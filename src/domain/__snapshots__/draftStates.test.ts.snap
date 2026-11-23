@@ -1,0 +1,55 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`draft states > the state map as agreed 1`] = `
+{
+  "asking": [
+    "guided_chronology",
+    "free_story",
+    "photos",
+    "summary",
+    "cancelled",
+    "expired",
+  ],
+  "cancelled": [],
+  "expired": [],
+  "free_story": [
+    "asking",
+    "cancelled",
+    "expired",
+  ],
+  "guided_chronology": [
+    "asking",
+    "cancelled",
+    "expired",
+  ],
+  "neighbourhood": [
+    "asking",
+    "cancelled",
+    "expired",
+  ],
+  "photos": [
+    "summary",
+    "cancelled",
+    "expired",
+  ],
+  "place": [
+    "place_confirm",
+    "neighbourhood",
+    "cancelled",
+    "expired",
+  ],
+  "place_confirm": [
+    "neighbourhood",
+    "place",
+    "cancelled",
+    "expired",
+  ],
+  "sent": [],
+  "summary": [
+    "sent",
+    "asking",
+    "cancelled",
+    "expired",
+  ],
+}
+`;

@@ -1,0 +1,118 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`limits table > rows as agreed 1`] = `
+{
+  "address.bindings": {
+    "effect": "refuse",
+    "max": 60,
+    "subject": "address",
+    "window": "clockHour",
+  },
+  "address.draftReads": {
+    "effect": "refuse",
+    "max": 2000,
+    "subject": "address",
+    "window": "clockHour",
+  },
+  "address.messages": {
+    "effect": "refuse",
+    "max": 2000,
+    "subject": "address",
+    "window": "clockHour",
+  },
+  "address.searches": {
+    "effect": "refuse",
+    "max": 1000,
+    "subject": "address",
+    "window": "clockHour",
+  },
+  "device.messageHour": {
+    "effect": "refuse",
+    "max": 150,
+    "subject": "device",
+    "window": "clockHour",
+  },
+  "device.numbers": {
+    "effect": "refuse",
+    "max": 5,
+    "subject": "device",
+    "window": "standing",
+  },
+  "message.day": {
+    "effect": "refuse",
+    "max": 300,
+    "subject": "numberSlot",
+    "window": "wibDay",
+  },
+  "message.hour": {
+    "effect": "refuse",
+    "max": 150,
+    "subject": "numberSlot",
+    "window": "clockHour",
+  },
+  "message.minute": {
+    "effect": "refuse",
+    "max": 20,
+    "subject": "numberSlot",
+    "window": "minute",
+  },
+  "model.day": {
+    "effect": "templatesOnly",
+    "max": 150,
+    "subject": "number",
+    "window": "wibDay",
+  },
+  "model.draft": {
+    "effect": "templatesOnly",
+    "max": 30,
+    "subject": "draft",
+    "window": "draftLife",
+  },
+  "send.rolling": {
+    "effect": "refuse",
+    "max": 5,
+    "subject": "numberSlot",
+    "window": "rolling24h",
+  },
+}
+`;
+
+exports[`limits table > rows as agreed 2`] = `
+{
+  "chronologyNote": {
+    "max": 300,
+  },
+  "chronologyWhole": {
+    "max": 500,
+  },
+  "message": {
+    "max": 2000,
+  },
+  "name": {
+    "max": 80,
+    "min": 2,
+  },
+  "neighbourhood": {
+    "max": 3,
+    "min": 1,
+  },
+  "officerPosition": {
+    "max": 80,
+    "min": 2,
+  },
+  "officerRegency": {
+    "max": 80,
+    "min": 3,
+  },
+  "otherNeed": {
+    "max": 120,
+  },
+  "placeNames": {
+    "max": 300,
+  },
+  "placeQuery": {
+    "max": 60,
+    "min": 3,
+  },
+}
+`;

@@ -1,0 +1,3093 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`field spec ids > fields, groups and options, in asking order 1`] = `
+[
+  {
+    "group": "event",
+    "id": "place",
+    "kind": "place",
+    "required": true,
+  },
+  {
+    "group": "event",
+    "id": "neighbourhood",
+    "kind": "neighbourhood",
+  },
+  {
+    "group": "event",
+    "id": "hazardType",
+    "kind": "hazardType",
+    "required": true,
+  },
+  {
+    "group": "event",
+    "id": "hazardSubtype",
+    "kind": "hazardSubtype",
+    "required": true,
+  },
+  {
+    "group": "event",
+    "id": "chronology",
+    "kind": "chronology",
+    "maxLength": 500,
+    "noteMaxLength": 300,
+    "required": true,
+  },
+  {
+    "group": "event",
+    "id": "eventTime",
+    "kind": "eventTime",
+    "required": true,
+  },
+  {
+    "group": "victims",
+    "id": "dead",
+    "kind": "count",
+    "max": 100000,
+    "unit": "people",
+  },
+  {
+    "group": "victims",
+    "id": "missing",
+    "kind": "count",
+    "max": 100000,
+    "unit": "people",
+  },
+  {
+    "group": "victims",
+    "id": "injured",
+    "kind": "count",
+    "max": 1000000,
+    "unit": "people",
+  },
+  {
+    "group": "victims",
+    "id": "injuredInpatient",
+    "kind": "count",
+    "max": 1000000,
+    "parent": "injured",
+    "unit": "people",
+  },
+  {
+    "group": "affected",
+    "id": "affectedFamilies",
+    "kind": "count",
+    "max": 5000000,
+    "unit": "families",
+  },
+  {
+    "group": "affected",
+    "id": "affectedPeople",
+    "kind": "count",
+    "max": 20000000,
+    "unit": "people",
+  },
+  {
+    "group": "displacement",
+    "id": "displacedPeople",
+    "kind": "count",
+    "max": 5000000,
+    "unit": "people",
+  },
+  {
+    "group": "displacement",
+    "id": "displacedFamilies",
+    "kind": "count",
+    "max": 2000000,
+    "unit": "families",
+  },
+  {
+    "group": "displacement",
+    "id": "shelters",
+    "kind": "text",
+    "maxLength": 300,
+    "parent": "displacedPeople",
+  },
+  {
+    "exceptFor": [
+      "drought",
+    ],
+    "group": "houses",
+    "id": "housesHeavy",
+    "kind": "count",
+    "max": 2000000,
+    "unit": "houses",
+  },
+  {
+    "exceptFor": [
+      "drought",
+    ],
+    "group": "houses",
+    "id": "housesModerate",
+    "kind": "count",
+    "max": 2000000,
+    "unit": "houses",
+  },
+  {
+    "exceptFor": [
+      "drought",
+    ],
+    "group": "houses",
+    "id": "housesLight",
+    "kind": "count",
+    "max": 2000000,
+    "unit": "houses",
+  },
+  {
+    "group": "houses",
+    "id": "housesFlooded",
+    "kind": "count",
+    "max": 5000000,
+    "onlyFor": [
+      "flood",
+      "tsunami",
+      "tidalWaveAbrasion",
+    ],
+    "unit": "houses",
+  },
+  {
+    "group": "vulnerable",
+    "id": "vulnerableGroups",
+    "kind": "multiChoice",
+    "options": [
+      {
+        "id": "infantsToddlers",
+      },
+      {
+        "id": "pregnantOrNursing",
+      },
+      {
+        "id": "elderly",
+      },
+      {
+        "id": "disabled",
+      },
+      {
+        "id": "none",
+        "meaning": "none",
+      },
+      {
+        "id": "unknown",
+        "meaning": "unknown",
+      },
+    ],
+  },
+  {
+    "exceptFor": [
+      "drought",
+    ],
+    "group": "facilities",
+    "id": "schools",
+    "kind": "count",
+    "max": 100000,
+    "unit": "units",
+  },
+  {
+    "exceptFor": [
+      "drought",
+    ],
+    "group": "facilities",
+    "id": "healthFacilities",
+    "kind": "count",
+    "max": 100000,
+    "unit": "units",
+  },
+  {
+    "exceptFor": [
+      "drought",
+    ],
+    "group": "facilities",
+    "id": "worshipPlaces",
+    "kind": "count",
+    "max": 100000,
+    "unit": "units",
+  },
+  {
+    "exceptFor": [
+      "forestFire",
+      "drought",
+      "buildingFire",
+    ],
+    "group": "facilities",
+    "id": "roads",
+    "kind": "count",
+    "max": 100000,
+    "unit": "points",
+  },
+  {
+    "group": "facilities",
+    "id": "schoolNames",
+    "kind": "text",
+    "maxLength": 300,
+    "parent": "schools",
+  },
+  {
+    "group": "facilities",
+    "id": "healthFacilityNames",
+    "kind": "text",
+    "maxLength": 300,
+    "parent": "healthFacilities",
+  },
+  {
+    "group": "facilities",
+    "id": "worshipPlaceNames",
+    "kind": "text",
+    "maxLength": 300,
+    "parent": "worshipPlaces",
+  },
+  {
+    "group": "facilities",
+    "id": "roadNames",
+    "kind": "text",
+    "maxLength": 300,
+    "parent": "roads",
+  },
+  {
+    "group": "facilities",
+    "id": "roadPassable",
+    "kind": "choice",
+    "options": [
+      {
+        "id": "allVehicles",
+      },
+      {
+        "id": "motorbikesAndWalkers",
+      },
+      {
+        "id": "cutOff",
+      },
+      {
+        "id": "unknown",
+        "meaning": "unknown",
+      },
+    ],
+    "parent": "roads",
+  },
+  {
+    "group": "services",
+    "id": "disruptedServices",
+    "kind": "multiChoice",
+    "options": [
+      {
+        "id": "powerOut",
+      },
+      {
+        "id": "phoneSignalLost",
+      },
+      {
+        "id": "cleanWaterStopped",
+      },
+      {
+        "id": "allRunning",
+        "meaning": "none",
+      },
+      {
+        "id": "unknown",
+        "meaning": "unknown",
+      },
+    ],
+  },
+  {
+    "group": "specific",
+    "id": "waterDepth",
+    "kind": "choice",
+    "onlyFor": [
+      "flood",
+    ],
+    "options": [
+      {
+        "id": "ankle",
+        "value": 10,
+      },
+      {
+        "id": "knee",
+        "value": 50,
+      },
+      {
+        "id": "waist",
+        "value": 100,
+      },
+      {
+        "id": "chest",
+        "value": 130,
+      },
+      {
+        "id": "overHead",
+        "value": 170,
+      },
+    ],
+    "unit": "cm",
+  },
+  {
+    "group": "specific",
+    "id": "burntArea",
+    "kind": "choice",
+    "onlyFor": [
+      "forestFire",
+    ],
+    "options": [
+      {
+        "id": "underOneHectare",
+      },
+      {
+        "id": "oneToFiveHectares",
+      },
+      {
+        "id": "fiveToTwentyFiveHectares",
+      },
+      {
+        "id": "overTwentyFiveHectares",
+      },
+      {
+        "id": "unknown",
+        "meaning": "unknown",
+      },
+    ],
+    "unit": "ha",
+  },
+  {
+    "group": "specific",
+    "id": "shakingFelt",
+    "kind": "choice",
+    "onlyFor": [
+      "earthquake",
+    ],
+    "options": [
+      {
+        "id": "barelyFelt",
+      },
+      {
+        "id": "feltNoDamage",
+      },
+      {
+        "id": "lightDamage",
+      },
+      {
+        "id": "moderateDamage",
+      },
+      {
+        "id": "heavyDamage",
+      },
+    ],
+  },
+  {
+    "group": "specific",
+    "id": "ashThickness",
+    "kind": "choice",
+    "onlyFor": [
+      "volcanicEruption",
+    ],
+    "options": [
+      {
+        "id": "dustThin",
+      },
+      {
+        "id": "coinThick",
+      },
+      {
+        "id": "coversGround",
+      },
+      {
+        "id": "thick",
+      },
+    ],
+  },
+  {
+    "group": "specific",
+    "id": "seaWaterHeight",
+    "kind": "choice",
+    "onlyFor": [
+      "tsunami",
+    ],
+    "options": [
+      {
+        "id": "ankle",
+      },
+      {
+        "id": "knee",
+      },
+      {
+        "id": "waist",
+      },
+      {
+        "id": "overHead",
+      },
+      {
+        "id": "unknown",
+        "meaning": "unknown",
+      },
+    ],
+  },
+  {
+    "group": "specific",
+    "id": "cleanWater",
+    "kind": "choice",
+    "onlyFor": [
+      "drought",
+    ],
+    "options": [
+      {
+        "id": "stillEnough",
+      },
+      {
+        "id": "gettingHard",
+      },
+      {
+        "id": "noCleanWater",
+      },
+    ],
+  },
+  {
+    "group": "specific",
+    "id": "windDamageSpread",
+    "kind": "choice",
+    "onlyFor": [
+      "extremeWeather",
+    ],
+    "options": [
+      {
+        "id": "onePoint",
+      },
+      {
+        "id": "oneHamlet",
+      },
+      {
+        "id": "severalVillages",
+      },
+    ],
+  },
+  {
+    "group": "specific",
+    "id": "shorelineLoss",
+    "kind": "choice",
+    "onlyFor": [
+      "tidalWaveAbrasion",
+    ],
+    "options": [
+      {
+        "id": "underOneMetre",
+      },
+      {
+        "id": "oneToFiveMetres",
+      },
+      {
+        "id": "overFiveMetres",
+      },
+      {
+        "id": "unknown",
+        "meaning": "unknown",
+      },
+    ],
+  },
+  {
+    "group": "specific",
+    "id": "farmland",
+    "kind": "choice",
+    "onlyFor": [
+      "flood",
+      "landslide",
+      "drought",
+      "volcanicEruption",
+      "extremeWeather",
+      "tsunami",
+      "tidalWaveAbrasion",
+    ],
+    "options": [
+      {
+        "id": "none",
+        "meaning": "none",
+        "value": 0,
+      },
+      {
+        "id": "underOneHectare",
+        "value": 0.5,
+      },
+      {
+        "id": "oneToTenHectares",
+        "value": 5,
+      },
+      {
+        "id": "tenToHundredHectares",
+        "value": 50,
+      },
+      {
+        "id": "overHundredHectares",
+        "value": 100,
+      },
+      {
+        "id": "unknown",
+        "meaning": "unknown",
+      },
+    ],
+    "unit": "ha",
+  },
+  {
+    "group": "specific",
+    "id": "craterDistance",
+    "kind": "choice",
+    "onlyFor": [
+      "volcanicEruption",
+    ],
+    "options": [
+      {
+        "id": "underThreeKm",
+        "value": 2,
+      },
+      {
+        "id": "threeToFiveKm",
+        "value": 4,
+      },
+      {
+        "id": "fiveToTenKm",
+        "value": 7,
+      },
+      {
+        "id": "overTenKm",
+        "value": 10,
+      },
+      {
+        "id": "unknown",
+        "meaning": "unknown",
+      },
+    ],
+    "unit": "km",
+  },
+  {
+    "group": "needs",
+    "id": "urgentNeeds",
+    "kind": "multiChoice",
+    "options": [
+      {
+        "category": "logistics",
+        "id": "readyMeals",
+        "onlyFor": [
+          "flood",
+          "landslide",
+          "tidalWaveAbrasion",
+          "extremeWeather",
+          "earthquake",
+          "tsunami",
+          "volcanicEruption",
+          "buildingFire",
+          "forestFire",
+        ],
+      },
+      {
+        "category": "logistics",
+        "id": "foodParcels",
+      },
+      {
+        "category": "logistics",
+        "id": "drinkingWater",
+      },
+      {
+        "category": "logistics",
+        "id": "clothingParcels",
+        "onlyFor": [
+          "flood",
+          "landslide",
+          "tidalWaveAbrasion",
+          "extremeWeather",
+          "earthquake",
+          "tsunami",
+          "volcanicEruption",
+          "buildingFire",
+        ],
+      },
+      {
+        "category": "logistics",
+        "id": "sleepingMats",
+        "onlyFor": [
+          "flood",
+          "landslide",
+          "tidalWaveAbrasion",
+          "extremeWeather",
+          "earthquake",
+          "tsunami",
+          "volcanicEruption",
+          "buildingFire",
+        ],
+      },
+      {
+        "category": "logistics",
+        "id": "tents",
+        "onlyFor": [
+          "flood",
+          "landslide",
+          "tidalWaveAbrasion",
+          "extremeWeather",
+          "earthquake",
+          "tsunami",
+          "volcanicEruption",
+          "buildingFire",
+        ],
+      },
+      {
+        "category": "logistics",
+        "id": "familyKits",
+        "onlyFor": [
+          "flood",
+          "landslide",
+          "tidalWaveAbrasion",
+          "extremeWeather",
+          "earthquake",
+          "tsunami",
+          "volcanicEruption",
+          "buildingFire",
+        ],
+      },
+      {
+        "category": "logistics",
+        "id": "babyKits",
+        "onlyFor": [
+          "flood",
+          "landslide",
+          "tidalWaveAbrasion",
+          "extremeWeather",
+          "earthquake",
+          "tsunami",
+          "volcanicEruption",
+          "buildingFire",
+        ],
+      },
+      {
+        "category": "logistics",
+        "id": "medicalCare",
+      },
+      {
+        "category": "logistics",
+        "id": "masks",
+        "onlyFor": [
+          "forestFire",
+          "volcanicEruption",
+        ],
+      },
+      {
+        "category": "equipment",
+        "id": "rubberBoats",
+        "onlyFor": [
+          "flood",
+          "tsunami",
+          "tidalWaveAbrasion",
+        ],
+      },
+      {
+        "category": "equipment",
+        "id": "waterPumps",
+        "onlyFor": [
+          "flood",
+        ],
+      },
+      {
+        "category": "equipment",
+        "id": "waterTanks",
+        "onlyFor": [
+          "drought",
+        ],
+      },
+      {
+        "category": "equipment",
+        "id": "firefightingEquipment",
+        "onlyFor": [
+          "forestFire",
+          "buildingFire",
+        ],
+      },
+      {
+        "category": "equipment",
+        "id": "sandbags",
+        "onlyFor": [
+          "landslide",
+          "flood",
+          "tidalWaveAbrasion",
+        ],
+      },
+      {
+        "category": "equipment",
+        "id": "heavyMachinery",
+        "onlyFor": [
+          "landslide",
+          "earthquake",
+          "flood",
+          "volcanicEruption",
+          "tsunami",
+        ],
+      },
+      {
+        "category": "equipment",
+        "id": "chainsaws",
+        "onlyFor": [
+          "extremeWeather",
+          "landslide",
+        ],
+      },
+      {
+        "category": "equipment",
+        "id": "roofingMaterial",
+        "onlyFor": [
+          "extremeWeather",
+          "earthquake",
+        ],
+      },
+      {
+        "category": "equipment",
+        "id": "generators",
+        "onlyFor": [
+          "earthquake",
+          "tsunami",
+          "flood",
+          "extremeWeather",
+          "volcanicEruption",
+        ],
+      },
+      {
+        "category": "other",
+        "freeTextMaxLength": 120,
+        "id": "other",
+      },
+      {
+        "category": "other",
+        "id": "noUrgentNeed",
+        "meaning": "none",
+      },
+    ],
+  },
+]
+`;
+
+exports[`field spec ids > guided chronology steps per hazard type 1`] = `
+[
+  [
+    "flood",
+    [
+      {
+        "multiple": false,
+        "options": [
+          {
+            "id": "heavyRain",
+            "phrase": true,
+          },
+          {
+            "id": "riverRising",
+            "phrase": true,
+          },
+          {
+            "id": "upstreamWater",
+            "phrase": true,
+          },
+          {
+            "id": "highTide",
+            "phrase": true,
+          },
+          {
+            "id": "embankmentBreach",
+            "phrase": true,
+          },
+          {
+            "id": "unknown",
+            "phrase": true,
+          },
+        ],
+        "prefix": false,
+        "warning": false,
+      },
+      {
+        "multiple": false,
+        "options": [
+          {
+            "id": "slowRise",
+            "phrase": true,
+          },
+          {
+            "danger": true,
+            "id": "fastRise",
+            "phrase": true,
+          },
+          {
+            "danger": true,
+            "id": "suddenTorrent",
+            "phrase": true,
+          },
+          {
+            "id": "unknown",
+            "phrase": false,
+          },
+        ],
+        "prefix": false,
+        "warning": true,
+      },
+      {
+        "multiple": true,
+        "options": [
+          {
+            "id": "homes",
+            "phrase": true,
+          },
+          {
+            "id": "roads",
+            "phrase": true,
+          },
+          {
+            "id": "farmland",
+            "phrase": true,
+          },
+          {
+            "id": "schoolsOrWorship",
+            "phrase": true,
+          },
+          {
+            "id": "markets",
+            "phrase": true,
+          },
+          {
+            "id": "unknown",
+            "phrase": false,
+          },
+          {
+            "freeText": true,
+            "id": "other",
+            "phrase": false,
+          },
+        ],
+        "prefix": true,
+        "warning": false,
+      },
+      {
+        "multiple": true,
+        "options": [
+          {
+            "id": "roadsBlocked",
+            "phrase": true,
+          },
+          {
+            "id": "powerOut",
+            "phrase": true,
+          },
+          {
+            "id": "cleanWaterDisrupted",
+            "phrase": true,
+          },
+          {
+            "id": "phoneSignalWeak",
+            "phrase": true,
+          },
+          {
+            "danger": true,
+            "id": "residentsTrapped",
+            "phrase": true,
+          },
+          {
+            "freeText": true,
+            "id": "other",
+            "phrase": false,
+          },
+          {
+            "id": "nothingDisrupted",
+            "phrase": false,
+          },
+        ],
+        "prefix": true,
+        "warning": true,
+      },
+      {
+        "multiple": false,
+        "options": [
+          {
+            "id": "underThreeHours",
+            "phrase": true,
+          },
+          {
+            "id": "threeToTwelveHours",
+            "phrase": true,
+          },
+          {
+            "id": "overHalfDay",
+            "phrase": true,
+          },
+          {
+            "id": "overOneDay",
+            "phrase": true,
+          },
+        ],
+        "prefix": false,
+        "warning": false,
+      },
+      {
+        "multiple": false,
+        "options": [
+          {
+            "danger": true,
+            "id": "stillRising",
+            "phrase": true,
+          },
+          {
+            "id": "holding",
+            "phrase": true,
+          },
+          {
+            "id": "startingToRecede",
+            "phrase": true,
+          },
+          {
+            "id": "receded",
+            "phrase": true,
+          },
+        ],
+        "prefix": false,
+        "warning": true,
+      },
+      {
+        "multiple": true,
+        "options": [
+          {
+            "danger": true,
+            "id": "heavyRainContinues",
+            "phrase": true,
+          },
+          {
+            "danger": true,
+            "id": "cracksInBanks",
+            "phrase": true,
+          },
+          {
+            "danger": true,
+            "id": "powerCablesInWater",
+            "phrase": true,
+          },
+          {
+            "danger": true,
+            "id": "upstreamWaterWarning",
+            "phrase": true,
+          },
+          {
+            "freeText": true,
+            "id": "other",
+            "phrase": false,
+          },
+          {
+            "id": "none",
+            "phrase": false,
+          },
+        ],
+        "prefix": true,
+        "warning": true,
+      },
+      {
+        "multiple": true,
+        "options": [
+          {
+            "id": "strongCurrent",
+            "phrase": true,
+          },
+          {
+            "id": "debrisAtBridge",
+            "phrase": true,
+          },
+          {
+            "id": "livestockSweptAway",
+            "phrase": true,
+          },
+          {
+            "id": "nearbyLandslide",
+            "phrase": true,
+          },
+          {
+            "id": "wellWaterPolluted",
+            "phrase": true,
+          },
+          {
+            "freeText": true,
+            "id": "other",
+            "phrase": false,
+          },
+          {
+            "id": "none",
+            "phrase": false,
+          },
+        ],
+        "prefix": true,
+        "warning": false,
+      },
+    ],
+  ],
+  [
+    "landslide",
+    [
+      {
+        "multiple": true,
+        "options": [
+          {
+            "danger": true,
+            "id": "newCracks",
+            "phrase": true,
+          },
+          {
+            "id": "springChanged",
+            "phrase": true,
+          },
+          {
+            "id": "treesLeaning",
+            "phrase": true,
+          },
+          {
+            "danger": true,
+            "id": "rumblingFromSlope",
+            "phrase": true,
+          },
+          {
+            "freeText": true,
+            "id": "other",
+            "phrase": false,
+          },
+          {
+            "id": "noSign",
+            "phrase": false,
+          },
+        ],
+        "prefix": true,
+        "warning": true,
+      },
+      {
+        "multiple": false,
+        "options": [
+          {
+            "id": "heavyRainToday",
+            "phrase": true,
+          },
+          {
+            "id": "rainForDays",
+            "phrase": true,
+          },
+          {
+            "id": "earthquake",
+            "phrase": true,
+          },
+          {
+            "id": "slopeCut",
+            "phrase": true,
+          },
+          {
+            "id": "unknown",
+            "phrase": true,
+          },
+        ],
+        "prefix": false,
+        "warning": false,
+      },
+      {
+        "multiple": false,
+        "options": [
+          {
+            "id": "slowCreep",
+            "phrase": true,
+          },
+          {
+            "id": "suddenCollapse",
+            "phrase": true,
+          },
+          {
+            "danger": true,
+            "id": "mudFlow",
+            "phrase": true,
+          },
+          {
+            "id": "sinking",
+            "phrase": true,
+          },
+        ],
+        "prefix": false,
+        "warning": true,
+      },
+      {
+        "multiple": true,
+        "options": [
+          {
+            "id": "houses",
+            "phrase": true,
+          },
+          {
+            "id": "roads",
+            "phrase": true,
+          },
+          {
+            "id": "farmland",
+            "phrase": true,
+          },
+          {
+            "danger": true,
+            "id": "riverBlocked",
+            "phrase": true,
+          },
+          {
+            "danger": true,
+            "id": "peopleBuried",
+            "phrase": true,
+          },
+          {
+            "freeText": true,
+            "id": "other",
+            "phrase": false,
+          },
+          {
+            "id": "nothingAffected",
+            "phrase": false,
+          },
+        ],
+        "prefix": true,
+        "warning": true,
+      },
+      {
+        "multiple": false,
+        "options": [
+          {
+            "danger": true,
+            "id": "stillMoving",
+            "phrase": true,
+          },
+          {
+            "id": "newCracksNotMoving",
+            "phrase": true,
+          },
+          {
+            "id": "stopped",
+            "phrase": true,
+          },
+          {
+            "id": "unknown",
+            "phrase": true,
+          },
+        ],
+        "prefix": false,
+        "warning": true,
+      },
+      {
+        "multiple": false,
+        "options": [
+          {
+            "id": "vehiclesCanPass",
+            "phrase": true,
+          },
+          {
+            "id": "onFootOnly",
+            "phrase": true,
+          },
+          {
+            "id": "cutOff",
+            "phrase": true,
+          },
+        ],
+        "prefix": false,
+        "warning": false,
+      },
+      {
+        "multiple": true,
+        "options": [
+          {
+            "danger": true,
+            "id": "rainContinues",
+            "phrase": true,
+          },
+          {
+            "danger": true,
+            "id": "otherSlopesCracked",
+            "phrase": true,
+          },
+          {
+            "danger": true,
+            "id": "riverDammed",
+            "phrase": true,
+          },
+          {
+            "danger": true,
+            "id": "residentsBelowSlope",
+            "phrase": true,
+          },
+          {
+            "freeText": true,
+            "id": "other",
+            "phrase": false,
+          },
+          {
+            "id": "none",
+            "phrase": false,
+          },
+        ],
+        "prefix": true,
+        "warning": true,
+      },
+      {
+        "multiple": true,
+        "options": [
+          {
+            "id": "smallFurtherSlides",
+            "phrase": true,
+          },
+          {
+            "id": "fallenTrees",
+            "phrase": true,
+          },
+          {
+            "id": "powerOutOrCablesDown",
+            "phrase": true,
+          },
+          {
+            "id": "wellWaterMurky",
+            "phrase": true,
+          },
+          {
+            "id": "roadSubsided",
+            "phrase": true,
+          },
+          {
+            "freeText": true,
+            "id": "other",
+            "phrase": false,
+          },
+          {
+            "id": "none",
+            "phrase": false,
+          },
+        ],
+        "prefix": true,
+        "warning": false,
+      },
+    ],
+  ],
+  [
+    "tidalWaveAbrasion",
+    [
+      {
+        "multiple": false,
+        "options": [
+          {
+            "id": "stormAtSea",
+            "phrase": true,
+          },
+          {
+            "danger": true,
+            "id": "seaRecededSuddenly",
+            "phrase": true,
+          },
+          {
+            "id": "bigWavesClearWeather",
+            "phrase": true,
+          },
+          {
+            "id": "fullMoonTide",
+            "phrase": true,
+          },
+          {
+            "id": "unknown",
+            "phrase": true,
+          },
+        ],
+        "prefix": false,
+        "warning": true,
+      },
+      {
+        "multiple": false,
+        "options": [
+          {
+            "id": "wavesHitShore",
+            "phrase": true,
+          },
+          {
+            "id": "seaWaterInSettlement",
+            "phrase": true,
+          },
+          {
+            "id": "shoreReceding",
+            "phrase": true,
+          },
+          {
+            "id": "shoreCollapse",
+            "phrase": true,
+          },
+        ],
+        "prefix": false,
+        "warning": false,
+      },
+      {
+        "multiple": false,
+        "options": [
+          {
+            "id": "firstTime",
+            "phrase": true,
+          },
+          {
+            "id": "everyHighWaveSeason",
+            "phrase": true,
+          },
+          {
+            "id": "ongoingForYears",
+            "phrase": true,
+          },
+        ],
+        "prefix": false,
+        "warning": false,
+      },
+      {
+        "multiple": true,
+        "options": [
+          {
+            "id": "coastalHomes",
+            "phrase": true,
+          },
+          {
+            "id": "boatsOrPiers",
+            "phrase": true,
+          },
+          {
+            "id": "pondsOrPlantations",
+            "phrase": true,
+          },
+          {
+            "id": "stalls",
+            "phrase": true,
+          },
+          {
+            "id": "coastalRoad",
+            "phrase": true,
+          },
+          {
+            "id": "seawall",
+            "phrase": true,
+          },
+          {
+            "id": "unknown",
+            "phrase": false,
+          },
+          {
+            "freeText": true,
+            "id": "other",
+            "phrase": false,
+          },
+        ],
+        "prefix": true,
+        "warning": false,
+      },
+      {
+        "multiple": false,
+        "options": [
+          {
+            "danger": true,
+            "id": "stillHigh",
+            "phrase": true,
+          },
+          {
+            "id": "easing",
+            "phrase": true,
+          },
+          {
+            "id": "calm",
+            "phrase": true,
+          },
+        ],
+        "prefix": false,
+        "warning": true,
+      },
+      {
+        "multiple": true,
+        "options": [
+          {
+            "danger": true,
+            "id": "tideStillHigh",
+            "phrase": true,
+          },
+          {
+            "danger": true,
+            "id": "cliffCracked",
+            "phrase": true,
+          },
+          {
+            "danger": true,
+            "id": "homesAtRisk",
+            "phrase": true,
+          },
+          {
+            "id": "highWaveWarningActive",
+            "phrase": true,
+          },
+          {
+            "freeText": true,
+            "id": "other",
+            "phrase": false,
+          },
+          {
+            "id": "none",
+            "phrase": false,
+          },
+        ],
+        "prefix": true,
+        "warning": true,
+      },
+      {
+        "multiple": true,
+        "options": [
+          {
+            "id": "saltWaterInFields",
+            "phrase": true,
+          },
+          {
+            "id": "boatsAdrift",
+            "phrase": true,
+          },
+          {
+            "id": "coastalTreesFallen",
+            "phrase": true,
+          },
+          {
+            "id": "marineDebris",
+            "phrase": true,
+          },
+          {
+            "id": "shorelineChanged",
+            "phrase": true,
+          },
+          {
+            "freeText": true,
+            "id": "other",
+            "phrase": false,
+          },
+          {
+            "id": "none",
+            "phrase": false,
+          },
+        ],
+        "prefix": true,
+        "warning": false,
+      },
+    ],
+  ],
+  [
+    "extremeWeather",
+    [
+      {
+        "multiple": true,
+        "options": [
+          {
+            "id": "hotHumid",
+            "phrase": true,
+          },
+          {
+            "id": "darkClouds",
+            "phrase": true,
+          },
+          {
+            "id": "suddenColdWind",
+            "phrase": true,
+          },
+          {
+            "id": "frequentLightning",
+            "phrase": true,
+          },
+          {
+            "freeText": true,
+            "id": "other",
+            "phrase": false,
+          },
+          {
+            "id": "noSign",
+            "phrase": false,
+          },
+        ],
+        "prefix": true,
+        "warning": false,
+      },
+      {
+        "multiple": false,
+        "options": [
+          {
+            "danger": true,
+            "id": "whirlwind",
+            "phrase": true,
+          },
+          {
+            "id": "straightLineWind",
+            "phrase": true,
+          },
+          {
+            "id": "hail",
+            "phrase": true,
+          },
+          {
+            "id": "heavyRainLightning",
+            "phrase": true,
+          },
+        ],
+        "prefix": false,
+        "warning": true,
+      },
+      {
+        "multiple": false,
+        "options": [
+          {
+            "id": "fewMinutes",
+            "phrase": true,
+          },
+          {
+            "id": "quarterToHalfHour",
+            "phrase": true,
+          },
+          {
+            "id": "overHalfHour",
+            "phrase": true,
+          },
+          {
+            "danger": true,
+            "id": "stillOngoing",
+            "phrase": true,
+          },
+        ],
+        "prefix": false,
+        "warning": true,
+      },
+      {
+        "multiple": true,
+        "options": [
+          {
+            "id": "roofs",
+            "phrase": true,
+          },
+          {
+            "id": "fallenTrees",
+            "phrase": true,
+          },
+          {
+            "id": "polesOrBillboards",
+            "phrase": true,
+          },
+          {
+            "id": "wallsOrBuildings",
+            "phrase": true,
+          },
+          {
+            "id": "vehiclesHit",
+            "phrase": true,
+          },
+          {
+            "id": "tentsOrStalls",
+            "phrase": true,
+          },
+          {
+            "freeText": true,
+            "id": "other",
+            "phrase": false,
+          },
+          {
+            "id": "noDamage",
+            "phrase": false,
+          },
+        ],
+        "prefix": true,
+        "warning": false,
+      },
+      {
+        "multiple": true,
+        "options": [
+          {
+            "danger": true,
+            "id": "liveCablesDown",
+            "phrase": true,
+          },
+          {
+            "danger": true,
+            "id": "leaningTreesOrBillboards",
+            "phrase": true,
+          },
+          {
+            "danger": true,
+            "id": "peopleTrapped",
+            "phrase": true,
+          },
+          {
+            "freeText": true,
+            "id": "other",
+            "phrase": false,
+          },
+          {
+            "id": "none",
+            "phrase": false,
+          },
+        ],
+        "prefix": true,
+        "warning": true,
+      },
+      {
+        "multiple": false,
+        "options": [
+          {
+            "danger": true,
+            "id": "stillBad",
+            "phrase": true,
+          },
+          {
+            "id": "easedCloudy",
+            "phrase": true,
+          },
+          {
+            "id": "easedClear",
+            "phrase": true,
+          },
+        ],
+        "prefix": false,
+        "warning": true,
+      },
+      {
+        "multiple": true,
+        "options": [
+          {
+            "id": "hail",
+            "phrase": true,
+          },
+          {
+            "id": "lightningStrike",
+            "phrase": true,
+          },
+          {
+            "id": "floodingAfter",
+            "phrase": true,
+          },
+          {
+            "id": "smallLandslide",
+            "phrase": true,
+          },
+          {
+            "id": "powerOut",
+            "phrase": true,
+          },
+          {
+            "id": "highWavesAtCoast",
+            "phrase": true,
+          },
+          {
+            "freeText": true,
+            "id": "other",
+            "phrase": false,
+          },
+          {
+            "id": "none",
+            "phrase": false,
+          },
+        ],
+        "prefix": true,
+        "warning": false,
+      },
+    ],
+  ],
+  [
+    "drought",
+    [
+      {
+        "multiple": true,
+        "options": [
+          {
+            "id": "noRainLong",
+            "phrase": true,
+          },
+          {
+            "id": "wellsShrinking",
+            "phrase": true,
+          },
+          {
+            "id": "riversShrinking",
+            "phrase": true,
+          },
+          {
+            "id": "cropsWilting",
+            "phrase": true,
+          },
+          {
+            "freeText": true,
+            "id": "other",
+            "phrase": false,
+          },
+          {
+            "id": "unknown",
+            "phrase": false,
+          },
+        ],
+        "prefix": true,
+        "warning": false,
+      },
+      {
+        "multiple": false,
+        "options": [
+          {
+            "id": "underTwoWeeks",
+            "phrase": true,
+          },
+          {
+            "id": "twoWeeksToOneMonth",
+            "phrase": true,
+          },
+          {
+            "id": "oneToThreeMonths",
+            "phrase": true,
+          },
+          {
+            "id": "overThreeMonths",
+            "phrase": true,
+          },
+        ],
+        "prefix": false,
+        "warning": false,
+      },
+      {
+        "multiple": true,
+        "options": [
+          {
+            "id": "dugWells",
+            "phrase": true,
+          },
+          {
+            "id": "boreholes",
+            "phrase": true,
+          },
+          {
+            "id": "springs",
+            "phrase": true,
+          },
+          {
+            "id": "riversOrReservoirs",
+            "phrase": true,
+          },
+          {
+            "id": "pipedWater",
+            "phrase": true,
+          },
+          {
+            "id": "noneDried",
+            "phrase": false,
+          },
+          {
+            "freeText": true,
+            "id": "other",
+            "phrase": false,
+          },
+        ],
+        "prefix": true,
+        "warning": false,
+      },
+      {
+        "multiple": false,
+        "options": [
+          {
+            "id": "queueAtRemainingSource",
+            "phrase": true,
+          },
+          {
+            "id": "buyingWater",
+            "phrase": true,
+          },
+          {
+            "id": "fetchingFarAway",
+            "phrase": true,
+          },
+          {
+            "id": "waterDeliveries",
+            "phrase": true,
+          },
+          {
+            "danger": true,
+            "id": "usingMurkyWater",
+            "phrase": true,
+          },
+        ],
+        "prefix": false,
+        "warning": true,
+      },
+      {
+        "multiple": true,
+        "options": [
+          {
+            "id": "cropFailure",
+            "phrase": true,
+          },
+          {
+            "id": "livestockThirsty",
+            "phrase": true,
+          },
+          {
+            "id": "diarrhoeaOrSkinDisease",
+            "phrase": true,
+          },
+          {
+            "id": "schoolsShortOfWater",
+            "phrase": true,
+          },
+          {
+            "freeText": true,
+            "id": "other",
+            "phrase": false,
+          },
+          {
+            "id": "noVisibleImpact",
+            "phrase": false,
+          },
+        ],
+        "prefix": true,
+        "warning": false,
+      },
+      {
+        "multiple": true,
+        "options": [
+          {
+            "id": "longDrySeason",
+            "phrase": true,
+          },
+          {
+            "danger": true,
+            "id": "landVeryDry",
+            "phrase": true,
+          },
+          {
+            "id": "waterPriceRising",
+            "phrase": true,
+          },
+          {
+            "freeText": true,
+            "id": "other",
+            "phrase": false,
+          },
+          {
+            "id": "none",
+            "phrase": false,
+          },
+        ],
+        "prefix": true,
+        "warning": true,
+      },
+      {
+        "multiple": true,
+        "options": [
+          {
+            "id": "crackedGround",
+            "phrase": true,
+          },
+          {
+            "id": "riverDryCompletely",
+            "phrase": true,
+          },
+          {
+            "id": "haze",
+            "phrase": true,
+          },
+          {
+            "id": "residentsMovedForWater",
+            "phrase": true,
+          },
+          {
+            "freeText": true,
+            "id": "other",
+            "phrase": false,
+          },
+          {
+            "id": "none",
+            "phrase": false,
+          },
+        ],
+        "prefix": true,
+        "warning": false,
+      },
+    ],
+  ],
+  [
+    "forestFire",
+    [
+      {
+        "multiple": false,
+        "options": [
+          {
+            "id": "forest",
+            "phrase": true,
+          },
+          {
+            "id": "plantationOrField",
+            "phrase": true,
+          },
+          {
+            "id": "scrubOrGrassland",
+            "phrase": true,
+          },
+          {
+            "id": "peatland",
+            "phrase": true,
+          },
+          {
+            "id": "emptyLandOrYard",
+            "phrase": true,
+          },
+          {
+            "id": "unknown",
+            "phrase": true,
+          },
+        ],
+        "prefix": false,
+        "warning": false,
+      },
+      {
+        "multiple": false,
+        "options": [
+          {
+            "id": "sawSmoke",
+            "phrase": true,
+          },
+          {
+            "id": "sawFlames",
+            "phrase": true,
+          },
+          {
+            "id": "smeltBurning",
+            "phrase": true,
+          },
+          {
+            "id": "smokeFromGround",
+            "phrase": true,
+          },
+          {
+            "id": "toldByOthers",
+            "phrase": true,
+          },
+        ],
+        "prefix": false,
+        "warning": false,
+      },
+      {
+        "multiple": false,
+        "options": [
+          {
+            "id": "landClearingByFire",
+            "phrase": true,
+          },
+          {
+            "id": "spreadingRubbishFire",
+            "phrase": true,
+          },
+          {
+            "id": "cigaretteOrCampfire",
+            "phrase": true,
+          },
+          {
+            "id": "lightning",
+            "phrase": true,
+          },
+          {
+            "id": "veryDryWeather",
+            "phrase": true,
+          },
+          {
+            "id": "unknown",
+            "phrase": true,
+          },
+        ],
+        "prefix": false,
+        "warning": false,
+      },
+      {
+        "multiple": false,
+        "options": [
+          {
+            "danger": true,
+            "id": "spreadingFast",
+            "phrase": true,
+          },
+          {
+            "danger": true,
+            "id": "smoulderingUnderground",
+            "phrase": true,
+          },
+          {
+            "id": "smallFires",
+            "phrase": true,
+          },
+          {
+            "id": "outStillSmoking",
+            "phrase": true,
+          },
+          {
+            "id": "out",
+            "phrase": true,
+          },
+        ],
+        "prefix": false,
+        "warning": true,
+      },
+      {
+        "multiple": true,
+        "options": [
+          {
+            "danger": true,
+            "id": "settlements",
+            "phrase": true,
+          },
+          {
+            "id": "plantations",
+            "phrase": true,
+          },
+          {
+            "id": "roads",
+            "phrase": true,
+          },
+          {
+            "danger": true,
+            "id": "hazardousFacilities",
+            "phrase": true,
+          },
+          {
+            "freeText": true,
+            "id": "other",
+            "phrase": false,
+          },
+          {
+            "id": "nothingThreatened",
+            "phrase": false,
+          },
+        ],
+        "prefix": true,
+        "warning": true,
+      },
+      {
+        "multiple": false,
+        "options": [
+          {
+            "id": "noSmoke",
+            "phrase": true,
+          },
+          {
+            "id": "thinSmoke",
+            "phrase": true,
+          },
+          {
+            "id": "thickSmoke",
+            "phrase": true,
+          },
+          {
+            "danger": true,
+            "id": "breathingTrouble",
+            "phrase": true,
+          },
+        ],
+        "prefix": false,
+        "warning": true,
+      },
+      {
+        "multiple": true,
+        "options": [
+          {
+            "id": "reignited",
+            "phrase": true,
+          },
+          {
+            "id": "schoolsClosed",
+            "phrase": true,
+          },
+          {
+            "id": "roadsCoveredInSmoke",
+            "phrase": true,
+          },
+          {
+            "id": "wildlifeInSettlements",
+            "phrase": true,
+          },
+          {
+            "id": "flyingAsh",
+            "phrase": true,
+          },
+          {
+            "freeText": true,
+            "id": "other",
+            "phrase": false,
+          },
+          {
+            "id": "none",
+            "phrase": false,
+          },
+        ],
+        "prefix": true,
+        "warning": false,
+      },
+    ],
+  ],
+  [
+    "earthquake",
+    [
+      {
+        "multiple": false,
+        "options": [
+          {
+            "id": "gentleThenStronger",
+            "phrase": true,
+          },
+          {
+            "id": "suddenJolt",
+            "phrase": true,
+          },
+          {
+            "id": "slowRolling",
+            "phrase": true,
+          },
+          {
+            "id": "rumbleBefore",
+            "phrase": true,
+          },
+        ],
+        "prefix": false,
+        "warning": false,
+      },
+      {
+        "multiple": false,
+        "options": [
+          {
+            "id": "fewSeconds",
+            "phrase": true,
+          },
+          {
+            "danger": true,
+            "id": "aboutHalfMinute",
+            "phrase": true,
+          },
+          {
+            "danger": true,
+            "id": "overHalfMinute",
+            "phrase": true,
+          },
+          {
+            "id": "unknown",
+            "phrase": false,
+          },
+        ],
+        "prefix": false,
+        "warning": true,
+      },
+      {
+        "multiple": false,
+        "options": [
+          {
+            "id": "nobodyWentOut",
+            "phrase": true,
+          },
+          {
+            "id": "someWentOut",
+            "phrase": true,
+          },
+          {
+            "id": "nearlyAllRanOut",
+            "phrase": true,
+          },
+          {
+            "id": "hardToStand",
+            "phrase": true,
+          },
+        ],
+        "prefix": false,
+        "warning": false,
+      },
+      {
+        "multiple": true,
+        "options": [
+          {
+            "danger": true,
+            "id": "unusualSea",
+            "phrase": true,
+          },
+          {
+            "danger": true,
+            "id": "groundCracked",
+            "phrase": true,
+          },
+          {
+            "id": "slopeLandslide",
+            "phrase": true,
+          },
+          {
+            "danger": true,
+            "id": "gasOrFire",
+            "phrase": true,
+          },
+          {
+            "id": "powerOutOrCablesDown",
+            "phrase": true,
+          },
+          {
+            "danger": true,
+            "id": "peopleTrapped",
+            "phrase": true,
+          },
+          {
+            "freeText": true,
+            "id": "other",
+            "phrase": false,
+          },
+          {
+            "id": "nothingSeen",
+            "phrase": false,
+          },
+        ],
+        "prefix": true,
+        "warning": true,
+      },
+      {
+        "multiple": false,
+        "options": [
+          {
+            "id": "noneYet",
+            "phrase": true,
+          },
+          {
+            "id": "oneOrTwoSmall",
+            "phrase": true,
+          },
+          {
+            "id": "manyTimes",
+            "phrase": true,
+          },
+          {
+            "danger": true,
+            "id": "strongerThanFirst",
+            "phrase": true,
+          },
+        ],
+        "prefix": false,
+        "warning": true,
+      },
+      {
+        "multiple": false,
+        "options": [
+          {
+            "id": "atHome",
+            "phrase": true,
+          },
+          {
+            "id": "inOpenField",
+            "phrase": true,
+          },
+          {
+            "id": "evacuated",
+            "phrase": true,
+          },
+          {
+            "id": "afraidToReturn",
+            "phrase": true,
+          },
+        ],
+        "prefix": false,
+        "warning": false,
+      },
+      {
+        "multiple": true,
+        "options": [
+          {
+            "id": "restlessAnimals",
+            "phrase": true,
+          },
+          {
+            "id": "wellWaterChanged",
+            "phrase": true,
+          },
+          {
+            "id": "tallBuildingsSwaying",
+            "phrase": true,
+          },
+          {
+            "id": "boomingSounds",
+            "phrase": true,
+          },
+          {
+            "freeText": true,
+            "id": "other",
+            "phrase": false,
+          },
+          {
+            "id": "none",
+            "phrase": false,
+          },
+        ],
+        "prefix": true,
+        "warning": false,
+      },
+    ],
+  ],
+  [
+    "tsunami",
+    [
+      {
+        "multiple": false,
+        "options": [
+          {
+            "danger": true,
+            "id": "strongLongQuake",
+            "phrase": true,
+          },
+          {
+            "danger": true,
+            "id": "seaRecededSuddenly",
+            "phrase": true,
+          },
+          {
+            "danger": true,
+            "id": "roarFromSea",
+            "phrase": true,
+          },
+          {
+            "danger": true,
+            "id": "sirenSounded",
+            "phrase": true,
+          },
+          {
+            "danger": true,
+            "id": "noWarningSign",
+            "phrase": true,
+          },
+        ],
+        "prefix": false,
+        "warning": true,
+      },
+      {
+        "multiple": false,
+        "options": [
+          {
+            "id": "slowRise",
+            "phrase": true,
+          },
+          {
+            "id": "wallOfWater",
+            "phrase": true,
+          },
+          {
+            "id": "repeatedWaves",
+            "phrase": true,
+          },
+          {
+            "id": "withRoar",
+            "phrase": true,
+          },
+        ],
+        "prefix": false,
+        "warning": true,
+      },
+      {
+        "multiple": false,
+        "options": [
+          {
+            "id": "shoreOnly",
+            "phrase": true,
+          },
+          {
+            "id": "coastalSettlement",
+            "phrase": true,
+          },
+          {
+            "id": "farInland",
+            "phrase": true,
+          },
+          {
+            "id": "upRivers",
+            "phrase": true,
+          },
+        ],
+        "prefix": false,
+        "warning": false,
+      },
+      {
+        "multiple": true,
+        "options": [
+          {
+            "id": "boatsOnLand",
+            "phrase": true,
+          },
+          {
+            "id": "housesSweptAway",
+            "phrase": true,
+          },
+          {
+            "id": "vehiclesDragged",
+            "phrase": true,
+          },
+          {
+            "id": "debrisPiledUp",
+            "phrase": true,
+          },
+          {
+            "danger": true,
+            "id": "peopleSweptAway",
+            "phrase": true,
+          },
+          {
+            "freeText": true,
+            "id": "other",
+            "phrase": false,
+          },
+          {
+            "id": "none",
+            "phrase": false,
+          },
+        ],
+        "prefix": true,
+        "warning": true,
+      },
+      {
+        "multiple": false,
+        "options": [
+          {
+            "id": "onHighGround",
+            "phrase": true,
+          },
+          {
+            "id": "movingUp",
+            "phrase": true,
+          },
+          {
+            "danger": true,
+            "id": "someNotEvacuated",
+            "phrase": true,
+          },
+          {
+            "danger": true,
+            "id": "evacuationRouteBlocked",
+            "phrase": true,
+          },
+        ],
+        "prefix": false,
+        "warning": true,
+      },
+      {
+        "multiple": false,
+        "options": [
+          {
+            "danger": true,
+            "id": "stillChurning",
+            "phrase": true,
+          },
+          {
+            "danger": true,
+            "id": "seaRecededAgain",
+            "phrase": true,
+          },
+          {
+            "id": "calmNoOfficialStatement",
+            "phrase": true,
+          },
+          {
+            "id": "unknown",
+            "phrase": true,
+          },
+        ],
+        "prefix": false,
+        "warning": true,
+      },
+      {
+        "multiple": true,
+        "options": [
+          {
+            "id": "aftershocks",
+            "phrase": true,
+          },
+          {
+            "id": "fires",
+            "phrase": true,
+          },
+          {
+            "id": "powerAndRoadsCut",
+            "phrase": true,
+          },
+          {
+            "id": "strandedFish",
+            "phrase": true,
+          },
+          {
+            "id": "sirenSilent",
+            "phrase": true,
+          },
+          {
+            "freeText": true,
+            "id": "other",
+            "phrase": false,
+          },
+          {
+            "id": "none",
+            "phrase": false,
+          },
+        ],
+        "prefix": true,
+        "warning": false,
+      },
+    ],
+  ],
+  [
+    "volcanicEruption",
+    [
+      {
+        "multiple": true,
+        "options": [
+          {
+            "id": "tremors",
+            "phrase": true,
+          },
+          {
+            "id": "rumblingOrBooms",
+            "phrase": true,
+          },
+          {
+            "id": "sulphurSmell",
+            "phrase": true,
+          },
+          {
+            "id": "springWaterChanged",
+            "phrase": true,
+          },
+          {
+            "id": "animalsComingDown",
+            "phrase": true,
+          },
+          {
+            "freeText": true,
+            "id": "other",
+            "phrase": false,
+          },
+          {
+            "id": "noSign",
+            "phrase": false,
+          },
+        ],
+        "prefix": true,
+        "warning": false,
+      },
+      {
+        "multiple": true,
+        "options": [
+          {
+            "id": "ashColumn",
+            "phrase": true,
+          },
+          {
+            "id": "ashfall",
+            "phrase": true,
+          },
+          {
+            "id": "incandescentRocks",
+            "phrase": true,
+          },
+          {
+            "danger": true,
+            "id": "pyroclasticFlow",
+            "phrase": true,
+          },
+          {
+            "danger": true,
+            "id": "lahar",
+            "phrase": true,
+          },
+          {
+            "id": "lavaFlow",
+            "phrase": true,
+          },
+          {
+            "freeText": true,
+            "id": "other",
+            "phrase": false,
+          },
+        ],
+        "prefix": true,
+        "warning": true,
+      },
+      {
+        "multiple": false,
+        "options": [
+          {
+            "id": "normal",
+            "phrase": true,
+          },
+          {
+            "id": "greyOvercast",
+            "phrase": true,
+          },
+          {
+            "id": "darkAsNight",
+            "phrase": true,
+          },
+          {
+            "danger": true,
+            "id": "poorVisibilityBreathing",
+            "phrase": true,
+          },
+        ],
+        "prefix": false,
+        "warning": true,
+      },
+      {
+        "multiple": false,
+        "options": [
+          {
+            "id": "normal",
+            "phrase": true,
+          },
+          {
+            "id": "risingMurky",
+            "phrase": true,
+          },
+          {
+            "danger": true,
+            "id": "thickMudWithRocks",
+            "phrase": true,
+          },
+          {
+            "danger": true,
+            "id": "suddenlyDry",
+            "phrase": true,
+          },
+        ],
+        "prefix": false,
+        "warning": true,
+      },
+      {
+        "multiple": false,
+        "options": [
+          {
+            "id": "asUsual",
+            "phrase": true,
+          },
+          {
+            "id": "someEvacuated",
+            "phrase": true,
+          },
+          {
+            "id": "allEvacuated",
+            "phrase": true,
+          },
+          {
+            "danger": true,
+            "id": "residentsInDangerZone",
+            "phrase": true,
+          },
+        ],
+        "prefix": false,
+        "warning": true,
+      },
+      {
+        "multiple": false,
+        "options": [
+          {
+            "danger": true,
+            "id": "stillErupting",
+            "phrase": true,
+          },
+          {
+            "id": "stoppedStillSmoking",
+            "phrase": true,
+          },
+          {
+            "id": "lookingCalm",
+            "phrase": true,
+          },
+          {
+            "id": "unknown",
+            "phrase": true,
+          },
+        ],
+        "prefix": false,
+        "warning": true,
+      },
+      {
+        "multiple": true,
+        "options": [
+          {
+            "id": "soreEyesCoughing",
+            "phrase": true,
+          },
+          {
+            "danger": true,
+            "id": "roofsCoveredInAsh",
+            "phrase": true,
+          },
+          {
+            "id": "cropsAndLivestockCovered",
+            "phrase": true,
+          },
+          {
+            "id": "schoolsClosed",
+            "phrase": true,
+          },
+          {
+            "id": "airportOrRoadsClosed",
+            "phrase": true,
+          },
+          {
+            "freeText": true,
+            "id": "other",
+            "phrase": false,
+          },
+          {
+            "id": "none",
+            "phrase": false,
+          },
+        ],
+        "prefix": true,
+        "warning": true,
+      },
+      {
+        "multiple": true,
+        "options": [
+          {
+            "id": "tremorsAgain",
+            "phrase": true,
+          },
+          {
+            "id": "gravelRain",
+            "phrase": true,
+          },
+          {
+            "id": "sirensOrDrums",
+            "phrase": true,
+          },
+          {
+            "id": "powerOut",
+            "phrase": true,
+          },
+          {
+            "id": "wellWaterMurky",
+            "phrase": true,
+          },
+          {
+            "freeText": true,
+            "id": "other",
+            "phrase": false,
+          },
+          {
+            "id": "none",
+            "phrase": false,
+          },
+        ],
+        "prefix": true,
+        "warning": false,
+      },
+    ],
+  ],
+  [
+    "buildingFire",
+    [
+      {
+        "multiple": false,
+        "options": [
+          {
+            "id": "sawSmoke",
+            "phrase": true,
+          },
+          {
+            "id": "sawFlames",
+            "phrase": true,
+          },
+          {
+            "id": "heardExplosion",
+            "phrase": true,
+          },
+          {
+            "id": "smeltBurningOrGas",
+            "phrase": true,
+          },
+          {
+            "id": "residentsShouting",
+            "phrase": true,
+          },
+        ],
+        "prefix": false,
+        "warning": false,
+      },
+      {
+        "multiple": false,
+        "options": [
+          {
+            "id": "electricalShortCircuit",
+            "phrase": true,
+          },
+          {
+            "id": "stoveOrGasCylinder",
+            "phrase": true,
+          },
+          {
+            "id": "candleCigaretteOrIncense",
+            "phrase": true,
+          },
+          {
+            "id": "spreadingRubbishFire",
+            "phrase": true,
+          },
+          {
+            "id": "vehicleOrFuel",
+            "phrase": true,
+          },
+          {
+            "id": "unknown",
+            "phrase": true,
+          },
+        ],
+        "prefix": false,
+        "warning": false,
+      },
+      {
+        "multiple": false,
+        "options": [
+          {
+            "id": "homes",
+            "phrase": true,
+          },
+          {
+            "id": "shopsOrMarket",
+            "phrase": true,
+          },
+          {
+            "id": "factoriesOrWarehouses",
+            "phrase": true,
+          },
+          {
+            "id": "officesSchoolsOrDorms",
+            "phrase": true,
+          },
+          {
+            "id": "manyBuildingTypes",
+            "phrase": true,
+          },
+        ],
+        "prefix": false,
+        "warning": false,
+      },
+      {
+        "multiple": false,
+        "options": [
+          {
+            "id": "oneBuilding",
+            "phrase": true,
+          },
+          {
+            "danger": true,
+            "id": "spreadingToNeighbours",
+            "phrase": true,
+          },
+          {
+            "danger": true,
+            "id": "spreadingFastWithWind",
+            "phrase": true,
+          },
+          {
+            "id": "hardToReach",
+            "phrase": true,
+          },
+        ],
+        "prefix": false,
+        "warning": true,
+      },
+      {
+        "multiple": true,
+        "options": [
+          {
+            "danger": true,
+            "id": "gasOrExplosives",
+            "phrase": true,
+          },
+          {
+            "id": "thickBlackSmoke",
+            "phrase": true,
+          },
+          {
+            "danger": true,
+            "id": "peopleTrapped",
+            "phrase": true,
+          },
+          {
+            "danger": true,
+            "id": "liveCablesOrTransformer",
+            "phrase": true,
+          },
+          {
+            "danger": true,
+            "id": "buildingCollapsing",
+            "phrase": true,
+          },
+          {
+            "freeText": true,
+            "id": "other",
+            "phrase": false,
+          },
+          {
+            "id": "none",
+            "phrase": false,
+          },
+        ],
+        "prefix": true,
+        "warning": true,
+      },
+      {
+        "multiple": false,
+        "options": [
+          {
+            "danger": true,
+            "id": "stillGrowing",
+            "phrase": true,
+          },
+          {
+            "id": "burningUnderControl",
+            "phrase": true,
+          },
+          {
+            "id": "outStillSmoking",
+            "phrase": true,
+          },
+          {
+            "id": "fullyOut",
+            "phrase": true,
+          },
+        ],
+        "prefix": false,
+        "warning": true,
+      },
+      {
+        "multiple": true,
+        "options": [
+          {
+            "id": "furtherExplosions",
+            "phrase": true,
+          },
+          {
+            "id": "notEnoughWater",
+            "phrase": true,
+          },
+          {
+            "id": "hydrantsNotWorking",
+            "phrase": true,
+          },
+          {
+            "id": "powerCutOff",
+            "phrase": true,
+          },
+          {
+            "id": "residentsWithBuckets",
+            "phrase": true,
+          },
+          {
+            "freeText": true,
+            "id": "other",
+            "phrase": false,
+          },
+          {
+            "id": "none",
+            "phrase": false,
+          },
+        ],
+        "prefix": true,
+        "warning": false,
+      },
+    ],
+  ],
+  [
+    "other",
+    [],
+  ],
+]
+`;
+
+exports[`field spec ids > hazard types and subtypes 1`] = `
+[
+  [
+    "flood",
+    [
+      "riverOverflow",
+      "standingWater",
+      "flashFlood",
+      "tidalFlood",
+      "laharFlood",
+      "embankmentFailure",
+      "unknown",
+    ],
+  ],
+  [
+    "landslide",
+    [
+      "slide",
+      "rockfall",
+      "debrisFlow",
+      "slowCreep",
+      "unknown",
+    ],
+  ],
+  [
+    "tidalWaveAbrasion",
+    [
+      "tidalWave",
+      "coastalAbrasion",
+      "unknown",
+    ],
+  ],
+  [
+    "extremeWeather",
+    [
+      "whirlwind",
+      "strongWind",
+      "tropicalCyclone",
+      "hail",
+      "extremeTemperature",
+      "unknown",
+    ],
+  ],
+  [
+    "drought",
+    [
+      "meteorological",
+      "agricultural",
+      "hydrological",
+      "unknown",
+    ],
+  ],
+  [
+    "forestFire",
+    [
+      "forest",
+      "nonPeatLand",
+      "peatLand",
+      "unknown",
+    ],
+  ],
+  [
+    "earthquake",
+    [
+      "tectonic",
+      "volcanic",
+      "collapse",
+      "unknown",
+    ],
+  ],
+  [
+    "tsunami",
+    [
+      "seismic",
+      "nonSeismic",
+      "unknown",
+    ],
+  ],
+  [
+    "volcanicEruption",
+    [
+      "collapsePyroclasticFlow",
+      "eruptionPyroclasticFlow",
+      "ashfall",
+      "toxicGas",
+      "incandescentEjecta",
+      "unknown",
+    ],
+  ],
+  [
+    "buildingFire",
+    [
+      "building",
+      "settlement",
+      "unknown",
+    ],
+  ],
+  [
+    "other",
+    [
+      "otherEvent",
+      "unknown",
+    ],
+  ],
+]
+`;
