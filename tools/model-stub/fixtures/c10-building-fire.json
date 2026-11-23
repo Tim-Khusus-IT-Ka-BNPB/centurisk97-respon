@@ -1,0 +1,95 @@
+{
+  "id": "c10-building-fire",
+  "reporter": "B",
+  "role": "claimedOfficer",
+  "officer": {
+    "regency": "Kabupaten Contoh",
+    "position": "Staf"
+  },
+  "taps": {
+    "hazardType": "Kebakaran gedung dan permukiman",
+    "hazardSubtype": "Kebakaran permukiman"
+  },
+  "steps": [
+    {
+      "at": "hazardType",
+      "say": "rumah warga terbakar di gang sempit, dua rumah rusak berat, tidak ada yang meninggal, satu orang luka bakar dirawat di puskesmas",
+      "masked": "rumah warga terbakar di gang sempit, dua rumah rusak berat, tidak ada yang meninggal, satu orang luka bakar dirawat di puskesmas",
+      "expectModelCall": true,
+      "model": {
+        "topic": "disaster",
+        "reply": "sympathy",
+        "lifeAtRisk": false,
+        "complete": true,
+        "nextQuestion": "summary",
+        "state": "sent",
+        "send": true,
+        "hazardGuesses": [
+          {
+            "hazardType": "buildingFire",
+            "subtype": "settlement",
+            "confidence": 0.9
+          }
+        ],
+        "fields": [
+          {
+            "field": "housesHeavy",
+            "value": "2",
+            "quote": "dua rumah rusak berat"
+          },
+          {
+            "field": "dead",
+            "value": "0",
+            "quote": "tidak ada yang meninggal"
+          },
+          {
+            "field": "injured",
+            "value": "1",
+            "quote": "satu orang luka bakar"
+          },
+          {
+            "field": "injuredInpatient",
+            "value": "1",
+            "quote": "satu orang luka bakar dirawat di puskesmas"
+          }
+        ]
+      }
+    }
+  ],
+  "final": {
+    "housesHeavy": {
+      "state": "value",
+      "value": 2,
+      "origin": "quote",
+      "quote": "dua rumah rusak berat"
+    },
+    "dead": {
+      "state": "none",
+      "value": 0,
+      "origin": "quote",
+      "quote": "tidak ada yang meninggal"
+    },
+    "injured": {
+      "state": "value",
+      "value": 1,
+      "origin": "quote",
+      "quote": "satu orang luka bakar"
+    },
+    "injuredInpatient": {
+      "state": "value",
+      "value": 1,
+      "origin": "quote",
+      "quote": "satu orang luka bakar dirawat di puskesmas"
+    }
+  },
+  "dropped": [
+    {
+      "field": "complete, nextQuestion, state, send"
+    }
+  ],
+  "summaryShows": ["Pelapor: Uji Dua (Petugas BPBD)"],
+  "stored": {
+    "role": "claimedOfficer",
+    "sent": false
+  }
+}

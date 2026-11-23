@@ -1,0 +1,99 @@
+{
+  "id": "c07-earthquake",
+  "reporter": "C",
+  "role": "citizen",
+  "taps": {
+    "hazardType": "Gempa bumi",
+    "hazardSubtype": "Gempa tektonik"
+  },
+  "steps": [
+    {
+      "at": "hazardType",
+      "say": "gempa kuat sekali, tiga rumah rusak berat dan sepuluh rumah rusak ringan, satu masjid retak",
+      "masked": "gempa kuat sekali, tiga rumah rusak berat dan sepuluh rumah rusak ringan, satu masjid retak",
+      "expectModelCall": true,
+      "model": {
+        "topic": "disaster",
+        "reply": "sympathy",
+        "lifeAtRisk": false,
+        "hazardGuesses": [
+          {
+            "hazardType": "earthquake",
+            "subtype": "tectonic",
+            "confidence": 0.95
+          }
+        ],
+        "fields": [
+          {
+            "field": "housesHeavy",
+            "value": "3",
+            "quote": "tiga rumah rusak berat"
+          },
+          {
+            "field": "housesLight",
+            "value": "10",
+            "quote": "sepuluh rumah rusak ringan"
+          },
+          {
+            "field": "worshipPlaces",
+            "value": "1",
+            "quote": "satu masjid retak"
+          },
+          {
+            "field": "affectedPeople",
+            "value": "99999999",
+            "quote": "gempa kuat sekali"
+          }
+        ]
+      }
+    },
+    {
+      "at": "textQuestion:worshipPlaceNames",
+      "tap": "Simpan jawaban",
+      "values": {
+        "worshipPlaceNames": ""
+      }
+    },
+    {
+      "at": "textQuestion:worshipPlaceNames",
+      "tap": "Simpan jawaban",
+      "values": {
+        "worshipPlaceNames": ""
+      }
+    }
+  ],
+  "final": {
+    "housesHeavy": {
+      "state": "value",
+      "value": 3,
+      "origin": "quote",
+      "quote": "tiga rumah rusak berat"
+    },
+    "housesLight": {
+      "state": "value",
+      "value": 10,
+      "origin": "quote",
+      "quote": "sepuluh rumah rusak ringan"
+    },
+    "worshipPlaces": {
+      "state": "value",
+      "value": 1,
+      "origin": "quote",
+      "quote": "satu masjid retak"
+    },
+    "worshipPlaceNames": {
+      "state": "notYetKnown"
+    },
+    "affectedPeople": {
+      "state": "confirmedUnknown",
+      "origin": "tappedOption"
+    }
+  },
+  "dropped": [
+    {
+      "field": "affectedPeople",
+      "offered": 99999999
+    }
+  ],
+  "summaryShows": ["belum didata"]
+}

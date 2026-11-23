@@ -1,0 +1,71 @@
+{
+  "id": "c01-flood-river",
+  "reporter": "A",
+  "role": "citizen",
+  "taps": {
+    "hazardType": "Banjir",
+    "hazardSubtype": "Banjir luapan sungai"
+  },
+  "steps": [
+    {
+      "at": "hazardType",
+      "say": "tiga rumah rusak berat, tidak ada korban jiwa",
+      "masked": "tiga rumah rusak berat, tidak ada korban jiwa",
+      "expectModelCall": true,
+      "model": {
+        "topic": "disaster",
+        "reply": "sympathy",
+        "lifeAtRisk": false,
+        "hazardGuesses": [
+          {
+            "hazardType": "flood",
+            "subtype": "riverOverflow",
+            "confidence": 0.8
+          }
+        ],
+        "fields": [
+          {
+            "field": "housesHeavy",
+            "value": "3",
+            "quote": "tiga rumah rusak berat"
+          },
+          {
+            "field": "dead",
+            "value": "0",
+            "quote": "tidak ada korban jiwa"
+          },
+          {
+            "field": "injured",
+            "value": "5",
+            "quote": "tiga rumah rusak berat"
+          }
+        ]
+      }
+    }
+  ],
+  "final": {
+    "housesHeavy": {
+      "state": "value",
+      "value": 3,
+      "origin": "quote",
+      "quote": "tiga rumah rusak berat"
+    },
+    "dead": {
+      "state": "none",
+      "value": 0,
+      "origin": "quote",
+      "quote": "tidak ada korban jiwa"
+    },
+    "injured": {
+      "state": "confirmedUnknown",
+      "origin": "tappedOption"
+    }
+  },
+  "dropped": [
+    {
+      "field": "injured",
+      "offered": 5
+    }
+  ],
+  "summaryShows": ["Rusak berat: 3 rumah", "Meninggal: tidak ada"]
+}

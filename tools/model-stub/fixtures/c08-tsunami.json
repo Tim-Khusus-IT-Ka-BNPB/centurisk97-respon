@@ -1,0 +1,65 @@
+{
+  "id": "c08-tsunami",
+  "reporter": "D",
+  "role": "citizen",
+  "taps": {
+    "hazardType": "Tsunami",
+    "hazardSubtype": "Tsunami seismik"
+  },
+  "steps": [
+    {
+      "at": "hazardType",
+      "say": "air laut naik tinggi setelah gempa, ada orang terjebak di atap, empat puluh rumah terendam",
+      "masked": "air laut naik tinggi setelah gempa, ada orang terjebak di atap, empat puluh rumah terendam",
+      "expectModelCall": true,
+      "model": {
+        "topic": "disaster",
+        "reply": "calm",
+        "lifeAtRisk": true,
+        "hazardGuesses": [
+          {
+            "hazardType": "tsunami",
+            "subtype": "seismic",
+            "confidence": 0.8
+          }
+        ],
+        "fields": [
+          {
+            "field": "housesFlooded",
+            "value": "40",
+            "quote": "empat puluh rumah terendam"
+          },
+          {
+            "field": "injured",
+            "value": "1",
+            "quote": "ada orang terjebak"
+          }
+        ]
+      }
+    }
+  ],
+  "final": {
+    "housesFlooded": {
+      "state": "value",
+      "value": 40,
+      "origin": "quote",
+      "quote": "empat puluh rumah terendam"
+    },
+    "injured": {
+      "state": "confirmedUnknown",
+      "origin": "tappedOption"
+    }
+  },
+  "dropped": [
+    {
+      "field": "injured",
+      "offered": 1
+    }
+  ],
+  "notices": [
+    {
+      "after": 1,
+      "kind": "lifeLine"
+    }
+  ]
+}

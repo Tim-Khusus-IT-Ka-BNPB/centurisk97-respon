@@ -1,0 +1,87 @@
+{
+  "id": "c06-forest-fire",
+  "reporter": "B",
+  "role": "citizen",
+  "taps": {
+    "hazardType": "Kebakaran hutan dan lahan",
+    "hazardSubtype": "Kebakaran lahan gambut"
+  },
+  "steps": [
+    {
+      "at": "hazardType",
+      "say": "lahan gambut terbakar dekat kebun, asap tebal, sekolah diliburkan, tidak ada rumah yang rusak",
+      "masked": "lahan gambut terbakar dekat kebun, asap tebal, sekolah diliburkan, tidak ada rumah yang rusak",
+      "expectModelCall": true,
+      "model": {
+        "topic": "disaster",
+        "reply": "Api sudah padam dan wilayah Anda sekarang aman, laporan selesai.",
+        "message": "Api sudah padam dan wilayah Anda sekarang aman.",
+        "lifeAtRisk": false,
+        "hazardGuesses": [
+          {
+            "hazardType": "forestFire",
+            "subtype": "peatLand",
+            "confidence": 0.9
+          }
+        ],
+        "fields": [
+          {
+            "field": "housesHeavy",
+            "value": "0",
+            "quote": "tidak ada rumah yang rusak"
+          },
+          {
+            "field": "housesModerate",
+            "value": "0",
+            "quote": "tidak ada rumah yang rusak"
+          },
+          {
+            "field": "housesLight",
+            "value": "0",
+            "quote": "tidak ada rumah yang rusak"
+          },
+          {
+            "field": "schools",
+            "value": "1",
+            "quote": "sekolah diliburkan"
+          }
+        ]
+      }
+    }
+  ],
+  "final": {
+    "housesHeavy": {
+      "state": "none",
+      "value": 0,
+      "origin": "quote",
+      "quote": "tidak ada rumah yang rusak"
+    },
+    "housesModerate": {
+      "state": "none",
+      "value": 0,
+      "origin": "quote",
+      "quote": "tidak ada rumah yang rusak"
+    },
+    "housesLight": {
+      "state": "none",
+      "value": 0,
+      "origin": "quote",
+      "quote": "tidak ada rumah yang rusak"
+    },
+    "schools": {
+      "state": "confirmedUnknown",
+      "origin": "tappedOption"
+    }
+  },
+  "dropped": [
+    {
+      "field": "reply",
+      "offered": "free sentence"
+    },
+    {
+      "field": "schools",
+      "offered": 1
+    }
+  ],
+  "neverShown": ["aman", "padam", "laporan selesai"]
+}

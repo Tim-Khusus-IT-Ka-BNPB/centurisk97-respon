@@ -1,0 +1,74 @@
+{
+  "id": "c04-extreme-weather",
+  "reporter": "D",
+  "role": "citizen",
+  "taps": {
+    "hazardType": "Cuaca ekstrem",
+    "hazardSubtype": "Puting beliung"
+  },
+  "steps": [
+    {
+      "at": "hazardType",
+      "say": "angin puting beliung merobohkan pohon, empat rumah rusak sedang, warga luka dua orang",
+      "masked": "angin puting beliung merobohkan pohon, empat rumah rusak sedang, warga luka dua orang",
+      "expectModelCall": true,
+      "model": {
+        "topic": "disaster",
+        "reply": "calm",
+        "lifeAtRisk": false,
+        "hazardGuesses": [
+          {
+            "hazardType": "extremeWeather",
+            "subtype": "whirlwind",
+            "confidence": 0.95
+          }
+        ],
+        "fields": [
+          {
+            "field": "housesModerate",
+            "value": "4",
+            "quote": "empat rumah rusak sedang"
+          },
+          {
+            "field": "injured",
+            "value": "2",
+            "quote": "warga luka dua orang"
+          },
+          {
+            "field": "dead",
+            "value": "0",
+            "quote": "merobohkan pohon"
+          }
+        ]
+      }
+    }
+  ],
+  "final": {
+    "housesModerate": {
+      "state": "value",
+      "value": 4,
+      "origin": "quote",
+      "quote": "empat rumah rusak sedang"
+    },
+    "injured": {
+      "state": "value",
+      "value": 2,
+      "origin": "quote",
+      "quote": "warga luka dua orang"
+    },
+    "injuredInpatient": {
+      "state": "confirmedUnknown",
+      "origin": "tappedOption"
+    },
+    "dead": {
+      "state": "confirmedUnknown",
+      "origin": "tappedOption"
+    }
+  },
+  "dropped": [
+    {
+      "field": "dead",
+      "offered": 0
+    }
+  ]
+}

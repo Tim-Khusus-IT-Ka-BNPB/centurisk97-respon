@@ -1,0 +1,98 @@
+{
+  "id": "c03-tidal-wave-abrasion",
+  "reporter": "C",
+  "role": "citizen",
+  "taps": {
+    "hazardType": "Gelombang pasang dan abrasi",
+    "hazardSubtype": "Abrasi pantai",
+    "eventTime": "Sudah lebih dari 30 hari"
+  },
+  "steps": [
+    {
+      "at": "hazardType",
+      "say": "gelombang tinggi mengikis pantai, lima rumah rusak ringan, dua belas keluarga mengungsi ke balai desa",
+      "masked": "gelombang tinggi mengikis pantai, lima rumah rusak ringan, dua belas keluarga mengungsi ke balai desa",
+      "expectModelCall": true,
+      "model": {
+        "topic": "disaster",
+        "reply": "thanks",
+        "lifeAtRisk": false,
+        "hazardGuesses": [
+          {
+            "hazardType": "tidalWaveAbrasion",
+            "subtype": "coastalAbrasion",
+            "confidence": 0.7
+          }
+        ],
+        "fields": [
+          {
+            "field": "housesLight",
+            "value": "5",
+            "quote": "lima rumah rusak ringan"
+          },
+          {
+            "field": "displacedFamilies",
+            "value": "12",
+            "quote": "dua belas keluarga mengungsi"
+          },
+          {
+            "field": "shelters",
+            "value": "balai desa",
+            "quote": "mengungsi ke balai desa"
+          },
+          {
+            "field": "displacedFamilies",
+            "value": "12.0",
+            "quote": "dua belas keluarga mengungsi"
+          }
+        ]
+      }
+    },
+    {
+      "at": "numberForm:displacement",
+      "tap": "Simpan jawaban",
+      "values": {
+        "displacedPeople": "40"
+      }
+    }
+  ],
+  "final": {
+    "eventTime": {
+      "state": "value",
+      "value": {
+        "kind": "olderThan30Days"
+      },
+      "origin": "tappedOption"
+    },
+    "housesLight": {
+      "state": "value",
+      "value": 5,
+      "origin": "quote",
+      "quote": "lima rumah rusak ringan"
+    },
+    "displacedFamilies": {
+      "state": "value",
+      "value": 12,
+      "origin": "quote",
+      "quote": "dua belas keluarga mengungsi"
+    },
+    "displacedPeople": {
+      "state": "value",
+      "value": 40,
+      "origin": "boxEntry"
+    },
+    "shelters": {
+      "state": "value",
+      "value": "balai desa",
+      "origin": "quote",
+      "quote": "mengungsi ke balai desa"
+    }
+  },
+  "dropped": [
+    {
+      "field": "displacedFamilies",
+      "offered": "12.0"
+    }
+  ],
+  "summaryShows": ["Sudah lebih dari 30 hari"]
+}

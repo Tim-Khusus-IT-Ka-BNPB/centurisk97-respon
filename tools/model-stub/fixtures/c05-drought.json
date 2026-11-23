@@ -1,0 +1,64 @@
+{
+  "id": "c05-drought",
+  "reporter": "A",
+  "role": "citizen",
+  "taps": {
+    "hazardType": "Kekeringan",
+    "hazardSubtype": "Kekeringan pertanian",
+    "eventTime": "Sudah lebih dari 30 hari"
+  },
+  "steps": [
+    {
+      "at": "hazardType",
+      "say": "sudah tiga bulan tidak hujan, sumur warga kering, sekitar dua ratus keluarga terdampak",
+      "masked": "sudah tiga bulan tidak hujan, sumur warga kering, sekitar dua ratus keluarga terdampak",
+      "expectModelCall": true,
+      "model": {
+        "topic": "disaster",
+        "reply": "thanks",
+        "lifeAtRisk": false,
+        "hazardGuesses": [
+          {
+            "hazardType": "drought",
+            "subtype": "agricultural",
+            "confidence": 0.9
+          }
+        ],
+        "fields": [
+          {
+            "field": "affectedFamilies",
+            "value": "200",
+            "quote": "dua ratus keluarga terdampak"
+          },
+          {
+            "field": "housesHeavy",
+            "value": "3",
+            "quote": "tiga bulan"
+          }
+        ]
+      }
+    }
+  ],
+  "final": {
+    "eventTime": {
+      "state": "value",
+      "value": {
+        "kind": "olderThan30Days"
+      },
+      "origin": "tappedOption"
+    },
+    "affectedFamilies": {
+      "state": "value",
+      "value": 200,
+      "origin": "quote",
+      "quote": "dua ratus keluarga terdampak"
+    }
+  },
+  "absent": ["housesHeavy", "housesModerate", "housesLight", "housesFlooded"],
+  "dropped": [
+    {
+      "field": "housesHeavy",
+      "offered": 3
+    }
+  ]
+}

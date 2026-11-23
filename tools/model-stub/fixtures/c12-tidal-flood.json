@@ -1,0 +1,62 @@
+{
+  "id": "c12-tidal-flood",
+  "reporter": "D",
+  "role": "citizen",
+  "taps": {
+    "hazardType": "Banjir",
+    "hazardSubtype": "Banjir rob",
+    "waterDepth": "Selutut"
+  },
+  "steps": [
+    {
+      "at": "hazardType",
+      "say": "rob masuk lagi pagi ini, air laut sampai selutut di jalan, tiga puluh rumah terendam, tidak ada yang mengungsi",
+      "masked": "rob masuk lagi pagi ini, air laut sampai selutut di jalan, tiga puluh rumah terendam, tidak ada yang mengungsi",
+      "expectModelCall": true,
+      "model": {
+        "topic": "disaster",
+        "reply": "thanks",
+        "lifeAtRisk": false,
+        "hazardGuesses": [
+          {
+            "hazardType": "flood",
+            "subtype": "tidalFlood",
+            "confidence": 0.9
+          }
+        ],
+        "fields": [
+          {
+            "field": "housesFlooded",
+            "value": "30",
+            "quote": "tiga puluh rumah terendam"
+          },
+          {
+            "field": "displacedPeople",
+            "value": "0",
+            "quote": "tidak ada yang mengungsi"
+          }
+        ]
+      }
+    }
+  ],
+  "final": {
+    "housesFlooded": {
+      "state": "value",
+      "value": 30,
+      "origin": "quote",
+      "quote": "tiga puluh rumah terendam"
+    },
+    "displacedPeople": {
+      "state": "none",
+      "value": 0,
+      "origin": "quote",
+      "quote": "tidak ada yang mengungsi"
+    },
+    "waterDepth": {
+      "state": "value",
+      "value": "knee",
+      "origin": "tappedOption"
+    }
+  },
+  "absent": ["shelters"]
+}

@@ -1,0 +1,56 @@
+{
+  "id": "c09-volcanic-eruption",
+  "reporter": "A",
+  "role": "citizen",
+  "taps": {
+    "hazardType": "Erupsi gunung api",
+    "hazardSubtype": "Hujan abu"
+  },
+  "steps": [
+    {
+      "at": "hazardType",
+      "say": "saya Uji Satu melihat abu turun tebal sejak pagi, sekitar seratus lima puluh warga mengungsi ke gedung sekolah",
+      "masked": "saya [nama pelapor] melihat abu turun tebal sejak pagi, sekitar seratus lima puluh warga mengungsi ke gedung sekolah",
+      "expectModelCall": true,
+      "model": {
+        "topic": "disaster",
+        "reply": "thanks",
+        "lifeAtRisk": false,
+        "hazardGuesses": [
+          {
+            "hazardType": "volcanicEruption",
+            "subtype": "ashfall",
+            "confidence": 0.9
+          }
+        ],
+        "fields": [
+          {
+            "field": "displacedPeople",
+            "value": "150",
+            "quote": "seratus lima puluh warga mengungsi"
+          },
+          {
+            "field": "shelters",
+            "value": "gedung sekolah",
+            "quote": "mengungsi ke gedung sekolah"
+          }
+        ]
+      }
+    }
+  ],
+  "final": {
+    "displacedPeople": {
+      "state": "value",
+      "value": 150,
+      "origin": "quote",
+      "quote": "seratus lima puluh warga mengungsi"
+    },
+    "shelters": {
+      "state": "value",
+      "value": "gedung sekolah",
+      "origin": "quote",
+      "quote": "mengungsi ke gedung sekolah"
+    }
+  },
+  "neverInModelInput": ["Uji Satu", "Uji", "Satu"]
+}

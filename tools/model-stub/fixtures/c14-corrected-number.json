@@ -1,0 +1,65 @@
+{
+  "id": "c14-corrected-number",
+  "reporter": "B",
+  "role": "citizen",
+  "taps": {
+    "hazardType": "Banjir",
+    "hazardSubtype": "Banjir genangan"
+  },
+  "steps": [
+    {
+      "at": "hazardType",
+      "say": "genangan di perumahan, lima rumah rusak ringan. nomor saya 0800 0000 0002, NIK 3201010101010001, surel uji@contoh.test",
+      "masked": "genangan di perumahan, lima rumah rusak ringan. nomor saya [nomor HP], NIK [NIK], surel [email]",
+      "expectModelCall": true,
+      "model": {
+        "topic": "disaster",
+        "reply": "thanks",
+        "lifeAtRisk": false,
+        "hazardGuesses": [
+          {
+            "hazardType": "flood",
+            "subtype": "standingWater",
+            "confidence": 0.8
+          }
+        ],
+        "fields": [
+          {
+            "field": "housesLight",
+            "value": "5",
+            "quote": "lima rumah rusak ringan"
+          }
+        ]
+      }
+    },
+    {
+      "at": "summary",
+      "say": "maaf salah, yang rusak ringan delapan rumah",
+      "masked": "maaf salah, yang rusak ringan delapan rumah",
+      "expectModelCall": true,
+      "model": {
+        "topic": "disaster",
+        "reply": "none",
+        "lifeAtRisk": false,
+        "hazardGuesses": [],
+        "fields": [
+          {
+            "field": "housesLight",
+            "value": "8",
+            "quote": "rusak ringan delapan rumah"
+          }
+        ]
+      }
+    }
+  ],
+  "final": {
+    "housesLight": {
+      "state": "value",
+      "value": 8,
+      "origin": "quote",
+      "quote": "rusak ringan delapan rumah"
+    }
+  },
+  "neverInModelInput": ["0800 0000 0002", "3201010101010001", "uji@contoh.test"],
+  "summaryShows": ["Rusak ringan: 8 rumah"]
+}

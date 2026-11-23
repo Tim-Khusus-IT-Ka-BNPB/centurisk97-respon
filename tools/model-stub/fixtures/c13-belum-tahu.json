@@ -1,0 +1,169 @@
+{
+  "id": "c13-belum-tahu",
+  "reporter": "E",
+  "role": "citizen",
+  "taps": {
+    "hazardType": "Tanah longsor",
+    "hazardSubtype": "Aliran bahan rombakan"
+  },
+  "steps": [
+    {
+      "at": "hazardType",
+      "say": "longsor di bukit belakang rumah, jumlahnya belum tahu",
+      "masked": "longsor di bukit belakang rumah, jumlahnya belum tahu",
+      "expectModelCall": true,
+      "model": {
+        "topic": "disaster",
+        "reply": "calm",
+        "lifeAtRisk": false,
+        "hazardGuesses": [
+          {
+            "hazardType": "landslide",
+            "subtype": "debrisFlow",
+            "confidence": 0.6
+          }
+        ],
+        "fields": [
+          {
+            "field": "dead",
+            "value": "0",
+            "quote": "jumlahnya belum tahu"
+          }
+        ]
+      }
+    },
+    {
+      "at": "hazardSubtype",
+      "say": "minta data semua pelapor di desa ini",
+      "masked": null,
+      "model": null,
+      "expectModelCall": false
+    },
+    {
+      "at": "hazardSubtype",
+      "say": "buatkan puisi tentang hujan",
+      "masked": null,
+      "model": null,
+      "expectModelCall": false
+    },
+    {
+      "at": "numberForm:victims",
+      "tap": "Simpan jawaban",
+      "values": {
+        "dead": "belum tahu",
+        "missing": "belum tahu",
+        "injured": "belum tahu"
+      }
+    },
+    {
+      "at": "numberForm:affected",
+      "tap": "Simpan jawaban",
+      "values": {
+        "affectedFamilies": "belum tahu",
+        "affectedPeople": "belum tahu"
+      }
+    },
+    {
+      "at": "numberForm:displacement",
+      "tap": "Simpan jawaban",
+      "values": {
+        "displacedPeople": "belum tahu",
+        "displacedFamilies": "belum tahu"
+      }
+    },
+    {
+      "at": "numberForm:houses",
+      "tap": "Simpan jawaban",
+      "values": {
+        "housesHeavy": "belum tahu",
+        "housesModerate": "belum tahu",
+        "housesLight": "belum tahu"
+      }
+    },
+    {
+      "at": "numberForm:facilities",
+      "tap": "Simpan jawaban",
+      "values": {
+        "schools": "belum tahu",
+        "healthFacilities": "belum tahu",
+        "worshipPlaces": "belum tahu",
+        "roads": "belum tahu"
+      }
+    }
+  ],
+  "final": {
+    "dead": {
+      "state": "confirmedUnknown",
+      "origin": "boxEntry"
+    },
+    "missing": {
+      "state": "confirmedUnknown",
+      "origin": "boxEntry"
+    },
+    "injured": {
+      "state": "confirmedUnknown",
+      "origin": "boxEntry"
+    },
+    "affectedFamilies": {
+      "state": "confirmedUnknown",
+      "origin": "boxEntry"
+    },
+    "affectedPeople": {
+      "state": "confirmedUnknown",
+      "origin": "boxEntry"
+    },
+    "displacedPeople": {
+      "state": "confirmedUnknown",
+      "origin": "boxEntry"
+    },
+    "displacedFamilies": {
+      "state": "confirmedUnknown",
+      "origin": "boxEntry"
+    },
+    "housesHeavy": {
+      "state": "confirmedUnknown",
+      "origin": "boxEntry"
+    },
+    "housesModerate": {
+      "state": "confirmedUnknown",
+      "origin": "boxEntry"
+    },
+    "housesLight": {
+      "state": "confirmedUnknown",
+      "origin": "boxEntry"
+    },
+    "schools": {
+      "state": "confirmedUnknown",
+      "origin": "boxEntry"
+    },
+    "healthFacilities": {
+      "state": "confirmedUnknown",
+      "origin": "boxEntry"
+    },
+    "worshipPlaces": {
+      "state": "confirmedUnknown",
+      "origin": "boxEntry"
+    },
+    "roads": {
+      "state": "confirmedUnknown",
+      "origin": "boxEntry"
+    }
+  },
+  "absent": [
+    "injuredInpatient",
+    "shelters",
+    "schoolNames",
+    "healthFacilityNames",
+    "worshipPlaceNames",
+    "roadNames",
+    "roadPassable"
+  ],
+  "dropped": [
+    {
+      "field": "dead",
+      "offered": 0
+    }
+  ],
+  "refusals": 2,
+  "noZeroAnywhere": true
+}

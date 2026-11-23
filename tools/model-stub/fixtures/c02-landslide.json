@@ -1,0 +1,70 @@
+{
+  "id": "c02-landslide",
+  "reporter": "B",
+  "role": "citizen",
+  "taps": {
+    "hazardType": "Tanah longsor",
+    "hazardSubtype": "Longsoran"
+  },
+  "steps": [
+    {
+      "at": "hazardType",
+      "say": "Tanah longsor menimbun dua rumah di kampung kami, satu orang hilang",
+      "masked": "Tanah longsor menimbun dua rumah di kampung kami, satu orang hilang",
+      "expectModelCall": true,
+      "model": {
+        "topic": "disaster",
+        "reply": "sympathy",
+        "lifeAtRisk": false,
+        "hazardGuesses": [
+          {
+            "hazardType": "landslide",
+            "subtype": "slide",
+            "confidence": 0.9
+          }
+        ],
+        "fields": [
+          {
+            "field": "housesHeavy",
+            "value": "2",
+            "quote": "menimbun dua rumah"
+          },
+          {
+            "field": "missing",
+            "value": "1",
+            "quote": "satu orang hilang"
+          },
+          {
+            "field": "dead",
+            "value": "2",
+            "quote": "dua orang meninggal"
+          }
+        ]
+      }
+    }
+  ],
+  "final": {
+    "housesHeavy": {
+      "state": "value",
+      "value": 2,
+      "origin": "quote",
+      "quote": "menimbun dua rumah"
+    },
+    "missing": {
+      "state": "value",
+      "value": 1,
+      "origin": "quote",
+      "quote": "satu orang hilang"
+    },
+    "dead": {
+      "state": "confirmedUnknown",
+      "origin": "tappedOption"
+    }
+  },
+  "dropped": [
+    {
+      "field": "dead",
+      "offered": 2
+    }
+  ]
+}

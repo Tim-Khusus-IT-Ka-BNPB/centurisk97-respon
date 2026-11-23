@@ -1,0 +1,82 @@
+{
+  "id": "c11-flash-flood",
+  "reporter": "C",
+  "role": "citizen",
+  "taps": {
+    "hazardType": "Banjir",
+    "hazardSubtype": "Banjir bandang"
+  },
+  "steps": [
+    {
+      "at": "hazardType",
+      "say": "banjir bandang datang tiba-tiba dari hulu, lumpur dan batang kayu, tujuh rumah hanyut, dua orang belum ditemukan",
+      "masked": "banjir bandang datang tiba-tiba dari hulu, lumpur dan batang kayu, tujuh rumah hanyut, dua orang belum ditemukan",
+      "expectModelCall": true,
+      "model": {
+        "topic": "disaster",
+        "reply": "sympathy",
+        "lifeAtRisk": false,
+        "hazardGuesses": [
+          {
+            "hazardType": "rahasia",
+            "subtype": "apa saja",
+            "confidence": 1.0
+          },
+          {
+            "hazardType": "other",
+            "subtype": "otherEvent",
+            "confidence": 0.9
+          },
+          {
+            "hazardType": "flood",
+            "subtype": "flashFlood",
+            "confidence": 0.8
+          }
+        ],
+        "fields": [
+          {
+            "field": "housesHeavy",
+            "value": "7",
+            "quote": "tujuh rumah hanyut"
+          },
+          {
+            "field": "missing",
+            "value": "2",
+            "quote": "dua orang belum ditemukan"
+          },
+          {
+            "field": "shelters",
+            "value": "Masjid Agung Raya",
+            "quote": "dari hulu"
+          }
+        ]
+      }
+    }
+  ],
+  "final": {
+    "housesHeavy": {
+      "state": "value",
+      "value": 7,
+      "origin": "quote",
+      "quote": "tujuh rumah hanyut"
+    },
+    "missing": {
+      "state": "value",
+      "value": 2,
+      "origin": "quote",
+      "quote": "dua orang belum ditemukan"
+    }
+  },
+  "dropped": [
+    {
+      "field": "hazardGuesses",
+      "offered": "rahasia, other"
+    },
+    {
+      "field": "shelters",
+      "offered": "Masjid Agung Raya"
+    }
+  ],
+  "neverShown": ["rahasia", "Masjid Agung Raya"],
+  "hazardChoicesShown": 10
+}
