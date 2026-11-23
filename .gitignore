@@ -1,0 +1,40 @@
+# Planning and task files of the engineering lifecycle, local only
+/workflow/
+
+# Agent folders
+agents/
+.agent/
+.agents/
+.claude/
+.codex/
+.cursor/
+.gemini/
+.kiro/
+.opencode/
+.windsurf/
+
+# Secrets and local settings
+.env
+.env.*
+!.env.example
+.dev.vars
+
+# Dependencies, build output and generated types
+node_modules/
+build/
+.react-router/
+.wrangler/
+worker-configuration.d.ts
+
+# Test and report output
+coverage/
+reports/
+test-results/
+playwright-report/
+.stryker-tmp/
+
+# Model stub call log
+tools/model-stub/calls.log
+
+# OS
+.DS_Store

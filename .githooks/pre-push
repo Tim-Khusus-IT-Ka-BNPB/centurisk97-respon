@@ -1,0 +1,4 @@
+#!/bin/sh
+# Blocks a push when any tracked or new file holds a credential.
+set -eu
+pnpm -s scan

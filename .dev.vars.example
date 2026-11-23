@@ -1,0 +1,24 @@
+# Settings the Worker reads locally. Copy to .dev.vars, which git ignores.
+# Every value here is a safe local sample. Staging and production values are never written in a file.
+
+APP_ENV=local
+APP_ORIGIN=http://localhost:5173
+
+# 32 bytes or more. Must equal KEY_HMAC_SECRET in .env.
+KEY_HMAC_SECRET=local-sample-hmac-key-at-least-32-bytes-long
+
+IDENTITY_ADAPTER=seeded
+
+# off, or recorded (the local model stub). A live key is refused locally.
+MODEL_MODE=off
+MODEL_BASE_URL=http://localhost:8790
+MODEL_API_KEY=
+MODEL_NAME=recorded
+
+# Local and test only.
+CLOCK_FIXED=
+FAULT_SEND=
+FAULT_PLACE=
+ADDRESS_FALLBACK=
+
+LOG_LEVEL=info

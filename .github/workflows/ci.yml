@@ -1,0 +1,54 @@
+name: ci
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  verify:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    env:
+      CI: "true"
+      APP_ENV: test
+      KEY_HMAC_SECRET: ci-only-sample-hmac-key-at-least-32-bytes
+      MODEL_STUB_PORT: "8790"
+      MODEL_STUB_DELAY_MS: "0"
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: pnpm/action-setup@73e46992e05b19abd31f2f3c20e0e7370d762115 # v6.1.1
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+      - name: Install
+        run: pnpm install --frozen-lockfile
+      - name: Secret scan
+        run: pnpm scan
+      - name: Worker settings for the run
+        run: cp .dev.vars.example .dev.vars
+      - name: Types, lint, unused code
+        run: pnpm check
+      - name: Migrate and seed a local D1 database with wrangler
+        run: |
+          pnpm db:migrate
+          pnpm db:seed
+      - name: Unit and integration tests with coverage
+        run: pnpm test
+      - name: Mutation tests on the domain
+        run: pnpm test:mutation
+      - name: Browsers
+        run: pnpm exec playwright install --with-deps chromium webkit
+      - name: End-to-end tests
+        run: pnpm test:e2e
+      - name: Bundle budget
+        run: pnpm bundle:check

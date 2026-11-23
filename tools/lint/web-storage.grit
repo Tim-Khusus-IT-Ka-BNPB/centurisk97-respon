@@ -1,0 +1,10 @@
+language js
+
+or {
+  `localStorage` as $use,
+  `sessionStorage` as $use,
+  `indexedDB` as $use,
+  `$target.cookie = $value` as $use
+} where {
+  register_diagnostic(span=$use, message="Pages keep nothing in browser storage: no localStorage, sessionStorage, IndexedDB or cookie writes.")
+}

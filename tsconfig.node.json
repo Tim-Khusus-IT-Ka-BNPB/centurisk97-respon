@@ -1,0 +1,30 @@
+{
+  "extends": "./tsconfig.json",
+  "include": [
+    "scripts/**/*",
+    "tools/**/*",
+    "e2e/**/*",
+    "db/**/*",
+    "src/platform/settings.ts",
+    "src/platform/database.ts",
+    "src/platform/keys.ts",
+    "src/domain/placeText.ts",
+    "src/domain/placeFile.ts",
+    "src/domain/modelMessage.ts",
+    "vite.config.ts",
+    "vitest.config.ts",
+    "react-router.config.ts",
+    "playwright.config.ts"
+  ],
+  "compilerOptions": {
+    "composite": true,
+    "tsBuildInfoFile": "./node_modules/.cache/tsbuildinfo/node.json",
+    "lib": ["ES2024", "DOM"],
+    "types": ["node"],
+    "target": "ES2024",
+    "module": "NodeNext",
+    "moduleResolution": "NodeNext",
+    "allowImportingTsExtensions": true,
+    "erasableSyntaxOnly": true
+  }
+}

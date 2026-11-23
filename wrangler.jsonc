@@ -1,0 +1,18 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "lapor-bencana",
+  "main": "src/platform/cloudflare/worker.ts",
+  "compatibility_date": "2026-11-15",
+  "observability": { "enabled": true },
+  "triggers": { "crons": ["*/15 * * * *"] },
+  "d1_databases": [
+    {
+      "binding": "DB",
+      // This product's own database, separate from upstream's. Local runs keep it under
+      // .wrangler/state; staging gets its own id when the owner creates it.
+      "database_name": "lapor-bencana",
+      "database_id": "00000000-0000-0000-0000-000000000000",
+      "migrations_dir": "db/migrations"
+    }
+  ]
+}
