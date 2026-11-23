@@ -1,0 +1,21 @@
+{
+  "error.auth.signInFirst": "Masuk dulu dengan nomor WhatsApp Anda.",
+  "error.auth.signInFirst.hint": "Buka laporan dari perangkat yang Anda pakai untuk melapor, atau buat laporan baru.",
+  "error.draft.notFound": "Laporan tidak ditemukan. Laporan ini tidak ada atau tidak bisa dibuka dari perangkat ini. Buat laporan baru dari halaman awal.",
+  "error.draft.notFound.title": "Laporan tidak ditemukan",
+  "error.draft.notFound.body": "Laporan ini tidak ada atau tidak bisa dibuka dari perangkat ini. Buat laporan baru dari halaman awal.",
+  "error.draft.changed": "Laporan ini sudah berubah di tab atau perangkat lain, jadi jawaban Anda belum disimpan. Pertanyaan terbaru ada di bawah. Jawab lagi dari sana.",
+  "error.draft.openExists": "Ada laporan yang belum selesai di perangkat ini. Lanjutkan laporan itu, atau hapus dan buat laporan baru.",
+  "error.draft.expired": "Laporan ini sudah kedaluwarsa dan isinya dihapus. Buat laporan baru bila kejadian masih perlu dilaporkan.",
+  "error.draft.nothingToUndo": "Belum ada jawaban yang bisa dibatalkan.",
+  "error.draft.backLimit": "Sudah 12 langkah dibatalkan, batas paling banyak. Jawaban yang lebih lama bisa diubah lewat Ubah di ringkasan.",
+  "error.turn.keyReused": "Jawaban ini berbeda dari kiriman sebelumnya dengan tombol yang sama. Muat ulang halaman, lalu jawab pertanyaan terbaru.",
+  "error.request.refused": "Halaman ini tidak bisa mengirim jawaban Anda. Muat ulang halaman, lalu jawab lagi. Jawaban yang sudah tersimpan tidak hilang.",
+  "error.request.tooLarge": "Isian terlalu panjang untuk dikirim sekaligus. Pendekkan teks yang panjang, lalu kirim lagi.",
+  "error.request.unavailable": "Layanan sedang terganggu, jadi jawaban Anda belum tersimpan. Isian Anda masih ada. Kirim lagi dalam beberapa menit.",
+  "error.request.invalidFields": "Beberapa isian belum bisa disimpan. Perbaiki isian yang ditandai di bawah, lalu simpan lagi. Isian lain tetap ada.",
+  "error.network.lost": "Sambungan terputus sebelum jawaban tersimpan. Isian Anda masih ada. Ketuk kirim lagi; jawaban tidak tercatat dua kali.",
+  "error.card.noOptions": "Pilihan untuk pertanyaan ini tidak bisa dimuat. Laporan Anda tetap tersimpan. Muat ulang halaman.",
+  "error.place.unavailable": "Pencarian tempat belum bisa dipakai karena data wilayah tidak terbaca. Laporan Anda tetap tersimpan di langkah ini. Cari lagi dalam beberapa menit.",
+  "error.send.failed": "Laporan belum terkirim karena layanan sedang terganggu. Semua jawaban tetap tersimpan. Ketuk Kirim sekali lagi."
+}

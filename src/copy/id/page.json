@@ -1,0 +1,9 @@
+{
+  "page.home.title": "{appName}",
+  "page.report.title": "Lapor kejadian, {appName}",
+  "page.help.title": "Bantuan, {appName}",
+  "page.about.title": "Tentang, {appName}",
+  "page.privacy.title": "Kebijakan privasi, {appName}",
+  "page.draft.title": "Laporan sedang diisi, {appName}",
+  "page.notFound.title": "Halaman tidak ditemukan, {appName}"
+}

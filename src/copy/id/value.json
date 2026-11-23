@@ -1,0 +1,5 @@
+{
+  "value.eventTime.dateTime": "{date}, pukul {time} {zone}",
+  "value.eventTime.dateOnly": "{date}, jam tidak diketahui",
+  "value.eventTime.olderThan30Days": "Sudah lebih dari 30 hari"
+}

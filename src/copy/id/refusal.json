@@ -1,0 +1,5 @@
+{
+  "refusal.offTopic": "Layanan ini hanya untuk melaporkan kejadian bencana. Pertanyaan atau permintaan lain tidak dilayani di sini.",
+  "refusal.dataRequest": "Layanan ini hanya menerima laporan kejadian bencana dan tidak memberikan data BNPB dalam bentuk apa pun.",
+  "refusal.templatesOnly": "Pesan di luar laporan bencana tidak diproses lagi di percakapan ini. Lanjutkan dengan menjawab pertanyaan laporan di bawah."
+}

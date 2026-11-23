@@ -1,0 +1,10 @@
+{
+  "known.title": "Pilih pelapor",
+  "known.lead": "Nomor yang pernah dipakai di perangkat ini.",
+  "known.row": "{name}, {maskedNumber} ({role})",
+  "known.other": "Nomor lain",
+  "known.confirm": "Melapor sebagai {name} ({role})?",
+  "known.remove": "Hapus dari perangkat ini",
+  "known.removed": "Nomor {maskedNumber} sudah dihapus dari perangkat ini.",
+  "known.error.removeFailed": "Nomor {maskedNumber} belum terhapus karena layanan sedang terganggu. Nomor masih ada di daftar. Hapus lagi dalam beberapa menit."
+}

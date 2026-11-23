@@ -1,0 +1,10 @@
+{
+  "consent.text": "Percakapan, nomor WhatsApp, lokasi, dan foto yang Anda kirim dipakai BNPB untuk penanganan bencana dan dapat dibaca petugas. Data tidak ditampilkan ke publik. Apakah Anda setuju?",
+  "consent.short": "Data Anda dipakai BNPB untuk penanganan bencana dan tidak ditampilkan ke publik.",
+  "consent.privacyOpen": "Baca kebijakan privasi lengkap",
+  "consent.privacyClose": "Tutup kebijakan privasi",
+  "consent.agree": "Setuju",
+  "consent.decline": "Tidak setuju",
+  "consent.declined.title": "Laporan tidak dibuat",
+  "consent.declined.body": "Tidak ada data Anda yang disimpan. Anda bisa melapor kapan saja dari halaman awal."
+}

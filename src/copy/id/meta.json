@@ -1,0 +1,10 @@
+{
+  "meta.home.description": "Laporkan kejadian bencana di sekitar Anda ke BNPB. Pertanyaan diajukan satu per satu, sebagian besar jawaban cukup dipilih, tiap laporan mendapat nomor tiket.",
+  "meta.report.description": "Mulai laporan kejadian bencana ke BNPB. Isi nama dan nomor WhatsApp, baca kebijakan privasi, lalu jawab pertanyaan satu per satu sampai laporan lengkap.",
+  "meta.draft.description": "Laporan kejadian bencana ke BNPB yang sedang diisi. Laporan hanya bisa dibuka dari perangkat yang membuatnya. Buat laporan Anda sendiri dari halaman awal.",
+  "meta.help.description": "Bantuan memakai {appName}: apa yang perlu disiapkan, kata yang bisa diketik, arti istilah dan status laporan, serta cara menghapus nomor Anda.",
+  "meta.about.description": "Tentang {appName}: satu pintu warga dan petugas BPBD melaporkan kejadian bencana ke BNPB, dipandu pertanyaan satu per satu, bernomor tiket.",
+  "meta.privacy.description": "Kebijakan privasi {appName}: data apa yang dikumpulkan saat Anda melapor, untuk apa dipakai, siapa yang dapat melihat, dan hak Anda atas data itu.",
+  "meta.notFound.description": "Halaman yang Anda buka tidak ada. Kembali ke halaman awal {appName} untuk membuat laporan kejadian bencana ke BNPB.",
+  "meta.image.alt": "{appName}, lapor kejadian bencana ke BNPB"
+}

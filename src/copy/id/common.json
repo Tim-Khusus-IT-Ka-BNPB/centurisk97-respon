@@ -1,0 +1,11 @@
+{
+  "common.loading": "Memuat...",
+  "common.saving": "Menyimpan jawaban...",
+  "common.save": "Simpan jawaban",
+  "common.unknown": "Tidak tahu",
+  "common.allNone": "Tidak ada semua",
+  "common.none": "Tidak ada",
+  "common.charCount": "{length} dari {max} huruf",
+  "common.retryTime.today": "pukul {time} {zone}",
+  "common.retryTime.otherDay": "pukul {time} {zone}, {date}"
+}

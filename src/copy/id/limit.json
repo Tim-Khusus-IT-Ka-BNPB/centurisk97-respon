@@ -1,0 +1,13 @@
+{
+  "limit.message.minute": "Batas pesan tercapai: paling banyak {limit} pesan per menit untuk nomor ini di perangkat ini. Laporan Anda tetap tersimpan. Lanjutkan mulai {retryTime}.",
+  "limit.message.hour": "Batas pesan tercapai: paling banyak {limit} pesan per jam untuk nomor ini di perangkat ini. Laporan Anda tetap tersimpan. Lanjutkan mulai {retryTime}.",
+  "limit.message.day": "Batas pesan tercapai: paling banyak {limit} pesan per hari untuk nomor ini di perangkat ini. Laporan Anda tetap tersimpan. Lanjutkan mulai {retryTime}.",
+  "limit.device.messageHour": "Batas pesan perangkat ini tercapai: paling banyak 150 pesan per jam. Laporan Anda tetap tersimpan. Lanjutkan mulai {retryTime}.",
+  "limit.send.rolling": "Batas laporan tercapai: satu nomor paling banyak 5 laporan terkirim dalam 24 jam. Laporan ini tetap tersimpan di ringkasan. Kirim lagi mulai {retryTime}.",
+  "limit.device.numbers": "Perangkat ini sudah dipakai untuk terlalu banyak nomor. Gunakan perangkat Anda sendiri.",
+  "limit.device.numbers.hint": "Batasnya 5 nomor per perangkat. Nomor yang tidak dipakai lagi bisa dihapus lewat Hapus dari perangkat ini.",
+  "limit.address.bindings": "Jaringan internet yang Anda pakai sedang dipakai banyak pelapor, jadi pelapor baru dari jaringan ini dibatasi {limit} per jam. Laporan Anda tetap tersimpan. Lanjutkan mulai {retryTime}, atau pakai jaringan lain.",
+  "limit.address.messages": "Jaringan internet yang Anda pakai sedang dipakai banyak pelapor, jadi pesan dari jaringan ini dibatasi {limit} per jam. Laporan Anda tetap tersimpan. Lanjutkan mulai {retryTime}, atau pakai jaringan lain.",
+  "limit.address.searches": "Jaringan internet yang Anda pakai sedang dipakai banyak pelapor, jadi pencarian tempat dari jaringan ini dibatasi {limit} per jam. Laporan Anda tetap tersimpan. Lanjutkan mulai {retryTime}, atau pakai jaringan lain.",
+  "limit.address.draftReads": "Jaringan internet yang Anda pakai sedang dipakai banyak pelapor, jadi pembukaan laporan dari jaringan ini dibatasi {limit} per jam. Laporan Anda tetap tersimpan. Lanjutkan mulai {retryTime}, atau pakai jaringan lain."
+}

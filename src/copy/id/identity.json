@@ -1,0 +1,20 @@
+{
+  "identity.title": "Data pelapor",
+  "identity.lead": "Sebelum melapor, kami catat data awal dulu.",
+  "identity.role.label": "Melapor sebagai",
+  "identity.role.citizen": "Warga",
+  "identity.role.officer": "Petugas BPBD",
+  "identity.name.label": "Nama",
+  "identity.name.hint": "Nama Anda, tanpa angka. Paling banyak 80 huruf.",
+  "identity.number.label": "WhatsApp",
+  "identity.number.hint": "Nomor WhatsApp Anda, diawali 08, 62 atau +62. Contoh: 0800 0000 0001.",
+  "identity.number.session": "Anda sudah masuk. Nomor tidak perlu diisi lagi.",
+  "identity.officerRegency.label": "BPBD",
+  "identity.officerRegency.hint": "Kabupaten atau kota tempat BPBD Anda, misalnya Kabupaten Contoh.",
+  "identity.officerPosition.label": "Jabatan",
+  "identity.officerPosition.hint": "Jabatan Anda di BPBD, misalnya Staf.",
+  "identity.readBack.title": "Periksa nomor Anda",
+  "identity.readBack.body": "Nomor ini yang akan dicatat: {number}. Benar?",
+  "identity.readBack.yes": "Ya",
+  "identity.readBack.change": "Ganti"
+}

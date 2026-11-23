@@ -1,0 +1,22 @@
+{
+  "fieldError.required": "{label} belum diisi. Isi {label} untuk melanjutkan.",
+  "fieldError.exclusiveWithOthers": "{label}: \"{option}\" tidak bisa dipilih bersama pilihan lain. Jawaban belum disimpan. Pilih \"{option}\" saja, atau hapus centangnya lalu pilih yang sesuai.",
+  "fieldError.name.digits": "Nama tidak boleh berisi angka. Tulis nama dengan huruf saja.",
+  "fieldError.name.tooLong": "Nama terlalu panjang: {length} huruf, paling banyak 80. Pendekkan Nama, tidak ada yang dipotong otomatis.",
+  "fieldError.name.tooShort": "Nama terlalu pendek. Tulis paling sedikit 2 huruf.",
+  "fieldError.number.format": "Nomor WhatsApp belum terbaca. Tulis nomor yang diawali 08, 62 atau +62, dengan 9 sampai 13 angka sesudah +62.",
+  "fieldError.officerRegency.tooShort": "Tulis nama kabupaten atau kota BPBD Anda, paling sedikit 3 huruf.",
+  "fieldError.officerPosition.tooShort": "Tulis jabatan Anda, paling sedikit 2 huruf.",
+  "fieldError.query.tooShort": "Kata pencarian terlalu pendek. Ketik paling sedikit 3 huruf.",
+  "fieldError.query.tooLong": "Kata pencarian terlalu panjang. Pakai paling banyak 60 huruf, cukup nama tempatnya.",
+  "fieldError.digits": "{label} diisi 1 sampai 3 angka, misalnya 004. Perbaiki {label} atau pilih Tidak tahu.",
+  "fieldError.time.dateRequired": "Tanggal kejadian belum diisi. Pilih tanggalnya, atau pilih Sudah lebih dari 30 hari.",
+  "fieldError.time.inFuture": "Waktu itu belum terjadi. Periksa lagi tanggal dan jamnya. Waktu kejadian paling lambat 10 menit dari sekarang.",
+  "fieldError.time.tooOld": "Tanggal itu lebih dari 30 hari lalu. Pilih tanggal dalam 30 hari terakhir, atau pilih Sudah lebih dari 30 hari.",
+  "fieldError.time.hourFormat": "Jam belum terbaca. Tulis jam dengan format 24 jam, misalnya 14.30, atau pilih Tidak tahu jamnya.",
+  "fieldError.countNeeded": "Sebutkan jumlahnya dengan angka, misalnya 2. Tulis 0 bila tidak ada.",
+  "fieldError.wholeNumber": "{label} diisi angka bulat tanpa titik atau koma, misalnya 12.",
+  "fieldError.tooLarge": "{label} paling banyak {max}. Periksa lagi angkanya.",
+  "fieldError.text.tooLong": "{label} terlalu panjang: {length} huruf, paling banyak {max}. Teks Anda masih ada. Pendekkan lalu simpan lagi.",
+  "fieldError.message.tooLong": "Pesan terlalu panjang: {length} dari paling banyak 2.000 huruf. Pesan belum terkirim dan masih ada di kotak. Pendekkan, atau bagi menjadi dua pesan."
+}
