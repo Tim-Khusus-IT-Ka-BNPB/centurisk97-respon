@@ -3,7 +3,7 @@
 This repo rebuilds the Lapor module of `poskokarhutla`, which moves much faster. This file records what we reviewed upstream, whether it affects us, and what each milestone is synced against, so we always know what is stale.
 
 - **Upstream:** `terasurbannetwork/poskokarhutla`, branch `main`, expected at `../poskokarhutla`
-- **Last reviewed:** `f938e0b6` (24 Nov 2026)
+- **Last reviewed:** `44adc772` (24 Nov 2026)
 
 **We only monitor upstream.** Nothing here writes to `../poskokarhutla`: no edits, commits, pulls or fetches. Every command in this file only reads. Fixes upstream are for its owner to make.
 
@@ -23,7 +23,7 @@ Upstream's Lapor paths took 91 commits in their first five days (19 to 23 Nov 20
 Set the range, replacing the first SHA with the last reviewed one above. `origin/main` is as fresh as your own last pull or your editor's auto-fetch.
 
 ```bash
-RANGE=f938e0b6..origin/main
+RANGE=44adc772..origin/main
 ```
 
 **1. Did Lapor change?** Commits per file in the paths Lapor owns upstream.
@@ -111,6 +111,7 @@ Newest first.
 
 | Date | Range | Notable | Affects us | Labels |
 |---|---|---|---|---|
+| 2026-11-24 | `f938e0b6..44adc772` | Two data commits (visibility readings), nothing in Lapor's paths, decisions or borrowed code. Drill-down for M02 read the desk, field check, emergency and report taker code at this commit | M02 opened from this commit. Nothing built here is stale | `skip` |
 | 2026-11-24 | `f8789ea3..f938e0b6` | 15 new routes, 5 new tables, migrations 0164 to 0170, decisions K90 to K92 and a new `profil-bpbd` package. BPBD follow-up data, which we had parked, is now built on web and WhatsApp. Also new: one-tap emergency, village QR poster, who took a report, monthly response card, BPBD verification with three-source reconciliation. Two new callers: Dalops and Data Bencana call `meja/rekon`, the leaders' page calls `respons` | Map gains M09 (follow-up data) and M10 (verified and reconciled), plus new tasks in M02, M03, M05 and M06. Nothing built here is stale | `port`, `watch` |
 | 2026-11-23 | Baseline `f8789ea3` | First review. Lapor is five days old upstream and live for pilot users: 19 Worker files, 39 API routes, 36 tables in migrations 0155 to 0163, 15 test files, 5 decision packages. Last two days added install as app, push warnings, report without signal, BPBD contact numbers and the regional report card | Everything is new to us and nothing is built, so nothing is stale. This is the baseline every milestone starts from | n/a |
 
@@ -120,8 +121,8 @@ One row per milestone of the map. Paths are upstream's.
 
 | Milestone | Upstream paths | Status | Synced at |
 |---|---|---|---|
-| M01-report-and-track | `src/lapor_mesin.js`, `src/lapor_spek.js`, `src/lapor_model.js`, `src/lapor_wilayah.js`, `src/lapor_jalan.js`, `src/lapor_kontak.js`, `src/lapor_tampil.js`, `public/lapor/index.html`, `public/lapor/lapor.js`, `public/lapor/lapor.css`, `public/lapor/lacak.html`, `public/lapor/lacak.js`, `public/lapor/lacak.css`, `public/lapor/maskot.js`, `public/lapor/ilustrasi.js`, `public/lapor/edukasi.json`, `public/lapor/lambang-bnpb.png`, `migrations/0155_lapor_ai.sql`, `migrations/0159_lapor_perangkat.sql`, `tests/lapor/mesin.test.mjs`, `tests/lapor/rute.test.mjs`, `tests/lapor/gerbang_topik.test.mjs`, `tests/lapor/kontak.test.mjs`, `tests/lapor/tempat_peta.test.mjs`, `data/kajian-bnpb/lapor-ai/` | Not started | |
-| M02-desk-and-field | `src/lapor_meja_hak.js`, `src/lapor_periksa.js`, `public/lapor/meja.html`, `public/lapor/meja.js`, `public/lapor/meja.css`, `public/lapor/kontak.js`, `migrations/0157_lapor_lanjut.sql`, `migrations/0162_lapor_periksa.sql`, `migrations/0166_profil_bpbd.sql`, `migrations/0167_lapor_ambil.sql`, `tests/lapor/lokal_periksa.test.mjs`, `tests/lapor/darurat_cepat.test.mjs`, `data/kajian-bnpb/profil-bpbd/` | Not started | |
+| M01-report-and-track | `src/lapor_mesin.js`, `src/lapor_spek.js`, `src/lapor_model.js`, `src/lapor_wilayah.js`, `src/lapor_jalan.js`, `src/lapor_kontak.js`, `src/lapor_tampil.js`, `public/lapor/index.html`, `public/lapor/lapor.js`, `public/lapor/lapor.css`, `public/lapor/lacak.html`, `public/lapor/lacak.js`, `public/lapor/lacak.css`, `public/lapor/maskot.js`, `public/lapor/ilustrasi.js`, `public/lapor/edukasi.json`, `public/lapor/lambang-bnpb.png`, `migrations/0155_lapor_ai.sql`, `migrations/0159_lapor_perangkat.sql`, `tests/lapor/mesin.test.mjs`, `tests/lapor/rute.test.mjs`, `tests/lapor/gerbang_topik.test.mjs`, `tests/lapor/kontak.test.mjs`, `tests/lapor/tempat_peta.test.mjs`, `data/kajian-bnpb/lapor-ai/` | Done | `f938e0b6` |
+| M02-desk-and-field | `src/lapor_meja_hak.js`, `src/lapor_periksa.js`, `public/lapor/meja.html`, `public/lapor/meja.js`, `public/lapor/meja.css`, `public/lapor/kontak.js`, `migrations/0157_lapor_lanjut.sql`, `migrations/0162_lapor_periksa.sql`, `migrations/0166_profil_bpbd.sql`, `migrations/0167_lapor_ambil.sql`, `tests/lapor/lokal_periksa.test.mjs`, `tests/lapor/darurat_cepat.test.mjs`, `data/kajian-bnpb/profil-bpbd/` | In progress, opened at `44adc772` | |
 | M03-documents-and-updates | `scripts/lapor/dokumen.py`, `scripts/wa/lapor_pdf.mjs`, `migrations/0156_lapor_versi.sql` | Not started | |
 | M04-whatsapp-door | `scripts/wa/lapor_wa.mjs`, `scripts/wa/gateway/index.js`, `tests/wa/lapor_arah.test.mjs` | Not started | |
 | M05-any-language-any-signal | `src/lapor_bahasa.js`, `public/lapor/tr/`, `public/lapor/poster.html`, `public/lapor/poster.js`, `public/lapor/poster.css`, `tests/lapor/poster.test.mjs`, `scripts/lapor/tr_buat.mjs`, `scripts/lapor/tr_kumpul.mjs`, `public/lapor/luring.js`, `public/sw-lapor.js`, `public/lapor/manifest.webmanifest`, `public/lapor/ikon/`, `migrations/0158_lapor_unggah.sql`, `tests/lapor/kamus_tr.test.mjs`, `tests/lapor/lokal_media.test.mjs`, `data/kajian-bnpb/lapor-luring/` | Not started | |
