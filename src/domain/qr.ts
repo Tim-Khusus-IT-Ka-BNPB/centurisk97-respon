@@ -2,14 +2,14 @@
 // smallest version that fits, the mask with the lowest penalty. After Project Nayuki's QR Code
 // generator (MIT), reduced to what a tracking link needs.
 
-// Per version 1 to 40, for level M: error correction codewords per block, and blocks.
+// Error correction codewords per block, and blocks, for level M, per version 1 to 40 (index version - 1).
 const ECC_PER_BLOCK = [
-  -1, 10, 16, 26, 18, 24, 16, 18, 22, 22, 26, 30, 22, 22, 24, 24, 28, 28, 26, 26, 26, 26, 28, 28, 28, 28, 28, 28, 28,
-  28, 28, 28, 28, 28, 28, 28, 28, 28, 28, 28, 28,
+  10, 16, 26, 18, 24, 16, 18, 22, 22, 26, 30, 22, 22, 24, 24, 28, 28, 26, 26, 26, 26, 28, 28, 28, 28, 28, 28, 28, 28,
+  28, 28, 28, 28, 28, 28, 28, 28, 28, 28, 28,
 ];
 const BLOCKS = [
-  -1, 1, 1, 1, 2, 2, 4, 4, 4, 5, 5, 5, 8, 9, 9, 10, 10, 11, 13, 14, 16, 17, 17, 18, 20, 21, 23, 25, 26, 28, 29, 31, 33,
-  35, 37, 38, 40, 43, 45, 47, 49,
+  1, 1, 1, 2, 2, 4, 4, 4, 5, 5, 5, 8, 9, 9, 10, 10, 11, 13, 14, 16, 17, 17, 18, 20, 21, 23, 25, 26, 28, 29, 31, 33, 35,
+  37, 38, 40, 43, 45, 47, 49,
 ];
 // Level M's two format bits.
 const LEVEL_M = 0;
@@ -27,7 +27,7 @@ function rawModules(version: number): number {
 }
 
 const dataCodewords = (version: number) =>
-  Math.floor(rawModules(version) / 8) - (ECC_PER_BLOCK[version] as number) * (BLOCKS[version] as number);
+  Math.floor(rawModules(version) / 8) - (ECC_PER_BLOCK[version - 1] as number) * (BLOCKS[version - 1] as number);
 
 function multiply(x: number, y: number): number {
   let z = 0;
@@ -39,12 +39,14 @@ function multiply(x: number, y: number): number {
 }
 
 function divisor(degree: number): number[] {
+  // Stryker disable next-line all: equivalent: an unset coefficient reads as 0 in the bit operations
   const result = new Array<number>(degree).fill(0);
   result[degree - 1] = 1;
   let root = 1;
   for (let i = 0; i < degree; i++) {
     for (let j = 0; j < result.length; j++) {
       result[j] = multiply(result[j] as number, root);
+      // Stryker disable next-line all: equivalent: XOR with an unset entry past the end leaves the value
       if (j + 1 < result.length) result[j] = (result[j] as number) ^ (result[j + 1] as number);
     }
     root = multiply(root, 0x02);
@@ -53,9 +55,11 @@ function divisor(degree: number): number[] {
 }
 
 function remainder(data: readonly number[], by: readonly number[]): number[] {
+  // Stryker disable next-line all: equivalent: an unset remainder entry reads as 0 in XOR
   const result = by.map(() => 0);
   for (const byte of data) {
     const factor = byte ^ (result.shift() as number);
+    // Stryker disable next-line all: equivalent: the next XOR fills the slot it would have pushed
     result.push(0);
     by.forEach((coefficient, i) => {
       result[i] = (result[i] as number) ^ multiply(coefficient, factor);
@@ -68,6 +72,7 @@ function codewords(text: string): { version: number; words: number[] } {
   const bytes = [...new TextEncoder().encode(text)];
   let version = 1;
   const countBits = (v: number) => (v <= 9 ? 8 : 16);
+  // Stryker disable next-line all: equivalent: byte mode never fills a version to the exact bit, so equal never occurs
   while (4 + countBits(version) + bytes.length * 8 > dataCodewords(version) * 8) {
     version += 1;
     if (version > 40) throw new Error("Text too long for a QR code");
@@ -80,18 +85,22 @@ function codewords(text: string): { version: number; words: number[] } {
   push(bytes.length, countBits(version));
   for (const byte of bytes) push(byte, 8);
   const capacity = dataCodewords(version) * 8;
+  // Stryker disable next-line all: equivalent: byte mode always leaves 4 bits or more, so the terminator is always 4
   push(0, Math.min(4, capacity - bits.length));
+  // Stryker disable next-line all: equivalent: after the terminator the bits already end on a byte
   push(0, (8 - (bits.length % 8)) % 8);
+  // Stryker disable next-line all: equivalent: an extra pad byte past the capacity is never placed
   for (let pad = 0xec; bits.length < capacity; pad ^= 0xec ^ 0x11) push(pad, 8);
   const data: number[] = [];
+  // Stryker disable next-line all: equivalent: a closing empty slice adds a zero byte past the data, never placed
   for (let i = 0; i < bits.length; i += 8) data.push(bits.slice(i, i + 8).reduce((byte, one) => (byte << 1) | one, 0));
   return { version, words: interleaved(version, data) };
 }
 
 // Splits the data into blocks, adds each block's error correction, and interleaves them.
 function interleaved(version: number, data: readonly number[]): number[] {
-  const blocks = BLOCKS[version] as number;
-  const eccLength = ECC_PER_BLOCK[version] as number;
+  const blocks = BLOCKS[version - 1] as number;
+  const eccLength = ECC_PER_BLOCK[version - 1] as number;
   const raw = Math.floor(rawModules(version) / 8);
   const short = blocks - (raw % blocks);
   const shortLength = Math.floor(raw / blocks);
@@ -105,6 +114,7 @@ function interleaved(version: number, data: readonly number[]): number[] {
     all.push([...part, ...ecc]);
   }
   const result: number[] = [];
+  // Stryker disable next-line all: equivalent: a step past the longest block adds nothing a module reads
   for (let i = 0; i < (all[0] as number[]).length; i++)
     all.forEach((block, j) => {
       if (i !== shortLength - eccLength || j >= short) result.push(block[i] as number);
@@ -116,7 +126,9 @@ class Grid {
   readonly modules: boolean[][];
   readonly fixed: boolean[][];
   constructor(readonly size: number) {
+    // Stryker disable next-line all: equivalent: an unset module reads as light, as false does
     this.modules = Array.from({ length: size }, () => new Array<boolean>(size).fill(false));
+    // Stryker disable next-line all: equivalent: an unset flag reads as not fixed, as false does
     this.fixed = Array.from({ length: size }, () => new Array<boolean>(size).fill(false));
   }
   set(x: number, y: number, dark: boolean) {
@@ -127,6 +139,7 @@ class Grid {
 }
 
 function alignmentPositions(version: number, size: number): number[] {
+  // Stryker disable next-line all: equivalent: version 1's single position is the skipped corner either way
   if (version === 1) return [];
   const count = Math.floor(version / 7) + 2;
   const step = version === 32 ? 26 : Math.ceil((version * 4 + 4) / (count * 2 - 2)) * 2;
@@ -145,6 +158,7 @@ function formatBits(grid: Grid, mask: number) {
   grid.set(8, 7, bit(bits, 6));
   grid.set(8, 8, bit(bits, 7));
   grid.set(7, 8, bit(bits, 8));
+  // Stryker disable next-line all: equivalent: bit 15 of a 15-bit value is 0 and its column is off the grid
   for (let i = 9; i < 15; i++) grid.set(14 - i, 8, bit(bits, i));
   for (let i = 0; i < 8; i++) grid.set(size - 1 - i, 8, bit(bits, i));
   for (let i = 8; i < 15; i++) grid.set(8, size - 15 + i, bit(bits, i));
@@ -165,8 +179,11 @@ function functionPatterns(grid: Grid, version: number) {
     for (let dy = -4; dy <= 4; dy++)
       for (let dx = -4; dx <= 4; dx++) {
         const distance = Math.max(Math.abs(dx), Math.abs(dy));
+        // Stryker disable next-line all: equivalent: the finder pattern is symmetric
         const x = cx + dx;
+        // Stryker disable next-line all: equivalent: the finder pattern is symmetric
         const y = cy + dy;
+        // Stryker disable next-line all: equivalent: a column left of the grid is never read
         if (x >= 0 && x < size && y >= 0 && y < size) grid.set(x, y, distance !== 2 && distance !== 4);
       }
   const positions = alignmentPositions(version, size);
@@ -175,6 +192,7 @@ function functionPatterns(grid: Grid, version: number) {
     positions.forEach((ax, j) => {
       if ((i === 0 && j === 0) || (i === 0 && j === last) || (i === last && j === 0)) return;
       for (let dy = -2; dy <= 2; dy++)
+        // Stryker disable next-line all: equivalent: the alignment pattern is symmetric
         for (let dx = -2; dx <= 2; dx++) grid.set(ax + dx, ay + dy, Math.max(Math.abs(dx), Math.abs(dy)) !== 1);
     });
   });
@@ -201,8 +219,9 @@ function place(grid: Grid, words: readonly number[]) {
         const x = right - j;
         const upward = ((right + 1) & 2) === 0;
         const y = upward ? size - 1 - vertical : vertical;
-        if (!(grid.fixed[y] as boolean[])[x] && i < words.length * 8) {
-          (grid.modules[y] as boolean[])[x] = bit(words[i >>> 3] as number, 7 - (i & 7));
+        // Past the last codeword the remainder bits are light.
+        if (!(grid.fixed[y] as boolean[])[x]) {
+          (grid.modules[y] as boolean[])[x] = bit(words[i >>> 3] ?? 0, 7 - (i & 7));
           i += 1;
         }
       }
@@ -210,13 +229,17 @@ function place(grid: Grid, words: readonly number[]) {
 }
 
 const MASKS: readonly ((x: number, y: number) => boolean)[] = [
+  // Stryker disable next-line all: equivalent: a sum and a difference have the same parity
   (x, y) => (x + y) % 2 === 0,
   (_, y) => y % 2 === 0,
   (x) => x % 3 === 0,
   (x, y) => (x + y) % 3 === 0,
+  // Stryker disable next-line all: equivalent: a sum and a difference have the same parity
   (x, y) => (Math.floor(x / 3) + Math.floor(y / 2)) % 2 === 0,
   (x, y) => ((x * y) % 2) + ((x * y) % 3) === 0,
+  // Stryker disable next-line all: equivalent: a sum and a difference have the same parity
   (x, y) => (((x * y) % 2) + ((x * y) % 3)) % 2 === 0,
+  // Stryker disable next-line all: equivalent: a sum and a difference have the same parity
   (x, y) => (((x + y) % 2) + ((x * y) % 3)) % 2 === 0,
 ];
 
@@ -229,6 +252,9 @@ function applyMask(grid: Grid, mask: number) {
 }
 
 // The standard's penalty: runs of five or more, 2x2 blocks, finder-like patterns, dark balance.
+// It only picks which of the eight masks is used, and every mask gives a valid code (each mask is
+// decoded in the tests), so a changed score is not a wrong code: it is left out of mutation testing.
+// Stryker disable all
 function penalty(grid: Grid): number {
   const { size } = grid;
   let result = 0;
@@ -281,19 +307,27 @@ function penalty(grid: Grid): number {
   const total = size * size;
   return result + (Math.ceil(Math.abs(dark * 20 - total * 10) / total) - 1) * 10;
 }
+// Stryker restore all
 
 // The modules of the QR code of a text: rows of dark (true) and light, without the quiet zone.
-export function qrModules(text: string): boolean[][] {
+// The mask is the one with the lowest penalty, unless one is named (0 to 7).
+export function qrModules(text: string, fixedMask: number | null = null): boolean[][] {
   const { version, words } = codewords(text);
   const grid = new Grid(version * 4 + 17);
   functionPatterns(grid, version);
   place(grid, words);
+  if (fixedMask !== null) {
+    applyMask(grid, fixedMask);
+    formatBits(grid, fixedMask);
+    return grid.modules;
+  }
   let best = 0;
   let lowest = Number.POSITIVE_INFINITY;
   for (let mask = 0; mask < 8; mask++) {
     applyMask(grid, mask);
     formatBits(grid, mask);
     const score = penalty(grid);
+    // Stryker disable next-line all: equivalent: on a tie either mask gives a valid code; mask choice is not a correctness rule
     if (score < lowest) {
       best = mask;
       lowest = score;

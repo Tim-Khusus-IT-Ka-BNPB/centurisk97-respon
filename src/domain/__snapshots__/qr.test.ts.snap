@@ -1,0 +1,57 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`qr > each of the eight masks gives the same code as decoded, at version 2 and version 7 1`] = `
+[
+  [
+    "f58d22d1",
+    "f3dc8f45",
+  ],
+  [
+    "bc1c70af",
+    "18058e1e",
+  ],
+  [
+    "7332d4b3",
+    "4f40cdaf",
+  ],
+  [
+    "e4956979",
+    "e05c3189",
+  ],
+  [
+    "f8be81ef",
+    "800b0033",
+  ],
+  [
+    "f65c80c6",
+    "13357506",
+  ],
+  [
+    "a6e3a959",
+    "84399501",
+  ],
+  [
+    "c4fe5ce7",
+    "f41c2d97",
+  ],
+]
+`;
+
+exports[`qr > the codes of 14 texts from version 1 to 40 stay exactly as decoded 1`] = `
+{
+  "1": "21:353cd6d9",
+  "1000": "121:e9455a87",
+  "120": "45:346d1d4b",
+  "14": "21:b949ffdf",
+  "140": "49:b2f1f12b",
+  "1500": "145:b356adb2",
+  "180": "53:c8ef896f",
+  "20": "25:cf715007",
+  "2000": "169:c7d84a9",
+  "230": "61:e0850185",
+  "2331": "177:4d54f52f",
+  "400": "77:28c9030b",
+  "60": "33:9e9173ca",
+  "700": "101:5d50ad3d",
+}
+`;
