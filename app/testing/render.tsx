@@ -18,6 +18,8 @@ export const text = makeText(ALL_TEXTS);
 
 type Options = {
   readonly path?: string;
+  // The address the page opens at, when it carries a query the route path does not.
+  readonly entry?: string;
   readonly action?: ActionFunction;
   readonly loader?: LoaderFunction;
 };
@@ -31,13 +33,16 @@ const Host = () => <TextContext.Provider value={text}>{current}</TextContext.Pro
 const Nothing = () => null;
 
 // Draws a component inside a router and the copy, as a page would.
-export function renderPage(ui: ReactNode, { path = "/lapor/report/d", action, loader }: Options = {}): RenderResult {
+export function renderPage(
+  ui: ReactNode,
+  { path = "/lapor/report/d", entry, action, loader }: Options = {},
+): RenderResult {
   current = ui;
   const Stub = createRoutesStub([
     { path, Component: Host, action: action ?? Nothing, loader: loader ?? Nothing, HydrateFallback: Nothing },
     { path: "*", Component: Nothing },
   ]);
-  return render(<Stub initialEntries={[path]} />);
+  return render(<Stub initialEntries={[entry ?? path]} />);
 }
 
 type DraftOptions = Options & {
@@ -56,6 +61,7 @@ function draftView(draft: DraftBody, options: DraftOptions = {}): DraftView {
     posted: options.posted ?? null,
     networkLost: options.networkLost ?? false,
     lifeLine: options.lifeLine ?? false,
+    origin: "http://localhost:5173",
   };
 }
 

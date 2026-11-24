@@ -20,6 +20,8 @@ export type DraftView = {
   readonly networkLost: boolean;
   // The 112 line the read carries, drawn inside the live card under its heading so it is in view.
   readonly lifeLine: boolean;
+  // The site's own address, for absolute links such as the tracking link's QR code.
+  readonly origin: string;
 };
 
 export const DraftContext = createContext<DraftView | null>(null);

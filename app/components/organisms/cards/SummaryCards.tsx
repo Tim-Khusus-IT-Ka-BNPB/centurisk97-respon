@@ -3,7 +3,7 @@ import { Form, Link } from "react-router";
 import type { Card } from "../../../../src/contract/card";
 import { cardProblem } from "../../../lib/envelope";
 import { useBusy, useMountFocus } from "../../../lib/hooks";
-import { hazardOf, type RowView, rowView, splitAround } from "../../../lib/summary";
+import { hazardOf, type RowView, rowView } from "../../../lib/summary";
 import { useText } from "../../../lib/text";
 import { clockTime, longDate } from "../../../lib/time";
 import { Button, buttonStyles } from "../../atoms/Button";
@@ -183,29 +183,6 @@ export function EndCard({ icon, headingId, title, level = 2, children, action, c
         {t(action)}
       </Link>
     </section>
-  );
-}
-
-export function SentCard({ card }: { readonly card: Extract<Card, { kind: "sent" }> }) {
-  const t = useText();
-  const ticket = splitAround(t, "card.sent.ticket", {}, "ticketNumber");
-  return (
-    <EndCard
-      card={card}
-      icon="circleCheck"
-      headingId={headingIdOf(card)}
-      title={t(card.titleKey)}
-      action="card.sent.new"
-    >
-      <p className="text-ticket font-bold tabular-nums break-words">
-        {ticket.before}
-        <span data-testid="ticket-number" className="whitespace-nowrap">
-          {card.ticketNumber}
-        </span>
-        {ticket.after}
-      </p>
-      {card.promptKey ? <p>{t(card.promptKey, card.params)}</p> : null}
-    </EndCard>
   );
 }
 

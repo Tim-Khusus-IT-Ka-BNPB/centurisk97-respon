@@ -62,6 +62,7 @@ export function DraftScreen({ page, acted }: { readonly page: Loaded; readonly a
       posted: acted?.posted ?? null,
       networkLost: acted?.networkLost ?? false,
       lifeLine: pageNotices(draft.notices, draft.card, quiet).lifeLine,
+      origin: page.origin,
     };
   }, [page, envelope, acted, quiet]);
   const open = !isFinalCard(view.draft.card);

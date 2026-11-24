@@ -223,6 +223,13 @@ describe("photo form with no script", () => {
     expect(refused.envelope?.fields).toEqual([{ fieldId: "photo", copyKey: "fieldError.photo.notNow", params: {} }]);
     form.delete("photo");
     expect(rendered(await browser.form(draftId, form)).status).toBe(400);
+    const rate = new FormData();
+    rate.set("action", "rate");
+    rate.set("value.ticketNumber", "LA-010101-99");
+    rate.set("value.rating", "4");
+    const notOwn = rendered(await browser.form(draftId, rate));
+    expect(notOwn.status).toBe(404);
+    expect(notOwn.envelope?.error.code).toBe("report.notFound");
   });
 });
 

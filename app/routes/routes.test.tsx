@@ -1,6 +1,6 @@
-import { screen } from "@testing-library/react";
+import { cleanup, screen } from "@testing-library/react";
 import { createElement, type FC } from "react";
-import { describe, expect, test } from "vitest";
+import { describe, expect, test, vi } from "vitest";
 import type { ApiCall } from "../../src/api/bridge";
 import { SAMPLE_DRAFTS, SAMPLE_FIELD_ERROR, SAMPLE_ME } from "../../src/testing/samples";
 import { LOST } from "../lib/network";
@@ -13,6 +13,7 @@ import HomeRoute, * as home from "./home";
 import NotFoundRoute, * as notFound from "./notFound";
 import PrivacyRoute, * as privacy from "./privacy";
 import StartRoute, * as start from "./start";
+import TrackingRoute, * as tracking from "./tracking";
 
 const DRAFT = SAMPLE_DRAFTS.summary.draftId;
 const api =
@@ -41,10 +42,11 @@ describe("route modules", () => {
     for (const route of [draft, start, home]) expect(route.headers()).toEqual({ "cache-control": "private, no-store" });
   });
 
-  test("titles come from the catalogue with the app's name", () => {
+  test("titles come from the catalogue with the app's name", async () => {
     const meta = (route: { meta: (args: Args) => unknown[] }, loaded: unknown) =>
       route.meta({ data: loaded, matches: [] } as Args)[0];
-    expect(meta(help, help.loader())).toEqual({ title: "Bantuan, Pantau Bencana BNPB" });
+    const noTopics = { context: { api: api({ "GET /education": json(SAMPLE_FIELD_ERROR, 503) }) } } as Args;
+    expect(meta(help, await help.loader(noTopics))).toEqual({ title: "Bantuan, Pantau Bencana BNPB" });
     expect(meta(about, about.loader())).toEqual({ title: "Tentang, Pantau Bencana BNPB" });
     expect(meta(privacy, privacy.loader())).toEqual({ title: "Kebijakan privasi, Pantau Bencana BNPB" });
     for (const route of [draft, start, home]) expect(route.meta({ data: undefined, matches: [] } as Args)).toEqual([]);
@@ -81,9 +83,47 @@ describe("route modules", () => {
     expect(await screen.findByRole("link", { name: "Lapor kejadian" })).toBeTruthy();
   });
 
+  test("the tracking page is never cached or indexed, and reads its report with script", async () => {
+    expect(tracking.headers()).toEqual({ "cache-control": "private, no-store", "x-robots-tag": "noindex" });
+    const loaded = tracking.loader();
+    expect(tracking.meta({ data: loaded, matches: [] } as Args)).toContainEqual({
+      title: "Lacak laporan, Pantau Bencana BNPB",
+    });
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async () => new Response(null, { status: 404 })),
+    );
+    renderPage(routeElement(TrackingRoute, { loaderData: loaded }), { path: "/lapor/lacak" });
+    expect(await screen.findByRole("heading", { level: 1, name: "Laporan tidak ditemukan." })).toBeTruthy();
+    vi.unstubAllGlobals();
+  });
+
   test("the text pages render their content", async () => {
-    renderPage(routeElement(HelpRoute, { loaderData: help.loader() }), { path: "/lapor/help" });
+    const topics = {
+      dataDate: "2026-11-19",
+      topics: [
+        {
+          id: "banjir",
+          title: "Banjir",
+          summary: "Air meluap.",
+          lists: [{ kind: "sebelum", items: ["Siapkan tas siaga"] }],
+          sources: [{ organisation: "BNPB", title: "Buku saku", url: "https://bnpb.go.id/" }],
+        },
+      ],
+    };
+    const loaded = await help.loader({ context: { api: api({ "GET /education": json(topics) }) } } as Args);
+    renderPage(routeElement(HelpRoute, { loaderData: loaded }), { path: "/lapor/help" });
     expect(await screen.findByRole("heading", { level: 2, name: "Istilah" })).toBeTruthy();
+    expect(screen.getByRole("heading", { level: 2, name: "Edukasi siaga" })).toBeTruthy();
+    expect(screen.getByText("Siapkan tas siaga")).toBeTruthy();
+    expect(screen.getByRole("link", { name: "BNPB: Buku saku" }).getAttribute("href")).toBe("https://bnpb.go.id/");
+    expect(screen.getByText("Topik per 19 November 2026.")).toBeTruthy();
+    cleanup();
+    const without = await help.loader({
+      context: { api: api({ "GET /education": json(SAMPLE_FIELD_ERROR, 503) }) },
+    } as Args);
+    renderPage(routeElement(HelpRoute, { loaderData: without }), { path: "/lapor/help" });
+    expect(await screen.findByText(/Topik edukasi siaga belum bisa dimuat/)).toBeTruthy();
     expect(screen.getByRole("link", { name: "Baca kebijakan privasi lengkap" }).getAttribute("href")).toBe(
       "/lapor/privacy",
     );

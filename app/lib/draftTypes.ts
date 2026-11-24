@@ -12,6 +12,8 @@ export type DraftPageData =
       readonly turnKey: string;
       // A search inside the place card reads the draft again; that read is no resume.
       readonly searching: boolean;
+      // The site's own address, for the tracking link in the QR code.
+      readonly origin: string;
       readonly texts: Texts;
     }
   | { readonly kind: "refused"; readonly envelope: ErrorEnvelope; readonly texts: Texts };

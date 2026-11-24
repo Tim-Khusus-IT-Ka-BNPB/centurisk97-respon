@@ -28,7 +28,15 @@ function Served() {
   return (
     <TextContext.Provider value={text}>
       <DraftContext.Provider
-        value={{ draft: served, turnKey: "k", envelope: null, posted: null, networkLost: false, lifeLine: false }}
+        value={{
+          draft: served,
+          turnKey: "k",
+          envelope: null,
+          posted: null,
+          networkLost: false,
+          lifeLine: false,
+          origin: "http://localhost:5173",
+        }}
       >
         <CardView card={served.card} />
       </DraftContext.Provider>
@@ -155,5 +163,8 @@ describe("place from GPS", () => {
     expect(photos).toContain("Kirim foto");
     expect(photos).toContain('encType="multipart/form-data"');
     expect(photos).toContain('capture="environment"');
+    const sent = serverHtml({ ...SAMPLE_DRAFTS.sent, card: { ...SAMPLE_DRAFTS.sent.card, rating: 3 } as Card });
+    expect(sent).toContain("Lacak laporan");
+    expect(sent).not.toContain("Salin");
   });
 });

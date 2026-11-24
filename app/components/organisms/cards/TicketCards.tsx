@@ -1,0 +1,239 @@
+import { useState } from "react";
+import { Form, Link, useSearchParams } from "react-router";
+import type { Card } from "../../../../src/contract/card";
+import type { Tracking } from "../../../../src/contract/tracking";
+import { qrModules, qrPath } from "../../../../src/domain/qr";
+import { problemOf } from "../../../lib/envelope";
+import { useBusy, useMountFocus } from "../../../lib/hooks";
+import { useText } from "../../../lib/text";
+import { buttonStyles } from "../../atoms/Button";
+import { Icon } from "../../atoms/Icon";
+import { FieldError } from "../../molecules/Field";
+import { headingIdOf, useDraftView } from "./CardShell";
+import { useHydrated } from "./PlaceCards";
+
+type SentCardData = Extract<Card, { kind: "sent" }>;
+
+export const trackingPath = (token: string) => `/lapor/lacak#t=${token}`;
+
+// The five handling stages as a strip: done ones filled and named, the rest waiting.
+function StageStrip({ stages }: { readonly stages: Tracking["stages"] }) {
+  const t = useText();
+  return (
+    // A row of five where the card is wide enough for "Ditindaklanjuti" whole, else a list.
+    <ol className="grid grid-cols-1 gap-2 text-meta @tiles:grid-cols-5 @tiles:gap-1 @tiles:text-center">
+      {stages.map((stage) => {
+        const done = stage.reachedAt !== null;
+        return (
+          <li key={stage.status} className="flex min-w-0 items-center gap-2 @tiles:flex-col @tiles:gap-1">
+            <span
+              aria-hidden="true"
+              className={`flex size-7 items-center justify-center rounded-full border-2 ${
+                done ? "border-primary bg-primary text-on-primary" : "border-control bg-surface text-muted"
+              }`}
+            >
+              {done ? <Icon name="check" className="size-4" /> : null}
+            </span>
+            <span className={done ? "font-semibold" : "text-muted"}>
+              {t(`stage.short.${stage.status}`)}
+              <span className="sr-only">{done ? "" : `, ${t("stage.waiting")}`}</span>
+            </span>
+          </li>
+        );
+      })}
+    </ol>
+  );
+}
+
+// Who to call about the report: its regency's or province's BPBD, or BNPB's 117 when neither has
+// a number recorded (K88). A number is never made up.
+export function ContactBlock({ contact }: { readonly contact: Tracking["contact"] }) {
+  const t = useText();
+  const phone = contact.level === "national" ? "117" : contact.phone;
+  return (
+    <section aria-labelledby="bpbd-contact" className="flex flex-col gap-2 rounded-control border border-line p-3">
+      <h3 id="bpbd-contact" className="font-bold">
+        {t("card.sent.contact.title")}
+      </h3>
+      <p className="break-words">
+        {contact.level === "national"
+          ? t("card.sent.contact.national")
+          : t(`card.sent.contact.${contact.level}`, { name: contact.name })}
+      </p>
+      {contact.level === "national" ? <p className="text-meta text-muted">{t("card.sent.contact.missing")}</p> : null}
+      <a
+        href={`tel:${phone.replace(/[^\d+]/g, "")}`}
+        className={buttonStyles({ variant: "signal", size: "main", className: "self-start" })}
+      >
+        <Icon name="phone" />
+        {t("card.sent.contact.call", { phone })}
+      </a>
+    </section>
+  );
+}
+
+function QrCode({ text, label }: { readonly text: string; readonly label: string }) {
+  const modules = qrModules(text);
+  const size = modules.length + 8;
+  return (
+    <svg
+      role="img"
+      aria-label={label}
+      viewBox={`0 0 ${size} ${size}`}
+      shapeRendering="crispEdges"
+      className="aspect-square h-auto w-40 max-w-full rounded-control border border-line bg-white"
+    >
+      <path d={qrPath(modules)} fill="#000" />
+    </svg>
+  );
+}
+
+function CopyNumber({ ticketNumber }: { readonly ticketNumber: string }) {
+  const t = useText();
+  const hydrated = useHydrated();
+  const [copied, setCopied] = useState(false);
+  if (!hydrated) return null;
+  return (
+    <button
+      type="button"
+      aria-label={t("card.sent.copyLabel", { ticketNumber })}
+      className={buttonStyles({ variant: "secondary", size: "min" })}
+      onClick={async () => {
+        await navigator.clipboard?.writeText(ticketNumber).catch(() => undefined);
+        setCopied(true);
+      }}
+    >
+      <Icon name={copied ? "check" : "square"} />
+      {copied ? t("card.sent.copied") : t("card.sent.copy")}
+    </button>
+  );
+}
+
+// Right after "Kirim" (K81): thanks by name with the ticket number; a tap anywhere asks for a
+// rating, and a rating closes it. It shows until the report is rated. Links and a form, so it
+// works with no script.
+function ThankYou({ card }: { readonly card: SentCardData }) {
+  const t = useText();
+  const { turnKey, envelope } = useDraftView();
+  const [search] = useSearchParams();
+  const rating = search.has("rate");
+  const heading = useMountFocus<HTMLHeadingElement>(true);
+  const problem = problemOf(envelope, "rating");
+  return (
+    <div
+      role="alertdialog"
+      aria-modal="true"
+      aria-labelledby="thanks-title"
+      className="fixed inset-0 z-50 flex items-center justify-center overflow-y-auto bg-primary p-4 text-on-primary"
+    >
+      {rating ? (
+        <Form
+          method="post"
+          replace
+          preventScrollReset
+          className="flex w-full max-w-md flex-col items-center gap-5 text-center"
+        >
+          <input type="hidden" name="action" value="rate" />
+          <input type="hidden" name="ticketNumber" value={card.ticketNumber} />
+          <input type="hidden" name="turnKey" value={turnKey} />
+          <h2 id="thanks-title" ref={heading} tabIndex={-1} className="text-card font-bold text-balance">
+            {t("card.sent.rate.question")}
+          </h2>
+          <div className="grid w-full grid-cols-5 gap-2">
+            {[1, 2, 3, 4, 5].map((n) => (
+              <RateButton key={n} n={n} />
+            ))}
+          </div>
+          <p className="flex w-full justify-between text-meta">
+            <span>{t("card.sent.rate.low")}</span>
+            <span>{t("card.sent.rate.high")}</span>
+          </p>
+          <FieldError id="rating" problem={problem} />
+        </Form>
+      ) : (
+        <Link
+          to="?rate"
+          replace
+          preventScrollReset
+          className="flex min-h-full w-full max-w-md flex-col items-center justify-center gap-4 text-center no-underline"
+        >
+          <span className="text-meta uppercase tracking-wide">{t("card.sent.thanks.label")}</span>
+          <h2 id="thanks-title" ref={heading} tabIndex={-1} className="text-display font-bold text-balance">
+            {t("card.sent.thanks.title", { firstName: card.firstName })}
+          </h2>
+          <span>{t("card.sent.thanks.ticket")}</span>
+          <span className="text-ticket font-bold tabular-nums">{card.ticketNumber}</span>
+          <span className={buttonStyles({ variant: "onHero", className: "mt-4" })}>{t("card.sent.thanks.next")}</span>
+        </Link>
+      )}
+    </div>
+  );
+}
+
+function RateButton({ n }: { readonly n: number }) {
+  const t = useText();
+  const busy = useBusy(String(n), "rating");
+  return (
+    <button
+      type="submit"
+      name="rating"
+      value={n}
+      aria-label={t("card.sent.rate.choice", { n })}
+      aria-disabled={busy ? true : undefined}
+      onClick={(event) => busy && event.preventDefault()}
+      className="flex min-h-target-main min-w-0 items-center justify-center rounded-control border-2 border-on-primary/60 text-card font-bold tabular-nums hover:bg-[oklch(100%_0_0/0.12)]"
+    >
+      {n}
+    </button>
+  );
+}
+
+// The ticket card (K18, K88): the number to keep, the tracking link and its QR code, the stages,
+// who to call, and a new report. It promises only what is done now: received and tracked.
+export function TicketCard({ card }: { readonly card: SentCardData }) {
+  const t = useText();
+  const { origin } = useDraftView();
+  const heading = useMountFocus<HTMLHeadingElement>(card.rating !== null);
+  const link = trackingPath(card.trackingToken);
+  return (
+    <>
+      {card.rating === null ? <ThankYou card={card} /> : null}
+      <section
+        aria-labelledby={headingIdOf(card)}
+        data-card-kind={card.kind}
+        data-card-id={card.cardId}
+        className="@container flex animate-settle flex-col gap-4 card-surface p-4 md:p-5"
+      >
+        <Icon name="circleCheck" className="size-8" />
+        <h2 id={headingIdOf(card)} ref={heading} tabIndex={-1} className="text-card font-bold text-balance">
+          {t("card.sent.heading")}
+        </h2>
+        <div className="flex flex-col gap-4 @tiles:flex-row @tiles:items-start @tiles:justify-between">
+          <div className="flex min-w-0 flex-col gap-2">
+            <span className="text-meta text-muted">{t("card.sent.number")}</span>
+            <p className="flex flex-wrap items-center gap-3">
+              <span data-testid="ticket-number" className="text-ticket font-bold whitespace-nowrap tabular-nums">
+                {card.ticketNumber}
+              </span>
+              <CopyNumber ticketNumber={card.ticketNumber} />
+            </p>
+          </div>
+          <figure className="flex flex-col items-start gap-1">
+            <QrCode text={`${origin}${link}`} label={t("card.sent.qr", { ticketNumber: card.ticketNumber })} />
+            <figcaption className="max-w-40 text-meta text-muted">{t("card.sent.qrHint")}</figcaption>
+          </figure>
+        </div>
+        <section aria-label={t("card.sent.stages")}>
+          <StageStrip stages={card.tracking.stages} />
+        </section>
+        <a href={link} className={buttonStyles({ variant: "primary", size: "main" })}>
+          {t("card.sent.track")}
+        </a>
+        <ContactBlock contact={card.tracking.contact} />
+        <Link to="/lapor/report" className={buttonStyles({ variant: "secondary", size: "main" })}>
+          {t("card.sent.new")}
+        </Link>
+      </section>
+    </>
+  );
+}

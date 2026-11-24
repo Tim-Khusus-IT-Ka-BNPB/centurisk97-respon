@@ -23,5 +23,12 @@
   "home.contact.address": "Graha BNPB, Jl. Pramuka Kav. 38, Jakarta Timur 13120",
   "home.hero.title": "Laporkan kejadian bencana di sekitar Anda",
   "home.hero.kicker": "Layanan pelaporan warga dan BPBD",
-  "home.hero.howTo": "Lihat cara melapor"
+  "home.hero.howTo": "Lihat cara melapor",
+  "home.reports.title": "Laporan saya",
+  "home.reports.lead": "Laporan yang terkirim dari nomor Anda di perangkat ini, yang terbaru di atas.",
+  "home.reports.empty": "Belum ada laporan terkirim dari perangkat ini.",
+  "home.reports.row": "{hazard}, dikirim {date} pukul {time} {zone}",
+  "home.reports.track": "Lacak laporan {ticketNumber}",
+  "home.reports.check": "Cek status laporan",
+  "home.reports.open": "Lacak laporan"
 }

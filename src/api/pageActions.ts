@@ -177,23 +177,27 @@ export async function draftPageAction(draftId: string, form: Form, api: ApiCall)
   const response =
     action === "photo"
       ? await api("POST", `${path}/photos`, photoForm(form))
-      : action === "send"
-        ? await api("POST", `${path}/send`, { revision, turnKey })
-        : await api("POST", `${path}/turns`, {
-            revision,
-            turnKey,
-            kind: field(form, "kind") || "answer",
-            cardId: field(form, "cardId") || null,
-            optionIds: form.getAll("optionIds").map(String),
-            values: Object.fromEntries(
-              [...form.keys()]
-                .filter((name) => name.startsWith("value."))
-                .map((name) => [name.slice(6), field(form, name)]),
-            ),
-            text: field(form, "text"),
-            groupId: field(form, "groupId") || null,
-            villageCode: field(form, "villageCode") || null,
-          });
+      : action === "rate"
+        ? await api("POST", `/reports/${encodeURIComponent(field(form, "value.ticketNumber"))}/rating`, {
+            rating: Number(field(form, "value.rating")),
+          })
+        : action === "send"
+          ? await api("POST", `${path}/send`, { revision, turnKey })
+          : await api("POST", `${path}/turns`, {
+              revision,
+              turnKey,
+              kind: field(form, "kind") || "answer",
+              cardId: field(form, "cardId") || null,
+              optionIds: form.getAll("optionIds").map(String),
+              values: Object.fromEntries(
+                [...form.keys()]
+                  .filter((name) => name.startsWith("value."))
+                  .map((name) => [name.slice(6), field(form, name)]),
+              ),
+              text: field(form, "text"),
+              groupId: field(form, "groupId") || null,
+              villageCode: field(form, "villageCode") || null,
+            });
   if (response.ok) return redirect(`/lapor/report/${draftId}`, response);
   return render("draft", form, response.status, (await response.json()) as ErrorEnvelope);
 }

@@ -3,7 +3,8 @@ import { ChoiceCard } from "./cards/ChoiceCards";
 import { NeighbourhoodCard, NumberFormCard, TextQuestionCard } from "./cards/FormCards";
 import { PhotosCardView } from "./cards/PhotoCards";
 import { PlaceCard, PlaceConfirmCard } from "./cards/PlaceCards";
-import { CancelledCard, ConfirmCard, SentCard, SummaryCardView } from "./cards/SummaryCards";
+import { CancelledCard, ConfirmCard, SummaryCardView } from "./cards/SummaryCards";
+import { TicketCard } from "./cards/TicketCards";
 import { ChronologyReviewCard, TimeCardView } from "./cards/TimeCards";
 
 // The live card, drawn from its kind.
@@ -35,7 +36,7 @@ export function CardView({ card }: { readonly card: Card }) {
     case "confirm":
       return <ConfirmCard card={card} />;
     case "sent":
-      return <SentCard card={card} />;
+      return <TicketCard card={card} />;
     default:
       return <CancelledCard card={card} />;
   }

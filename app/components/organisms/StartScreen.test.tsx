@@ -1,4 +1,4 @@
-import { fireEvent, screen, waitFor } from "@testing-library/react";
+import { fireEvent, screen, waitFor, within } from "@testing-library/react";
 import { describe, expect, test } from "vitest";
 import type { ErrorEnvelope } from "../../../src/contract/errors";
 import { SAMPLE_DRAFTS, SAMPLE_FIELD_ERROR, SAMPLE_ME } from "../../../src/testing/samples";
@@ -243,6 +243,25 @@ describe("the home", () => {
     );
     expect(screen.getByRole("link", { name: "021 2982 7793" }).getAttribute("href")).toBe("tel:02129827793");
     expect(screen.getByText(/Graha BNPB/).closest("a")).toBeNull();
+  });
+
+  test("Laporan saya lists each sent report with its stage and tracking link; Cek status laporan leads there", async () => {
+    renderPage(<HomeScreen me={SAMPLE_ME} />, { path: "/lapor" });
+    const list = await screen.findByRole("region", { name: "Laporan saya" });
+    expect(list.id).toBe("laporan-saya");
+    expect(screen.getByRole("link", { name: "Cek status laporan" }).getAttribute("href")).toBe("#laporan-saya");
+    expect(within(list).getByText("LA-231126-01")).toBeTruthy();
+    expect(within(list).getByText("Banjir, dikirim 23 November 2026 pukul 09.00 WIB")).toBeTruthy();
+    expect(within(list).getByText("Laporan diterima")).toBeTruthy();
+    expect(within(list).getByRole("link", { name: "Lacak laporan LA-231126-01" }).getAttribute("href")).toBe(
+      "/lapor/lacak#t=0123456789abcdef0123456789abcdef",
+    );
+  });
+
+  test("with nothing sent, Laporan saya says so and there is no Cek status laporan", async () => {
+    renderPage(<HomeScreen me={{ ...SAMPLE_ME, reports: [] }} />, { path: "/lapor" });
+    expect(await screen.findByText("Belum ada laporan terkirim dari perangkat ini.")).toBeTruthy();
+    expect(screen.queryByRole("link", { name: "Cek status laporan" })).toBeNull();
   });
 
   test("unreadable drafts are said, and reporting still works", async () => {

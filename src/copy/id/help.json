@@ -29,5 +29,15 @@
   "help.privacy.remove.q": "Bagaimana menghapus nomor saya dari perangkat ini?",
   "help.privacy.remove.a": "Saat memilih pelapor, ketuk Hapus dari perangkat ini di samping nomor Anda. Laporan yang belum selesai ikut dibatalkan. Laporan yang sudah terkirim tidak berubah.",
   "help.privacy.fullLink": "Baca kebijakan privasi lengkap",
-  "help.lead": "Jawaban singkat untuk pertanyaan yang sering muncul saat melapor."
+  "help.lead": "Jawaban singkat untuk pertanyaan yang sering muncul saat melapor.",
+  "help.group.education": "Edukasi siaga",
+  "help.education.lead": "Yang perlu dilakukan sebelum, saat, dan sesudah bencana.",
+  "help.education.tanda": "Tanda bahaya",
+  "help.education.sebelum": "Sebelum",
+  "help.education.saat": "Saat kejadian",
+  "help.education.sesudah": "Sesudah",
+  "help.education.butir": "Yang perlu diingat",
+  "help.education.sources": "Sumber",
+  "help.education.dataDate": "Topik per {dataDate}.",
+  "help.education.unavailable": "Topik edukasi siaga belum bisa dimuat. Bagian bantuan lain tetap bisa dibaca."
 }

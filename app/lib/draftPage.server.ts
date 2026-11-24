@@ -30,6 +30,7 @@ export async function loadDraftPage(
       envelope: load.envelope,
       turnKey: newKey(),
       searching: url.searchParams.has("q") || url.searchParams.has("area"),
+      origin: url.origin,
       texts: pickTexts(PAGE_TEXTS.draft, load.draft),
     },
   };

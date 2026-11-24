@@ -1,5 +1,21 @@
 {
   "state.notYetKnown": "belum didata",
   "state.confirmedUnknown": "tidak tahu",
-  "state.none": "tidak ada"
+  "state.none": "tidak ada",
+  "stage.short.new": "Diterima",
+  "stage.short.seen": "Dilihat",
+  "stage.short.under_review": "Ditelaah",
+  "stage.short.forwarded": "Diteruskan",
+  "stage.short.in_handling": "Ditindaklanjuti",
+  "stage.short.closed": "Selesai",
+  "stage.short.invalid": "Tidak dapat ditindaklanjuti",
+  "stage.long.new": "Laporan diterima",
+  "stage.long.seen": "Sudah dilihat petugas",
+  "stage.long.under_review": "Sedang ditelaah",
+  "stage.long.forwarded": "Diteruskan ke BPBD setempat",
+  "stage.long.in_handling": "Ditindaklanjuti",
+  "stage.long.closed": "Selesai ditangani",
+  "stage.long.invalid": "Tidak dapat ditindaklanjuti",
+  "stage.waiting": "Menunggu",
+  "stage.reachedAt": "{date}, pukul {time} {zone}"
 }

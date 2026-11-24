@@ -1,7 +1,8 @@
-import type { ReactNode } from "react";
+import { Fragment, type ReactNode } from "react";
 import { Link } from "react-router";
 import { ABOUT_POINTS, ABOUT_STEPS, HELP_GROUPS, PRIVACY_SECTIONS } from "../../lib/docs";
 import { useText } from "../../lib/text";
+import { localDateText } from "../../lib/time";
 import { buttonStyles } from "../atoms/Button";
 import { Icon } from "../atoms/Icon";
 import { Step } from "../molecules/Step";
@@ -41,30 +42,103 @@ function DocLayout({
   );
 }
 
-export function HelpScreen() {
+export type Education = {
+  readonly dataDate: string;
+  readonly topics: readonly {
+    readonly id: string;
+    readonly title: string;
+    readonly summary: string;
+    readonly lists: readonly { readonly kind: string; readonly items: readonly string[] }[];
+    readonly sources: readonly { readonly organisation: string; readonly title: string; readonly url: string }[];
+  }[];
+};
+
+// "Edukasi siaga" (K28): the preparedness topics as imported, each with its sources. Content from
+// the file, not the copy catalogue; when it cannot be read, the group says so.
+function EducationGroup({ education }: { readonly education: Education | null }) {
   const t = useText();
   return (
-    <DocLayout index={HELP_GROUPS.map(({ group }) => ({ id: `help-${group}`, label: t(`help.group.${group}`) }))}>
+    <section aria-labelledby="help-education" className="flex flex-col gap-2">
+      <h2 id="help-education" className="scroll-mt-6 text-page font-bold tracking-[-0.01em]">
+        {t("help.group.education")}
+      </h2>
+      <p className="text-muted">{t("help.education.lead")}</p>
+      {education === null ? <p>{t("help.education.unavailable")}</p> : null}
+      {education?.topics.map((topic) => (
+        <details key={topic.id} className="group card-surface">
+          <summary className="flex min-h-target-main cursor-pointer list-none [&::-webkit-details-marker]:hidden items-center justify-between gap-4 px-5 py-3 font-semibold">
+            {topic.title}
+            <Icon name="chevronRight" className="text-muted transition-transform group-open:rotate-90" />
+          </summary>
+          <div className="flex flex-col gap-4 border-t border-line px-5 py-4">
+            <p>{topic.summary}</p>
+            {topic.lists.map((list) => (
+              <div key={list.kind} className="flex flex-col gap-1">
+                <h3 className="font-bold">{t(`help.education.${list.kind}`)}</h3>
+                <ul className="flex list-disc flex-col gap-1 ps-5">
+                  {list.items.map((item) => (
+                    <li key={item}>{item}</li>
+                  ))}
+                </ul>
+              </div>
+            ))}
+            <div className="flex flex-col gap-1">
+              <h3 className="font-bold">{t("help.education.sources")}</h3>
+              <ul className="flex flex-col gap-1">
+                {topic.sources.map((source) => (
+                  <li key={source.url + source.title}>
+                    <a
+                      href={source.url}
+                      rel="noreferrer"
+                      className="underline underline-offset-4 [overflow-wrap:anywhere]"
+                    >
+                      {source.organisation}: {source.title}
+                    </a>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          </div>
+        </details>
+      ))}
+      {education ? (
+        <p className="text-meta text-muted">
+          {t("help.education.dataDate", { dataDate: localDateText(education.dataDate) })}
+        </p>
+      ) : null}
+    </section>
+  );
+}
+
+export function HelpScreen({ education }: { readonly education: Education | null }) {
+  const t = useText();
+  const index = HELP_GROUPS.map(({ group }) => ({ id: `help-${group}`, label: t(`help.group.${group}`) }));
+  index.splice(index.length - 1, 0, { id: "help-education", label: t("help.group.education") });
+  return (
+    <DocLayout index={index}>
       {HELP_GROUPS.map(({ group, items }) => (
-        <section key={group} aria-labelledby={`help-${group}`} className="flex flex-col gap-2">
-          <h2 id={`help-${group}`} className="scroll-mt-6 text-page font-bold tracking-[-0.01em]">
-            {t(`help.group.${group}`)}
-          </h2>
-          {items.map((item) => (
-            <details key={item} className="group card-surface">
-              <summary className="flex min-h-target-main cursor-pointer list-none [&::-webkit-details-marker]:hidden items-center justify-between gap-4 px-5 py-3 font-semibold">
-                {t(`help.${group}.${item}.q`)}
-                <Icon name="chevronRight" className="text-muted transition-transform group-open:rotate-90" />
-              </summary>
-              <p className="border-t border-line px-5 py-4 text-muted">{t(`help.${group}.${item}.a`)}</p>
-            </details>
-          ))}
-          {group === "privacy" ? (
-            <Link to="/lapor/privacy" className={buttonStyles({ variant: "quiet", className: "self-start" })}>
-              {t("help.privacy.fullLink")}
-            </Link>
-          ) : null}
-        </section>
+        <Fragment key={group}>
+          {group === "privacy" ? <EducationGroup education={education} /> : null}
+          <section aria-labelledby={`help-${group}`} className="flex flex-col gap-2">
+            <h2 id={`help-${group}`} className="scroll-mt-6 text-page font-bold tracking-[-0.01em]">
+              {t(`help.group.${group}`)}
+            </h2>
+            {items.map((item) => (
+              <details key={item} className="group card-surface">
+                <summary className="flex min-h-target-main cursor-pointer list-none [&::-webkit-details-marker]:hidden items-center justify-between gap-4 px-5 py-3 font-semibold">
+                  {t(`help.${group}.${item}.q`)}
+                  <Icon name="chevronRight" className="text-muted transition-transform group-open:rotate-90" />
+                </summary>
+                <p className="border-t border-line px-5 py-4 text-muted">{t(`help.${group}.${item}.a`)}</p>
+              </details>
+            ))}
+            {group === "privacy" ? (
+              <Link to="/lapor/privacy" className={buttonStyles({ variant: "quiet", className: "self-start" })}>
+                {t("help.privacy.fullLink")}
+              </Link>
+            ) : null}
+          </section>
+        </Fragment>
       ))}
     </DocLayout>
   );

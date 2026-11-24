@@ -207,20 +207,6 @@ describe("summary and the end of a draft", () => {
     expect(await screen.findByRole("button", { name: "Lanjutkan mengisi" })).toBeTruthy();
   });
 
-  test("a sent report shows its ticket by itself, and a new report starts again", async () => {
-    draw(SAMPLE_DRAFTS.sent);
-    const heading = await screen.findByRole("heading", { name: "Laporan terkirim" });
-    await waitFor(() => expect(document.activeElement).toBe(heading));
-    expect(screen.getByTestId("ticket-number").textContent).toBe("LA-231126-01");
-    expect(document.querySelector('[data-card-kind="sent"]')?.getAttribute("data-card-id")).toBe("c-3");
-    expect(screen.getByRole("link", { name: "Buat laporan baru" }).getAttribute("href")).toBe("/lapor/report");
-  });
-
-  test("a sent or cancelled card with no body still draws", async () => {
-    draw({ ...SAMPLE_DRAFTS.sent, card: { ...SAMPLE_DRAFTS.sent.card, promptKey: null } as Card });
-    await screen.findByTestId("ticket-number");
-  });
-
   test("a cancelled report says so", async () => {
     draw(SAMPLE_DRAFTS.cancelled);
     expect(await screen.findByText("Isi laporan sudah dihapus. Tidak ada yang terkirim.")).toBeTruthy();
