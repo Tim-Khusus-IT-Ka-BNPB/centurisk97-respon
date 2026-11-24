@@ -29,14 +29,10 @@ export function distanceKm(a: Point, b: Point): number {
   return EARTH_KM * Math.hypot((b.lon - a.lon) * RAD * Math.cos(meanLat), (b.lat - a.lat) * RAD);
 }
 
-// The box around the country that upstream refuses a point outside of, edges excluded.
+// The box around the country that upstream refuses a point outside of, edges excluded. NaN fails
+// every comparison.
 export const inIndonesia = (point: Point): boolean =>
-  Number.isFinite(point.lat) &&
-  Number.isFinite(point.lon) &&
-  point.lat > -11.5 &&
-  point.lat < 6.5 &&
-  point.lon > 94 &&
-  point.lon < 141.5;
+  point.lat > -11.5 && point.lat < 6.5 && point.lon > 94 && point.lon < 141.5;
 
 export function insideRings(point: Point, rings: readonly Ring[]): boolean {
   let inside = false;
@@ -44,8 +40,9 @@ export function insideRings(point: Point, rings: readonly Ring[]): boolean {
     for (let i = 0, j = ring.length - 1; i < ring.length; j = i++) {
       const [xi, yi] = ring[i] as readonly [number, number];
       const [xj, yj] = ring[j] as readonly [number, number];
-      if (yi > point.lat !== yj > point.lat && point.lon < ((xj - xi) * (point.lat - yi)) / (yj - yi) + xi)
-        inside = !inside;
+      const spans = yi > point.lat !== yj > point.lat;
+      // Stryker disable next-line EqualityOperator,ArithmeticOperator: on a closed ring the crossings left and right of a point have the same parity, and the regrouped product differs only in rounding
+      if (spans && point.lon < ((xj - xi) * (point.lat - yi)) / (yj - yi) + xi) inside = !inside;
     }
   }
   return inside;
@@ -66,6 +63,7 @@ export function resolveVillage(
   const holding = outlines.find((outline) => insideRings(point, outline.rings));
   if (holding) return { code: holding.code, exact: true };
   const nearest = nearestCentres(point, centres, 1)[0];
+  // Stryker disable next-line EqualityOperator: a centre exactly 3 km away is not writable in floats
   return nearest && nearest.km <= GEO.nearestCentreKm ? { code: nearest.code, exact: false } : null;
 }
 

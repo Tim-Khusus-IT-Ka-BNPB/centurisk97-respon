@@ -43,6 +43,7 @@ describe("shape files", () => {
   test("a file or feature that breaks the contract is refused with where it broke", () => {
     expect(checkShapeFiles([{ type: "Feature" }])).toEqual({ ok: false, problem: { kind: "shape" } });
     expect(checkShapeFiles([null])).toEqual({ ok: false, problem: { kind: "shape" } });
+    expect(checkShapeFiles([{ type: "Collection", features: [] }])).toEqual({ ok: false, problem: { kind: "shape" } });
     const broken = [
       feature("32.71", { type: "Polygon", coordinates: [ring] }),
       feature(3271, { type: "Polygon", coordinates: [ring] }),
@@ -86,6 +87,13 @@ describe("shape files", () => {
       feature("32.71.01.1001", { type: "MultiPolygon", coordinates: [] }),
       feature("32.71.01.1001", { type: "MultiPolygon", coordinates: "x" }),
       feature("32.71.01.1001", { type: "MultiPolygon", coordinates: [[ring], "x"] }),
+      feature("32.71.01.1001", { type: "Polygon", coordinates: [ring, ring.slice(0, 3)] }),
+      feature("32.71.01.1001", { type: "Polygon", coordinates: [[{ 0: 1, 1: 0 }, ...ring.slice(1)]] }),
+      feature("32.71.01.1001", { type: "Ring", coordinates: [[ring]] }),
+      feature("x32.71.01.1001", { type: "Polygon", coordinates: [ring] }),
+      feature("32.71.01.1001x", { type: "Polygon", coordinates: [ring] }),
+      feature(["32.71.01.1001"], { type: "Polygon", coordinates: [ring] }),
+      { type: "Feature", geometry: { type: "Polygon", coordinates: [ring] } },
       feature("32.71.01.1001", null),
       null,
     ];
@@ -97,5 +105,15 @@ describe("shape files", () => {
       problem: { kind: "duplicate", code: "32.71.01.1001" },
     });
     expect(checkShapeFiles([file(good, broken[0])])).toEqual({ ok: false, problem: { kind: "feature", index: 1 } });
+  });
+
+  test("a point on the edge of the world is a point", () => {
+    const edge = [
+      [180, 90],
+      [-180, -90],
+      [0, 0],
+      [180, 90],
+    ];
+    expect(checkShapeFiles([file(feature("32.71.01.1001", { type: "Polygon", coordinates: [edge] }))]).ok).toBe(true);
   });
 });

@@ -27,9 +27,9 @@ export type ShapeFileCheck =
 
 const VILLAGE_CODE = /^\d{2}\.\d{2}\.\d{2}\.\d{4}$/;
 
+// A short array has no number where one is missing.
 const isPair = (value: unknown): value is Pair =>
   Array.isArray(value) &&
-  value.length >= 2 &&
   Number.isFinite(value[0]) &&
   Number.isFinite(value[1]) &&
   Math.abs(value[0] as number) <= 180 &&

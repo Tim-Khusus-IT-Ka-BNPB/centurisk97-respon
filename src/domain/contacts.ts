@@ -41,8 +41,9 @@ export function checkContactFile(json: unknown): ContactFile | null {
   if (typeof file?.sumber !== "string" || typeof file.diperbarui !== "string" || !DATE.test(file.diperbarui))
     return null;
   const areas = file.wilayah;
-  if (typeof areas !== "object" || areas === null || Array.isArray(areas)) return null;
-  const entries = Object.entries(areas);
+  // Only a plain object: not null, not a list, not a function.
+  if (Object.getPrototypeOf(areas ?? 0) !== Object.prototype) return null;
+  const entries = Object.entries(areas as object);
   if (entries.length === 0 || !entries.every(([key, entry]) => AREA_KEY.test(key) && isEntry(entry))) return null;
   return file as ContactFile;
 }

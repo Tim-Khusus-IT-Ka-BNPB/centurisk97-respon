@@ -58,10 +58,6 @@ describe("photo checks", () => {
       kind: "refused",
       rule: "farFromDevice",
     });
-    expect(checkPhoto({ ...input(camera), bytes: new Uint8Array(PHOTO.maxBytes + 1).fill(0xff) })).toEqual({
-      kind: "refused",
-      rule: "format",
-    });
     expect(checkPhoto({ ...input(camera), bytes: new Uint8Array([0xff, 0xd8]) })).toEqual({
       kind: "refused",
       rule: "format",
@@ -137,5 +133,58 @@ describe("photo checks", () => {
       far: false,
     });
     expect(checkPhoto(input(camera))).toMatchObject({ far: false });
+  });
+
+  const jpegOf = (length: number) => {
+    const bytes = new Uint8Array(length);
+    bytes.set([0xff, 0xd8]);
+    return bytes;
+  };
+
+  test("a file of exactly the smallest or the largest size is kept; a byte either side is refused", () => {
+    for (const [length, kind] of [
+      [PHOTO.minBytes - 1, "refused"],
+      [PHOTO.minBytes, "kept"],
+      [PHOTO.maxBytes, "kept"],
+      [PHOTO.maxBytes + 1, "refused"],
+    ] as const)
+      expect(checkPhoto({ ...input(camera), bytes: jpegOf(length) }).kind, String(length)).toBe(kind);
+  });
+
+  test("a device reading on the edge of the box, of accuracy or of age is used; just past it is not", () => {
+    const badge = (device: DeviceFix) => (checkPhoto(input(camera, { device })) as { badge: string }).badge;
+    for (const [inside, outside] of [
+      [{ lat: -12 }, { lat: -12.001 }],
+      [{ lat: 7 }, { lat: 7.001 }],
+      [{ lon: 94 }, { lon: 93.999 }],
+      [{ lon: 142 }, { lon: 142.001 }],
+      [{ accuracyM: 0 }, { accuracyM: -0.001 }],
+      [{ accuracyM: 1000 }, { accuracyM: 1000.001 }],
+      [{ readAtMs: NOW - 10 * 60_000 }, { readAtMs: NOW - 10 * 60_000 - 1 }],
+    ]) {
+      expect(badge(fix(inside)), JSON.stringify(inside)).toBe("deviceGps");
+      expect(badge(fix(outside)), JSON.stringify(outside)).toBe("none");
+    }
+  });
+
+  test("a photo point near the device reading is no refusal; the device point is the one kept", () => {
+    const near = { lat: -6.21, lon: 106.8 };
+    expect(checkPhoto(input({ ...camera, point: near }, { device: fix() }))).toMatchObject({
+      kind: "kept",
+      badge: "deviceGps",
+      point: HERE,
+    });
+  });
+
+  test("a camera time exactly five minutes old is fresh, and exactly five minutes ahead is trusted", () => {
+    const at = (ms: number) =>
+      checkPhoto({ ...input(camera), exif: { camera: true, point: null, time: { localMs: ms, offsetMinutes: 0 } } });
+    expect(at(NOW - PHOTO.freshMs)).toMatchObject({ kind: "kept", timeSource: "photoData" });
+    expect(at(NOW - PHOTO.freshMs - 1)).toEqual({ kind: "refused", rule: "notFresh" });
+    expect(at(NOW + PHOTO.clockAheadMs)).toMatchObject({
+      timeSource: "photoData",
+      takenAtMs: NOW + PHOTO.clockAheadMs,
+    });
+    expect(at(NOW + PHOTO.clockAheadMs + 1)).toMatchObject({ timeSource: "upload" });
   });
 });

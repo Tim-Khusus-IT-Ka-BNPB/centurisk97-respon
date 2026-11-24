@@ -67,4 +67,36 @@ describe("contact file", () => {
       expect(checkContactFile(broken)).toBeNull();
     expect(checkContactFile({ sumber: "x", diperbarui: "2026-11-22", wilayah: { "11": good } })).not.toBeNull();
   });
+
+  test("each rule of the contract, on a file that only that rule refuses", () => {
+    const good = { nama: "Kab. A", bpbd: [item("0800-1108-0001", "kantor")] };
+    const at = (wilayah: object, extra: object = {}) =>
+      checkContactFile({ sumber: "uji", diperbarui: "2026-11-22", wilayah, ...extra });
+    expect(at({ "1108": good })).not.toBeNull();
+    expect(at({ "1108": { nama: "Kab. A", bpbd: [{ nomor: "0800-1108-0001", jenis: "wa" }] } })).not.toBeNull();
+    expect(
+      at({ "1108": { ...good, bpbd: [item("0800-1108-0001", "wa", { url: "https://bpbd.test/" })] } }),
+    ).not.toBeNull();
+    for (const [wilayah, extra] of [
+      [{ "1108": { ...good, bpbd: [null] } }, {}],
+      [{ "1108": { ...good, bpbd: [item("0800-1108-0001", "wa", { jenis: 1 })] } }, {}],
+      [{ "1108": { ...good, bpbd: [item("0800-1108-0001", "wa", { url: 5 })] } }, {}],
+      [{ "1108": { ...good, bpbd: [...good.bpbd, null] } }, {}],
+      [{ "1108": good, x: good }, {}],
+      [{ "111": good }, {}],
+      [{ x11: good }, {}],
+      [{ "1108": good }, { diperbarui: ["2026-11-22"] }],
+      [{ "1108": good }, { diperbarui: "2026-11-22x" }],
+      [{ "1108": good }, { diperbarui: "x2026-11-22" }],
+      [Object.assign(() => undefined, { "1108": good }), {}],
+    ] as const)
+      expect(at(wilayah, extra), JSON.stringify([wilayah, extra])).toBeNull();
+  });
+
+  test("six digits is a number to show; five with a dash in them is not", () => {
+    const one = (nomor: string) =>
+      pickContact(file({ "1108": { nama: "Kab. A", bpbd: [item(nomor, "wa")] } }), "11.08.01.2001");
+    expect(one("123456")).toEqual({ level: "regency", phone: "123456", kind: "wa" });
+    expect(one("12-345")).toEqual({ level: "national" });
+  });
 });

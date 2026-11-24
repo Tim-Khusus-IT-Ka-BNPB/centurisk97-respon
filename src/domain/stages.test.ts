@@ -24,6 +24,13 @@ describe("stages", () => {
       ["in_handling", null],
       ["closed", null],
     ]);
+    // History read out of order: the earliest row of a status is its time.
+    const late = stagesOf([
+      { toStatus: "seen", atMs: 30 },
+      { toStatus: "new", atMs: 10 },
+      { toStatus: "seen", atMs: 20 },
+    ]);
+    expect(late[1]).toEqual({ status: "seen", reachedAtMs: 20 });
     expect(stagesOf([])[0]).toEqual({ status: "new", reachedAtMs: null });
   });
 });

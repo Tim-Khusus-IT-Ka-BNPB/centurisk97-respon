@@ -55,14 +55,8 @@ export type PhotoInput = {
   readonly fallbackOffsetMinutes: number;
 };
 
-// Upstream's looser box for a point sent in, edges included.
-const plausible = (point: Point) =>
-  Number.isFinite(point.lat) &&
-  Number.isFinite(point.lon) &&
-  point.lat >= -12 &&
-  point.lat <= 7 &&
-  point.lon >= 94 &&
-  point.lon <= 142;
+// Upstream's looser box for a point sent in, edges included. NaN fails every comparison.
+const plausible = (point: Point) => point.lat >= -12 && point.lat <= 7 && point.lon >= 94 && point.lon <= 142;
 
 // A device reading counts only when it is a point in the box, 1 km or better, read in the last 10 minutes.
 function usableFix(device: DeviceFix | null, nowMs: number): DeviceFix | null {
@@ -83,12 +77,13 @@ export function checkPhoto(input: PhotoInput): PhotoCheck {
   if (cameraTime !== null && cameraTime < nowMs - PHOTO.freshMs) return { kind: "refused", rule: "notFresh" };
   const fix = usableFix(input.device, nowMs);
   const photoPoint = exif.point && plausible(exif.point) ? exif.point : null;
+  // Stryker disable next-line EqualityOperator: two points exactly 5 km apart are not writable in floats
   if (fix && photoPoint && distanceKm(fix, photoPoint) > GEO.photoFromDeviceKm)
     return { kind: "refused", rule: "farFromDevice" };
   if (!isJpeg(input.bytes) || input.bytes.length < PHOTO.minBytes || input.bytes.length > PHOTO.maxBytes)
     return { kind: "refused", rule: "format" };
   if (input.count >= PHOTO.maxPerDraft) return { kind: "refused", rule: "tooMany" };
-  const trustedTime = cameraTime !== null && cameraTime <= nowMs + PHOTO.clockAheadMs ? cameraTime : null;
+  const trustedTime = (cameraTime ?? Number.POSITIVE_INFINITY) <= nowMs + PHOTO.clockAheadMs ? cameraTime : null;
   const point = fix ? { lat: fix.lat, lon: fix.lon } : photoPoint;
   const time =
     trustedTime !== null
@@ -102,6 +97,7 @@ export function checkPhoto(input: PhotoInput): PhotoCheck {
     point,
     accuracyM: fix ? fix.accuracyM : null,
     ...time,
+    // Stryker disable next-line EqualityOperator: two points exactly 10 km apart are not writable in floats
     far: point !== null && input.placePoint !== null && distanceKm(point, input.placePoint) > GEO.photoFarFromPlaceKm,
   };
 }

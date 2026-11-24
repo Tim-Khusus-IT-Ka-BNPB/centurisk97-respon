@@ -27,6 +27,12 @@ describe("education file", () => {
       file([{ ...topic, sumber: [null] }]),
       file([topic, topic]),
       file([null]),
+      file([{ ...topic, sebelum: ["Siapkan tas", ""] }]),
+      file([{ ...topic, sumber: [source, null] }]),
+      file([{ ...topic, sumber: [{ ...source, url: "ftp://https://bnpb.go.id/" }] }]),
+      file([topic, null]),
+      file([topic], { dibuat: "x2026-11-19" }),
+      file([topic], { dibuat: "2026-11-19x" }),
     ])
       expect(checkEducationFile(broken)).toBeNull();
   });

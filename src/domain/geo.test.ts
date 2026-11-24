@@ -21,6 +21,8 @@ describe("geo", () => {
   test("distance is upstream's equirectangular kilometres", () => {
     expect(distanceKm({ lat: 0, lon: 0 }, { lat: 0, lon: 1 })).toBeCloseTo(111.19, 1);
     expect(distanceKm({ lat: -6.2, lon: 106.8 }, { lat: -6.2, lon: 106.8 })).toBe(0);
+    // Far from the equator the mean latitude shrinks the east-west part.
+    expect(distanceKm({ lat: 60, lon: 0 }, { lat: 62, lon: 1 })).toBeCloseTo(228.83, 1);
   });
 
   test("Indonesia's box excludes its edges and anything not a number", () => {
@@ -38,6 +40,40 @@ describe("geo", () => {
     expect(insideRings({ lat: -6.198, lon: 106.802 }, [square, hole])).toBe(true);
     expect(insideRings({ lat: -6.19, lon: 106.81 }, [square, hole])).toBe(false);
     expect(insideRings({ lat: -6.1, lon: 106.81 }, [square])).toBe(false);
+  });
+
+  test("slanted edges and points level with a vertex are read on the right side", () => {
+    // A diamond around lon 10, lat 5, written [lon, lat].
+    const diamond: Ring = [
+      [10, 6],
+      [11, 5],
+      [10, 4],
+      [9, 5],
+      [10, 6],
+    ];
+    const at = (dLon: number, dLat: number) => insideRings({ lat: 5 + dLat, lon: 10 + dLon }, [diamond]);
+    for (const [dLon, dLat] of [
+      [0.5, 0],
+      [-0.5, 0],
+      [0.4, 0.5],
+      [-0.4, 0.5],
+      [0.4, -0.5],
+      [-0.4, -0.5],
+    ] as const)
+      expect(at(dLon, dLat), `${dLon},${dLat}`).toBe(true);
+    for (const [dLon, dLat] of [
+      [1.5, 0],
+      [-1.5, 0],
+      [0.6, 0.5],
+      [-0.6, 0.5],
+      [0.6, -0.5],
+      [-0.6, -0.5],
+      [0.5, 1],
+      [-0.5, 1],
+      [0.5, -1],
+      [-0.5, -1],
+    ] as const)
+      expect(at(dLon, dLat), `${dLon},${dLat}`).toBe(false);
   });
 
   test("the outline holding the point wins; else the nearest centre within 3 km; else none", () => {

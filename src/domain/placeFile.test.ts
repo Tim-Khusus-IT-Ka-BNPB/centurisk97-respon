@@ -36,6 +36,7 @@ describe("place file contract", () => {
     ["a regency map that is a list", file({ kab: ["Aceh Utara"] })],
     ["an empty regency name", file({ kab: { "11.08": "" } })],
     ["a regency name that is not text", file({ kab: { "11.08": 5 } })],
+    ["one bad regency name among good ones", file({ kab: { ...file().kab, "11.09": "" } })],
     ["no rows", file({ baris: {} })],
   ])("%s is refused as malformed", (_label, json) => {
     expect(checkPlaceFile(json, PROVINCES, false)).toEqual({ ok: false, problem: { kind: "shape" } });
