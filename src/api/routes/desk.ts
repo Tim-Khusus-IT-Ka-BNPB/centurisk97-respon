@@ -2,12 +2,20 @@ import { createRoute, z } from "@hono/zod-openapi";
 import { deleteCookie, setCookie } from "hono/cookie";
 import { isSeededStaffCode, SESSION_COOKIE } from "../../adapters/identity/seeded";
 import { hazardTypeSchema } from "../../contract/common";
-import { deskQueueSchema, deskReportSchema } from "../../contract/desk";
+import { deskGallerySchema, deskMapSchema, deskQueueSchema, deskReportSchema } from "../../contract/desk";
 import { ticketStatusSchema } from "../../contract/tracking";
 import { DESK_PERIODS } from "../../domain/deskQueue";
 import { isTicketNumber } from "../../domain/ticketNumber";
 import type { StaffPrincipal } from "../../ports/identity";
-import { type DeskAnswer, deskQueue, readDeskReport, viewDeskReport } from "../../services/desk";
+import {
+  type DeskAnswer,
+  deskGallery,
+  deskMap,
+  deskPhotoFile,
+  deskQueue,
+  readDeskReport,
+  viewDeskReport,
+} from "../../services/desk";
 import { checkLimits } from "../../services/limits";
 import type { ApiContext } from "../context";
 import { refuse } from "../envelope";
@@ -24,6 +32,21 @@ const queueQuery = z.object({
 });
 
 const ticketParams = z.object({ ticketNumber: z.string().max(20) });
+
+// The map and the gallery share the queue's filters, with no paging.
+const filterQuery = queueQuery.omit({ page: true });
+
+const ticketRefused = (c: ApiContext) =>
+  refuse(c, 422, "request.invalidFields", {
+    fields: fieldErrors([{ fieldId: "ticket", rule: "ticketNumber.format", params: {} }]),
+  });
+
+// The searched ticket number in capitals, null for none, or "invalid" for text that is not one.
+function searchedTicket(text: string | undefined): string | null | "invalid" {
+  const ticket = text?.trim().toUpperCase() ?? "";
+  if (ticket === "") return null;
+  return isTicketNumber(ticket) ? ticket : "invalid";
+}
 
 function answered<T>(c: ApiContext, answer: DeskAnswer<T>): Response {
   if (answer.kind === "ok") return c.json(answer.body as object, 200);
@@ -49,16 +72,13 @@ export function addDeskRoutes(api: Api): void {
     }),
     async (c) => {
       const query = c.req.valid("query");
-      const ticket = query.ticket?.trim().toUpperCase() ?? "";
-      if (ticket !== "" && !isTicketNumber(ticket))
-        return refuse(c, 422, "request.invalidFields", {
-          fields: fieldErrors([{ fieldId: "ticket", rule: "ticketNumber.format", params: {} }]),
-        });
+      const ticketNumber = searchedTicket(query.ticket);
+      if (ticketNumber === "invalid") return ticketRefused(c);
       const answer = await deskQueue(c.env, staffOf(c), {
         status: query.status ?? null,
         hazardType: query.hazardType ?? null,
         period: query.period,
-        ticketNumber: ticket === "" ? null : ticket,
+        ticketNumber,
         page: query.page,
       });
       c.header("x-robots-tag", "noindex");
@@ -93,6 +113,64 @@ export function addDeskRoutes(api: Api): void {
     async (c) => {
       c.header("x-robots-tag", "noindex");
       return answered(c, await viewDeskReport(c.env, staffOf(c), c.req.valid("param").ticketNumber));
+    },
+  );
+
+  for (const [path, schema, read, description] of [
+    ["/desk/map", deskMapSchema, deskMap, "The filtered reports as points, newest first"],
+    ["/desk/photos", deskGallerySchema, deskGallery, "Photos of the filtered reports, newest first"],
+  ] as const)
+    addRoute(
+      api,
+      "staff",
+      createRoute({
+        method: "get",
+        path,
+        request: { query: filterQuery },
+        responses: {
+          200: jsonResponse(description, schema),
+          422: refusal("The ticket number searched is not one, on field ticket"),
+        },
+      }),
+      async (c) => {
+        const query = c.req.valid("query");
+        const ticketNumber = searchedTicket(query.ticket);
+        if (ticketNumber === "invalid") return ticketRefused(c);
+        c.header("x-robots-tag", "noindex");
+        return answered<object>(
+          c,
+          await read(c.env, staffOf(c), {
+            status: query.status ?? null,
+            hazardType: query.hazardType ?? null,
+            period: query.period,
+            ticketNumber,
+          }),
+        );
+      },
+    );
+
+  addRoute(
+    api,
+    "staff",
+    createRoute({
+      method: "get",
+      path: "/desk/photos/{photoId}",
+      request: { params: z.object({ photoId: z.uuid() }) },
+      responses: {
+        200: {
+          description: "A sent report's photo, metadata stripped",
+          content: { "image/jpeg": { schema: z.string() } },
+        },
+      },
+    }),
+    async (c) => {
+      const file = await deskPhotoFile(c.env, staffOf(c), c.req.valid("param").photoId);
+      if (file.kind !== "file") return answered(c, file);
+      return c.body(new Uint8Array(file.bytes), 200, {
+        "content-type": "image/jpeg",
+        "x-content-type-options": "nosniff",
+        "x-robots-tag": "noindex",
+      });
     },
   );
 

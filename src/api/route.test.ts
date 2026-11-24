@@ -11,6 +11,9 @@ describe("route list", () => {
     expect(routes).toEqual([
       { key: "DELETE /api/lapor/desk/session", policy: "public" },
       { key: "DELETE /api/lapor/me/profiles/:profileId", policy: "reporter" },
+      { key: "GET /api/lapor/desk/map", policy: "staff" },
+      { key: "GET /api/lapor/desk/photos", policy: "staff" },
+      { key: "GET /api/lapor/desk/photos/:photoId", policy: "staff" },
       { key: "GET /api/lapor/desk/reports", policy: "staff" },
       { key: "GET /api/lapor/desk/reports/:ticketNumber", policy: "staff" },
       { key: "GET /api/lapor/drafts/:draftId", policy: "reporter" },
@@ -261,6 +264,9 @@ describe("response schemas and the OpenAPI document", () => {
     const paths = Object.keys(document.paths ?? {}).sort();
     expect(paths).toEqual([
       "/api/lapor/consent",
+      "/api/lapor/desk/map",
+      "/api/lapor/desk/photos",
+      "/api/lapor/desk/photos/{photoId}",
       "/api/lapor/desk/reports",
       "/api/lapor/desk/reports/{ticketNumber}",
       "/api/lapor/desk/reports/{ticketNumber}/view",

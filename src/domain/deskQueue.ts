@@ -15,3 +15,7 @@ export function periodStart(period: DeskPeriod, nowMs: number): number | null {
 }
 
 export const DESK_PAGE_SIZE = 50;
+
+// The map draws at most this many points, the gallery this many photos, newest first.
+export const MAP_POINTS = 2000;
+export const GALLERY_PHOTOS = 200;

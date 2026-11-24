@@ -45,8 +45,9 @@ const SELECT = sql`select r.ticket_number, t.status, r.hazard_type, r.village_co
   join ticket t on t.report_id = r.id
   join report_version v on v.report_id = r.id and v.version = 1`;
 
-function where(filters: QueueFilters): Query {
-  const parts: Query[] = [];
+// The filters as a where clause, with any further conditions a query needs.
+function where(filters: QueueFilters, ...more: Query[]): Query {
+  const parts: Query[] = [...more];
   if (filters.status !== null) parts.push(sql`t.status = ${filters.status}`);
   if (filters.hazardType !== null) parts.push(sql`r.hazard_type = ${filters.hazardType}`);
   if (filters.sentFromMs !== null) parts.push(sql`r.sent_at >= ${new Date(filters.sentFromMs)}`);
@@ -161,4 +162,114 @@ export async function markViewed(db: Database, staff: StaffPrincipal, ticketNumb
       select ${ticketNumber}, 'new', 'seen', 'staff', ${staff.staffId}, ${staff.label}, ${at} where changes() = 1`,
     actionRow(staff, ticketNumber, "view", at),
   ]);
+}
+
+export type MapPoint = {
+  readonly ticketNumber: string;
+  readonly status: TicketStatus;
+  readonly hazardType: string;
+  readonly villageName: string;
+  readonly precision: "gpsPoint" | "estimate" | "villageLevel";
+  readonly lat: number;
+  readonly lon: number;
+};
+
+// Every filtered report as a point, newest first: its GPS reading, or for a village picked by
+// search the centre of that village's outline in the active place snapshot. A report whose
+// village has no outline there has no point to draw and is left out.
+export async function mapPoints(db: Database, filters: QueueFilters, limit: number): Promise<MapPoint[]> {
+  const found = await rows<{
+    ticket_number: string;
+    status: TicketStatus;
+    hazard_type: string;
+    village_name: string;
+    precision: MapPoint["precision"];
+    lat: number;
+    lon: number;
+  }>(
+    db,
+    sql`select r.ticket_number, t.status, r.hazard_type,
+        json_extract(v.fields, '$.place.value.villageName') as village_name,
+        json_extract(v.fields, '$.place.value.precision') as precision,
+        coalesce(json_extract(v.fields, '$.place.value.point.lat'), s.centre_lat) as lat,
+        coalesce(json_extract(v.fields, '$.place.value.point.lon'), s.centre_lon) as lon
+      from report r
+      join ticket t on t.report_id = r.id
+      join report_version v on v.report_id = r.id and v.version = 1
+      left join place_snapshot p on p.active = 1
+      left join place_village_shape s on s.snapshot_id = p.id and s.code = r.village_code
+      ${where(filters, sql`coalesce(json_extract(v.fields, '$.place.value.point.lat'), s.centre_lat) is not null`)}
+      order by r.sent_at desc, r.ticket_number desc limit ${limit}`,
+  );
+  return found.map((one) => ({
+    ticketNumber: one.ticket_number,
+    status: one.status,
+    hazardType: one.hazard_type,
+    villageName: one.village_name,
+    precision: one.precision,
+    lat: one.lat,
+    lon: one.lon,
+  }));
+}
+
+export type DeskPhoto = {
+  readonly id: string;
+  readonly ticketNumber: string;
+  readonly storeKey: string;
+  readonly villageCode: string;
+  readonly badge: "deviceGps" | "photoData" | "none";
+  readonly far: boolean;
+  readonly takenAt: Date;
+  readonly receivedAt: Date;
+};
+
+type PhotoRow = {
+  id: string;
+  ticket_number: string;
+  store_key: string;
+  village_code: string;
+  badge: DeskPhoto["badge"];
+  far: number;
+  taken_at: string;
+  received_at: string;
+};
+
+const PHOTO_SELECT = sql`select p.id, r.ticket_number, p.store_key, r.village_code, p.badge, p.far, p.taken_at, p.received_at
+  from draft_photo p
+  join report r on r.draft_id = p.draft_id
+  join ticket t on t.report_id = r.id`;
+
+const deskPhoto = (one: PhotoRow): DeskPhoto => ({
+  id: one.id,
+  ticketNumber: one.ticket_number,
+  storeKey: one.store_key,
+  villageCode: one.village_code,
+  badge: one.badge,
+  far: one.far === 1,
+  // Every kept photo has a time: the camera's, the device reading's, or its upload.
+  takenAt: new Date(one.taken_at),
+  receivedAt: new Date(one.received_at),
+});
+
+// Photos of the filtered sent reports, newest first.
+export async function galleryPhotos(db: Database, filters: QueueFilters, limit: number): Promise<DeskPhoto[]> {
+  const found = await rows<PhotoRow>(
+    db,
+    sql`${PHOTO_SELECT}${where(filters)} order by p.received_at desc, p.id limit ${limit}`,
+  );
+  return found.map(deskPhoto);
+}
+
+export async function reportPhotos(db: Database, ticketNumber: string): Promise<DeskPhoto[]> {
+  const found = await rows<PhotoRow>(
+    db,
+    sql`${PHOTO_SELECT} where r.ticket_number = ${ticketNumber} order by p.received_at, p.id`,
+  );
+  return found.map(deskPhoto);
+}
+
+// A photo of a sent report; a draft's photo is not on the desk.
+export async function sentPhoto(db: Database, photoId: string): Promise<DeskPhoto | null> {
+  const found = await row<PhotoRow>(db, sql`${PHOTO_SELECT} where p.id = ${photoId}`);
+  return found === null ? null : deskPhoto(found);
 }

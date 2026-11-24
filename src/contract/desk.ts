@@ -38,6 +38,44 @@ const deskGroupSchema = summaryGroupSchema.extend({
   rows: z.array(summaryGroupSchema.shape.rows.element.extend({ quote: z.string().nullable() })),
 });
 
+// A reporter's photo on the desk, with how its place is known (the reporter flow's badges).
+const deskPhotoSchema = z.object({
+  photoId: z.string(),
+  ticketNumber: z.string(),
+  badge: z.enum(["deviceGps", "photoData", "none"]),
+  far: z.boolean(),
+  takenAt: timeSchema,
+  receivedAt: timeSchema,
+});
+
+export const deskMapSchema = z.object({
+  account: accountSchema,
+  points: z.array(
+    z.object({
+      ticketNumber: z.string(),
+      status: ticketStatusSchema,
+      hazardType: hazardTypeSchema,
+      villageName: z.string(),
+      // A village picked by search sits at the village's centre, never at a made-up point.
+      precision: z.enum(["gpsPoint", "estimate", "villageLevel"]),
+      lat: z.number(),
+      lon: z.number(),
+    }),
+  ),
+  // More reports match than the map draws; the newest are drawn.
+  cut: z.boolean(),
+});
+
+export type DeskMap = z.infer<typeof deskMapSchema>;
+
+export const deskGallerySchema = z.object({
+  account: accountSchema,
+  photos: z.array(deskPhotoSchema),
+  cut: z.boolean(),
+});
+
+export type DeskGallery = z.infer<typeof deskGallerySchema>;
+
 export const deskReportSchema = queueItemSchema.extend({
   account: accountSchema,
   reporter: z.object({
@@ -52,6 +90,7 @@ export const deskReportSchema = queueItemSchema.extend({
     z.object({ status: ticketStatusSchema, at: timeSchema, actor: z.string().nullable(), note: z.string().nullable() }),
   ),
   reporterWords: z.array(z.object({ text: z.string(), at: timeSchema })),
+  photos: z.array(deskPhotoSchema),
 });
 
 export type DeskReport = z.infer<typeof deskReportSchema>;

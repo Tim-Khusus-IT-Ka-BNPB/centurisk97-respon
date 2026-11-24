@@ -1,6 +1,17 @@
-import { deskReport, markViewed, type QueueFilters, type QueueRow, queuePage } from "../adapters/d1/desk";
-import type { DeskQueue, DeskReport } from "../contract/desk";
-import { DESK_PAGE_SIZE, type DeskPeriod, periodStart } from "../domain/deskQueue";
+import {
+  type DeskPhoto,
+  deskReport,
+  galleryPhotos,
+  mapPoints,
+  markViewed,
+  type QueueFilters,
+  type QueueRow,
+  queuePage,
+  reportPhotos,
+  sentPhoto,
+} from "../adapters/d1/desk";
+import type { DeskGallery, DeskMap, DeskQueue, DeskReport } from "../contract/desk";
+import { DESK_PAGE_SIZE, type DeskPeriod, GALLERY_PHOTOS, MAP_POINTS, periodStart } from "../domain/deskQueue";
 import { type DeskCapability, mayUse } from "../domain/deskRights";
 import type { EventTimeValue, FieldStates, PlaceValue } from "../domain/fieldState";
 import type { TicketStatus } from "../domain/stages";
@@ -59,6 +70,80 @@ export type QueueQuery = {
   readonly page: number;
 };
 
+const filtersOf = (bindings: ServiceBindings, query: Omit<QueueQuery, "page">): QueueFilters => ({
+  status: query.status,
+  hazardType: query.hazardType,
+  sentFromMs: periodStart(query.period, bindings.clock.now()),
+  ticketNumber: query.ticketNumber,
+});
+
+const photoView = (photo: DeskPhoto): DeskGallery["photos"][number] => {
+  const zone = draftZone(photo.villageCode);
+  return {
+    photoId: photo.id,
+    ticketNumber: photo.ticketNumber,
+    badge: photo.badge,
+    far: photo.far,
+    takenAt: at(photo.takenAt, zone),
+    receivedAt: at(photo.receivedAt, zone),
+  };
+};
+
+// The filtered reports as points; one more than drawn is read to tell whether some were left out.
+export async function deskMap(
+  bindings: ServiceBindings,
+  staff: StaffPrincipal,
+  query: Omit<QueueQuery, "page">,
+): Promise<DeskAnswer<DeskMap>> {
+  const refused = await admitted(bindings, staff, "readQueue", "desk.read");
+  if (refused) return refused;
+  const found = await mapPoints(bindings.db, filtersOf(bindings, query), MAP_POINTS + 1);
+  return {
+    kind: "ok",
+    body: {
+      account: { label: staff.label },
+      points: found.slice(0, MAP_POINTS).map((point) => ({
+        ...point,
+        hazardType: point.hazardType as DeskMap["points"][number]["hazardType"],
+      })),
+      cut: found.length > MAP_POINTS,
+    },
+  };
+}
+
+export async function deskGallery(
+  bindings: ServiceBindings,
+  staff: StaffPrincipal,
+  query: Omit<QueueQuery, "page">,
+): Promise<DeskAnswer<DeskGallery>> {
+  const refused = await admitted(bindings, staff, "readQueue", "desk.read");
+  if (refused) return refused;
+  const found = await galleryPhotos(bindings.db, filtersOf(bindings, query), GALLERY_PHOTOS + 1);
+  return {
+    kind: "ok",
+    body: {
+      account: { label: staff.label },
+      photos: found.slice(0, GALLERY_PHOTOS).map(photoView),
+      cut: found.length > GALLERY_PHOTOS,
+    },
+  };
+}
+
+export type DeskPhotoFile = { readonly kind: "file"; readonly bytes: Uint8Array } | Refused;
+
+// A sent report's photo for staff. A draft's photo, or a file gone from the store, is not found.
+export async function deskPhotoFile(
+  bindings: ServiceBindings,
+  staff: StaffPrincipal,
+  photoId: string,
+): Promise<DeskPhotoFile> {
+  const refused = await admitted(bindings, staff, "readReport", "desk.read");
+  if (refused) return refused;
+  const photo = await sentPhoto(bindings.db, photoId);
+  const bytes = photo === null ? null : await bindings.photos.get(photo.storeKey);
+  return bytes === null ? { kind: "notFound" } : { kind: "file", bytes };
+}
+
 export async function deskQueue(
   bindings: ServiceBindings,
   staff: StaffPrincipal,
@@ -66,12 +151,7 @@ export async function deskQueue(
 ): Promise<DeskAnswer<DeskQueue>> {
   const refused = await admitted(bindings, staff, "readQueue", "desk.read");
   if (refused) return refused;
-  const filters: QueueFilters = {
-    status: query.status,
-    hazardType: query.hazardType,
-    sentFromMs: periodStart(query.period, bindings.clock.now()),
-    ticketNumber: query.ticketNumber,
-  };
+  const filters = filtersOf(bindings, query);
   const found = await queuePage(bindings.db, filters, (query.page - 1) * DESK_PAGE_SIZE, DESK_PAGE_SIZE);
   return {
     kind: "ok",
@@ -114,6 +194,7 @@ async function reportBody(bindings: ServiceBindings, staff: StaffPrincipal, tick
       note: one.note,
     })),
     reporterWords: found.reporterWords.map((one) => ({ text: one.text, at: at(one.atMs, zone) })),
+    photos: (await reportPhotos(bindings.db, ticketNumber)).map(photoView),
   };
   return body;
 }
