@@ -6,6 +6,7 @@ import {
   noSidewaysScroll,
   ownAddress,
   paced,
+  rateThenTicket,
   startReport,
   syntheticNumber,
 } from "./support.ts";
@@ -46,7 +47,7 @@ test("a new reporter walks from the form to a sent report with the model off", a
   await nextCard(page, cardId);
 
   await expect(liveCard(page)).toHaveAttribute("data-card-kind", "sent");
-  await expect(page.getByRole("heading", { name: "Laporan terkirim" })).toBeVisible();
+  await rateThenTicket(page);
   await expect(page.getByTestId("ticket-number")).toHaveText(/^LA-\d{6}-\d{2,}$/);
   await expect(page.getByLabel("Pesan")).toHaveCount(0);
   await noSidewaysScroll(page);

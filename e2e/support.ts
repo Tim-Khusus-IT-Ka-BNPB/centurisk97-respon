@@ -71,3 +71,14 @@ export async function answerCard(card: Locator, kind: string): Promise<void> {
     }
   }
 }
+
+// Right after "Kirim": the thank-you screen, a tap, a rating, then the ticket card.
+export async function rateThenTicket(page: Page, rating = 4): Promise<void> {
+  const thanks = page.getByRole("alertdialog");
+  await expect(thanks.getByRole("heading", { name: /^Terima kasih, / })).toBeVisible();
+  await thanks.getByRole("link").click();
+  await expect(thanks.getByRole("heading", { name: "Bagaimana pengalaman melapor Anda?" })).toBeVisible();
+  await thanks.getByRole("button", { name: `Nilai ${rating} dari 5` }).click();
+  await expect(page.getByRole("alertdialog")).toHaveCount(0);
+  await expect(page.getByRole("heading", { name: "Terima kasih, laporan Anda sudah kami terima" })).toBeVisible();
+}
