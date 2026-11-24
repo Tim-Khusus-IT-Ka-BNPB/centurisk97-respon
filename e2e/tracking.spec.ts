@@ -55,7 +55,8 @@ test("a sent report thanks, asks a rating, shows its ticket, and its link opens 
   await expect(ticket.getByRole("img", { name: `Kode QR lacak laporan ${ticketNumber}` })).toBeVisible();
   await expect(ticket.getByText("Hubungi BPBD setempat")).toBeVisible();
   await expect(ticket.getByRole("link", { name: /^Telepon / })).toHaveAttribute("href", /^tel:\d+$/);
-  await expect(ticket.getByText(/PDF|Word|menghubungi Anda|diteruskan/i)).toHaveCount(0);
+  await expect(ticket.getByText("Petugas kami akan menghubungi Anda bila perlu keterangan tambahan.")).toBeVisible();
+  await expect(ticket.getByText(/PDF|Word|diteruskan/i)).toHaveCount(0);
   await noSidewaysScroll(page);
   await ticket.screenshot({ path: test.info().outputPath("ticket.png") });
   const link = (await ticket.getByRole("link", { name: "Lacak laporan" }).getAttribute("href")) as string;

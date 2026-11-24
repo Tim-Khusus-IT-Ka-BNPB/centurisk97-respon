@@ -23,5 +23,6 @@
   "tracking.updated": "Halaman ini diperbarui sendiri tiap 30 detik.",
   "tracking.back": "Kembali ke halaman awal",
   "tracking.footer": "Halaman ini hanya bisa dibuka lewat tautan yang dikirim kepada pelapor. Jangan bagikan ke orang lain.",
-  "tracking.noscript": "Halaman lacak perlu JavaScript untuk membaca tautan. Buka tautan ini di peramban dengan JavaScript menyala, atau buka Laporan saya di halaman awal dari perangkat yang dipakai melapor."
+  "tracking.noscript": "Halaman lacak perlu JavaScript untuk membaca tautan. Buka tautan ini di peramban dengan JavaScript menyala, atau buka Laporan saya di halaman awal dari perangkat yang dipakai melapor.",
+  "tracking.contactPromise": "Petugas akan menghubungi pelapor bila perlu keterangan tambahan."
 }

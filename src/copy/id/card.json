@@ -83,7 +83,7 @@
   "card.cancelled.new": "Buat laporan baru",
   "card.sent.title": "Laporan terkirim",
   "card.sent.ticket": "Nomor tiket: {ticketNumber}",
-  "card.sent.body": "Laporan Anda sudah kami terima. Simpan nomor tiket ini.",
+  "card.sent.body": "Laporan Anda sudah kami terima. Petugas kami akan menghubungi Anda bila perlu keterangan tambahan. Simpan nomor tiket ini.",
   "card.sent.new": "Buat laporan baru",
   "card.placeSearch.locate": "Pakai lokasi saat ini",
   "card.placeSearch.locating": "Membaca lokasi...",
@@ -150,5 +150,6 @@
   "card.sent.contact.province": "BPBD Provinsi {name}",
   "card.sent.contact.national": "Call Center BNPB 117",
   "card.sent.contact.missing": "Nomor BPBD daerah Anda belum tercatat.",
-  "card.sent.contact.call": "Telepon {phone}"
+  "card.sent.contact.call": "Telepon {phone}",
+  "card.sent.contactPromise": "Petugas kami akan menghubungi Anda bila perlu keterangan tambahan."
 }

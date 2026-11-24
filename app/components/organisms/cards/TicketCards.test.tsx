@@ -42,8 +42,10 @@ describe("ticket card", () => {
     expect(screen.getByRole("link", { name: "Telepon 0800-1111-2222" }).getAttribute("href")).toBe("tel:080011112222");
     expect(screen.getByRole("link", { name: "Buat laporan baru" }).getAttribute("href")).toBe("/lapor/report");
     expect(document.querySelector('[data-card-kind="sent"]')?.getAttribute("data-card-id")).toBe("c-3");
-    // Nothing that M01 cannot do, and nothing it does not do yet.
-    expect(screen.queryByText(/PDF|Word|kabar|balasan|menghubungi|diteruskan/i)).toBeNull();
+    // Staff see the report and its number on the desk, so contact is promised (K18); nothing
+    // that is not built yet is.
+    expect(screen.getByText("Petugas kami akan menghubungi Anda bila perlu keterangan tambahan.")).toBeTruthy();
+    expect(screen.queryByText(/PDF|Word|kabar|balasan|diteruskan/i)).toBeNull();
   });
 
   test("a province's BPBD, or BNPB's 117 when the area has no number", async () => {

@@ -49,6 +49,7 @@ describe("tracking page", () => {
       "DitindaklanjutiMenunggu",
       "Selesai ditanganiMenunggu",
     ]);
+    expect(within(status).getByText("Petugas akan menghubungi pelapor bila perlu keterangan tambahan.")).toBeTruthy();
     const event = screen.getByRole("region", { name: "Kejadian" });
     expect(within(event).getByText("Banjir")).toBeTruthy();
     expect(within(event).getByText("Desa/Kel. Sukamaju, Kec. Contoh, Aceh Utara")).toBeTruthy();

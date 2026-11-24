@@ -116,6 +116,7 @@ function TrackingView({ tracking }: { readonly tracking: Tracking }) {
             </li>
           ))}
         </ol>
+        <p>{t("tracking.contactPromise")}</p>
         <p className="text-meta text-muted">{t("tracking.updated")}</p>
       </section>
       <div className="flex flex-col gap-6">

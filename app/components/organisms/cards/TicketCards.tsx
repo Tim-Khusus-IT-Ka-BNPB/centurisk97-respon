@@ -163,6 +163,7 @@ function ThankYou({ card }: { readonly card: SentCardData }) {
           </h2>
           <span>{t("card.sent.thanks.ticket")}</span>
           <span className="text-ticket font-bold tabular-nums">{card.ticketNumber}</span>
+          <span className="text-balance">{t("card.sent.contactPromise")}</span>
           <span className={buttonStyles({ variant: "onHero", className: "mt-4" })}>{t("card.sent.thanks.next")}</span>
         </Link>
       )}
@@ -189,7 +190,8 @@ function RateButton({ n }: { readonly n: number }) {
 }
 
 // The ticket card (K18, K88): the number to keep, the tracking link and its QR code, the stages,
-// who to call, and a new report. It promises only what is done now: received and tracked.
+// who to call, and a new report. It promises only what is done now: received, tracked, and
+// contact by staff, who see the report and its number on the desk.
 export function TicketCard({ card }: { readonly card: SentCardData }) {
   const t = useText();
   const { origin } = useDraftView();
@@ -208,6 +210,7 @@ export function TicketCard({ card }: { readonly card: SentCardData }) {
         <h2 id={headingIdOf(card)} ref={heading} tabIndex={-1} className="text-card font-bold text-balance">
           {t("card.sent.heading")}
         </h2>
+        <p>{t("card.sent.contactPromise")}</p>
         <div className="flex flex-col gap-4 @tiles:flex-row @tiles:items-start @tiles:justify-between">
           <div className="flex min-w-0 flex-col gap-2">
             <span className="text-meta text-muted">{t("card.sent.number")}</span>
