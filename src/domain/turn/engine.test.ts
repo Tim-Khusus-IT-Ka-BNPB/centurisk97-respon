@@ -75,6 +75,13 @@ describe("typed words before anything else", () => {
     ["kembali lagi", "story"],
     ["jangan batal", "story"],
     ["batalkan saja", "story"],
+    ["status", "status"],
+    ["Cek status.", "status"],
+    ["cek   status laporan", "status"],
+    ["status laporan saya", "status"],
+    ["xstatus", "story"],
+    ["cek status x", "story"],
+    ["status saya", "story"],
   ])("%s is %s", (text, kind) => {
     expect(classifyFreeText(text)).toEqual({ kind });
   });
@@ -89,6 +96,19 @@ describe("typed words before anything else", () => {
 });
 
 describe("a turn", () => {
+  test("cek status lists the reporter's tickets in the chat and leaves the question as it was", () => {
+    const from = draft({}, { state: "place" });
+    const listed = next(from, { kind: "status", tickets: ["LB-1", "LB-2"] });
+    expect(listed.question).toEqual({ kind: "place" });
+    expect(listed.draft).toEqual(from);
+    expect(listed.notices).toEqual([
+      { kind: "refusal", copyKey: "reply.status.list", params: { count: 2, tickets: "LB-1, LB-2" } },
+    ]);
+    expect(next(from, { kind: "status", tickets: [] }).notices).toEqual([
+      { kind: "refusal", copyKey: "reply.status.none", params: { count: 0, tickets: "" } },
+    ]);
+  });
+
   test("an answer moves on and remembers where it was, for kembali", () => {
     const from = draft(placed);
     const moved = next(from, { kind: "answer", answer: { optionIds: ["flood"], values: {} }, village: null });
@@ -448,6 +468,8 @@ describe("a GPS reading", () => {
     expect(reading.question).toEqual({ kind: "placeConfirm" });
     expect(reading.draft.state).toBe("place_confirm");
     expect(reading.draft.backStack).toHaveLength(1);
+    expect(reading.draft.content.placeReading).toEqual({ village: read, nearby: [], showNearby: false });
+    expect(reading.notices).toEqual([]);
     expect(next(reading.draft, found).question).toEqual({ kind: "placeConfirm" });
     expect(run(draft(placed), found)).toEqual({ kind: "stale" });
   });

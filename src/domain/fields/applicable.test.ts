@@ -1,6 +1,7 @@
 import { describe, expect, test } from "vitest";
 import type { FieldStates } from "../fieldState";
-import { applicableFields, chosenHazardType, completePercent, fieldsForHazard } from "./applicable";
+import { applicableFields, chosenHazardType, completePercent, fieldsForHazard, keepableFields } from "./applicable";
+import { FIELDS } from "./catalogue";
 
 const ids = (fields: readonly { id: string }[]) => fields.map((field) => field.id);
 const tapped = (value: string) => ({ state: "value", value, origin: "tappedOption" }) as const;
@@ -97,5 +98,10 @@ describe("completeness", () => {
   test("a parent above 0 adds its follow-up to the count", () => {
     const withInjured = { ...flood, injured: count(2) };
     expect(applicableFields(withInjured).length).toBe(applicableFields(flood).length + 1);
+  });
+
+  test("before a type is chosen a value told in words may be kept for any field", () => {
+    expect(keepableFields({})).toBe(FIELDS);
+    expect(keepableFields({ hazardType: tapped("flood") })).toEqual(fieldsForHazard("flood"));
   });
 });

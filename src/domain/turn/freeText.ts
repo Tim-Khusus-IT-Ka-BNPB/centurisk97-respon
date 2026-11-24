@@ -22,7 +22,8 @@ export type FreeTextKind =
 
 const BACK_WORDS = /^(?:kembali|balik|salah pilih|undo)$/i;
 const CANCEL_WORDS = /^(?:batal|batalkan|batalkan laporan)$/i;
-const STATUS_WORDS = /^(?:cek\s+)?status(?:\s+laporan(?:\s+saya)?)?$/i;
+// Matched after tidy(), which leaves one space between words.
+const STATUS_WORDS = /^(?:cek )?status(?: laporan(?: saya)?)?$/i;
 
 // What a typed message is, before anything reaches the model: a command, too long, off topic, or a story.
 export function classifyFreeText(text: string): FreeTextKind {

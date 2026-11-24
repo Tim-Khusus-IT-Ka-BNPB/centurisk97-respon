@@ -26,6 +26,9 @@ describe("one step's sentence", () => {
   const answers = (steps: string[][], otherText: Record<number, string> = {}) => ({ steps, otherText });
   test("a single step is its phrase; a silent answer adds nothing", () => {
     expect(stepSentence("flood", 0, answers([["heavyRain"]]), phraseOf)).toBe("Frasa heavyRain");
+    expect(stepSentence("flood", 0, answers([["heavyRain"]]), (key) => key)).toBe(
+      "chronology.flood.step1.option.heavyRain.phrase",
+    );
     expect(stepSentence("flood", 1, answers([["x"], ["unknown"]]), phraseOf)).toBeNull();
     expect(stepSentence("other", 0, answers([["x"]]), phraseOf)).toBeNull();
   });

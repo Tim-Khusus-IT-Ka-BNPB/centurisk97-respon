@@ -56,6 +56,8 @@ describe("number forms", () => {
       origin: "boxEntry",
     });
     expect(result.kind === "applied" && result.asked).toEqual({ dead: 2, missing: 1, injured: 1 });
+    const others = apply(victims, answer([], { dead: "1", missing: "", injured: "" }), EMPTY_CONTENT, { shelters: 3 });
+    expect(others.kind === "applied" && others.asked).toMatchObject({ shelters: 3 });
   });
 
   test("the form buttons settle empty boxes only, and keep a box already filled from words", () => {

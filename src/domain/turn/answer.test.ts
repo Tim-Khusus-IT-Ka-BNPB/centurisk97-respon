@@ -244,7 +244,7 @@ describe("the GPS reading and the photo step", () => {
   test("Benar places the read village, Bukan opens the list, and a village from the list replaces it", () => {
     expect(apply(confirm, answer(["confirm"]), reading(false))).toMatchObject({
       kind: "applied",
-      content: { states: { place: { value: read, origin: "tappedOption" } }, placeReading: null },
+      content: { states: { place: { state: "value", value: read, origin: "tappedOption" } }, placeReading: null },
     });
     expect(apply(confirm, answer(["other"]), reading(false))).toMatchObject({
       content: { placeReading: { showNearby: true } },
@@ -259,6 +259,7 @@ describe("the GPS reading and the photo step", () => {
       [answer(), false, other],
       [answer(["confirm"]), true, null],
       [answer(["confirm"]), true, other],
+      [answer(), true, null],
     ] as const)
       expect(apply(confirm, given, reading(showNearby), {}, place)).toEqual({ kind: "stale" });
   });
