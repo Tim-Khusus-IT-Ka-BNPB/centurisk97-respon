@@ -10,7 +10,8 @@ type FixedLimitId = {
 export type LimitSubject =
   | { readonly kind: "numberSlot"; readonly numberKey: string; readonly ownerSlot: string }
   | { readonly kind: "device"; readonly deviceId: string }
-  | { readonly kind: "address"; readonly bucket: string };
+  | { readonly kind: "address"; readonly bucket: string }
+  | { readonly kind: "staff"; readonly staffId: string };
 
 export type LimitRefusal = { readonly limitId: LimitId; readonly retryAtMs: number | null };
 
@@ -18,6 +19,7 @@ export type LimitRefusal = { readonly limitId: LimitId; readonly retryAtMs: numb
 async function subjectKey(secret: string, subject: LimitSubject): Promise<string> {
   if (subject.kind === "address") return hmacKey(secret, "address", subject.bucket);
   if (subject.kind === "device") return hmacKey(secret, "subject", `device:${subject.deviceId}`);
+  if (subject.kind === "staff") return hmacKey(secret, "subject", `staff:${subject.staffId}`);
   return hmacKey(secret, "subject", `${subject.numberKey}:${subject.ownerSlot}`);
 }
 

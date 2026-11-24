@@ -1,0 +1,17 @@
+import { localDate } from "./eventTime";
+import { DAY_MS, HOUR_MS } from "./time";
+
+// The queue's period filter, counted in WIB days: "today" is since WIB midnight, a week is today
+// and the six days before it.
+export const DESK_PERIODS = ["today", "week", "month", "all"] as const;
+export type DeskPeriod = (typeof DESK_PERIODS)[number];
+
+const PERIOD_DAYS = { today: 1, week: 7, month: 30 } as const;
+
+export function periodStart(period: DeskPeriod, nowMs: number): number | null {
+  if (period === "all") return null;
+  const wibMidnight = Date.parse(`${localDate(nowMs, "WIB")}T00:00:00Z`) - 7 * HOUR_MS;
+  return wibMidnight - (PERIOD_DAYS[period] - 1) * DAY_MS;
+}
+
+export const DESK_PAGE_SIZE = 50;

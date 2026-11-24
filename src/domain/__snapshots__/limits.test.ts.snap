@@ -26,10 +26,28 @@ exports[`limits table > rows as agreed 1`] = `
     "subject": "address",
     "window": "clockHour",
   },
+  "address.staffSignIn": {
+    "effect": "refuse",
+    "max": 30,
+    "subject": "address",
+    "window": "clockHour",
+  },
   "address.tracking": {
     "effect": "refuse",
     "max": 300,
     "subject": "address",
+    "window": "clockHour",
+  },
+  "desk.read": {
+    "effect": "refuse",
+    "max": 600,
+    "subject": "staff",
+    "window": "clockHour",
+  },
+  "desk.write": {
+    "effect": "refuse",
+    "max": 120,
+    "subject": "staff",
     "window": "clockHour",
   },
   "device.messageHour": {

@@ -3,7 +3,7 @@ import { DAY_MS, HOUR_MS, MINUTE_MS } from "./time";
 
 type LimitWindow = "minute" | "clockHour" | "wibDay" | "rolling24h" | "draftLife" | "standing";
 
-type LimitSubject = "numberSlot" | "device" | "address" | "draft" | "number";
+type LimitSubject = "numberSlot" | "device" | "address" | "draft" | "number" | "staff";
 
 // What happens past the limit: the request is refused, or the draft carries on with templates.
 type LimitEffect = "refuse" | "templatesOnly";
@@ -31,6 +31,9 @@ export const LIMITS = {
   "rating.hour": { subject: "numberSlot", window: "clockHour", max: 30, effect: "refuse" },
   "model.draft": { subject: "draft", window: "draftLife", max: 30, effect: "templatesOnly" },
   "model.day": { subject: "number", window: "wibDay", max: 150, effect: "templatesOnly" },
+  "address.staffSignIn": { subject: "address", window: "clockHour", max: 30, effect: "refuse" },
+  "desk.read": { subject: "staff", window: "clockHour", max: 600, effect: "refuse" },
+  "desk.write": { subject: "staff", window: "clockHour", max: 120, effect: "refuse" },
 } as const satisfies Record<string, LimitRow>;
 
 export type LimitId = keyof typeof LIMITS;
