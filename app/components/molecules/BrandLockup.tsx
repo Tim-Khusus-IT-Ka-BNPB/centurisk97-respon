@@ -7,12 +7,19 @@ export function BrandLockup({ tone = "page" }: { readonly tone?: "page" | "hero"
   const t = useText();
   return (
     <span className="inline-flex items-center gap-3">
-      <Emblem size={tone === "hero" ? 32 : 40} />
+      <Emblem size={tone === "hero" ? 32 : 40} className={tone === "hero" ? undefined : "size-8 sm:size-10"} />
       <span className="flex flex-col leading-tight">
-        <span className={cn("font-bold tracking-[-0.01em]", tone === "hero" ? "text-body text-on-hero" : "text-card")}>
+        <span
+          className={cn(
+            "font-bold tracking-[-0.01em]",
+            tone === "hero" ? "text-body text-on-hero" : "text-body sm:text-card",
+          )}
+        >
           {t("app.name")}
         </span>
-        <span className={cn("text-meta", tone === "hero" ? "text-on-hero-muted" : "text-muted")}>
+        <span
+          className={cn(tone === "hero" ? "text-meta text-on-hero-muted" : "text-[0.75rem] text-muted sm:text-meta")}
+        >
           {t("home.contact.organisation")}
         </span>
       </span>

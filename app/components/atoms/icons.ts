@@ -160,6 +160,7 @@ export const ICONS = {
     ["path", { d: "M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3z" }],
     ["circle", { cx: "12", cy: "13", r: "3" }],
   ],
+  menu: [["path", { d: "M4 6h16M4 12h16M4 18h16" }]],
   locateFixed: [
     ["path", { d: "M2 12h3M19 12h3M12 2v3M12 19v3" }],
     ["circle", { cx: "12", cy: "12", r: "7" }],
