@@ -70,6 +70,27 @@ export const PAGE_TEXTS = {
   about: [...SHELL, "about."],
   privacy: [...SHELL, "privacy."],
   notFound: [...SHELL, "notFound."],
+  desk: [
+    ...SHELL,
+    "desk.",
+    "stage.",
+    "hazard.",
+    "hazardSubtype.",
+    "error.",
+    "fieldError.",
+    "limit.",
+    "common.",
+    "field.",
+    "group.",
+    "option.",
+    "state.",
+    "unit.",
+    "value.",
+    "card.summary.row",
+    "card.placeSearch.rowVillage",
+    "card.placeSearch.rowPlace",
+    "card.placeConfirm.",
+  ],
 } as const;
 
 const matches = (key: string, prefixes: readonly string[]) =>

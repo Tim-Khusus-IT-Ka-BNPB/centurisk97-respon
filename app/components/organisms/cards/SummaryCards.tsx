@@ -38,7 +38,7 @@ function StateMark({ state }: { readonly state: "none" | "confirmedUnknown" | "n
   );
 }
 
-function SummaryRow({ view }: { readonly view: RowView }) {
+export function SummaryRow({ view }: { readonly view: RowView }) {
   if (view.kind === "value") return <li className="break-words">{view.text}</li>;
   return (
     <li className="break-words">

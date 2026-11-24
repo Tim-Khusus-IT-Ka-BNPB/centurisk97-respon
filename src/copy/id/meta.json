@@ -7,5 +7,6 @@
   "meta.privacy.description": "Kebijakan privasi {appName}: data apa yang dikumpulkan saat Anda melapor, untuk apa dipakai, siapa yang dapat melihat, dan hak Anda atas data itu.",
   "meta.notFound.description": "Halaman yang Anda buka tidak ada. Kembali ke halaman awal {appName} untuk membuat laporan kejadian bencana ke BNPB.",
   "meta.image.alt": "{appName}, lapor kejadian bencana ke BNPB",
-  "meta.tracking.description": "Status penanganan laporan bencana Anda, dibuka lewat tautan yang dikirim kepada pelapor."
+  "meta.tracking.description": "Status penanganan laporan bencana Anda, dibuka lewat tautan yang dikirim kepada pelapor.",
+  "meta.desk.description": "Meja laporan untuk petugas BNPB dan BPBD."
 }

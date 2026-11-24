@@ -6,5 +6,6 @@
   "page.privacy.title": "Kebijakan privasi, {appName}",
   "page.draft.title": "Laporan sedang diisi, {appName}",
   "page.notFound.title": "Halaman tidak ditemukan, {appName}",
-  "page.tracking.title": "Lacak laporan, {appName}"
+  "page.tracking.title": "Lacak laporan, {appName}",
+  "page.desk.title": "Meja laporan, {appName}"
 }
