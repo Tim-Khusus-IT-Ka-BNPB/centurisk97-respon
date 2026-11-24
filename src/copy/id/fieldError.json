@@ -18,5 +18,15 @@
   "fieldError.wholeNumber": "{label} diisi angka bulat tanpa titik atau koma, misalnya 12.",
   "fieldError.tooLarge": "{label} paling banyak {max}. Periksa lagi angkanya.",
   "fieldError.text.tooLong": "{label} terlalu panjang: {length} huruf, paling banyak {max}. Teks Anda masih ada. Pendekkan lalu simpan lagi.",
-  "fieldError.message.tooLong": "Pesan terlalu panjang: {length} dari paling banyak 2.000 huruf. Pesan belum terkirim dan masih ada di kotak. Pendekkan, atau bagi menjadi dua pesan."
+  "fieldError.message.tooLong": "Pesan terlalu panjang: {length} dari paling banyak 2.000 huruf. Pesan belum terkirim dan masih ada di kotak. Pendekkan, atau bagi menjadi dua pesan.",
+  "fieldError.location.invalid": "Lokasi yang terbaca tidak sah. Tekan Pakai lokasi saat ini lagi, atau cari nama tempat.",
+  "fieldError.photo.notCamera": "Foto harus diambil langsung dengan kamera ponsel. Tangkapan layar dan gambar hasil sunting tidak diterima. Tekan Ambil foto lalu potret langsung.",
+  "fieldError.photo.notFresh": "Foto ini diambil lebih dari 5 menit lalu. Ambil foto baru langsung dengan kamera.",
+  "fieldError.photo.notRecent": "Foto ini bukan rekaman baru. Ambil foto langsung dengan kamera.",
+  "fieldError.photo.farFromDevice": "Lokasi di foto lebih dari 5 km dari posisi Anda sekarang. Ambil foto di lokasi ini.",
+  "fieldError.photo.format": "Foto harus berformat JPEG dan paling besar 2,5 MB. Foto ini tidak disimpan. Ambil ulang dengan kamera ponsel.",
+  "fieldError.photo.tooMany": "Paling banyak 10 foto per laporan. Foto ini tidak disimpan. Tekan Lanjut untuk ke ringkasan.",
+  "fieldError.photo.notNow": "Foto belum diperlukan sekarang. Lanjutkan pertanyaan laporan dulu.",
+  "fieldError.photo.broken": "Foto ini rusak atau tidak bisa dibaca, jadi tidak disimpan. Ambil ulang dengan kamera.",
+  "fieldError.photo.unreadable": "Foto tidak terbaca atau terlalu besar untuk diperkecil. Ambil ulang dengan kamera."
 }

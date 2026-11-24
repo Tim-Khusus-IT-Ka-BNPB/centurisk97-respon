@@ -238,6 +238,11 @@ export const updateDraft = (draftId: string, revision: number, write: DraftWrite
       last_acted_at = ${at}, revision = revision + 1
     where id = ${draftId} and revision = ${revision} and ${OPEN}`;
 
+// A photo kept in the photo step: the draft moves on a revision, still in that step.
+export const photoAdded = (draftId: string, revision: number, at: Date): Query =>
+  sql`update report_draft set last_acted_at = ${at}, revision = revision + 1, pending_notices = null
+    where id = ${draftId} and revision = ${revision} and state = 'photos'`;
+
 type EndReason = "sent" | "cancelled" | "expired" | "removedNumber";
 const ENDED_STATE: Readonly<Record<EndReason, DraftState>> = {
   sent: "sent",
@@ -248,7 +253,7 @@ const ENDED_STATE: Readonly<Record<EndReason, DraftState>> = {
 
 // Ends a draft that is still open and removes its personal content; `when` narrows which state
 // of it may be ended. The batch holds only if the draft did end here. A sent draft keeps its
-// transcript with the report.
+// transcript and photos with the report.
 export function endDraft(draftId: string, reason: EndReason, at: Date, when: Query = sql`1 = 1`): Query[] {
   const ended = [
     sql`update report_draft set state = ${ENDED_STATE[reason]}, end_reason = ${reason}, ended_at = ${at},
@@ -257,7 +262,12 @@ export function endDraft(draftId: string, reason: EndReason, at: Date, when: Que
     changedOne,
     sql`delete from turn_reply where draft_id = ${draftId}`,
   ];
-  if (reason !== "sent") ended.push(sql`delete from draft_message where draft_id = ${draftId}`);
+  // Photos leave with the draft unless it is sent; the store files follow through photo_removal.
+  if (reason !== "sent")
+    ended.push(
+      sql`delete from draft_message where draft_id = ${draftId}`,
+      sql`delete from draft_photo where draft_id = ${draftId}`,
+    );
   return ended;
 }
 

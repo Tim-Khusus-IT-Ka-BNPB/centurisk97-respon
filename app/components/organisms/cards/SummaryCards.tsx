@@ -114,6 +114,14 @@ export function SummaryCardView({ card }: { readonly card: SummaryCard }) {
           </section>
         );
       })}
+      <section aria-labelledby="group-photos" className="flex flex-col gap-2 border-t border-line pt-4">
+        <h3 id="group-photos" className="text-body font-bold">
+          {t("card.summary.photosTitle")}
+        </h3>
+        <p className="tabular-nums">
+          {card.photos.count === 0 ? t("card.summary.noPhotos") : t("card.summary.photos", card.photos)}
+        </p>
+      </section>
       {problem ? <Notice kind="error">{t(problem.copyKey, problem.params)}</Notice> : null}
       <SendAction />
       <TurnForm kind="cancel" className="mt-4 flex flex-col">

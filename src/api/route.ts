@@ -15,6 +15,10 @@ export type Policy = "public" | "reporter";
 
 export const API_BASE = "/api/lapor";
 const MAX_BODY_BYTES = 16 * 1024;
+// A photo upload: 2.5 MB is the photo rule, and a page with no script cannot shrink a camera
+// file first, so the route takes more and the photo check names the size.
+const PHOTO_BODY_BYTES = 12 * 1024 * 1024;
+const isPhotoUpload = (method: string, path: string) => method === "POST" && /\/drafts\/[^/]+\/photos$/.test(path);
 const READ_METHODS = new Set(["GET", "HEAD"]);
 
 export type Api = {
@@ -73,7 +77,10 @@ export function createApi(): Api {
     defaultHook: (result, c) => (result.success ? undefined : refuse(c, 400, "request.refused")),
   }).basePath(API_BASE);
   app.use("*", responseHeaders, addressCheck, writeCheck);
-  app.use("*", bodyLimit({ maxSize: MAX_BODY_BYTES, onError: (c) => refuse(c, 413, "request.tooLarge") }));
+  const tooLarge = (c: Parameters<typeof refuse>[0]) => refuse(c, 413, "request.tooLarge");
+  const small = bodyLimit({ maxSize: MAX_BODY_BYTES, onError: tooLarge });
+  const photo = bodyLimit({ maxSize: PHOTO_BODY_BYTES, onError: tooLarge });
+  app.use("*", (c, next) => (isPhotoUpload(c.req.method, c.req.path) ? photo(c, next) : small(c, next)));
   app.notFound((c) => refuse(c, 404, "request.refused"));
   app.onError((error, c) => {
     const state = sqlState(error);
@@ -104,7 +111,7 @@ function sharedResponses(method: string, policy: Policy) {
     503: refusal("A dependency is down"),
     ...(READ_METHODS.has(method.toUpperCase())
       ? {}
-      : { 403: refusal("Not sent from this site"), 413: refusal("Body over 16 KB") }),
+      : { 403: refusal("Not sent from this site"), 413: refusal("Body over 16 KB, or 12 MB for a photo") }),
     ...(policy === "reporter" ? { 401: refusal("No reporter"), 404: refusal("Not found for this reporter") } : {}),
   };
 }

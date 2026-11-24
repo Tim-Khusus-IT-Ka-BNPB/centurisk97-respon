@@ -1,5 +1,8 @@
 {
   "refusal.offTopic": "Layanan ini hanya untuk melaporkan kejadian bencana. Pertanyaan atau permintaan lain tidak dilayani di sini.",
   "refusal.dataRequest": "Layanan ini hanya menerima laporan kejadian bencana dan tidak memberikan data BNPB dalam bentuk apa pun.",
-  "refusal.templatesOnly": "Pesan di luar laporan bencana tidak diproses lagi di percakapan ini. Lanjutkan dengan menjawab pertanyaan laporan di bawah."
+  "refusal.templatesOnly": "Pesan di luar laporan bencana tidak diproses lagi di percakapan ini. Lanjutkan dengan menjawab pertanyaan laporan di bawah.",
+  "refusal.place.outside": "Lokasi itu di luar Indonesia. Bagikan lokasi kejadian.",
+  "refusal.place.notFound": "Titik itu belum terbaca sebagai desa di Indonesia. Pastikan GPS menyala dan Anda di dekat lokasi kejadian, lalu bagikan lagi, atau cari nama tempat.",
+  "refusal.place.unavailable": "Lokasi dari GPS belum bisa dibaca sekarang. Cari nama desa atau kelurahan di bawah."
 }

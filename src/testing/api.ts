@@ -1,5 +1,6 @@
 import { seededIdentity } from "../adapters/identity/seeded";
 import { modelOff } from "../adapters/model/off";
+import { type Bucket, r2PhotoStore } from "../adapters/r2/photoStore";
 import type { ApiBindings } from "../api/context";
 import type { DraftBody } from "../contract/draft";
 import type { ErrorEnvelope } from "../contract/errors";
@@ -15,6 +16,11 @@ export function testDatabase(): Database {
   const db = (globalThis as { testD1?: Database }).testD1;
   if (db === undefined) throw new Error("No test database: db/testDatabase.ts did not run for this file");
   return db;
+}
+
+// The in-memory R2 bucket of this test file, made beside its database.
+export function testBucket(): Bucket {
+  return (globalThis as { testPhotos?: Bucket }).testPhotos as Bucket;
 }
 
 // Columns stored as JSON text, read back as values so a test compares what was stored.
@@ -140,6 +146,7 @@ export function testBindings(
       clock,
       identity: seededIdentity(db, clock),
       model: options.model ?? modelOff,
+      photos: r2PhotoStore(testBucket()),
     },
     lines,
   };
@@ -188,7 +195,24 @@ export function browser(fetchApi: Fetch, address = freshAddress()) {
     const json: unknown = text === "" ? null : JSON.parse(text);
     return { status: response.status, json, draft: json as DraftBody, error: json as ErrorEnvelope };
   };
-  return { call, cookies, address };
+  // A multipart post, as the page's photo form sends it.
+  const upload = async (path: string, form: FormData) => {
+    const headers: Record<string, string> = { "cf-connecting-ip": address, origin: TEST_ORIGIN, "x-lapor-client": "1" };
+    if (cookies.size > 0) headers.cookie = [...cookies].map(([name, value]) => `${name}=${value}`).join("; ");
+    const response = await fetchApi(
+      new Request(`http://localhost/api/lapor${path}`, { method: "POST", headers, body: form }),
+    );
+    const json: unknown = await response.json();
+    return { status: response.status, json, draft: json as DraftBody, error: json as ErrorEnvelope };
+  };
+  // A file read, answered as its status, type and bytes.
+  const file = async (path: string) => {
+    const headers: Record<string, string> = { "cf-connecting-ip": address };
+    if (cookies.size > 0) headers.cookie = [...cookies].map(([name, value]) => `${name}=${value}`).join("; ");
+    const response = await fetchApi(new Request(`http://localhost/api/lapor${path}`, { headers }));
+    return { status: response.status, headers: response.headers, bytes: new Uint8Array(await response.arrayBuffer()) };
+  };
+  return { call, upload, file, cookies, address };
 }
 
 // A WIB day far from any real one whose ticket counter no other test uses: with lastN 0 it has no

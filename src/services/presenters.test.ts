@@ -10,7 +10,7 @@ import { EMPTY_CONTENT } from "../domain/turn/content";
 import { createClock } from "../platform/clock";
 import { sqlState } from "../platform/database";
 import { createServices } from "../platform/services";
-import { testBindings } from "../testing/api";
+import { testBindings, testBucket } from "../testing/api";
 import { cardFor } from "./cards";
 import { answerLine } from "./extract";
 import { summaryGroups } from "./summary";
@@ -23,6 +23,7 @@ const context = {
   reporter: { name: "Uji Satu", role: "citizen" as const },
   completePercent: 50,
   asked: {},
+  photos: [],
 };
 
 describe("cards", () => {
@@ -124,7 +125,9 @@ describe("the reporter's line for a card answer", () => {
 describe("ports chosen by the settings", () => {
   const { bindings } = testBindings();
   test("off, recorded and live models; the seeded identity; the upstream identity is not built", async () => {
-    expect(createServices(bindings.settings, bindings.log, bindings.db, bindings.clock).model).toBe(modelOff);
+    expect(createServices(bindings.settings, bindings.log, bindings.db, testBucket(), bindings.clock).model).toBe(
+      modelOff,
+    );
     expect(
       await modelOff.extract(
         modelRequest(maskText("x", { name: null, number: null }), {}),
@@ -135,6 +138,7 @@ describe("ports chosen by the settings", () => {
       { ...bindings.settings, model: { mode: "recorded", baseUrl: "http://localhost:8790", name: "recorded" } },
       bindings.log,
       bindings.db,
+      testBucket(),
       bindings.clock,
     );
     expect(recorded.model).not.toBe(modelOff);
@@ -142,13 +146,20 @@ describe("ports chosen by the settings", () => {
       { ...bindings.settings, model: { mode: "live", baseUrl: "https://api.anthropic.com", apiKey: "k", name: "m" } },
       bindings.log,
       bindings.db,
+      testBucket(),
       bindings.clock,
     );
     expect(live.model).not.toBe(modelOff);
     expect(Object.keys(seededIdentity(bindings.db, bindings.clock))).toEqual(["resolve"]);
     expect(() => upstreamIdentity()).toThrow("not built");
     expect(() =>
-      createServices({ ...bindings.settings, identityAdapter: "upstream" }, bindings.log, bindings.db, bindings.clock),
+      createServices(
+        { ...bindings.settings, identityAdapter: "upstream" },
+        bindings.log,
+        bindings.db,
+        testBucket(),
+        bindings.clock,
+      ),
     ).toThrow("not built");
   });
 });

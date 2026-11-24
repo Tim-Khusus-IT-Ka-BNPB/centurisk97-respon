@@ -2,6 +2,7 @@ import { describe, expect, test } from "vitest";
 import type { MeResponse } from "../contract/draft";
 import { hmacKey } from "../platform/keys";
 import { freshAddress, freshNumber, query, TEST_ORIGIN, testBindings } from "../testing/api";
+import { cameraJpeg } from "../testing/photoBase";
 import { api } from "./app";
 import { createBridge } from "./bridge";
 import { draftPageAction, type PageResult, startStepAction } from "./pageActions";
@@ -36,7 +37,8 @@ function page() {
     return draftPageAction(draftId, form, bridge());
   };
   const me = async () => (await (await bridge()("GET", "/me")).json()) as MeResponse;
-  return { post, draft, me };
+  const form = async (draftId: string, fields: FormData) => draftPageAction(draftId, fields, bridge());
+  return { post, draft, form, me };
 }
 
 const rendered = (result: PageResult) => result as Extract<PageResult, { kind: "render" }>;
@@ -200,6 +202,27 @@ describe("draft page with no script", () => {
       value: { rt: "1", rw: null },
       origin: "boxEntry",
     });
+  });
+});
+
+describe("photo form with no script", () => {
+  test("the file and the reading boxes go to the photo route, and its refusal redraws the draft", async () => {
+    const browser = page();
+    const created = located(
+      await browser.post({ action: "consent", role: "citizen", name: "Uji Satu", number: freshNumber().typed }),
+    );
+    const draftId = created.location.split("/").at(-1) as string;
+    const form = new FormData();
+    form.set("action", "photo");
+    form.set("revision", "0");
+    form.set("turnKey", crypto.randomUUID());
+    form.set("photo", new File([new Uint8Array(cameraJpeg({ make: "Uji" }))], "foto.jpg", { type: "image/jpeg" }));
+    for (const name of ["lat", "lon", "accuracy", "readAt", "offset"]) form.set(`value.${name}`, "");
+    const refused = rendered(await browser.form(draftId, form));
+    expect(refused.status).toBe(422);
+    expect(refused.envelope?.fields).toEqual([{ fieldId: "photo", copyKey: "fieldError.photo.notNow", params: {} }]);
+    form.delete("photo");
+    expect(rendered(await browser.form(draftId, form)).status).toBe(400);
   });
 });
 

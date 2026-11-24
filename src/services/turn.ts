@@ -15,6 +15,7 @@ import {
   truncateTranscript,
   updateDraft,
 } from "../adapters/d1/drafts";
+import { draftPhotos, type PhotoRecord } from "../adapters/d1/photos";
 import { activeVillage } from "../adapters/d1/places";
 import { sentTicket } from "../adapters/d1/send";
 import type { DraftBody } from "../contract/draft";
@@ -24,7 +25,7 @@ import type { GroupId } from "../domain/fields/catalogue";
 import type { FieldError, ReporterRole } from "../domain/identityForm";
 import { maskText } from "../domain/masking";
 import { ownsDraft } from "../domain/ownership";
-import type { DraftContent, Question } from "../domain/turn/content";
+import type { DraftContent, PlaceReading, Question } from "../domain/turn/content";
 import {
   currentQuestion,
   type DraftSnapshot,
@@ -41,12 +42,13 @@ import { cardFor } from "./cards";
 import { draftView, draftZone, LIFE_LINE, type Notice, noticesOnRead } from "./draftView";
 import { answerLine, extractFrom } from "./extract";
 import { checkLimits, type LimitRefusal } from "./limits";
+import { locatePlace } from "./places";
 import { phraseOf } from "./summary";
 
 export type TurnRequest = {
   readonly revision: number;
   readonly turnKey: string;
-  readonly kind: "answer" | "freeText" | "back" | "editGroup" | "cancel" | "confirm" | "dismiss";
+  readonly kind: "answer" | "freeText" | "locate" | "back" | "editGroup" | "cancel" | "confirm" | "dismiss";
   readonly cardId: string | null;
   readonly optionIds: readonly string[];
   readonly values: Readonly<Record<string, string>>;
@@ -94,6 +96,7 @@ export async function viewOf(
   draft: DraftRecord,
   notices: readonly Notice[],
   turnKey: string | null,
+  photos?: readonly PhotoRecord[],
 ): Promise<DraftBody> {
   const ticket = draft.state === "sent" ? await sentTicket(bindings.db, draft.id) : null;
   return draftView({
@@ -103,6 +106,7 @@ export async function viewOf(
     turnKey,
     nowMs: bindings.clock.now(),
     ticket,
+    photos: photos ?? (await draftPhotos(bindings.db, draft.id)),
   });
 }
 
@@ -119,8 +123,27 @@ export async function readDraft(bindings: ServiceBindings, principal: Principal,
   return { kind: "ok", status: 200, body: await viewOf(bindings, draft, notices, null) };
 }
 
+// Every message counts against the number, the device and the address; a photo is a message.
+export function checkMessageLimits(
+  bindings: ServiceBindings,
+  principal: Principal,
+  address: string,
+  draft: DraftRecord,
+): Promise<LimitRefusal | null> {
+  const numberSlot = { kind: "numberSlot", numberKey: draft.numberKey, ownerSlot: draft.ownerSlot } as const;
+  return checkLimits(bindings, [
+    ["message.minute", numberSlot],
+    ["message.hour", numberSlot],
+    ["message.day", numberSlot],
+    ...(principal.kind === "device"
+      ? ([["device.messageHour", { kind: "device", deviceId: principal.deviceId }]] as const)
+      : []),
+    ["address.messages", { kind: "address", bucket: address }],
+  ]);
+}
+
 // A turn key seen before: the stored reply for the same request, a refusal for another.
-function replayOf(stored: StoredReply, requestHash: string): Answer {
+export function replayOf(stored: StoredReply, requestHash: string): Answer {
   return stored.requestHash === requestHash
     ? { kind: "ok", status: stored.status, body: stored.body }
     : { kind: "keyReused" };
@@ -149,11 +172,26 @@ function noticesOf(outcome: Extract<TurnOutcome, { kind: "next" }>, extraLife: b
 
 type Prepared = { readonly input: TurnInput; readonly messages: NewMessage[] } | { readonly errors: FieldError[] };
 
+// A reading the page took: coordinates and accuracy as numbers, accuracy never negative.
+function readingOf(values: Readonly<Record<string, string>>) {
+  // An empty box is no number, not 0.
+  const [lat, lon, accuracyM] = ["lat", "lon", "accuracy"].map((name) => Number(values[name]?.trim() || Number.NaN));
+  const valid = [lat, lon, accuracyM].every((value) => Number.isFinite(value)) && (accuracyM as number) >= 0;
+  return valid ? { lat: lat as number, lon: lon as number, accuracyM: accuracyM as number } : null;
+}
+
+// The village picked from the nearby list, which carries the reading it came from.
+function nearbyVillage(content: DraftContent, code: string | null) {
+  const reading = content.placeReading as PlaceReading | null | undefined;
+  return reading?.nearby.find((one) => one.village.villageCode === code)?.village ?? null;
+}
+
 async function prepare(
   bindings: ServiceBindings,
   draft: DraftRecord,
   request: TurnRequest,
   question: Question,
+  photos: readonly PhotoRecord[],
 ): Promise<Prepared> {
   const reporter = { name: draft.name, number: draft.number };
   const content = draft.content as DraftContent;
@@ -170,9 +208,16 @@ async function prepare(
       messages.push({ speaker: "assistant", copyKey: `reply.${extraction.reply}`, params: {}, cardKind: null });
     return { input: { kind: "story", message, extraction }, messages };
   }
+  if (request.kind === "locate") {
+    const reading = readingOf(request.values);
+    if (reading === null) return { errors: [{ fieldId: "location", rule: "location.invalid", params: {} }] };
+    return { input: { kind: "located", result: await locatePlace(bindings, reading) }, messages: [] };
+  }
   if (request.kind === "answer") {
-    const village =
-      question.kind === "place" && request.villageCode ? await activeVillage(bindings.db, request.villageCode) : null;
+    let village = null;
+    if (question.kind === "place" && request.villageCode)
+      village = await activeVillage(bindings.db, request.villageCode);
+    if (question.kind === "placeConfirm") village = nearbyVillage(content, request.villageCode);
     const card = cardFor(question, content, {
       cardId: "",
       nowMs: bindings.clock.now(),
@@ -180,8 +225,15 @@ async function prepare(
       reporter: { name: "", role: "citizen" },
       completePercent: 0,
       asked: draft.asked,
+      photos,
     });
-    const line = village ? village.villageName : answerLine(card, request.optionIds, request.values, reporter);
+    // A place taken shows as the village's name, whether picked, read from GPS or confirmed.
+    const confirmed =
+      question.kind === "placeConfirm" && request.optionIds[0] === "confirm"
+        ? (content.placeReading as PlaceReading).village
+        : null;
+    const named = village ?? confirmed;
+    const line = named ? named.villageName : answerLine(card, request.optionIds, request.values, reporter);
     return {
       input: { kind: "answer", answer: { optionIds: request.optionIds, values: request.values }, village },
       messages: line === "" ? [] : [{ speaker: "reporter", textMasked: line }],
@@ -209,22 +261,15 @@ export async function takeTurn(
   if (stored) return replayOf(stored, requestHash);
   if (isFinal(draft.state))
     return { kind: "ok", status: 200, body: await viewOf(bindings, draft, [], request.turnKey) };
-  const refusal = await checkLimits(bindings, [
-    ["message.minute", { kind: "numberSlot", numberKey: draft.numberKey, ownerSlot: draft.ownerSlot }],
-    ["message.hour", { kind: "numberSlot", numberKey: draft.numberKey, ownerSlot: draft.ownerSlot }],
-    ["message.day", { kind: "numberSlot", numberKey: draft.numberKey, ownerSlot: draft.ownerSlot }],
-    ...(principal.kind === "device"
-      ? ([["device.messageHour", { kind: "device", deviceId: principal.deviceId }]] as const)
-      : []),
-    ["address.messages", { kind: "address", bucket: address }],
-  ]);
+  const refusal = await checkMessageLimits(bindings, principal, address, draft);
   if (refusal) return { kind: "limit", refusal, draft: await viewOf(bindings, draft, [LIFE_LINE], request.turnKey) };
   const changed = async () => ({ kind: "changed" as const, draft: await viewOf(bindings, draft, [], request.turnKey) });
   if (request.revision !== draft.revision) return changed();
   if (request.kind === "answer" && request.cardId !== `c-${draft.revision}`) return changed();
   const before = turnDraft(draft);
   const question = currentQuestion(before);
-  const prepared = await prepare(bindings, draft, request, question);
+  const photos = await draftPhotos(bindings.db, draft.id);
+  const prepared = await prepare(bindings, draft, request, question, photos);
   if ("errors" in prepared)
     return {
       kind: "invalid",
@@ -238,6 +283,7 @@ export async function takeTurn(
     zone: draftZone(draft.villageCode),
     reporter: { name: draft.name, number: draft.number },
     phraseOf,
+    photoCount: photos.length,
   };
   const outcome = runTurn(before, prepared.input, context);
   if (outcome.kind === "stale") return changed();
@@ -255,7 +301,7 @@ export async function takeTurn(
       errors: [],
       draft: await viewOf(bindings, draft, [], request.turnKey),
     };
-  return commit(bindings, draft, request, requestHash, outcome, prepared.messages);
+  return commit(bindings, draft, request, requestHash, outcome, prepared.messages, photos);
 }
 
 async function commit(
@@ -265,6 +311,7 @@ async function commit(
   requestHash: string,
   outcome: Exclude<TurnOutcome, { kind: "stale" | "invalid" | "backRefused" }>,
   messages: NewMessage[],
+  photos: readonly PhotoRecord[],
 ): Promise<Answer> {
   const db = bindings.db;
   const at = new Date(bindings.clock.now());
@@ -293,6 +340,7 @@ async function commit(
       reporter: { name: draft.name as string, role: draft.role as ReporterRole },
       completePercent: 0,
       asked: next.asked,
+      photos,
     });
     lines.push({
       speaker: "assistant",
@@ -311,6 +359,7 @@ async function commit(
     turnKey: request.turnKey,
     nowMs: bindings.clock.now(),
     ticket: null,
+    photos,
   });
   const done = await atomically(db, [
     updateDraft(draft.id, draft.revision, write, at),

@@ -1,5 +1,5 @@
 import { DRAFT_LIFE_MS, type DraftRecord, type TranscriptRow } from "../adapters/d1/drafts";
-
+import type { PhotoRecord } from "../adapters/d1/photos";
 import type { Card } from "../contract/card";
 import type { DraftBody } from "../contract/draft";
 import { isFinal } from "../domain/draftStates";
@@ -35,6 +35,7 @@ type ViewInput = {
   readonly turnKey: string | null;
   readonly nowMs: number;
   readonly ticket: SentTicket | null;
+  readonly photos: readonly PhotoRecord[];
 };
 
 function endedCard(ticket: SentTicket | null, cardId: string): Card {
@@ -69,6 +70,7 @@ export function draftView(input: ViewInput): DraftBody {
         reporter: { name: draft.name as string, role: draft.role as ReporterRole },
         completePercent: percent,
         asked: draft.asked,
+        photos: input.photos,
       });
   return {
     draftId: draft.id,

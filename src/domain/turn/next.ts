@@ -50,7 +50,7 @@ function questionFor(
 // applicable field never asked, in table order, then each field left empty once more, then the summary.
 export function nextQuestion(_state: DraftState, content: DraftContent, asked: AskedCounts): Question {
   if (content.overlay?.kind === "cancelConfirm") return { kind: "cancelConfirm" };
-  if (content.states.place === undefined) return { kind: "place" };
+  if (content.states.place === undefined) return content.placeReading ? { kind: "placeConfirm" } : { kind: "place" };
   if (content.states.neighbourhood === undefined) return { kind: "neighbourhood" };
   const fields = applicableFields(content.states).filter(isAsked);
   const unasked = fields.filter((field) => content.states[field.id as FieldId] === undefined);
@@ -68,12 +68,14 @@ export function nextQuestion(_state: DraftState, content: DraftContent, asked: A
       (asked[field.id as FieldId] ?? 0) < MAX_ASKS,
   );
   if (again[0]) return questionFor(again[0], again, content, true);
-  return { kind: "summary" };
+  return content.photosDone ? { kind: "summary" } : { kind: "photos" };
 }
 
 // The stored state a question belongs to.
 export function stateFor(question: Question, current: DraftState): DraftState {
-  if (question.kind === "place" || question.kind === "neighbourhood") return question.kind;
+  if (question.kind === "place" || question.kind === "neighbourhood" || question.kind === "photos")
+    return question.kind;
+  if (question.kind === "placeConfirm") return "place_confirm";
   if (question.kind === "cancelConfirm") return current;
   if (question.kind === "chronologyStep" || question.kind === "chronologyReview") return "guided_chronology";
   return question.kind === "summary" ? "summary" : "asking";

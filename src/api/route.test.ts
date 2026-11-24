@@ -11,6 +11,7 @@ describe("route list", () => {
     expect(routes).toEqual([
       { key: "DELETE /api/lapor/me/profiles/:profileId", policy: "reporter" },
       { key: "GET /api/lapor/drafts/:draftId", policy: "reporter" },
+      { key: "GET /api/lapor/drafts/:draftId/photos/:photoId", policy: "public" },
       { key: "GET /api/lapor/health", policy: "public" },
       { key: "GET /api/lapor/me", policy: "public" },
       { key: "GET /api/lapor/places/districts/:code/villages", policy: "public" },
@@ -18,6 +19,7 @@ describe("route list", () => {
       { key: "GET /api/lapor/places/search", policy: "public" },
       { key: "POST /api/lapor/consent", policy: "public" },
       { key: "POST /api/lapor/drafts", policy: "reporter" },
+      { key: "POST /api/lapor/drafts/:draftId/photos", policy: "reporter" },
       { key: "POST /api/lapor/drafts/:draftId/send", policy: "reporter" },
       { key: "POST /api/lapor/drafts/:draftId/turns", policy: "reporter" },
     ]);
@@ -244,6 +246,8 @@ describe("response schemas and the OpenAPI document", () => {
       "/api/lapor/consent",
       "/api/lapor/drafts",
       "/api/lapor/drafts/{draftId}",
+      "/api/lapor/drafts/{draftId}/photos",
+      "/api/lapor/drafts/{draftId}/photos/{photoId}",
       "/api/lapor/drafts/{draftId}/send",
       "/api/lapor/drafts/{draftId}/turns",
       "/api/lapor/health",

@@ -54,7 +54,8 @@ function rowValue(
         districtName: place.districtName,
         regencyName: place.regencyName,
         provinceName: place.provinceName,
-        precision: "villageLevel",
+        precision: place.precision,
+        point: place.point ?? null,
       };
     }
     case "neighbourhood":

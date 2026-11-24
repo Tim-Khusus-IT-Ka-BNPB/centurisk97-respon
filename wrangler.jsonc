@@ -14,5 +14,12 @@
       "database_id": "00000000-0000-0000-0000-000000000000",
       "migrations_dir": "db/migrations"
     }
+  ],
+  "r2_buckets": [
+    {
+      "binding": "PHOTOS",
+      // Report photos, metadata stripped. Local runs keep them under .wrangler/state.
+      "bucket_name": "lapor-bencana-photos"
+    }
   ]
 }

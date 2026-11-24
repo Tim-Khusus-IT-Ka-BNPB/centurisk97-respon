@@ -155,28 +155,45 @@ export async function startStepAction(form: Form, api: ApiCall): Promise<PageRes
 }
 
 // POST /lapor/report/<draftId>: a turn or a send from a form. Box values travel as "value.<fieldId>".
+// The photo route's form: the file and the turn controls, and the device reading the page put in
+// its boxes (value.<name>, as every box of a turn form travels).
+const READING_FIELDS = ["lat", "lon", "accuracy", "readAt", "offset"] as const;
+
+function photoForm(form: Form): FormData {
+  const photo = new FormData();
+  for (const name of ["photo", "revision", "turnKey"]) {
+    const value = form.get(name);
+    if (value !== null) photo.set(name, value);
+  }
+  for (const name of READING_FIELDS) photo.set(name, field(form, `value.${name}`));
+  return photo;
+}
+
 export async function draftPageAction(draftId: string, form: Form, api: ApiCall): Promise<PageResult> {
   const path = `/drafts/${encodeURIComponent(draftId)}`;
   const revision = Number(field(form, "revision"));
   const turnKey = field(form, "turnKey");
+  const action = field(form, "action");
   const response =
-    field(form, "action") === "send"
-      ? await api("POST", `${path}/send`, { revision, turnKey })
-      : await api("POST", `${path}/turns`, {
-          revision,
-          turnKey,
-          kind: field(form, "kind") || "answer",
-          cardId: field(form, "cardId") || null,
-          optionIds: form.getAll("optionIds").map(String),
-          values: Object.fromEntries(
-            [...form.keys()]
-              .filter((name) => name.startsWith("value."))
-              .map((name) => [name.slice(6), field(form, name)]),
-          ),
-          text: field(form, "text"),
-          groupId: field(form, "groupId") || null,
-          villageCode: field(form, "villageCode") || null,
-        });
+    action === "photo"
+      ? await api("POST", `${path}/photos`, photoForm(form))
+      : action === "send"
+        ? await api("POST", `${path}/send`, { revision, turnKey })
+        : await api("POST", `${path}/turns`, {
+            revision,
+            turnKey,
+            kind: field(form, "kind") || "answer",
+            cardId: field(form, "cardId") || null,
+            optionIds: form.getAll("optionIds").map(String),
+            values: Object.fromEntries(
+              [...form.keys()]
+                .filter((name) => name.startsWith("value."))
+                .map((name) => [name.slice(6), field(form, name)]),
+            ),
+            text: field(form, "text"),
+            groupId: field(form, "groupId") || null,
+            villageCode: field(form, "villageCode") || null,
+          });
   if (response.ok) return redirect(`/lapor/report/${draftId}`, response);
   return render("draft", form, response.status, (await response.json()) as ErrorEnvelope);
 }

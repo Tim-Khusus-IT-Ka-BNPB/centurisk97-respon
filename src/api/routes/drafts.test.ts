@@ -78,6 +78,7 @@ describe("a report with the model off", () => {
         "timeCard",
         "numberForm",
         "multiChoice",
+        "photos",
         "summary",
       ]),
     );

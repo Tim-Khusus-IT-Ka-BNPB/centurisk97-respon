@@ -7,7 +7,7 @@ import { BACK_STEPS } from "../limits";
 import type { MaskedText } from "../masking";
 import { OFF_TOPIC_LIMIT, type TopicVerdict } from "../topicGate";
 import { type AnswerContext, applyAnswer, type CardAnswer } from "./answer";
-import type { AskedCounts, DraftContent, Question } from "./content";
+import type { AskedCounts, DraftContent, PlaceReading, Question } from "./content";
 import { applyStory } from "./freeText";
 import { nextQuestion, stateFor } from "./next";
 
@@ -25,9 +25,15 @@ export type TurnDraft = DraftSnapshot & {
   readonly templatesOnly: boolean;
 };
 
+// What a GPS reading resolved to, decided by the service from the outlines.
+export type LocateResult =
+  | { readonly kind: "found"; readonly reading: Omit<PlaceReading, "showNearby"> }
+  | { readonly kind: "outside" | "notFound" | "unavailable" };
+
 export type TurnInput =
   | { readonly kind: "answer"; readonly answer: CardAnswer; readonly village: PlaceValue | null }
   | { readonly kind: "story"; readonly message: MaskedText; readonly extraction: Extraction }
+  | { readonly kind: "located"; readonly result: LocateResult }
   | { readonly kind: "refused"; readonly topic: TopicVerdict }
   | { readonly kind: "back" }
   | { readonly kind: "editGroup"; readonly groupId: GroupId }
@@ -111,6 +117,14 @@ export function runTurn(draft: TurnDraft, input: TurnInput, context: AnswerConte
       );
     case "refused":
       return refuse(draft, input.topic);
+    case "located": {
+      // A reading is taken on the place card, or again from the nearby list.
+      if (question.kind !== "place" && question.kind !== "placeConfirm") return { kind: "stale" };
+      if (input.result.kind !== "found")
+        return settle(draft, [{ kind: "refusal", copyKey: `refusal.place.${input.result.kind}` }]);
+      const placeReading = { ...input.result.reading, showNearby: false };
+      return settle(remembered(draft, { ...draft.content, placeReading }, draft.asked), []);
+    }
     case "story": {
       // The model's label refuses a message only when no checked value of it survives: code holds the flow.
       const kept = Object.keys(input.extraction.fields).length + input.extraction.hazardGuesses.length;

@@ -33,9 +33,11 @@ const event: FieldStates = {
   chronology: { state: "value", value: { steps: [], otherText: {}, note: null, text: "" }, origin: "tappedOption" },
   eventTime: { state: "value", value: { kind: "olderThan30Days" }, origin: "tappedOption" },
 };
+// The photo step is done unless a test says otherwise, so a full draft reaches the summary.
 const content = (states: FieldStates, extra: Partial<DraftContent> = {}): DraftContent => ({
   ...EMPTY_CONTENT,
   states,
+  photosDone: "cannotSend",
   ...extra,
 });
 const next = (states: FieldStates, asked = {}, extra: Partial<DraftContent> = {}) =>
@@ -208,6 +210,8 @@ describe("a new draft's content", () => {
 describe("the stored state of a question", () => {
   test.each<[Question, string]>([
     [{ kind: "place" }, "place"],
+    [{ kind: "placeConfirm" }, "place_confirm"],
+    [{ kind: "photos" }, "photos"],
     [{ kind: "neighbourhood" }, "neighbourhood"],
     [{ kind: "chronologyStep", step: 0 }, "guided_chronology"],
     [{ kind: "chronologyReview" }, "guided_chronology"],
@@ -222,6 +226,8 @@ describe("the stored state of a question", () => {
 describe("what a question settles", () => {
   test.each<[Question, string[]]>([
     [{ kind: "place" }, ["place"]],
+    [{ kind: "placeConfirm" }, ["place"]],
+    [{ kind: "photos" }, []],
     [{ kind: "neighbourhood" }, ["neighbourhood"]],
     [{ kind: "eventTime" }, ["eventTime"]],
     [{ kind: "choice", fieldId: "waterDepth" }, ["waterDepth"]],
@@ -267,5 +273,14 @@ describe("choice answers offered", () => {
     expect(isExclusiveOption({ id: "none", meaning: "none" })).toBe(true);
     expect(isExclusiveOption({ id: "unknown", meaning: "unknown" })).toBe(true);
     expect(isExclusiveOption({ id: "elderly" })).toBe(false);
+  });
+});
+
+describe("the GPS reading and the photo step", () => {
+  const reading = { village: placed.place as never, nearby: [], showNearby: false };
+  test("a waiting reading is confirmed before RT and RW; the photo step comes before the summary", () => {
+    expect(nextQuestion("place", content({}, { placeReading: reading }), {})).toEqual({ kind: "placeConfirm" });
+    expect(next(floodAllBut(), {}, { photosDone: null })).toEqual({ kind: "photos" });
+    expect(next(floodAllBut(), {}, { photosDone: "continued" })).toEqual({ kind: "summary" });
   });
 });

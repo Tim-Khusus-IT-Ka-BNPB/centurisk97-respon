@@ -5,6 +5,7 @@ import type { ApiEnv } from "./context";
 import { refuse } from "./envelope";
 import { addRoute, createApi, refusal } from "./route";
 import { addDraftRoutes } from "./routes/drafts";
+import { addPhotoRoutes } from "./routes/photos";
 import { addPlaceRoutes } from "./routes/places";
 import { addReporterRoutes } from "./routes/reporters";
 
@@ -43,3 +44,4 @@ addRoute(
 addReporterRoutes(api);
 addDraftRoutes(api);
 addPlaceRoutes(api);
+addPhotoRoutes(api);

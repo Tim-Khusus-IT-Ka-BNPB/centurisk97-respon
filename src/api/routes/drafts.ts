@@ -13,7 +13,7 @@ const draftParams = z.object({ draftId: z.string().max(64) });
 const turnBody = z.object({
   revision: z.number().int().nonnegative(),
   turnKey: z.uuid(),
-  kind: z.enum(["answer", "freeText", "back", "editGroup", "cancel", "confirm", "dismiss"]),
+  kind: z.enum(["answer", "freeText", "locate", "back", "editGroup", "cancel", "confirm", "dismiss"]),
   cardId: z.string().max(40).nullable().default(null),
   optionIds: z.array(z.string().max(60)).max(40).default([]),
   values: z.record(z.string().max(60), z.string().max(4000)).default({}),

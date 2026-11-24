@@ -8,8 +8,10 @@ import { chosenHazardType } from "../domain/fields/applicable";
 import { type FieldId, fieldById } from "../domain/fields/catalogue";
 import type { HazardTypeId } from "../domain/hazards";
 import { LENGTHS } from "../domain/limits";
+import type { KeptPhoto } from "../domain/photoChecks";
+import { PHOTO } from "../domain/photoChecks";
 import { DAY_MS, MINUTE_MS } from "../domain/time";
-import type { AskedCounts, DraftContent, Question } from "../domain/turn/content";
+import type { AskedCounts, DraftContent, PlaceReading, Question } from "../domain/turn/content";
 import { choiceOptions, isExclusiveOption } from "../domain/turn/options";
 import { chronologyRow, summaryGroups } from "./summary";
 
@@ -164,13 +166,70 @@ export type CardContext = {
   readonly reporter: { readonly name: string; readonly role: "citizen" | "claimedOfficer" };
   readonly completePercent: number;
   readonly asked: AskedCounts;
+  // The draft's photos in the order they arrived.
+  readonly photos: readonly (KeptPhoto & { readonly id: string })[];
 };
+
+const readVillage = (village: PlaceReading["village"]) => ({
+  code: village.villageCode,
+  villageName: village.villageName,
+  districtName: village.districtName,
+  regencyName: village.regencyName,
+  provinceName: village.provinceName,
+});
+
+function placeConfirmCard(base: CardBase, reading: PlaceReading): Card {
+  const point = reading.village.point as NonNullable<PlaceReading["village"]["point"]>;
+  return {
+    ...base,
+    kind: "placeConfirm",
+    titleKey: reading.showNearby ? "card.placeConfirm.nearbyTitle" : "card.placeConfirm.title",
+    promptKey: reading.showNearby ? "card.placeConfirm.nearbyPrompt" : "card.placeConfirm.prompt",
+    village: readVillage(reading.village),
+    point,
+    precision: reading.village.precision === "gpsPoint" ? "gpsPoint" : "estimate",
+    options: reading.showNearby
+      ? []
+      : [option("confirm", "card.placeConfirm.confirm", null), option("other", "card.placeConfirm.other", null)],
+    nearby: reading.showNearby ? reading.nearby.map((one) => ({ ...readVillage(one.village), km: one.km })) : null,
+  };
+}
+
+function photosCard(base: CardBase, context: CardContext): Card {
+  const count = context.photos.length;
+  return {
+    ...base,
+    kind: "photos",
+    titleKey: "card.photos.title",
+    promptKey: "card.photos.prompt",
+    params: { count, max: PHOTO.maxPerDraft },
+    photos: context.photos.map((photo) => ({
+      photoId: photo.id,
+      badge: photo.badge,
+      far: photo.far,
+      takenAt: { utc: new Date(photo.takenAtMs).toISOString(), zone: context.zone },
+      timeSource: photo.timeSource,
+      point: photo.point,
+      accuracyM: photo.accuracyM,
+    })),
+    max: PHOTO.maxPerDraft,
+    options: [
+      count > 0
+        ? option("continue", "card.photos.continue", null)
+        : option("cannotSend", "card.photos.cannotSend", null),
+    ],
+  };
+}
 
 // The card for the question code picked. Copy keys only; the client fills the text.
 export function cardFor(question: Question, content: DraftContent, context: CardContext): Card {
   const base: CardBase = { cardId: context.cardId, params: {} };
   const hazardType = chosenHazardType(content.states);
   switch (question.kind) {
+    case "placeConfirm":
+      return placeConfirmCard(base, content.placeReading as PlaceReading);
+    case "photos":
+      return photosCard(base, context);
     case "place":
       return {
         ...base,
@@ -257,6 +316,10 @@ export function cardFor(question: Question, content: DraftContent, context: Card
         params: { percent: context.completePercent },
         reporter: context.reporter,
         groups: summaryGroups(content.states),
+        photos: {
+          count: context.photos.length,
+          withPlace: context.photos.filter((photo) => photo.point !== null).length,
+        },
       };
     default:
       return {

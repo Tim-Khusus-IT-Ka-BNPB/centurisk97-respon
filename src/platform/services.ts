@@ -1,6 +1,7 @@
 import { seededIdentity, upstreamIdentity } from "../adapters/identity/seeded";
 import { httpModel } from "../adapters/model/http";
 import { modelOff } from "../adapters/model/off";
+import { type Bucket, r2PhotoStore } from "../adapters/r2/photoStore";
 import type { Clock } from "../ports/clock";
 import type { ModelPort } from "../ports/model";
 import type { ServiceBindings } from "../services/bindings";
@@ -15,7 +16,13 @@ function modelFor(settings: Settings): ModelPort {
 }
 
 // The ports a request uses, chosen by the settings.
-export function createServices(settings: Settings, log: Logger, db: Database, clock: Clock): ServiceBindings {
+export function createServices(
+  settings: Settings,
+  log: Logger,
+  db: Database,
+  photos: Bucket,
+  clock: Clock,
+): ServiceBindings {
   const identity = settings.identityAdapter === "seeded" ? seededIdentity(db, clock) : upstreamIdentity();
-  return { settings, log, db, clock, identity, model: modelFor(settings) };
+  return { settings, log, db, clock, identity, model: modelFor(settings), photos: r2PhotoStore(photos) };
 }

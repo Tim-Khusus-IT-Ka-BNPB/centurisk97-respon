@@ -13,6 +13,17 @@ function recorder() {
 }
 
 describe("page to api bridge", () => {
+  test("a form with a file goes as multipart, its boundary set by the runtime", async () => {
+    const { seen, fetchApi } = recorder();
+    const page = new Request(`${ORIGIN}/lapor/report/d`, { method: "POST", headers: { origin: ORIGIN } });
+    const form = new FormData();
+    form.set("photo", new File([new Uint8Array([1, 2])], "foto.jpg", { type: "image/jpeg" }));
+    await createBridge(fetchApi, ORIGIN, page)("POST", "/drafts/d/photos", form);
+    const [call] = seen as [Request];
+    expect(call.headers.get("content-type")).toMatch(/^multipart\/form-data; boundary=/);
+    expect(((await call.formData()).get("photo") as File).size).toBe(2);
+  });
+
   test("a page post becomes a JSON write from our origin, with cookie and address carried", async () => {
     const { seen, fetchApi } = recorder();
     const page = new Request(`${ORIGIN}/lapor/report`, {

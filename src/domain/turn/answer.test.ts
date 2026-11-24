@@ -9,6 +9,7 @@ const context: AnswerContext = {
   zone: "WIB",
   reporter: { name: "Uji Satu", number: "+6280000000001" },
   phraseOf: (key) => `phrase ${key.split(".").slice(-2, -1)[0]}`,
+  photoCount: 0,
 };
 const tapped = (value: string): FieldState => ({ state: "value", value, origin: "tappedOption" });
 const village: PlaceValue = {
@@ -230,5 +231,50 @@ describe("a reopened group", () => {
   test("an answer on the summary or the cancel confirm is stale", () => {
     expect(apply({ kind: "summary" }, answer(["x"]))).toEqual({ kind: "stale" });
     expect(apply({ kind: "cancelConfirm" }, answer())).toEqual({ kind: "stale" });
+  });
+});
+
+describe("the GPS reading and the photo step", () => {
+  const read: PlaceValue = { ...village, precision: "gpsPoint", point: { lat: 5.1, lon: 97.1, accuracyM: 12 } };
+  const other: PlaceValue = { ...read, villageCode: "11.08.01.2002", villageName: "Mekar" };
+  const reading = (showNearby: boolean) =>
+    with_({}, { placeReading: { village: read, nearby: [{ village: other, km: 0.8 }], showNearby } });
+  const confirm: Question = { kind: "placeConfirm" };
+
+  test("Benar places the read village, Bukan opens the list, and a village from the list replaces it", () => {
+    expect(apply(confirm, answer(["confirm"]), reading(false))).toMatchObject({
+      kind: "applied",
+      content: { states: { place: { value: read, origin: "tappedOption" } }, placeReading: null },
+    });
+    expect(apply(confirm, answer(["other"]), reading(false))).toMatchObject({
+      content: { placeReading: { showNearby: true } },
+    });
+    expect(states(apply(confirm, answer(), reading(true), {}, other))).toMatchObject({ place: { value: other } });
+  });
+
+  test("anything not on the card on screen is stale", () => {
+    for (const [given, showNearby, place] of [
+      [answer(["confirm", "other"]), false, null],
+      [answer(["nonsense"]), false, null],
+      [answer(), false, other],
+      [answer(["confirm"]), true, null],
+      [answer(["confirm"]), true, other],
+    ] as const)
+      expect(apply(confirm, given, reading(showNearby), {}, place)).toEqual({ kind: "stale" });
+  });
+
+  test("Lanjut needs a photo and Tidak bisa mengirim foto needs none", () => {
+    const photos: Question = { kind: "photos" };
+    const run = (given: CardAnswer, photoCount: number) =>
+      applyAnswer(photos, given, EMPTY_CONTENT, {}, { ...context, photoCount });
+    expect(run(answer(["continue"]), 1)).toMatchObject({ kind: "applied", content: { photosDone: "continued" } });
+    expect(run(answer(["cannotSend"]), 0)).toMatchObject({ kind: "applied", content: { photosDone: "cannotSend" } });
+    for (const [given, count] of [
+      [answer(["continue"]), 0],
+      [answer(["cannotSend"]), 1],
+      [answer(["continue", "cannotSend"]), 1],
+      [answer(["other"]), 1],
+    ] as const)
+      expect(run(given, count)).toEqual({ kind: "stale" });
   });
 });

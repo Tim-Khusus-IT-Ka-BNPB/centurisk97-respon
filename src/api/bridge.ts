@@ -25,7 +25,9 @@ export function createBridge(
       if (value !== null) headers.set(name, value);
     }
     const init: RequestInit = { method, headers };
-    if (body !== undefined) {
+    // A form with a file travels as multipart; the runtime sets its boundary.
+    if (body instanceof FormData) init.body = body;
+    else if (body !== undefined) {
       headers.set("content-type", "application/json");
       init.body = JSON.stringify(body);
     }

@@ -23,6 +23,8 @@ export type AnswerContext = {
   readonly zone: Zone;
   readonly reporter: Reporter;
   readonly phraseOf: PhraseOf;
+  // Photos already taken in this draft, which the photo step's two endings depend on.
+  readonly photoCount: number;
 };
 
 export type Applied =

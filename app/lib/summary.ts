@@ -51,8 +51,8 @@ export function valueLines(t: Text, fieldId: string, value: RowValue): readonly 
       if (time.kind === "dateOnly") return [t("value.eventTime.dateOnly", { date })];
       return [t("value.eventTime.dateTime", { date, time: localClockText(time.localTime), zone: time.zone })];
     }
-    case "place":
-      return [
+    case "place": {
+      const lines = [
         t("card.placeSearch.rowVillage", { village: value.villageName }),
         t("card.placeSearch.rowPlace", {
           district: value.districtName,
@@ -60,6 +60,11 @@ export function valueLines(t: Text, fieldId: string, value: RowValue): readonly 
           province: value.provinceName,
         }),
       ];
+      // A place read from GPS says how well it is known; a village picked by search is a village.
+      if (value.point === null || value.precision === "villageLevel") return lines;
+      const metres = t("card.placeConfirm.accuracy", { metres: Math.round(value.point.accuracyM) });
+      return [...lines, `${t(`card.placeConfirm.precision.${value.precision}`)}, ${metres}`];
+    }
     default: {
       const parts = [
         value.rt === null ? null : `${t("field.neighbourhood.rt")} ${value.rt}`,

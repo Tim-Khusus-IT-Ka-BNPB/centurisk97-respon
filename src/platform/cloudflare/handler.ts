@@ -1,4 +1,5 @@
 import type { AppLoadContext } from "react-router";
+import { r2PhotoStore } from "../../adapters/r2/photoStore";
 import { api } from "../../api/app";
 import { createBridge } from "../../api/bridge";
 import { runSweep } from "../../services/sweep";
@@ -53,7 +54,7 @@ export function createWorker(pages: PageHandler, runtime: string, sink?: LogSink
       const state = startOnce(env);
       if (!state.ok) return new Response(null, { status: 503, headers: { "referrer-policy": "no-referrer" } });
       const { settings, log, clock } = state.instance;
-      const bindings = createServices(settings, log, env.DB, clock);
+      const bindings = createServices(settings, log, env.DB, env.PHOTOS, clock);
       const fetchApi = async (apiRequest: Request) => api.app.fetch(apiRequest, bindings, ctx);
       if (new URL(request.url).pathname.startsWith("/api/")) return fetchApi(request);
       const context = {
@@ -68,7 +69,7 @@ export function createWorker(pages: PageHandler, runtime: string, sink?: LogSink
       const state = startOnce(env);
       if (!state.ok) return;
       try {
-        await runSweep(env.DB, state.instance.clock, state.instance.log);
+        await runSweep(env.DB, r2PhotoStore(env.PHOTOS), state.instance.clock, state.instance.log);
       } catch (error) {
         // The driver's message may quote values, so only its SQLite code leaves this run.
         const code = sqlState(error);

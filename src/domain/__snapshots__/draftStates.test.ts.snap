@@ -14,11 +14,13 @@ exports[`draft states > the state map as agreed 1`] = `
   "expired": [],
   "free_story": [
     "asking",
+    "photos",
     "cancelled",
     "expired",
   ],
   "guided_chronology": [
     "asking",
+    "photos",
     "cancelled",
     "expired",
   ],

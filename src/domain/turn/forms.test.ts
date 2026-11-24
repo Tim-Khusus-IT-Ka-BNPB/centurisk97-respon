@@ -9,6 +9,7 @@ const context: AnswerContext = {
   zone: "WIB",
   reporter: { name: "Uji Satu", number: "+6280000000001" },
   phraseOf: (key) => `phrase ${key.split(".").slice(-2, -1)[0]}`,
+  photoCount: 0,
 };
 const tapped = (value: string): FieldState => ({ state: "value", value, origin: "tappedOption" });
 const with_ = (states: FieldStates, extra: Partial<DraftContent> = {}): DraftContent => ({

@@ -4,7 +4,7 @@ import type { FieldId } from "../fields/catalogue";
 import type { HazardTypeId } from "../hazards";
 import { maskText } from "../masking";
 import { tidy } from "../text";
-import { type AskedCounts, type DraftContent, type Question, questionFields } from "./content";
+import { type AskedCounts, type DraftContent, type PlaceReading, type Question, questionFields } from "./content";
 import {
   type AnswerContext,
   type Applied,
@@ -30,6 +30,35 @@ function answerPlace(answer: CardAnswer, content: DraftContent, village: PlaceVa
   if (village === null)
     return invalid({ fieldId: "villageCode", rule: "required", params: { label: "field.place.label" } });
   return applied(withStates(content, { place: { state: "value", value: village, origin: "tappedOption" } }));
+}
+
+// "Benar" takes the village read from GPS, "Bukan" opens the nearby list, and a village of that
+// list replaces the read one while keeping the reading. Each is the reporter's tap on a read place.
+function answerPlaceConfirm(answer: CardAnswer, content: DraftContent, village: PlaceValue | null): Applied {
+  // The confirm card is asked only while a reading waits.
+  const reading = content.placeReading as PlaceReading;
+  const [option, ...rest] = answer.optionIds;
+  if (rest.length > 0) return STALE;
+  const placed = (value: PlaceValue) =>
+    applied({
+      ...withStates(content, { place: { state: "value", value, origin: "tappedOption" } }),
+      placeReading: null,
+    });
+  if (village !== null && option === undefined) return reading.showNearby ? placed(village) : STALE;
+  // "Benar" and "Bukan" are on screen only until the nearby list opens.
+  if (reading.showNearby) return STALE;
+  if (option === "confirm") return placed(reading.village);
+  if (option === "other") return applied({ ...content, placeReading: { ...reading, showNearby: true } });
+  return STALE;
+}
+
+// "Lanjut" needs a photo taken; "Tidak bisa mengirim foto" needs none.
+function answerPhotos(answer: CardAnswer, content: DraftContent, photoCount: number): Applied {
+  const [option, ...rest] = answer.optionIds;
+  if (rest.length > 0) return STALE;
+  if (option === "continue" && photoCount > 0) return applied({ ...content, photosDone: "continued" });
+  if (option === "cannotSend" && photoCount === 0) return applied({ ...content, photosDone: "cannotSend" });
+  return STALE;
 }
 
 function answerNeighbourhood(answer: CardAnswer, content: DraftContent): Applied {
@@ -133,6 +162,10 @@ function dispatch(
   switch (question.kind) {
     case "place":
       return answerPlace(answer, content, village);
+    case "placeConfirm":
+      return answerPlaceConfirm(answer, content, village);
+    case "photos":
+      return answerPhotos(answer, content, context.photoCount);
     case "neighbourhood":
       return answerNeighbourhood(answer, content);
     case "choice":

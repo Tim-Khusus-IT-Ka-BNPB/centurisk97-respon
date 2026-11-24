@@ -177,8 +177,15 @@ describe("summary and the end of a draft", () => {
     expect(screen.getByText("Meninggal:").textContent).toBe("Meninggal: tidak ada");
     expect(screen.getByText("Hilang:").textContent).toBe("Hilang: tidak tahu");
     expect(screen.getByText("Luka-luka:").textContent).toBe("Luka-luka: belum didata");
+    expect(screen.getByText("2 foto, 1 dengan lokasi terekam")).toBeTruthy();
     fireEvent.click(screen.getByRole("button", { name: "Kirim" }));
     await screen.findByRole("button", { name: "Mengirim laporan..." });
+  });
+
+  test("a summary with no photos says so", async () => {
+    const card = SAMPLE_DRAFTS.summary.card as Extract<Card, { kind: "summary" }>;
+    draw({ ...SAMPLE_DRAFTS.summary, card: { ...card, photos: { count: 0, withPlace: 0 } } });
+    expect(await screen.findByText("Tanpa foto")).toBeTruthy();
   });
 
   test("a failed send says so above Kirim and keeps focus on it", async () => {

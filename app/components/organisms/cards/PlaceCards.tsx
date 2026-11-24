@@ -1,5 +1,7 @@
-import { Form, Link, useNavigation } from "react-router";
+import { type ReactNode, useState, useSyncExternalStore } from "react";
+import { Form, Link, useNavigation, useSubmit } from "react-router";
 import type { Card } from "../../../../src/contract/card";
+import { readPosition } from "../../../lib/device";
 import { problemOf } from "../../../lib/envelope";
 import { useBusy } from "../../../lib/hooks";
 import { areaName, type PlaceItem, rowText, searchStatus } from "../../../lib/place";
@@ -10,13 +12,201 @@ import { Button, buttonStyles } from "../../atoms/Button";
 import { Input } from "../../atoms/controls";
 import { Icon } from "../../atoms/Icon";
 import { Field } from "../../molecules/Field";
-import { LifeLine } from "../../molecules/Notice";
+import { LifeLine, Notice } from "../../molecules/Notice";
 import { CardShell, TurnForm, useDraftView } from "./CardShell";
-
-type SearchCard = Extract<Card, { kind: "placeSearch" | "regencyVillages" }>;
 
 const row =
   "flex min-h-target-main w-full min-w-0 items-center gap-3 rounded-control border border-control bg-surface px-4 py-2 text-start text-ink hover:bg-[color-mix(in_oklch,var(--surface),var(--ink)_4%)]";
+
+type SearchCard = Extract<Card, { kind: "placeSearch" | "regencyVillages" }>;
+type ConfirmCard = Extract<Card, { kind: "placeConfirm" }>;
+
+const noSubscribe = () => () => {};
+// True once the page runs script; the server render and a page with no script draw without it.
+export const useHydrated = () =>
+  useSyncExternalStore(
+    noSubscribe,
+    () => true,
+    () => false,
+  );
+
+type Locating =
+  | { readonly kind: "idle" | "reading" }
+  | { readonly kind: "failed"; readonly reason: "denied" | "unavailable" | "unsupported" };
+
+// Reads the phone's position and sends it as a turn. It needs script, so a page without script
+// never shows it: search below stays the way to give the place.
+function LocateButton({ label, hint }: { readonly label: string; readonly hint: string }) {
+  const t = useText();
+  const hydrated = useHydrated();
+  const submit = useSubmit();
+  const { draft, turnKey } = useDraftView();
+  const sending = useBusy("locate", "kind");
+  const [locating, setLocating] = useState<Locating>({ kind: "idle" });
+  if (!hydrated) return null;
+  const read = async () => {
+    setLocating({ kind: "reading" });
+    const result = await readPosition();
+    if (result.kind !== "read") {
+      setLocating({ kind: "failed", reason: result.kind });
+      return;
+    }
+    setLocating({ kind: "idle" });
+    const form = new FormData();
+    for (const [name, value] of Object.entries({
+      action: "turn",
+      kind: "locate",
+      cardId: draft.card.cardId,
+      revision: String(draft.revision),
+      turnKey,
+      lat: String(result.position.lat),
+      lon: String(result.position.lon),
+      accuracy: String(result.position.accuracy),
+    }))
+      form.set(name, value);
+    submit(form, { method: "post", replace: true, preventScrollReset: true });
+  };
+  const busy = locating.kind === "reading" || sending;
+  return (
+    <div className="flex flex-col gap-2">
+      {locating.kind === "failed" ? <Notice kind="error">{t(`card.placeSearch.${locating.reason}`)}</Notice> : null}
+      <Button
+        type="button"
+        variant="primary"
+        size="main"
+        className="@actions:self-start"
+        onClick={read}
+        busyLabel={busy ? t("card.placeSearch.locating") : null}
+      >
+        <Icon name="locateFixed" />
+        {locating.kind === "failed" && locating.reason === "denied" ? t("card.placeSearch.retry") : label}
+      </Button>
+      <p className="text-meta text-muted">{hint}</p>
+    </div>
+  );
+}
+
+const coordinate = (value: number) => value.toFixed(6);
+const kilometres = new Intl.NumberFormat("id-ID", { maximumFractionDigits: 1 });
+
+// "Lokasi terbaca": the village the reading fell in, its coordinates and accuracy, to confirm or
+// replace with one of the nearest villages.
+export function PlaceConfirmCard({ card }: { readonly card: ConfirmCard }) {
+  const t = useText();
+  const { village, point } = card;
+  return (
+    <CardShell
+      card={card}
+      title={t(card.titleKey, card.params)}
+      prompt={card.promptKey && t(card.promptKey)}
+      focusId={null}
+    >
+      {card.nearby === null ? (
+        <>
+          <div className="flex flex-col gap-1 rounded-control border border-line bg-sunken p-3">
+            <p className="flex items-start gap-2 font-semibold break-words">
+              <Icon name="mapPin" className="mt-0.5" />
+              {breakAfterSlash(t("card.placeSearch.rowVillage", { village: village.villageName }))}
+            </p>
+            <p className="break-words">
+              {breakAfterSlash(
+                t("card.placeSearch.rowPlace", {
+                  district: village.districtName,
+                  regency: village.regencyName,
+                  province: village.provinceName,
+                }),
+              )}
+            </p>
+            <p className="text-meta tabular-nums">
+              {t("card.placeConfirm.coordinates", { lat: coordinate(point.lat), lon: coordinate(point.lon) })}
+            </p>
+            <p className="text-meta">
+              {t(`card.placeConfirm.precision.${card.precision}`)},{" "}
+              {t("card.placeConfirm.accuracy", { metres: Math.round(point.accuracyM) })}
+            </p>
+          </div>
+          <TurnForm className="flex flex-col gap-2 @actions:flex-row">
+            {card.options.map((option) => (
+              <OptionButton
+                key={option.id}
+                id={option.id}
+                label={t(option.labelKey)}
+                primary={option.id === "confirm"}
+              />
+            ))}
+          </TurnForm>
+        </>
+      ) : (
+        <>
+          <TurnForm>
+            <ul className="flex flex-col gap-2">
+              {card.nearby.map((one) => (
+                <li key={one.code} className="min-w-0">
+                  <NearbyRow code={one.code}>
+                    <span className="flex min-w-0 flex-1 flex-col break-words">
+                      <span className="font-semibold">
+                        {breakAfterSlash(t("card.placeSearch.rowVillage", { village: one.villageName }))}
+                      </span>
+                      <span className="text-meta text-muted tabular-nums">
+                        {t("card.placeConfirm.nearbyRow", {
+                          district: one.districtName,
+                          km: kilometres.format(one.km),
+                        })}
+                      </span>
+                    </span>
+                  </NearbyRow>
+                </li>
+              ))}
+            </ul>
+          </TurnForm>
+          <LocateButton label={t("card.placeConfirm.relocate")} hint={t("card.placeConfirm.relocateHint")} />
+        </>
+      )}
+    </CardShell>
+  );
+}
+
+function OptionButton({
+  id,
+  label,
+  primary,
+}: {
+  readonly id: string;
+  readonly label: string;
+  readonly primary: boolean;
+}) {
+  const t = useText();
+  const busy = useBusy(id, "optionIds");
+  return (
+    <Button
+      name="optionIds"
+      value={id}
+      variant={primary ? "primary" : "secondary"}
+      size="main"
+      busyLabel={busy ? t("common.saving") : null}
+    >
+      {label}
+    </Button>
+  );
+}
+
+function NearbyRow({ code, children }: { readonly code: string; readonly children: ReactNode }) {
+  const t = useText();
+  const busy = useBusy(code, "villageCode");
+  return (
+    <button
+      type="submit"
+      name="villageCode"
+      value={code}
+      aria-disabled={busy ? true : undefined}
+      onClick={(event) => busy && event.preventDefault()}
+      className={row}
+    >
+      {busy ? <span className="flex-1">{t("common.saving")}</span> : children}
+      <Icon name="chevronRight" className="text-muted" />
+    </button>
+  );
+}
 
 function RowWords({ item }: { readonly item: PlaceItem }) {
   const t = useText();
@@ -111,6 +301,7 @@ export function PlaceCard({ card }: { readonly card: SearchCard }) {
       prompt={area ? null : card.promptKey && t(card.promptKey, card.params)}
       focusId={searched ? "q" : null}
     >
+      {area ? null : <LocateButton label={t("card.placeSearch.locate")} hint={t("card.placeSearch.locateHint")} />}
       <Form method="get" replace preventScrollReset className="flex min-w-0 flex-col gap-3">
         {area ? <input type="hidden" name="area" value={card.areaCode} /> : null}
         <Field

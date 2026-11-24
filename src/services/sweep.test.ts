@@ -87,7 +87,7 @@ describe("the scheduled sweep", () => {
         fields = null, back_stack = null, last_acted_at = ${at(age)} where id = ${id}`;
     }
 
-    await runSweep(db, clock, bindings.log);
+    await runSweep(db, bindings.photos, clock, bindings.log);
 
     expect(await draftRow(due.id)).toEqual({ state: "expired", has_fields: 0, messages: 0, replies: 0 });
     expect(await draftRow(tapped.id)).toMatchObject({ state: "neighbourhood", has_fields: 1 });
@@ -109,11 +109,12 @@ describe("the scheduled sweep", () => {
 
     // Run again at once, it finds nothing left to do.
     expect(await draftRow(tapped.id)).toMatchObject({ state: "neighbourhood", has_fields: 1 });
-    expect(await runSweep(db, clock, bindings.log)).toEqual({
+    expect(await runSweep(db, bindings.photos, clock, bindings.log)).toEqual({
       expired: 0,
       pruned: 0,
       devicesRemoved: 0,
       draftsRemoved: 0,
+      photoFilesRemoved: 0,
     });
   });
 
@@ -124,7 +125,7 @@ describe("the scheduled sweep", () => {
     await query`with recursive n (i) as (select 1 union all select i + 1 from n where i < ${RETENTION.batch + 1})
       insert into rate_counter (limit_id, subject_key, window_start, count)
       select 'message.minute', ${subject}, strftime('%Y-%m-%dT%H:%M:%fZ', ${old}, '-' || i || ' minutes'), 1 from n`;
-    const counts = await runSweep(db, clock, bindings.log);
+    const counts = await runSweep(db, bindings.photos, clock, bindings.log);
     expect(counts.pruned).toBeGreaterThanOrEqual(RETENTION.batch + 1);
     expect(await query`select 1 from rate_counter where subject_key = ${subject}`).toHaveLength(0);
   });

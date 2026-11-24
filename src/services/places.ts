@@ -3,12 +3,18 @@ import {
   type Area,
   activeSnapshot,
   areaOf,
+  centresAround,
+  outlinesAround,
   type PlaceHits,
   searchArea,
   searchCountry,
+  villagesOf,
 } from "../adapters/d1/places";
+import type { PlacePoint, PlaceValue } from "../domain/fieldState";
+import { GEO, inIndonesia, nearestCentres, precisionOf, resolveVillage } from "../domain/geo";
 import { type AreaLevel, PLACE_RESULTS } from "../domain/placeSearch";
 import { placeQueryWords } from "../domain/placeText";
+import type { LocateResult } from "../domain/turn/engine";
 import { sqlState } from "../platform/database";
 import type { ServiceBindings } from "./bindings";
 import type { LimitRefusal } from "./limits";
@@ -86,4 +92,44 @@ export function areaVillages(
     const hits = await searchArea(bindings.db, snapshot.id, area, placeQueryWords(query), PLACE_RESULTS.area);
     return { kind: "ok", value: { ...results(hits, snapshot), area } };
   });
+}
+
+// Centres within this square give the fallback village and the nearby list; with fewer than the
+// list needs, a wider square is read once.
+const CENTRE_WINDOW_DEG = 0.3;
+const WIDE_WINDOW_DEG = 1;
+
+// A GPS reading as a village of the active snapshot, with the villages nearest to it.
+export async function locatePlace(bindings: ServiceBindings, reading: PlacePoint): Promise<LocateResult> {
+  if (!inIndonesia(reading)) return { kind: "outside" };
+  if (bindings.settings.faultPlace) return { kind: "unavailable" };
+  try {
+    const snapshot = await activeSnapshot(bindings.db);
+    if (snapshot === null) return { kind: "unavailable" };
+    const outlines = await outlinesAround(bindings.db, snapshot.id, reading);
+    let centres = await centresAround(bindings.db, snapshot.id, reading, CENTRE_WINDOW_DEG);
+    if (centres.length <= GEO.nearbyVillages)
+      centres = await centresAround(bindings.db, snapshot.id, reading, WIDE_WINDOW_DEG);
+    const resolved = resolveVillage(reading, outlines, centres);
+    if (resolved === null) return { kind: "notFound" };
+    const nearby = nearestCentres(reading, centres, GEO.nearbyVillages, resolved.code);
+    const names = await villagesOf(bindings.db, snapshot.id, [resolved.code, ...nearby.map((one) => one.code)]);
+    const precision = precisionOf(reading.accuracyM);
+    const read = (code: string) => ({ ...(names.get(code) as PlaceValue), precision, point: reading });
+    return {
+      kind: "found",
+      reading: {
+        village: read(resolved.code),
+        nearby: nearby.map((one) => ({ village: read(one.code), km: Math.round(one.km * 10) / 10 })),
+      },
+    };
+  } catch (error) {
+    const state = sqlState(error);
+    bindings.log.error({
+      event: "place.failed",
+      errorCode: "place.unavailable",
+      ...(state ? { sqlState: state } : {}),
+    });
+    return { kind: "unavailable" };
+  }
 }

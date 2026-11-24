@@ -11,6 +11,8 @@ const CONTROLS = new Set([
   "text",
   "groupId",
   "villageCode",
+  // The photo form's file goes to the photo route as it is.
+  "photo",
 ]);
 export const INTENT = "intent";
 

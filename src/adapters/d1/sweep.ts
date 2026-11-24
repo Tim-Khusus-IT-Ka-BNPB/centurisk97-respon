@@ -10,7 +10,7 @@ const counted = async (db: Database, queries: Query[]): Promise<number> => {
 };
 
 // Expires open drafts last acted on before the cutoff and removes their content, notices,
-// transcript and stored replies. A tap that lands first moves last_acted_at past the cutoff, so
+// transcript, stored replies and photos. A tap that lands first moves last_acted_at past the cutoff, so
 // the draft is no longer due.
 export async function expireBatch(db: Database, cutoffs: SweepCutoffs, now: Date, batch: number): Promise<number> {
   const ended = sql`select id from report_draft where state = 'expired' and end_reason = 'expired' and ended_at = ${now}`;
@@ -24,6 +24,7 @@ export async function expireBatch(db: Database, cutoffs: SweepCutoffs, now: Date
       returning id`,
     sql`delete from draft_message where draft_id in (${ended})`,
     sql`delete from turn_reply where draft_id in (${ended})`,
+    sql`delete from draft_photo where draft_id in (${ended})`,
   ]);
 }
 

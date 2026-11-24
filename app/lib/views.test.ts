@@ -132,8 +132,24 @@ describe("summary rows", () => {
         regencyName: "Aceh Utara",
         provinceName: "Aceh",
         precision: "villageLevel",
+        point: null,
       }),
     ).toEqual(["Desa/Kel. Sukamaju", "Kec. Contoh, Aceh Utara, Aceh"]);
+    const gps = { lat: 5.1, lon: 97.1, accuracyM: 12.4 };
+    const read = {
+      kind: "place" as const,
+      villageName: "Sukamaju",
+      districtName: "Contoh",
+      regencyName: "Aceh Utara",
+      provinceName: "Aceh",
+    };
+    expect(valueLines(t, "place", { ...read, precision: "gpsPoint", point: gps })[2]).toBe(
+      "Titik GPS, ketelitian ±12 m",
+    );
+    expect(valueLines(t, "place", { ...read, precision: "estimate", point: { ...gps, accuracyM: 1500 } })[2]).toBe(
+      "Perkiraan, GPS kurang teliti, ketelitian ±1.500 m",
+    );
+    expect(valueLines(t, "place", { ...read, precision: "villageLevel", point: gps })).toHaveLength(2);
     expect(valueLines(t, "neighbourhood", { kind: "neighbourhood", rt: "004", rw: null })).toEqual(["RT 004"]);
     expect(valueLines(t, "neighbourhood", { kind: "neighbourhood", rt: null, rw: "002" })).toEqual(["RW 002"]);
     expect(valueLines(t, "neighbourhood", { kind: "neighbourhood", rt: "004", rw: "002" })).toEqual([

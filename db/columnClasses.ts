@@ -200,4 +200,25 @@ export const COLUMN_CLASSES: Readonly<Record<string, TableClasses>> = {
       rings: PUB,
     },
   },
+  draft_photo: {
+    retention: "deleted when its draft is cancelled, expires or is removed; kept with a sent report",
+    columns: {
+      id: I,
+      draft_id: I,
+      store_key: I,
+      bytes: I,
+      lat: P,
+      lon: P,
+      accuracy_m: P,
+      badge: I,
+      far: I,
+      taken_at: P,
+      time_source: I,
+      received_at: I,
+    },
+  },
+  photo_removal: {
+    retention: "until the sweep has deleted the file from the photo store",
+    columns: { store_key: I, queued_at: I },
+  },
 };

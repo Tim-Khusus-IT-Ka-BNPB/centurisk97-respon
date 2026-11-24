@@ -21,9 +21,14 @@ async function migrate(db: Database): Promise<void> {
   }
 }
 
-const proxy = await getPlatformProxy<{ DB: Database }>({ configPath: "wrangler.jsonc", persist: false });
+const proxy = await getPlatformProxy<{ DB: Database; PHOTOS: unknown }>({
+  configPath: "wrangler.jsonc",
+  persist: false,
+});
 await migrate(proxy.env.DB);
 await seedPlaces(proxy.env.DB);
 await seedIdentities(proxy.env.DB);
 (globalThis as { testD1?: Database }).testD1 = proxy.env.DB;
+// The R2 bucket beside it, for the photo store (src/testing/api.ts).
+(globalThis as { testPhotos?: unknown }).testPhotos = proxy.env.PHOTOS;
 afterAll(() => proxy.dispose());

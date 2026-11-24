@@ -13,6 +13,7 @@ const context: AnswerContext = {
   zone: "WIB",
   reporter: { name: "Uji Satu", number: null },
   phraseOf: (key) => key,
+  photoCount: 0,
 };
 const tapped = (value: string): FieldState => ({ state: "value", value, origin: "tappedOption" });
 const unknown: FieldState = { state: "confirmedUnknown", origin: "tappedOption" };
@@ -38,7 +39,7 @@ const draft = (
   content: Partial<DraftContent> = {},
 ): TurnDraft => ({
   state: "asking",
-  content: { ...EMPTY_CONTENT, states, ...content },
+  content: { ...EMPTY_CONTENT, states, photosDone: "cannotSend", ...content },
   asked: {},
   backStack: [],
   offTopicCount: 0,
@@ -423,5 +424,40 @@ describe("a story applied", () => {
     );
     const result = applyStory({ kind: "place" }, EMPTY_CONTENT, {}, message, kept, context);
     expect(result.kind === "applied" && Object.keys(result.content.states)).toEqual(["housesHeavy"]);
+  });
+});
+
+describe("a GPS reading", () => {
+  const read = {
+    villageCode: "11.08.01.2001",
+    precision: "gpsPoint" as const,
+    point: { lat: 5.1, lon: 97.1, accuracyM: 12 },
+    snapshotId: 1,
+    villageName: "A",
+    districtName: "B",
+    regencyName: "C",
+    provinceName: "D",
+  };
+  const found = {
+    kind: "located" as const,
+    result: { kind: "found" as const, reading: { village: read, nearby: [] } },
+  };
+  test("is taken on the place card and again on the confirm card, and refused anywhere else", () => {
+    const start = draft({}, { state: "place" });
+    const reading = next(start, found);
+    expect(reading.question).toEqual({ kind: "placeConfirm" });
+    expect(reading.draft.state).toBe("place_confirm");
+    expect(reading.draft.backStack).toHaveLength(1);
+    expect(next(reading.draft, found).question).toEqual({ kind: "placeConfirm" });
+    expect(run(draft(placed), found)).toEqual({ kind: "stale" });
+  });
+
+  test("a point outside, not found or unreadable leaves the draft at the place card with the reason", () => {
+    for (const kind of ["outside", "notFound", "unavailable"] as const) {
+      const refused = next(draft({}, { state: "place" }), { kind: "located", result: { kind } });
+      expect(refused.question).toEqual({ kind: "place" });
+      expect(refused.notices).toEqual([{ kind: "refusal", copyKey: `refusal.place.${kind}` }]);
+      expect(refused.draft.backStack).toEqual([]);
+    }
   });
 });

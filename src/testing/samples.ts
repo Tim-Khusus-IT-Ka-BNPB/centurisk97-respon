@@ -1,8 +1,8 @@
 import type { Card, CardKind } from "../contract/card";
 import type { DraftBody, MeResponse } from "../contract/draft";
 import type { ErrorEnvelope } from "../contract/errors";
-import { EMPTY_CONTENT } from "../domain/turn/content";
-import { cardFor } from "../services/cards";
+import { EMPTY_CONTENT, type PlaceReading } from "../domain/turn/content";
+import { type CardContext, cardFor } from "../services/cards";
 
 // One draft body per card kind, for component tests and for building screens before the
 // turn engine exists. Every sample parses against the contract schemas (see samples.test.ts).
@@ -82,6 +82,57 @@ const village = {
   provinceName: "Aceh",
 };
 
+const BUILT: CardContext = {
+  cardId: card.cardId,
+  nowMs: Date.parse("2026-11-24T03:00:00.000Z"),
+  zone: "WIB",
+  reporter: { name: "Uji Satu", role: "citizen" },
+  completePercent: 0,
+  asked: {},
+  photos: [],
+};
+
+const readVillage = (code: string, villageName: string, km: number) => ({
+  village: {
+    villageCode: code,
+    precision: "gpsPoint" as const,
+    point: { lat: 5.1, lon: 97.1, accuracyM: 12 },
+    snapshotId: 1,
+    villageName,
+    districtName: "Contoh",
+    regencyName: "Aceh Utara",
+    provinceName: "Aceh",
+  },
+  km,
+});
+
+const READING: PlaceReading = {
+  village: readVillage("11.08.01.2001", "Sukamaju", 0).village,
+  nearby: [readVillage("11.08.01.2002", "Mekar", 0.8), readVillage("11.08.01.2003", "Jaya", 1.4)],
+  showNearby: false,
+};
+
+const SAMPLE_PHOTOS: CardContext["photos"] = [
+  {
+    id: "5b0e3c8e-4c1a-4f55-9a43-0d5c1c0b7a11",
+    badge: "deviceGps",
+    point: { lat: 5.1, lon: 97.1 },
+    accuracyM: 30,
+    takenAtMs: Date.parse("2026-11-24T02:58:00.000Z"),
+    timeSource: "photoData",
+    far: false,
+  },
+  {
+    id: "7c2d9a10-2f3b-4b8e-8d61-5e9f0a1b2c33",
+    badge: "none",
+    point: null,
+    accuracyM: null,
+    takenAtMs: Date.parse("2026-11-24T02:59:00.000Z"),
+    timeSource: "upload",
+    far: false,
+  },
+];
+
 export const SAMPLE_DRAFTS: Readonly<Record<CardKind, DraftBody>> = {
   placeSearch: draft(
     "place",
@@ -106,18 +157,13 @@ export const SAMPLE_DRAFTS: Readonly<Record<CardKind, DraftBody>> = {
     query: null,
     places: { items: [village], total: 844, cut: true, dataDate: "2026-10-25" },
   }),
-  // Drawn by the engine's own card builder, so the sample cannot drift from what is sent.
-  neighbourhood: draft(
-    "neighbourhood",
-    cardFor({ kind: "neighbourhood" }, EMPTY_CONTENT, {
-      cardId: card.cardId,
-      nowMs: Date.parse("2026-11-24T03:00:00.000Z"),
-      zone: "WIB",
-      reporter: { name: "Uji Satu", role: "citizen" },
-      completePercent: 0,
-      asked: {},
-    }),
+  // Drawn by the engine's own card builder, so the samples cannot drift from what is sent.
+  placeConfirm: draft(
+    "place_confirm",
+    cardFor({ kind: "placeConfirm" }, { ...EMPTY_CONTENT, placeReading: READING }, BUILT),
   ),
+  neighbourhood: draft("neighbourhood", cardFor({ kind: "neighbourhood" }, EMPTY_CONTENT, BUILT)),
+  photos: draft("photos", cardFor({ kind: "photos" }, EMPTY_CONTENT, { ...BUILT, photos: SAMPLE_PHOTOS })),
   choice: draft("asking", {
     ...card,
     kind: "choice",
@@ -254,6 +300,7 @@ export const SAMPLE_DRAFTS: Readonly<Record<CardKind, DraftBody>> = {
           rows: [{ fieldId: "housesHeavy", state: "value", value: { kind: "count", count: 3 }, origin: "quote" }],
         },
       ],
+      photos: { count: 2, withPlace: 1 },
     },
     { notices: [lifeLine], completePercent: 62 },
   ),

@@ -13,6 +13,7 @@ import {
 export const CARD_KINDS = [
   "placeSearch",
   "regencyVillages",
+  "placeConfirm",
   "neighbourhood",
   "choice",
   "multiChoice",
@@ -21,6 +22,7 @@ export const CARD_KINDS = [
   "textQuestion",
   "chronologyStep",
   "chronologyReview",
+  "photos",
   "summary",
   "confirm",
   "sent",
@@ -55,6 +57,28 @@ const cardOptionSchema = z.object({
   guess: z.boolean().optional(),
   // Picking this option opens a text box ("Lainnya").
   freeTextMaxLength: z.number().int().positive().nullable(),
+});
+
+const placePrecisionSchema = z.enum(["villageLevel", "gpsPoint", "estimate"]);
+// The device's reading; coordinates as read, accuracy in metres.
+const placePointSchema = z.object({ lat: z.number(), lon: z.number(), accuracyM: z.number() });
+const readVillageSchema = z.object({
+  code: z.string(),
+  villageName: z.string(),
+  districtName: z.string(),
+  regencyName: z.string(),
+  provinceName: z.string(),
+});
+
+const photoSchema = z.object({
+  photoId: z.string(),
+  badge: z.enum(["deviceGps", "photoData", "none"]),
+  // More than 10 km from the report's place (A4).
+  far: z.boolean(),
+  takenAt: timeSchema,
+  timeSource: z.enum(["photoData", "deviceGps", "upload"]),
+  point: z.object({ lat: z.number(), lon: z.number() }).nullable(),
+  accuracyM: z.number().nullable(),
 });
 
 // A regency or district row opens its villages; a village row is picked.
@@ -95,7 +119,8 @@ const rowValueSchema = z.discriminatedUnion("kind", [
     districtName: z.string(),
     regencyName: z.string(),
     provinceName: z.string(),
-    precision: z.literal("villageLevel"),
+    precision: placePrecisionSchema,
+    point: placePointSchema.nullable(),
   }),
   z.object({ kind: z.literal("neighbourhood"), rt: z.string().nullable(), rw: z.string().nullable() }),
   z.object({
@@ -146,6 +171,17 @@ export const cardSchema = z.discriminatedUnion("kind", [
     query: z.string().nullable(),
     places: placeResultsSchema.nullable(),
   }),
+  z.object({
+    ...base,
+    kind: z.literal("placeConfirm"),
+    village: readVillageSchema,
+    point: placePointSchema,
+    precision: placePrecisionSchema.exclude(["villageLevel"]),
+    // "Benar" and "Bukan, pilih desa/kelurahan lain".
+    options: z.array(cardOptionSchema),
+    // The nearest villages, listed once "Bukan" is tapped.
+    nearby: z.array(readVillageSchema.extend({ km: z.number() })).nullable(),
+  }),
   z.object({ ...base, kind: z.literal("neighbourhood"), fields: z.array(cardFieldSchema) }),
   z.object({ ...base, kind: z.literal("choice"), fieldId: z.string(), options: z.array(cardOptionSchema) }),
   z.object({ ...base, kind: z.literal("multiChoice"), fieldId: z.string(), options: z.array(cardOptionSchema) }),
@@ -181,9 +217,18 @@ export const cardSchema = z.discriminatedUnion("kind", [
   }),
   z.object({
     ...base,
+    kind: z.literal("photos"),
+    photos: z.array(photoSchema),
+    max: z.number().int().positive(),
+    // "Lanjut" once a photo is kept, "Tidak bisa mengirim foto" before.
+    options: z.array(cardOptionSchema),
+  }),
+  z.object({
+    ...base,
     kind: z.literal("summary"),
     reporter: z.object({ name: z.string(), role: reporterRoleSchema }),
     groups: z.array(summaryGroupSchema),
+    photos: z.object({ count: z.number().int().nonnegative(), withPlace: z.number().int().nonnegative() }),
   }),
   z.object({
     ...base,

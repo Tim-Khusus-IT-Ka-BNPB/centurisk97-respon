@@ -11,6 +11,7 @@ const context: CardContext = {
   reporter: { name: "Uji Satu", role: "citizen" },
   completePercent: 0,
   asked: {},
+  photos: [],
 };
 
 describe("choice cards", () => {

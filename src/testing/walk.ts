@@ -27,6 +27,8 @@ export function defaultAnswer(card: Card, villageCode: string): Record<string, u
       return { optionIds: ["today", "hourUnknown"] };
     case "numberForm":
       return { optionIds: ["allNone"] };
+    case "photos":
+      return { optionIds: ["cannotSend"] };
     default:
       return null;
   }

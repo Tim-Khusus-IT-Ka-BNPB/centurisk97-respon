@@ -1,7 +1,8 @@
 import type { Card } from "../../../src/contract/card";
 import { ChoiceCard } from "./cards/ChoiceCards";
 import { NeighbourhoodCard, NumberFormCard, TextQuestionCard } from "./cards/FormCards";
-import { PlaceCard } from "./cards/PlaceCards";
+import { PhotosCardView } from "./cards/PhotoCards";
+import { PlaceCard, PlaceConfirmCard } from "./cards/PlaceCards";
 import { CancelledCard, ConfirmCard, SentCard, SummaryCardView } from "./cards/SummaryCards";
 import { ChronologyReviewCard, TimeCardView } from "./cards/TimeCards";
 
@@ -11,6 +12,10 @@ export function CardView({ card }: { readonly card: Card }) {
     case "placeSearch":
     case "regencyVillages":
       return <PlaceCard card={card} />;
+    case "placeConfirm":
+      return <PlaceConfirmCard card={card} />;
+    case "photos":
+      return <PhotosCardView card={card} />;
     case "neighbourhood":
       return <NeighbourhoodCard card={card} />;
     case "choice":
