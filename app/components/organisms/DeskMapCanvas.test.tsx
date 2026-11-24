@@ -23,6 +23,15 @@ class FakeMap {
   remove() {
     this.removed = true;
   }
+  idle: (() => void) | null = null;
+  load: (() => void) | null = null;
+  resized = 0;
+  once(event: "idle" | "load", listener: () => void) {
+    this[event] = listener;
+  }
+  resize() {
+    this.resized += 1;
+  }
 }
 class FakeMarker {
   at: unknown = null;
@@ -109,6 +118,9 @@ describe("the desk map canvas", () => {
     ]);
     expect(made.markers.every((marker) => marker.map === map)).toBe(true);
     expect(made.markers[0]?.popup?.content?.textContent).toContain("LA-241126-01");
+    expect(map.fitted).toEqual([]);
+    map.load?.();
+    expect(map.resized).toBe(1);
     expect(map.fitted).toEqual([
       [
         [
@@ -118,6 +130,10 @@ describe("the desk map canvas", () => {
         { padding: 48, maxZoom: 13, duration: 0 },
       ],
     ]);
+    const region = view.getByRole("region", { name: "Peta laporan" });
+    expect(region.dataset.ready).toBeUndefined();
+    map.idle?.();
+    expect(region.dataset.ready).toBe("true");
     view.unmount();
     expect(map.removed).toBe(true);
   });
@@ -126,6 +142,7 @@ describe("the desk map canvas", () => {
     made.maps.length = 0;
     draw([]);
     await waitFor(() => expect(made.maps).toHaveLength(1));
+    (made.maps[0] as FakeMap).load?.();
     expect((made.maps[0] as FakeMap).fitted).toEqual([]);
     cleanup();
   });
