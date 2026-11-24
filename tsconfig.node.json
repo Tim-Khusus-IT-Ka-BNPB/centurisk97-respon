@@ -17,6 +17,7 @@
     "src/domain/modelMessage.ts",
     "vite.config.ts",
     "vitest.config.ts",
+    "vitest.mutation.config.ts",
     "react-router.config.ts",
     "playwright.config.ts"
   ],
