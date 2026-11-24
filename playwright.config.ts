@@ -1,0 +1,51 @@
+import { defineConfig, devices } from "@playwright/test";
+
+const appPort = 8787;
+const stubPort = Number(process.env.MODEL_STUB_PORT ?? "8790");
+const ci = Boolean(process.env.CI);
+const phone = { ...devices["Pixel 7"], viewport: { width: 390, height: 844 } };
+
+export default defineConfig({
+  testDir: "e2e",
+  fullyParallel: false,
+  workers: 1,
+  forbidOnly: ci,
+  retries: 0,
+  reporter: ci ? [["list"]] : [["list"], ["html", { open: "never", outputFolder: "playwright-report" }]],
+  use: {
+    baseURL: `http://localhost:${appPort}`,
+    // Traces and videos record typed names and numbers, so CI never keeps them.
+    trace: ci ? "off" : "retain-on-failure",
+    video: "off",
+    screenshot: "off",
+  },
+  projects: [
+    { name: "chromium", use: { ...phone } },
+    { name: "webkit", use: { ...devices["iPhone 13"], viewport: { width: 390, height: 844 } } },
+    { name: "chromium-320", use: { ...phone, viewport: { width: 320, height: 640 } } },
+    { name: "chromium-tablet", use: { ...devices["Desktop Chrome"], viewport: { width: 768, height: 1024 } } },
+    { name: "chromium-desktop", use: { ...devices["Desktop Chrome"], viewport: { width: 1280, height: 800 } } },
+    { name: "webkit-desktop", use: { ...devices["Desktop Safari"], viewport: { width: 1920, height: 1080 } } },
+    { name: "chromium-no-script", use: { ...phone, javaScriptEnabled: false } },
+    {
+      name: "webkit-no-script",
+      use: { ...devices["iPhone 13"], viewport: { width: 390, height: 844 }, javaScriptEnabled: false },
+    },
+  ],
+  webServer: [
+    {
+      command: "pnpm model-stub",
+      url: `http://127.0.0.1:${stubPort}/health`,
+      reuseExistingServer: false,
+      timeout: 30_000,
+    },
+    {
+      // A fresh test database each run, migrated and seeded, apart from the dev server's.
+      command: `pnpm db:e2e && pnpm preview --persist-to .wrangler/e2e --var APP_ENV:test --var APP_ORIGIN:http://localhost:${appPort}`,
+      url: `http://localhost:${appPort}/api/lapor/health`,
+      env: { APP_ENV: "test" },
+      reuseExistingServer: false,
+      timeout: 120_000,
+    },
+  ],
+});
