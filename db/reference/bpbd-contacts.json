@@ -1,0 +1,57 @@
+{
+  "sumber": "Data sintetis untuk uji, bukan nomor sebenarnya.",
+  "diperbarui": "2026-11-22",
+  "wilayah": {
+    "1108": {
+      "nama": "Kab. Aceh Utara",
+      "bpbd": [
+        {
+          "nomor": "0800-1108-0002",
+          "jenis": "kantor",
+          "url": null,
+          "tanggal": null
+        },
+        {
+          "nomor": "0800-1108-0001",
+          "jenis": "call_center",
+          "url": null,
+          "tanggal": null
+        }
+      ]
+    },
+    "12": {
+      "nama": "Provinsi Sumatera Utara",
+      "bpbd": [
+        {
+          "nomor": "0800-1200-0001",
+          "jenis": "pusdalops",
+          "url": null,
+          "tanggal": null
+        }
+      ]
+    },
+    "1206": {
+      "nama": "Kab. Karo",
+      "bpbd": [
+        {
+          "nomor": "0800-1206-0001",
+          "jenis": "kantor",
+          "url": null,
+          "tanggal": null,
+          "lama": true
+        }
+      ]
+    },
+    "11": {
+      "nama": "Provinsi Aceh",
+      "bpbd": [
+        {
+          "nomor": "123",
+          "jenis": "kantor",
+          "url": null,
+          "tanggal": null
+        }
+      ]
+    }
+  }
+}

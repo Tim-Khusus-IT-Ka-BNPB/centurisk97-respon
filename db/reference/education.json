@@ -1,0 +1,52 @@
+{
+  "dibuat": "2026-11-19",
+  "catatan": "Topik sintetis untuk uji. Isi sebenarnya dimuat dari berkas edukasi upstream.",
+  "topik": [
+    {
+      "id": "banjir",
+      "judul": "Banjir",
+      "ringkas": "Air meluap dan menggenangi daratan, bisa datang cepat setelah hujan deras.",
+      "gambar": null,
+      "tanda": ["Hujan deras berjam-jam", "Air sungai naik dan keruh"],
+      "sebelum": ["Siapkan tas siaga", "Kenali jalur ke tempat tinggi"],
+      "saat": ["Matikan listrik dari sumbernya", "Pindah ke tempat yang lebih tinggi"],
+      "sesudah": ["Jangan menyentuh kabel yang basah", "Bersihkan rumah dengan sarung tangan"],
+      "sumber": [
+        {
+          "lembaga": "BNPB",
+          "judul": "Buku saku tanggap tangkas tangguh menghadapi bencana",
+          "url": "https://bnpb.go.id/"
+        }
+      ]
+    },
+    {
+      "id": "gempa",
+      "judul": "Gempa bumi",
+      "ringkas": "Guncangan tanah yang datang tiba-tiba tanpa tanda.",
+      "gambar": null,
+      "saat": ["Lindungi kepala dan berlindung di bawah meja yang kuat", "Jauhi kaca dan lemari"],
+      "sesudah": ["Periksa luka", "Keluar dengan hati-hati lewat jalur yang lapang"],
+      "sumber": [
+        {
+          "lembaga": "BNPB",
+          "judul": "Buku saku tanggap tangkas tangguh menghadapi bencana",
+          "url": "https://bnpb.go.id/"
+        }
+      ]
+    },
+    {
+      "id": "nomor-darurat",
+      "judul": "Nomor darurat",
+      "ringkas": "Nomor yang bisa dihubungi saat ada nyawa terancam.",
+      "gambar": null,
+      "butir": ["112: layanan darurat terpadu", "117: call center BNPB", "113: pemadam kebakaran"],
+      "sumber": [
+        {
+          "lembaga": "BNPB",
+          "judul": "Kontak BNPB",
+          "url": "https://bnpb.go.id/"
+        }
+      ]
+    }
+  ]
+}

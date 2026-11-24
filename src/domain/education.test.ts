@@ -1,0 +1,33 @@
+import { describe, expect, test } from "vitest";
+import seeded from "../../db/reference/education.json";
+import { checkEducationFile } from "./education";
+
+const source = { lembaga: "BNPB", judul: "Buku saku", url: "https://bnpb.go.id/" };
+const topic = { id: "banjir", judul: "Banjir", ringkas: "Air meluap.", sebelum: ["Siapkan tas"], sumber: [source] };
+const file = (topik: unknown[], extra: object = {}) => ({ dibuat: "2026-11-19", catatan: "", topik, ...extra });
+
+describe("education file", () => {
+  test("the seeded file and a minimal one pass", () => {
+    expect(checkEducationFile(seeded)?.topik).toHaveLength(3);
+    expect(checkEducationFile(file([topic]))?.dibuat).toBe("2026-11-19");
+  });
+
+  test("a file or topic that breaks its contract is refused", () => {
+    for (const broken of [
+      null,
+      file([topic], { dibuat: "19 Nov" }),
+      file([topic], { catatan: 1 }),
+      file([]),
+      { dibuat: "2026-11-19", catatan: "", topik: "x" },
+      file([{ ...topic, judul: " " }]),
+      file([{ ...topic, sebelum: "x" }]),
+      file([{ ...topic, saat: [""] }]),
+      file([{ ...topic, sumber: [] }]),
+      file([{ ...topic, sumber: [{ ...source, url: "http://bnpb.go.id/" }] }]),
+      file([{ ...topic, sumber: [null] }]),
+      file([topic, topic]),
+      file([null]),
+    ])
+      expect(checkEducationFile(broken)).toBeNull();
+  });
+});
