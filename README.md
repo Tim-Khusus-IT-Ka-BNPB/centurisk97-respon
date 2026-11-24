@@ -113,4 +113,11 @@ CI=1 pnpm exec wrangler d1 migrations apply lapor-bencana-staging --remote --env
 pnpm deploy:staging
 ```
 
+To roll back, list the versions and make an earlier one live; the same command rolls forward. Migrations only go forward, so a version is only rolled back to one that reads the current schema.
+
+```bash
+pnpm exec wrangler deployments list --name lapor-bencana-staging
+pnpm exec wrangler rollback <version id> --name lapor-bencana-staging --message "<why>"
+```
+
 `KEY_HMAC_SECRET` is a Worker secret (`wrangler secret put KEY_HMAC_SECRET --name lapor-bencana-staging`), never a file. The seeded test sessions are keyed with it, so a new secret means seeding again. The model is off until a key is set as a secret and `MODEL_MODE` is `live`.
