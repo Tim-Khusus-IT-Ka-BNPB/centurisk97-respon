@@ -6,7 +6,7 @@ This repo rebuilds the Lapor module of [poskokarhutla](https://github.com/terasu
 
 How it is built: typed contracts between pages and API, layered code (route, service, repository) with pure domain rules, every user-facing word in one copy catalogue, every rule enforced on the server, and nothing merged without type checks, lint, 100% unit coverage and browser tests at phone, tablet and desktop widths.
 
-Status: the guided report (identity and consent, place by search or GPS, hazard, questions, photos, summary, send) works end to end locally. Staging is not set up yet.
+Status: the guided report (identity and consent, place by search or GPS, hazard, questions, photos, summary, send), the ticket with its rating, the tracking page and "Laporan saya" work end to end locally. Staging is not set up yet.
 
 ## Where things are
 
@@ -56,10 +56,14 @@ Needs Node 26.3 (see `.nvmrc`) and pnpm 10.34.5 (the `packageManager` field; `np
    pnpm sweep:local         # fires the scheduled expiry sweep on the running dev server
    ```
 
+   Contacts and preparedness topics. The seed loads synthetic stand-ins: the BPBD numbers there are 0800 numbers, never an agency's real line. Upstream's real files load with `reference:import-file`, each checked against its contract first.
+
    Place data. The seed loads a small pinned cut of the village file and the outlines of those villages, which GPS reads a point against. To cover the whole country, import upstream's `public/data/desa_cari.json`; its outlines are read from `public/geo/desa/` beside it, or from a folder given as a second argument. A file under 80,000 villages or 500 regencies, or outlines for fewer than 80,000 of its villages, is refused, and the same files twice write nothing.
 
    ```bash
    pnpm reference:import ../poskokarhutla/public/data/desa_cari.json
+   pnpm reference:import-file bpbdContacts ../poskokarhutla/public/data/bpbd_kontak.json
+   pnpm reference:import-file education ../poskokarhutla/public/lapor/edukasi.json
    pnpm reference:timing    # times the search on the active snapshot of the local database
    pnpm db:seed             # makes the pinned seed file the active snapshot again
    pnpm openapi             # writes the API document generated from the routes to build/openapi.json
