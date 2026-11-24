@@ -1,10 +1,15 @@
 import { type BrowserContext, expect, type Locator, type Page } from "@playwright/test";
 
 // Every test reports from its own address, so the per-address limits of one run never meet
-// another's. Locally the dev server passes the header through unchanged.
+// another's. Locally the dev server passes the header through unchanged. Only our own host gets
+// it: on a request to another host (the map tiles) it would force a preflight that host refuses.
 export async function ownAddress(context: BrowserContext): Promise<void> {
   const part = () => Math.floor(Math.random() * 250) + 1;
-  await context.setExtraHTTPHeaders({ "cf-connecting-ip": `10.${part()}.${part()}.${part()}` });
+  const address = `10.${part()}.${part()}.${part()}`;
+  await context.route(
+    (url) => url.hostname === "localhost",
+    (route) => route.continue({ headers: { ...route.request().headers(), "cf-connecting-ip": address } }),
+  );
 }
 
 // A synthetic number in the 0800 range, new for each run.

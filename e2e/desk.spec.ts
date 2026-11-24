@@ -195,7 +195,16 @@ test("the map and the gallery show the filtered reports, and a page with no scri
   await page.getByRole("button", { name: "Terapkan" }).click();
   await page.getByRole("navigation", { name: "Tampilan laporan" }).getByRole("link", { name: "Peta" }).click();
   await expect(page.getByRole("heading", { name: /Peta laporan/ })).toContainText("1 titik");
-  if (script) await expect(page.locator("button.desk-marker")).toHaveCount(1, { timeout: 20_000 });
+  if (script) {
+    await expect(page.locator("button.desk-marker")).toHaveCount(1, { timeout: 20_000 });
+    await expect(page.getByRole("region", { name: "Peta laporan", exact: true })).toHaveAttribute(
+      "data-ready",
+      "true",
+      {
+        timeout: 30_000,
+      },
+    );
+  }
   await page.getByText("Daftar titik (1)").click();
   await expect(page.getByRole("link", { name: ticketNumber })).toBeVisible();
   await expect(page.getByText(/^5\.\d{6}, 97\.\d{6}, perkiraan tingkat desa$/)).toBeVisible();
