@@ -26,7 +26,7 @@ export default function DeskRoute({ loaderData, actionData }: Route.ComponentPro
   return (
     <Page texts={load.texts} publicPage={false} wide>
       {load.kind === "queue" ? (
-        <DeskQueueView queue={load.queue} filters={load.filters} envelope={load.envelope} />
+        <DeskQueueView shown={load.shown} filters={load.filters} envelope={load.envelope} />
       ) : load.kind === "refused" ? (
         <DeskRefused envelope={load.envelope} />
       ) : (

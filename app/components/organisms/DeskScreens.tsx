@@ -1,10 +1,11 @@
 import { type ReactNode, useEffect } from "react";
 import { Form, Link, useNavigation, useSubmit } from "react-router";
-import type { DeskQueue, DeskReport } from "../../../src/contract/desk";
+import type { DeskGallery, DeskMap, DeskQueue, DeskReport } from "../../../src/contract/desk";
 import type { ErrorEnvelope } from "../../../src/contract/errors";
 import { DESK_PERIODS } from "../../../src/domain/deskQueue";
 import { HAZARD_TYPE_IDS } from "../../../src/domain/hazards";
-import type { DeskFilters } from "../../lib/deskPage.server";
+import { GROUPS } from "../../lib/deskMap";
+import { DESK_VIEWS, type DeskFilters, type DeskShown } from "../../lib/deskTypes";
 import { problemOf } from "../../lib/envelope";
 import { useFocusOnChange } from "../../lib/hooks";
 import { limitText } from "../../lib/status";
@@ -18,6 +19,7 @@ import { Field } from "../molecules/Field";
 import { Notice } from "../molecules/Notice";
 import { Panel } from "../molecules/Panel";
 import { SummaryRow } from "./cards/SummaryCards";
+import { DeskMapCanvas } from "./DeskMapCanvas";
 
 const STATUSES = ["new", "seen", "under_review", "forwarded", "in_handling", "closed", "invalid"] as const;
 
@@ -152,6 +154,7 @@ function Filters({ filters, envelope }: { readonly filters: DeskFilters; readonl
   useFocusOnChange(problem === null ? null : "ticket", envelope);
   return (
     <Form method="get" role="search" aria-label={t("desk.filters")} className="@container card-surface p-4">
+      <input type="hidden" name="view" value={filters.view} />
       <div className="grid grid-cols-1 items-end gap-x-3 gap-y-4 @[19rem]:grid-cols-2 @[60rem]:grid-cols-[repeat(4,minmax(0,1fr))_auto]">
         <FilterSelect
           id="status"
@@ -242,66 +245,234 @@ function QueueRow({ item }: { readonly item: Item }) {
   );
 }
 
-const pageLink = (filters: DeskFilters, page: number) => {
+// The desk's address for these filters; the list view and the first page are left out.
+const deskLink = (filters: DeskFilters, change: Partial<DeskFilters>) => {
   const search = new URLSearchParams();
-  for (const [name, value] of Object.entries({ ...filters, page }))
-    if (value !== "" && value !== 1) search.set(name, String(value));
+  for (const [name, value] of Object.entries({ ...filters, ...change }))
+    if (value !== "" && value !== 1 && value !== "list") search.set(name, String(value));
   const text = search.toString();
   return text === "" ? "/lapor/meja" : `/lapor/meja?${text}`;
 };
 
+function ViewTabs({ filters }: { readonly filters: DeskFilters }) {
+  const t = useText();
+  return (
+    <nav aria-label={t("desk.views")} className="flex flex-wrap gap-2">
+      {DESK_VIEWS.map((view) => (
+        <Link
+          key={view}
+          to={deskLink(filters, { view, page: 1 })}
+          aria-current={filters.view === view ? "page" : undefined}
+          className={buttonStyles({
+            variant: filters.view === view ? "primary" : "secondary",
+            className: "min-w-24",
+          })}
+        >
+          {t(`desk.view.${view}`)}
+        </Link>
+      ))}
+    </nav>
+  );
+}
+
+function ListView({ queue, filters }: { readonly queue: DeskQueue; readonly filters: DeskFilters }) {
+  const t = useText();
+  return (
+    <section aria-labelledby="desk-list" className="flex flex-col gap-3">
+      <h2 id="desk-list" className="text-card font-bold">
+        {t("desk.list")} <span className="font-normal text-muted">{t("desk.count", { count: queue.total })}</span>
+      </h2>
+      {queue.items.length === 0 ? (
+        <Notice kind="info">
+          <p>{t("desk.empty")}</p>
+        </Notice>
+      ) : (
+        <ul className="flex flex-col gap-3">
+          {queue.items.map((item) => (
+            <QueueRow key={item.ticketNumber} item={item} />
+          ))}
+        </ul>
+      )}
+      {queue.pageCount > 1 ? (
+        <nav
+          aria-label={t("desk.page", { page: queue.page, pages: queue.pageCount })}
+          className="flex flex-wrap items-center gap-3"
+        >
+          {queue.page > 1 ? (
+            <Link to={deskLink(filters, { page: queue.page - 1 })} className={buttonStyles({ variant: "secondary" })}>
+              {t("desk.previous")}
+            </Link>
+          ) : null}
+          <span className="text-muted">{t("desk.page", { page: queue.page, pages: queue.pageCount })}</span>
+          {queue.page < queue.pageCount ? (
+            <Link to={deskLink(filters, { page: queue.page + 1 })} className={buttonStyles({ variant: "secondary" })}>
+              {t("desk.next")}
+            </Link>
+          ) : null}
+        </nav>
+      ) : null}
+    </section>
+  );
+}
+
+function Legend() {
+  const t = useText();
+  return (
+    <div className="flex flex-col gap-2 text-meta">
+      <p className="font-semibold">{t("desk.map.legend.status")}</p>
+      <ul className="flex flex-wrap gap-x-6 gap-y-2">
+        {GROUPS.map((group) => (
+          <li key={group} className="flex items-center gap-2">
+            <span aria-hidden="true" className={`desk-marker desk-marker-${group} size-6! border-2!`} />
+            {t(`desk.map.group.${group}`)}
+          </li>
+        ))}
+      </ul>
+      <p className="text-muted">{t("desk.map.legend.hazard")}</p>
+    </div>
+  );
+}
+
+function MapView({ map }: { readonly map: DeskMap }) {
+  const t = useText();
+  return (
+    <section aria-labelledby="desk-map" className="flex flex-col gap-3">
+      <h2 id="desk-map" className="text-card font-bold">
+        {t("desk.map.title")}{" "}
+        <span className="font-normal text-muted">{t("desk.map.count", { count: map.points.length })}</span>
+      </h2>
+      {map.cut ? (
+        <Notice kind="info">
+          <p>{t("desk.map.cut", { count: map.points.length })}</p>
+        </Notice>
+      ) : null}
+      {map.points.length === 0 ? (
+        <Notice kind="info">
+          <p>{t("desk.map.empty")}</p>
+        </Notice>
+      ) : (
+        <>
+          <noscript>
+            <p>{t("desk.map.noscript")}</p>
+          </noscript>
+          <DeskMapCanvas points={map.points} label={t("desk.map.title")} />
+          <Legend />
+          <details className="card-surface p-4">
+            <summary className="min-h-target cursor-pointer py-2 font-semibold">
+              {t("desk.map.table", { count: map.points.length })}
+            </summary>
+            <ul className="flex flex-col gap-3 pt-2">
+              {map.points.map((point) => (
+                <li key={point.ticketNumber} className="flex flex-col">
+                  <Link to={`/lapor/meja/${point.ticketNumber}`} className="font-bold tabular-nums">
+                    {point.ticketNumber}
+                  </Link>
+                  <span>
+                    {`${t(`hazard.${point.hazardType}.label`)}, ${t(`stage.short.${point.status}`)}, ${point.villageName}`}
+                  </span>
+                  <span className="text-meta text-muted tabular-nums">
+                    {`${point.lat.toFixed(6)}, ${point.lon.toFixed(6)}, ${t(`desk.map.precision.${point.precision}`)}`}
+                  </span>
+                </li>
+              ))}
+            </ul>
+          </details>
+        </>
+      )}
+    </section>
+  );
+}
+
+type Photo = DeskGallery["photos"][number];
+
+function PhotoFigure({ photo }: { readonly photo: Photo }) {
+  const t = useText();
+  return (
+    <figure className="flex flex-col gap-2 card-surface p-2">
+      <a href={`/api/lapor/desk/photos/${photo.photoId}`}>
+        <img
+          src={`/api/lapor/desk/photos/${photo.photoId}`}
+          alt={t("desk.gallery.alt", { ticket: photo.ticketNumber })}
+          loading="lazy"
+          className="aspect-[4/3] w-full rounded-control bg-sunken object-cover"
+        />
+      </a>
+      <figcaption className="flex flex-col gap-1 px-1 pb-1 text-meta">
+        <Link to={`/lapor/meja/${photo.ticketNumber}`} className="font-bold tabular-nums">
+          {photo.ticketNumber}
+        </Link>
+        <span className="inline-flex items-center gap-1">
+          <Icon name={photo.badge === "none" ? "circleDashed" : "mapPin"} className="size-4" />
+          {t(`card.photos.badge.${photo.badge}`)}
+        </span>
+        {photo.far ? (
+          <span className="inline-flex items-center gap-1">
+            <Icon name="triangleAlert" className="size-4" />
+            {t("card.photos.badge.far")}
+          </span>
+        ) : null}
+        <span className="text-muted tabular-nums">{when(t, "desk.gallery.received", photo.receivedAt)}</span>
+      </figcaption>
+    </figure>
+  );
+}
+
+const PHOTO_GRID = "grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4";
+
+function GalleryView({ gallery }: { readonly gallery: DeskGallery }) {
+  const t = useText();
+  return (
+    <section aria-labelledby="desk-gallery" className="flex flex-col gap-3">
+      <h2 id="desk-gallery" className="text-card font-bold">
+        {t("desk.gallery.title")}{" "}
+        <span className="font-normal text-muted">{t("desk.gallery.count", { count: gallery.photos.length })}</span>
+      </h2>
+      {gallery.cut ? (
+        <Notice kind="info">
+          <p>{t("desk.gallery.cut", { count: gallery.photos.length })}</p>
+        </Notice>
+      ) : null}
+      {gallery.photos.length === 0 ? (
+        <Notice kind="info">
+          <p>{t("desk.gallery.empty")}</p>
+        </Notice>
+      ) : (
+        <ul className={PHOTO_GRID}>
+          {gallery.photos.map((photo) => (
+            <li key={photo.photoId}>
+              <PhotoFigure photo={photo} />
+            </li>
+          ))}
+        </ul>
+      )}
+    </section>
+  );
+}
+
 export function DeskQueueView({
-  queue,
+  shown,
   filters,
   envelope,
 }: {
-  readonly queue: DeskQueue | null;
+  readonly shown: DeskShown | null;
   readonly filters: DeskFilters;
   readonly envelope: ErrorEnvelope | null;
 }) {
   const t = useText();
+  const label =
+    shown === null
+      ? ""
+      : (shown.view === "list" ? shown.queue : shown.view === "map" ? shown.map : shown.gallery).account.label;
   return (
     <>
-      <DeskHeading label={queue?.account.label ?? ""}>
+      <DeskHeading label={label}>
         <p>{t("desk.lead")}</p>
       </DeskHeading>
+      <ViewTabs filters={filters} />
       <Filters filters={filters} envelope={envelope} />
-      {queue === null ? null : (
-        <section aria-labelledby="desk-list" className="flex flex-col gap-3">
-          <h2 id="desk-list" className="text-card font-bold">
-            {t("desk.list")} <span className="font-normal text-muted">{t("desk.count", { count: queue.total })}</span>
-          </h2>
-          {queue.items.length === 0 ? (
-            <Notice kind="info">
-              <p>{t("desk.empty")}</p>
-            </Notice>
-          ) : (
-            <ul className="flex flex-col gap-3">
-              {queue.items.map((item) => (
-                <QueueRow key={item.ticketNumber} item={item} />
-              ))}
-            </ul>
-          )}
-          {queue.pageCount > 1 ? (
-            <nav
-              aria-label={t("desk.page", { page: queue.page, pages: queue.pageCount })}
-              className="flex flex-wrap items-center gap-3"
-            >
-              {queue.page > 1 ? (
-                <Link to={pageLink(filters, queue.page - 1)} className={buttonStyles({ variant: "secondary" })}>
-                  {t("desk.previous")}
-                </Link>
-              ) : null}
-              <span className="text-muted">{t("desk.page", { page: queue.page, pages: queue.pageCount })}</span>
-              {queue.page < queue.pageCount ? (
-                <Link to={pageLink(filters, queue.page + 1)} className={buttonStyles({ variant: "secondary" })}>
-                  {t("desk.next")}
-                </Link>
-              ) : null}
-            </nav>
-          ) : null}
-        </section>
-      )}
+      {shown?.view === "list" ? <ListView queue={shown.queue} filters={filters} /> : null}
+      {shown?.view === "map" ? <MapView map={shown.map} /> : null}
+      {shown?.view === "gallery" ? <GalleryView gallery={shown.gallery} /> : null}
     </>
   );
 }
@@ -364,6 +535,22 @@ export function DeskReportView({ report }: { readonly report: DeskReport }) {
             </p>
             <p className="text-meta text-muted tabular-nums">{when(t, "desk.row.sentAt", report.sentAt)}</p>
             <MarkSeen report={report} />
+          </section>
+          <section aria-labelledby="desk-photos" className="flex flex-col gap-3 card-surface p-4 md:p-5">
+            <h2 id="desk-photos" className="text-card font-bold">
+              {t("desk.photos")}
+            </h2>
+            {report.photos.length === 0 ? (
+              <p className="text-muted">{t("desk.photos.empty")}</p>
+            ) : (
+              <ul className="grid grid-cols-2 gap-3 sm:grid-cols-3">
+                {report.photos.map((photo) => (
+                  <li key={photo.photoId}>
+                    <PhotoFigure photo={photo} />
+                  </li>
+                ))}
+              </ul>
+            )}
           </section>
           <section aria-labelledby="desk-values" className="flex flex-col gap-4 card-surface p-4 md:p-5">
             <h2 id="desk-values" className="text-card font-bold">

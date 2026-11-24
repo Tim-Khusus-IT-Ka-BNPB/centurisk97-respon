@@ -1,17 +1,9 @@
 import type { ApiCall } from "../../src/api/bridge";
-import type { DeskQueue, DeskReport } from "../../src/contract/desk";
+import type { DeskGallery, DeskMap, DeskQueue, DeskReport } from "../../src/contract/desk";
 import type { ErrorEnvelope } from "../../src/contract/errors";
+import { DESK_VIEWS, type DeskFilters, type DeskShown, type DeskView } from "./deskTypes";
 import type { Texts } from "./text";
 import { PAGE_TEXTS, pickTexts } from "./texts.server";
-
-// The queue's filters as the address carries them, so a filtered view can be linked and reloaded.
-export type DeskFilters = {
-  readonly status: string;
-  readonly hazardType: string;
-  readonly period: string;
-  readonly ticket: string;
-  readonly page: number;
-};
 
 // What a desk page shows when its read is refused: sign in, not this account, or a notice.
 type DeskRefusal =
@@ -24,7 +16,8 @@ export type DeskQueueLoad =
       readonly kind: "queue";
       readonly texts: Texts;
       readonly filters: DeskFilters;
-      readonly queue: DeskQueue | null;
+      // What the view read: none when the search was refused.
+      readonly shown: DeskShown | null;
       // A refused search: the queue is drawn without results and the field says why.
       readonly envelope: ErrorEnvelope | null;
     };
@@ -37,7 +30,9 @@ const texts = () => pickTexts(PAGE_TEXTS.desk);
 
 export function filtersOf(search: URLSearchParams): DeskFilters {
   const page = Number(search.get("page") ?? "1");
+  const view = search.get("view") ?? "";
   return {
+    view: (DESK_VIEWS as readonly string[]).includes(view) ? (view as DeskView) : "list",
     status: search.get("status") ?? "",
     hazardType: search.get("hazardType") ?? "",
     period: search.get("period") ?? "all",
@@ -46,10 +41,11 @@ export function filtersOf(search: URLSearchParams): DeskFilters {
   };
 }
 
-// The API's query for these filters; an empty filter is left out.
+// The API's query for these filters; an empty filter, the view and the first page are left out.
 export function queueQuery(filters: DeskFilters): string {
   const search = new URLSearchParams();
-  for (const [name, value] of Object.entries(filters)) if (value !== "" && value !== 1) search.set(name, String(value));
+  for (const [name, value] of Object.entries(filters))
+    if (name !== "view" && value !== "" && value !== 1) search.set(name, String(value));
   const text = search.toString();
   return text === "" ? "" : `?${text}`;
 }
@@ -63,11 +59,22 @@ async function refusalOf(response: Response): Promise<DeskRefusal> {
 // GET /lapor/meja: the queue for a staff account, or the sign-in form for anyone else.
 export async function loadDeskQueue(url: URL, api: ApiCall): Promise<DeskQueueLoad> {
   const filters = filtersOf(url.searchParams);
-  const response = await api("GET", `/desk/reports${queueQuery(filters)}`);
-  if (response.ok)
-    return { kind: "queue", texts: texts(), filters, queue: (await response.json()) as DeskQueue, envelope: null };
+  // The map and the gallery are not paged.
+  const query = queueQuery(filters.view === "list" ? filters : { ...filters, page: 1 });
+  const path = { list: "/desk/reports", map: "/desk/map", gallery: "/desk/photos" }[filters.view];
+  const response = await api("GET", `${path}${query}`);
+  if (response.ok) {
+    const body = await response.json();
+    const shown =
+      filters.view === "list"
+        ? { view: "list" as const, queue: body as DeskQueue }
+        : filters.view === "map"
+          ? { view: "map" as const, map: body as DeskMap }
+          : { view: "gallery" as const, gallery: body as DeskGallery };
+    return { kind: "queue", texts: texts(), filters, shown, envelope: null };
+  }
   if (response.status === 422)
-    return { kind: "queue", texts: texts(), filters, queue: null, envelope: (await response.json()) as ErrorEnvelope };
+    return { kind: "queue", texts: texts(), filters, shown: null, envelope: (await response.json()) as ErrorEnvelope };
   return refusalOf(response);
 }
 

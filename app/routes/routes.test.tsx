@@ -330,6 +330,7 @@ describe("desk routes", () => {
       groups: [],
       history: [],
       reporterWords: [],
+      photos: [],
     };
     const load = async (answer: () => Response) =>
       unwrap(

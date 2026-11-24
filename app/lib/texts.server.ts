@@ -90,6 +90,7 @@ export const PAGE_TEXTS = {
     "card.placeSearch.rowVillage",
     "card.placeSearch.rowPlace",
     "card.placeConfirm.",
+    "card.photos.badge.",
   ],
 } as const;
 

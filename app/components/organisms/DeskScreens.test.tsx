@@ -3,6 +3,11 @@ import { describe, expect, test, vi } from "vitest";
 import { envelope } from "../../../src/api/envelope";
 import type { DeskQueue, DeskReport } from "../../../src/contract/desk";
 import { never, renderPage as stub } from "../../testing/render";
+
+vi.mock("./DeskMapCanvas", () => ({
+  DeskMapCanvas: ({ label }: { label: string }) => <section aria-label={label} />,
+}));
+
 import { DeskQueueView, DeskRefused, DeskReportView, DeskSignIn, spacedNumber } from "./DeskScreens";
 
 // The router stub draws once its loader settles.
@@ -13,7 +18,7 @@ async function renderPage(...args: Parameters<typeof stub>) {
 }
 
 const SENT = { utc: "2026-11-24T02:30:00.000Z", zone: "WIB" } as const;
-const FILTERS = { status: "", hazardType: "", period: "all", ticket: "", page: 1 };
+const FILTERS = { view: "list" as const, status: "", hazardType: "", period: "all", ticket: "", page: 1 };
 
 const ITEM: DeskQueue["items"][number] = {
   ticketNumber: "LA-241126-01",
@@ -48,6 +53,8 @@ const queue = (overrides: Partial<DeskQueue> = {}): DeskQueue => ({
   pageCount: 1,
   ...overrides,
 });
+
+const list = (queue: DeskQueue) => ({ view: "list" as const, queue });
 
 const REPORT: DeskReport = {
   ...ITEM,
@@ -98,11 +105,14 @@ const REPORT: DeskReport = {
     },
   ],
   reporterWords: [{ text: "banjir, dua orang meninggal", at: SENT }],
+  photos: [],
 };
 
 describe("the queue", () => {
   test("each report with its status, place, times, reporter and the unverified mark", async () => {
-    await renderPage(<DeskQueueView queue={queue()} filters={FILTERS} envelope={null} />, { path: "/lapor/meja" });
+    await renderPage(<DeskQueueView shown={list(queue())} filters={FILTERS} envelope={null} />, {
+      path: "/lapor/meja",
+    });
     expect(screen.getByRole("heading", { level: 1, name: "Meja laporan" })).toBeTruthy();
     expect(screen.getByText("Masuk sebagai Pusdalops BNPB, Petugas Uji")).toBeTruthy();
     const rows = screen.getAllByRole("listitem");
@@ -124,7 +134,7 @@ describe("the queue", () => {
   });
 
   test("an empty queue says so; several pages link to their neighbours with the filters kept", async () => {
-    await renderPage(<DeskQueueView queue={queue({ items: [], total: 0 })} filters={FILTERS} envelope={null} />, {
+    await renderPage(<DeskQueueView shown={list(queue({ items: [], total: 0 }))} filters={FILTERS} envelope={null} />, {
       path: "/lapor/meja",
     });
     expect(screen.getByText("Belum ada laporan yang cocok dengan saringan ini.")).toBeTruthy();
@@ -133,7 +143,7 @@ describe("the queue", () => {
   test("the middle page of three links both ways", async () => {
     await renderPage(
       <DeskQueueView
-        queue={queue({ page: 2, pageCount: 3, total: 120 })}
+        shown={list(queue({ page: 2, pageCount: 3, total: 120 }))}
         filters={{ ...FILTERS, status: "seen", page: 2 }}
         envelope={null}
       />,
@@ -150,7 +160,11 @@ describe("the queue", () => {
 
   test("the first and last pages link one way; a page with no filters links home", async () => {
     await renderPage(
-      <DeskQueueView queue={queue({ page: 1, pageCount: 2 })} filters={{ ...FILTERS, period: "" }} envelope={null} />,
+      <DeskQueueView
+        shown={list(queue({ page: 1, pageCount: 2 }))}
+        filters={{ ...FILTERS, period: "" }}
+        envelope={null}
+      />,
       {
         path: "/lapor/meja",
       },
@@ -164,7 +178,7 @@ describe("the queue", () => {
       ...envelope("request.invalidFields"),
       fields: [{ fieldId: "ticket", copyKey: "fieldError.ticketNumber.format", params: {} }],
     };
-    await renderPage(<DeskQueueView queue={null} filters={{ ...FILTERS, ticket: "0800" }} envelope={refused} />, {
+    await renderPage(<DeskQueueView shown={null} filters={{ ...FILTERS, ticket: "0800" }} envelope={refused} />, {
       path: "/lapor/meja",
     });
     expect(
@@ -175,7 +189,113 @@ describe("the queue", () => {
   });
 });
 
+const PHOTO = {
+  photoId: "11111111-1111-4111-8111-111111111111",
+  ticketNumber: "LA-241126-01",
+  badge: "deviceGps" as const,
+  far: true,
+  takenAt: SENT,
+  receivedAt: SENT,
+};
+
+const POINT = {
+  ticketNumber: "LA-241126-01",
+  status: "seen" as const,
+  hazardType: "flood",
+  villageName: "Sukamaju",
+  precision: "villageLevel" as const,
+  lat: 5.1,
+  lon: 97.123456,
+};
+
+describe("views", () => {
+  test("tabs keep the filters, mark the one shown, and the filters keep the view", async () => {
+    await renderPage(
+      <DeskQueueView shown={list(queue())} filters={{ ...FILTERS, status: "seen", page: 3 }} envelope={null} />,
+      {
+        path: "/lapor/meja",
+      },
+    );
+    const tabs = within(screen.getByRole("navigation", { name: "Tampilan laporan" }));
+    expect(tabs.getByRole("link", { name: "Daftar" }).getAttribute("aria-current")).toBe("page");
+    expect(tabs.getByRole("link", { name: "Daftar" }).getAttribute("href")).toBe("/lapor/meja?status=seen&period=all");
+    expect(tabs.getByRole("link", { name: "Peta" }).getAttribute("href")).toBe(
+      "/lapor/meja?view=map&status=seen&period=all",
+    );
+    expect(tabs.getByRole("link", { name: "Galeri" }).getAttribute("aria-current")).toBeNull();
+    expect((document.querySelector('input[name="view"]') as HTMLInputElement).value).toBe("list");
+  });
+
+  test("the map: its points, the legend in words, and every point listed for a page with no script", async () => {
+    const map = { account: { label: "Petugas Uji" }, points: [POINT], cut: true };
+    await renderPage(
+      <DeskQueueView shown={{ view: "map", map }} filters={{ ...FILTERS, view: "map" }} envelope={null} />,
+      {
+        path: "/lapor/meja",
+      },
+    );
+    expect(screen.getByText("Masuk sebagai Petugas Uji")).toBeTruthy();
+    expect(screen.getByRole("region", { name: "Peta laporan" })).toBeTruthy();
+    expect(screen.getByText("1 titik")).toBeTruthy();
+    expect(screen.getByText(/Peta menampilkan 1 laporan terbaru/)).toBeTruthy();
+    expect(screen.getByText("Belum ditangani: diterima, dilihat")).toBeTruthy();
+    expect(screen.getByText("Ditutup: selesai, tidak dapat ditindaklanjuti")).toBeTruthy();
+    expect(screen.getByText("Daftar titik (1)")).toBeTruthy();
+    expect(screen.getByRole("link", { name: "LA-241126-01" }).getAttribute("href")).toBe("/lapor/meja/LA-241126-01");
+    expect(screen.getByText("Banjir, Dilihat, Sukamaju")).toBeTruthy();
+    expect(screen.getByText("5.100000, 97.123456, perkiraan tingkat desa")).toBeTruthy();
+  });
+
+  test("a map with no points says so and draws no map", async () => {
+    const map = { account: { label: "Petugas Uji" }, points: [], cut: false };
+    await renderPage(
+      <DeskQueueView shown={{ view: "map", map }} filters={{ ...FILTERS, view: "map" }} envelope={null} />,
+      {
+        path: "/lapor/meja",
+      },
+    );
+    expect(screen.getByText("Belum ada laporan untuk saringan ini.")).toBeTruthy();
+    expect(screen.queryByRole("region", { name: "Peta laporan" })).toBeNull();
+  });
+
+  test("the gallery: each photo with its report, badges and time; staff open the file", async () => {
+    const gallery = {
+      account: { label: "Petugas Uji" },
+      photos: [PHOTO, { ...PHOTO, photoId: "2", badge: "none" as const, far: false }],
+      cut: true,
+    };
+    await renderPage(
+      <DeskQueueView shown={{ view: "gallery", gallery }} filters={{ ...FILTERS, view: "gallery" }} envelope={null} />,
+      { path: "/lapor/meja" },
+    );
+    expect(screen.getByText("2 foto")).toBeTruthy();
+    expect(screen.getByText(/Galeri menampilkan 2 foto terbaru/)).toBeTruthy();
+    const images = screen.getAllByRole("img", { name: "Foto laporan LA-241126-01" });
+    expect(images[0]?.getAttribute("src")).toBe(`/api/lapor/desk/photos/${PHOTO.photoId}`);
+    expect(screen.getByText("Lokasi GPS perangkat")).toBeTruthy();
+    expect(screen.getByText("Tanpa lokasi")).toBeTruthy();
+    expect(screen.getAllByText("Jauh dari lokasi kejadian")).toHaveLength(1);
+    expect(screen.getAllByText("Diterima 24 November 2026, pukul 09.30 WIB")).toHaveLength(2);
+  });
+
+  test("an empty gallery says so", async () => {
+    const gallery = { account: { label: "Petugas Uji" }, photos: [], cut: false };
+    await renderPage(
+      <DeskQueueView shown={{ view: "gallery", gallery }} filters={{ ...FILTERS, view: "gallery" }} envelope={null} />,
+      { path: "/lapor/meja" },
+    );
+    expect(screen.getByText("Belum ada foto untuk saringan ini.")).toBeTruthy();
+  });
+});
+
 describe("a report", () => {
+  test("shows the reporter's photos with their badges", async () => {
+    await renderPage(<DeskReportView report={{ ...REPORT, photos: [PHOTO] }} />, { path: "/lapor/meja/LA-241126-01" });
+    const photos = within(screen.getByRole("region", { name: "Foto pelapor" }));
+    expect(photos.getByRole("img", { name: "Foto laporan LA-241126-01" })).toBeTruthy();
+    expect(photos.getByText("Lokasi GPS perangkat")).toBeTruthy();
+  });
+
   test("every value with where it came from, the reporter, the history and the reporter's words", async () => {
     await renderPage(<DeskReportView report={REPORT} />, { path: "/lapor/meja/LA-241126-01" });
     expect(screen.getByRole("heading", { level: 2, name: "LA-241126-01" })).toBeTruthy();
@@ -250,7 +370,7 @@ describe("busy and repeated posts", () => {
   test("the last page has no next link, and its previous link with no filters is the plain desk", async () => {
     await renderPage(
       <DeskQueueView
-        queue={queue({ page: 2, pageCount: 2 })}
+        shown={list(queue({ page: 2, pageCount: 2 }))}
         filters={{ ...FILTERS, period: "", page: 2 }}
         envelope={null}
       />,

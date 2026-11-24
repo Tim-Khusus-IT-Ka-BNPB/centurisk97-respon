@@ -2,6 +2,7 @@ import type { ChangeEvent } from "react";
 import type { Card } from "../../../../src/contract/card";
 import { errorIdOf, problemOf } from "../../../lib/envelope";
 import { settleExclusive } from "../../../lib/exclusive";
+import { HAZARD_ICONS } from "../../../lib/hazardIcons";
 import { useBusy } from "../../../lib/hooks";
 import { type Text, useText } from "../../../lib/text";
 import { Input } from "../../atoms/controls";
@@ -14,19 +15,6 @@ import { SaveAction } from "./FormCards";
 
 type ChoiceLike = Extract<Card, { kind: "choice" | "multiChoice" | "chronologyStep" }>;
 type Option = ChoiceLike["options"][number];
-
-const HAZARD_ICONS: Readonly<Record<string, IconName>> = {
-  flood: "droplets",
-  landslide: "mountain",
-  tidalWaveAbrasion: "shell",
-  extremeWeather: "tornado",
-  drought: "sun",
-  forestFire: "trees",
-  earthquake: "activity",
-  tsunami: "waves",
-  volcanicEruption: "mountainSnow",
-  buildingFire: "flame",
-};
 
 // Types guessed from the reporter's words come first, in the order they were given.
 const guessesFirst = (options: readonly Option[]) => [

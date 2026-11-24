@@ -28,11 +28,16 @@ describe("the desk queue page", () => {
     const { api, calls } = fakeApi(() => Response.json(QUEUE));
     const load = await loadDeskQueue(new URL("http://x/lapor/meja?status=seen&hazardType=&ticket=LA-1&page=2"), api);
     expect(calls[0]?.path).toBe("/desk/reports?status=seen&period=all&ticket=LA-1&page=2");
-    expect(load).toMatchObject({ kind: "queue", queue: QUEUE, envelope: null, filters: { status: "seen", page: 2 } });
+    expect(load).toMatchObject({
+      kind: "queue",
+      shown: { view: "list", queue: QUEUE },
+      envelope: null,
+      filters: { view: "list", status: "seen", page: 2 },
+    });
     expect(queueQuery(filtersOf(new URLSearchParams("")))).toBe("?period=all");
     expect(filtersOf(new URLSearchParams("page=0")).page).toBe(1);
     expect(filtersOf(new URLSearchParams("page=x")).page).toBe(1);
-    expect(queueQuery({ status: "", hazardType: "", period: "", ticket: "", page: 1 })).toBe("");
+    expect(queueQuery({ view: "map", status: "", hazardType: "", period: "", ticket: "", page: 1 })).toBe("");
   });
 
   test("a refused search keeps the filters and says why; no staff account asks to sign in; others refuse", async () => {
@@ -41,7 +46,7 @@ describe("the desk queue page", () => {
       new URL("http://x/lapor/meja?ticket=1"),
       fakeApi(() => Response.json(field, { status: 422 })).api,
     );
-    expect(searched).toMatchObject({ kind: "queue", queue: null, envelope: field });
+    expect(searched).toMatchObject({ kind: "queue", shown: null, envelope: field });
     const signIn = await loadDeskQueue(
       new URL("http://x/lapor/meja"),
       fakeApi(() => Response.json(envelope("auth.staffSignInFirst"), { status: 401 })).api,
@@ -52,6 +57,24 @@ describe("the desk queue page", () => {
       fakeApi(() => Response.json(envelope("desk.notAllowed"), { status: 403 })).api,
     );
     expect(refused).toMatchObject({ kind: "refused", status: 403, envelope: { error: { code: "desk.notAllowed" } } });
+  });
+});
+
+describe("the map and the gallery", () => {
+  test("each view reads its own route with the filters and no page; an unknown view is the list", async () => {
+    const { api, calls } = fakeApi(() =>
+      Response.json({ account: { label: "Petugas" }, points: [], photos: [], cut: false }),
+    );
+    const map = await loadDeskQueue(new URL("http://x/lapor/meja?view=map&status=new&page=3"), api);
+    expect(map).toMatchObject({ kind: "queue", shown: { view: "map", map: { points: [] } } });
+    const gallery = await loadDeskQueue(new URL("http://x/lapor/meja?view=gallery"), api);
+    expect(gallery).toMatchObject({ kind: "queue", shown: { view: "gallery", gallery: { photos: [] } } });
+    await loadDeskQueue(new URL("http://x/lapor/meja?view=nope"), api);
+    expect(calls.map((call) => call.path)).toEqual([
+      "/desk/map?status=new&period=all",
+      "/desk/photos?period=all",
+      "/desk/reports?period=all",
+    ]);
   });
 });
 
