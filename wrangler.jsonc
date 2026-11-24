@@ -21,5 +21,30 @@
       // Report photos, metadata stripped. Local runs keep them under .wrangler/state.
       "bucket_name": "lapor-bencana-photos"
     }
-  ]
+  ],
+  "env": {
+    // Shared nothing with upstream but the Cloudflare account and the centurisk97.id zone: its own
+    // Worker, database, bucket and address. Synthetic data only. KEY_HMAC_SECRET is a Worker secret.
+    "staging": {
+      "name": "lapor-bencana-staging",
+      "routes": [{ "pattern": "lapor-bencana.centurisk97.id", "custom_domain": true }],
+      "triggers": { "crons": ["*/15 * * * *"] },
+      "d1_databases": [
+        {
+          "binding": "DB",
+          "database_name": "lapor-bencana-staging",
+          "database_id": "9c7d11d8-e58b-4a53-a17a-0c29e8fa6f59",
+          "migrations_dir": "db/migrations"
+        }
+      ],
+      "r2_buckets": [{ "binding": "PHOTOS", "bucket_name": "lapor-bencana-photos-staging" }],
+      "vars": {
+        "APP_ENV": "staging",
+        "APP_ORIGIN": "https://lapor-bencana.centurisk97.id",
+        "IDENTITY_ADAPTER": "seeded",
+        "MODEL_MODE": "off",
+        "LOG_LEVEL": "info"
+      }
+    }
+  }
 }
