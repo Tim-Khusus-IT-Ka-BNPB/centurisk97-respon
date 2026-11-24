@@ -1,5 +1,8 @@
 // Reads what the photo checks need from a JPEG's own EXIF data, and strips every segment that
 // can carry metadata before the file is stored (D11). Pure: bytes in, values out.
+//
+// Every read goes through one reader that refuses to read past the end, and every failure in
+// here means a broken file, so a broken file has one outcome wherever it breaks: not readable.
 
 import type { Point } from "./geo";
 
@@ -34,198 +37,228 @@ const TAG = {
 const TYPE_ASCII = 2;
 const TYPE_RATIONAL = 5;
 
+// Reads bytes, and refuses any read outside them.
+class Reader {
+  constructor(readonly bytes: Uint8Array) {}
+  byte(at: number): number {
+    const value = this.bytes[at];
+    if (value === undefined) throw new RangeError();
+    return value;
+  }
+  u16(at: number, little = false): number {
+    const [a, b] = [this.byte(at), this.byte(at + 1)];
+    return little ? a | (b << 8) : (a << 8) | b;
+  }
+  u32(at: number, little: boolean): number {
+    const [a, b] = [this.u16(at, little), this.u16(at + 2, little)];
+    return little ? a + b * 0x10000 : a * 0x10000 + b;
+  }
+  slice(at: number, length: number): Uint8Array {
+    this.byte(at + length - 1);
+    return this.bytes.subarray(at, at + length);
+  }
+}
+
 export const isJpeg = (bytes: Uint8Array): boolean => bytes[0] === 0xff && bytes[1] === SOI;
 
 type Segment = { readonly marker: number; readonly start: number; readonly end: number };
 
-// The header segments in order, up to and including the first SOS, or null when they do not parse.
-function headerSegments(bytes: Uint8Array): Segment[] | null {
-  if (!isJpeg(bytes)) return null;
-  const segments: Segment[] = [];
-  let at = 2;
-  while (at + 4 <= bytes.length) {
-    if (bytes[at] !== 0xff) return null;
-    const marker = bytes[at + 1] as number;
-    if (marker === 0xff) {
-      at += 1;
-      continue;
-    }
-    const length = ((bytes[at + 2] as number) << 8) | (bytes[at + 3] as number);
-    if (length < 2 || at + 2 + length > bytes.length) return null;
-    segments.push({ marker, start: at, end: at + 2 + length });
-    if (marker === SOS) return segments;
-    at += 2 + length;
-  }
-  return null;
+class Broken extends Error {}
+
+// The next segment from `at`, skipping fill bytes before its marker. A length under 2 makes the
+// next segment start inside this one's length field, where no marker can be.
+function segmentAt(reader: Reader, from: number): Segment {
+  let at = from;
+  if (reader.byte(at) !== 0xff) throw new Broken();
+  while (reader.byte(at + 1) === 0xff) at += 1;
+  const marker = reader.byte(at + 1);
+  if (marker === EOI) return { marker, start: at, end: at + 2 };
+  const length = reader.u16(at + 2);
+  reader.byte(at + 1 + length);
+  return { marker, start: at, end: at + 2 + length };
 }
 
+const EXIF_HEADER = "Exif\0\0";
+const textOf = (bytes: Uint8Array) => new TextDecoder("latin1").decode(bytes);
+
+const isExif = (reader: Reader, segment: Segment) =>
+  segment.marker === APP1 && textOf(reader.bytes.subarray(segment.start + 4, segment.start + 10)) === EXIF_HEADER;
+
+// The EXIF segment among the header segments, before the first scan. A file with none has nothing
+// to read, the same outcome as a broken one.
+function exifSegment(reader: Reader): Segment {
+  if (!isJpeg(reader.bytes)) throw new Broken();
+  for (let at = 2; ; ) {
+    const segment = segmentAt(reader, at);
+    if (segment.marker === EOI) throw new Broken();
+    if (isExif(reader, segment)) return segment;
+    if (segment.marker === SOS) throw new Broken();
+    at = segment.end;
+  }
+}
+
+type Entry = { readonly type: number; readonly count: number; readonly at: number };
+
+// The TIFF block inside the EXIF segment: offsets in it count from its start.
 class Tiff {
-  constructor(
-    private readonly view: DataView,
-    private readonly little: boolean,
-  ) {}
-  u16 = (at: number) => this.view.getUint16(at, this.little);
-  u32 = (at: number) => this.view.getUint32(at, this.little);
-  get size() {
-    return this.view.byteLength;
+  readonly little: boolean;
+  constructor(readonly reader: Reader) {
+    const order = textOf(reader.slice(0, 2));
+    if (order !== "II" && order !== "MM") throw new Broken();
+    this.little = order === "II";
+    if (this.u16(2) !== 42) throw new Broken();
   }
-}
+  u16 = (at: number) => this.reader.u16(at, this.little);
+  u32 = (at: number) => this.reader.u32(at, this.little);
 
-type Entry = { readonly type: number; readonly count: number; readonly valueAt: number };
-
-// Entries of one IFD by tag. A value over four bytes sits at the offset its field holds.
-function ifd(tiff: Tiff, offset: number): Map<number, Entry> {
-  const entries = new Map<number, Entry>();
-  if (offset + 2 > tiff.size) return entries;
-  const count = tiff.u16(offset);
-  for (let i = 0; i < count; i++) {
-    const at = offset + 2 + i * 12;
-    if (at + 12 > tiff.size) break;
-    const type = tiff.u16(at + 2);
-    const items = tiff.u32(at + 4);
-    const bytes = items * (type === TYPE_RATIONAL ? 8 : type === 3 ? 2 : type === 4 ? 4 : 1);
-    entries.set(tiff.u16(at), { type, count: items, valueAt: bytes > 4 ? tiff.u32(at + 8) : at + 8 });
+  // Entries of the IFD at an offset, by tag.
+  ifd(offset: number): Map<number, Entry> {
+    const entries = new Map<number, Entry>();
+    const count = this.u16(offset);
+    for (let i = 0; i < count; i++) {
+      const at = offset + 2 + i * 12;
+      const type = this.u16(at + 2);
+      const items = this.u32(at + 4);
+      // A value over four bytes sits at the offset its field holds. Only text and rationals are read.
+      const size = items * (type === TYPE_RATIONAL ? 8 : 1);
+      entries.set(this.u16(at), { type, count: items, at: size > 4 ? this.u32(at + 8) : at + 8 });
+    }
+    return entries;
   }
-  return entries;
-}
 
-function ascii(tiff: Tiff, bytes: Uint8Array, entry: Entry | undefined): string | null {
-  if (entry?.type !== TYPE_ASCII || entry.valueAt + entry.count > tiff.size) return null;
-  const text = new TextDecoder().decode(bytes.subarray(entry.valueAt, entry.valueAt + entry.count));
-  return text.replace(/\0+$/, "").trim();
-}
+  // An IFD pointed to by an entry of another, or none.
+  child(entries: Map<number, Entry>, tag: number): Map<number, Entry> {
+    const pointer = entries.get(tag);
+    return pointer ? this.ifd(this.u32(pointer.at)) : new Map();
+  }
 
-function rationals(tiff: Tiff, entry: Entry | undefined): number[] | null {
-  if (entry?.type !== TYPE_RATIONAL || entry.count !== 3 || entry.valueAt + 24 > tiff.size) return null;
-  // A zero denominator gives a value that is not finite, which the caller refuses.
-  return [0, 1, 2].map((i) => tiff.u32(entry.valueAt + i * 8) / tiff.u32(entry.valueAt + i * 8 + 4));
+  // Text without its terminating NULs, or null for an entry that is missing or not text.
+  ascii(entry: Entry | undefined): string | null {
+    if (entry?.type !== TYPE_ASCII) return null;
+    return textOf(this.reader.slice(entry.at, entry.count)).replaceAll("\0", "").trim();
+  }
+
+  // Three rationals (degrees, minutes, seconds), or null for an entry that is missing or not that.
+  rationals(entry: Entry | undefined): number[] | null {
+    if (entry?.type !== TYPE_RATIONAL || entry.count !== 3) return null;
+    // A zero denominator gives a value that is not finite, which the caller refuses.
+    return [0, 1, 2].map((i) => this.u32(entry.at + i * 8) / this.u32(entry.at + i * 8 + 4));
+  }
 }
 
 const DATE_TIME = /^(\d{4}):(\d{2}):(\d{2}) (\d{2}):(\d{2}):(\d{2})$/;
 const OFFSET = /^([+-])(\d{2}):(\d{2})$/;
 
 function timeOf(dateTime: string | null, offset: string | null): ExifTime | null {
-  const parts = DATE_TIME.exec(dateTime ?? "")
-    ?.slice(1)
-    .map(Number);
+  const parts = dateTime?.match(DATE_TIME);
   if (!parts) return null;
-  const [year, month, day, hour, minute, second] = parts as [number, number, number, number, number, number];
-  const localMs = Date.UTC(year, month - 1, day, hour, minute, second);
-  const check = new Date(localMs);
-  if (check.getUTCMonth() !== month - 1 || check.getUTCDate() !== day || hour > 23 || minute > 59 || second > 59)
-    return null;
-  const signed = OFFSET.exec(offset ?? "");
+  const [, year, month, day, hour, minute, second] = parts;
+  const written = `${year}-${month}-${day}T${hour}:${minute}:${second}`;
+  const localMs = Date.parse(`${written}Z`);
+  // A date the calendar rolls over (30 February, hour 24) does not read back as written.
+  if (Number.isNaN(localMs) || new Date(localMs).toISOString().slice(0, 19) !== written) return null;
+  const signed = offset?.match(OFFSET);
   const offsetMinutes = signed ? (signed[1] === "-" ? -1 : 1) * (Number(signed[2]) * 60 + Number(signed[3])) : null;
   return { localMs, offsetMinutes };
 }
 
-function coordinate(tiff: Tiff, bytes: Uint8Array, gps: Map<number, Entry>, value: number, ref: number): number | null {
-  const parts = rationals(tiff, gps.get(value));
-  if (!parts || parts.some((part) => !Number.isFinite(part))) return null;
+function coordinate(tiff: Tiff, gps: Map<number, Entry>, value: number, ref: number): number | null {
+  const parts = tiff.rationals(gps.get(value));
+  if (!parts?.every(Number.isFinite)) return null;
   const [degrees, minutes, seconds] = parts as [number, number, number];
   // A missing reference reads as north or east, as upstream reads it.
-  const sign = ["S", "W"].includes(String(ascii(tiff, bytes, gps.get(ref)))) ? -1 : 1;
+  const sign = ["S", "W"].includes(String(tiff.ascii(gps.get(ref)))) ? -1 : 1;
   return sign * (degrees + minutes / 60 + seconds / 3600);
 }
 
-function gpsPoint(tiff: Tiff, bytes: Uint8Array, gps: Map<number, Entry>): Point | null {
-  const lat = coordinate(tiff, bytes, gps, TAG.gpsLat, TAG.gpsLatRef);
-  const lon = coordinate(tiff, bytes, gps, TAG.gpsLon, TAG.gpsLonRef);
+function gpsPoint(tiff: Tiff, gps: Map<number, Entry>): Point | null {
+  const lat = coordinate(tiff, gps, TAG.gpsLat, TAG.gpsLatRef);
+  const lon = coordinate(tiff, gps, TAG.gpsLon, TAG.gpsLonRef);
+  if (lat === null || lon === null) return null;
   // 0, 0 is what a phone writes with no fix.
-  if (lat === null || lon === null || (lat === 0 && lon === 0)) return null;
-  return { lat, lon };
+  return lat === 0 && lon === 0 ? null : { lat, lon };
 }
-
-const EXIF_HEADER = [0x45, 0x78, 0x69, 0x66, 0, 0];
 
 // The EXIF block of a JPEG, or null when the file has none or it does not parse.
 export function readExif(bytes: Uint8Array): Exif | null {
-  const segments = headerSegments(bytes);
-  const app1 = segments?.find(
-    (segment) => segment.marker === APP1 && EXIF_HEADER.every((byte, i) => bytes[segment.start + 4 + i] === byte),
-  );
-  if (!app1) return null;
-  const block = bytes.subarray(app1.start + 10, app1.end);
-  const view = new DataView(block.buffer, block.byteOffset, block.byteLength);
-  if (block.length < 8) return null;
-  const order = view.getUint16(0);
-  if (order !== 0x4949 && order !== 0x4d4d) return null;
-  const tiff = new Tiff(view, order === 0x4949);
-  if (tiff.u16(2) !== 42) return null;
-  const first = ifd(tiff, tiff.u32(4));
-  const make = ascii(tiff, block, first.get(TAG.make));
-  const model = ascii(tiff, block, first.get(TAG.model));
-  const exifAt = first.get(TAG.exifIfd);
-  const exif = exifAt ? ifd(tiff, tiff.u32(exifAt.valueAt)) : new Map<number, Entry>();
-  const gpsAt = first.get(TAG.gpsIfd);
-  const gps = gpsAt ? ifd(tiff, tiff.u32(gpsAt.valueAt)) : new Map<number, Entry>();
-  return {
-    camera: Boolean(make) || Boolean(model),
-    time: timeOf(
-      ascii(tiff, block, exif.get(TAG.dateTimeOriginal)),
-      ascii(tiff, block, exif.get(TAG.offsetTimeOriginal)),
-    ),
-    point: gpsPoint(tiff, block, gps),
-  };
+  try {
+    const reader = new Reader(bytes);
+    const segment = exifSegment(reader);
+    const tiff = new Tiff(new Reader(bytes.subarray(segment.start + 10, segment.end)));
+    const first = tiff.ifd(tiff.u32(4));
+    const exif = tiff.child(first, TAG.exifIfd);
+    return {
+      camera: Boolean(tiff.ascii(first.get(TAG.make)) || tiff.ascii(first.get(TAG.model))),
+      time: timeOf(tiff.ascii(exif.get(TAG.dateTimeOriginal)), tiff.ascii(exif.get(TAG.offsetTimeOriginal))),
+      point: gpsPoint(tiff, tiff.child(first, TAG.gpsIfd)),
+    };
+  } catch {
+    return null;
+  }
 }
 
-// Segments that carry the picture: tables, frame, restart interval, and the JFIF and Adobe
+// Segments that carry the picture: frame and tables, restart interval, and the JFIF and Adobe
 // headers decoders need. Everything else (EXIF, XMP, ICC, comments, maker data) is dropped.
-function kept(bytes: Uint8Array, segment: Segment): boolean {
+function kept(reader: Reader, segment: Segment): boolean {
   const { marker } = segment;
-  if (marker >= 0xc0 && marker <= 0xcf && marker !== 0xc8) return true;
-  if (marker === 0xdb || marker === 0xdd) return true;
-  const name = new TextDecoder().decode(bytes.subarray(segment.start + 4, segment.start + 9));
-  return (marker === 0xe0 && name === "JFIF\0") || (marker === 0xee && name.startsWith("Adobe"));
+  if (marker === SOS || marker === 0xdb || marker === 0xdd) return true;
+  if (marker >= 0xc0 && marker <= 0xcf) return marker !== 0xc8;
+  const name = textOf(reader.bytes.subarray(segment.start + 4, segment.start + 9));
+  return (marker === 0xe0 && name === "JFIF\0") || (marker === 0xee && name === "Adobe");
+}
+
+const isRestart = (marker: number) => marker >= 0xd0 && marker <= 0xd7;
+
+// Entropy-coded data runs to the next marker that is not a stuffed byte or a restart marker.
+function scanEnd(reader: Reader, from: number): number {
+  let at = from;
+  for (;;) {
+    if (reader.byte(at) === 0xff) {
+      const next = reader.byte(at + 1);
+      if (next !== 0 && !isRestart(next)) return at;
+    }
+    at += 1;
+  }
+}
+
+// The JPEG with only the segments that draw it, cut after its end marker, or null when its
+// structure is broken. The scans of a progressive file are walked one after another.
+export function stripJpeg(bytes: Uint8Array): Uint8Array | null {
+  const reader = new Reader(bytes);
+  if (!isJpeg(bytes)) return null;
+  const parts: Uint8Array[] = [bytes.subarray(0, 2)];
+  try {
+    for (let at = 2; ; ) {
+      const segment = segmentAt(reader, at);
+      if (segment.marker === EOI) {
+        parts.push(bytes.subarray(segment.start, segment.end));
+        return join(parts);
+      }
+      if (kept(reader, segment)) parts.push(bytes.subarray(segment.start, segment.end));
+      at = segment.end;
+      if (segment.marker === SOS) {
+        const end = scanEnd(reader, at);
+        parts.push(bytes.subarray(at, end));
+        at = end;
+      }
+    }
+  } catch {
+    return null;
+  }
 }
 
 // A shrunk copy drawn on a canvas loses the camera's EXIF block, so the page puts the original's
 // block back before it sends the copy: the server reads it there, then strips it before storing.
 export function withExifOf(original: Uint8Array, copy: Uint8Array): Uint8Array {
-  const exif = headerSegments(original)?.find(
-    (segment) => segment.marker === APP1 && EXIF_HEADER.every((byte, i) => original[segment.start + 4 + i] === byte),
-  );
-  if (!exif || !isJpeg(copy)) return copy;
-  return join([copy.subarray(0, 2), original.subarray(exif.start, exif.end), copy.subarray(2)]);
-}
-
-const isRestart = (marker: number) => marker >= 0xd0 && marker <= 0xd7;
-
-// The JPEG with only the segments that draw it, cut after its end marker, or null when its
-// structure is broken. The scans of a progressive file are walked one after another.
-export function stripJpeg(bytes: Uint8Array): Uint8Array | null {
-  if (!isJpeg(bytes)) return null;
-  const parts: Uint8Array[] = [bytes.subarray(0, 2)];
-  let at = 2;
-  while (at + 1 < bytes.length) {
-    if (bytes[at] !== 0xff) return null;
-    const marker = bytes[at + 1] as number;
-    if (marker === 0xff) {
-      at += 1;
-      continue;
-    }
-    if (marker === EOI) {
-      parts.push(bytes.subarray(at, at + 2));
-      return join(parts);
-    }
-    if (at + 4 > bytes.length) return null;
-    const length = ((bytes[at + 2] as number) << 8) | (bytes[at + 3] as number);
-    const segment = { marker, start: at, end: at + 2 + length };
-    if (length < 2 || segment.end > bytes.length) return null;
-    if (marker === SOS || kept(bytes, segment)) parts.push(bytes.subarray(segment.start, segment.end));
-    at = segment.end;
-    if (marker !== SOS) continue;
-    // Entropy-coded data runs to the next marker that is not a stuffed byte or a restart marker.
-    let scan = at;
-    while (
-      scan + 1 < bytes.length &&
-      !(bytes[scan] === 0xff && bytes[scan + 1] !== 0 && !isRestart(bytes[scan + 1] as number))
-    )
-      scan += 1;
-    parts.push(bytes.subarray(at, scan));
-    at = scan;
+  if (!isJpeg(copy)) return copy;
+  let exif: Segment;
+  try {
+    exif = exifSegment(new Reader(original));
+  } catch {
+    // An original that is broken or has no block has none to carry over.
+    return copy;
   }
-  return null;
+  return join([copy.subarray(0, 2), original.subarray(exif.start, exif.end), copy.subarray(2)]);
 }
 
 function join(parts: readonly Uint8Array[]): Uint8Array {

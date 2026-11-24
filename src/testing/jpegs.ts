@@ -8,7 +8,8 @@ export type ExifValues = {
   // "YYYY:MM:DD HH:MM:SS" on the camera's clock.
   readonly dateTime?: string;
   readonly offset?: string;
-  readonly point?: { readonly lat: number; readonly lon: number };
+  // Either half may be left out, to write a GPS block that holds one coordinate only.
+  readonly point?: { readonly lat?: number; readonly lon?: number };
   readonly littleEndian?: boolean;
 };
 
@@ -77,14 +78,10 @@ function exifBlock(values: ExifValues): Uint8Array {
   const exif: Field[] = [];
   if (values.dateTime !== undefined) exif.push(asciiField(0x9003, values.dateTime));
   if (values.offset !== undefined) exif.push(asciiField(0x9011, values.offset));
-  const gps: Field[] = values.point
-    ? [
-        asciiField(1, values.point.lat < 0 ? "S" : "N"),
-        rationalField(2, Math.abs(values.point.lat), little),
-        asciiField(3, values.point.lon < 0 ? "W" : "E"),
-        rationalField(4, Math.abs(values.point.lon), little),
-      ]
-    : [];
+  const gps: Field[] = [];
+  const { lat, lon } = values.point ?? {};
+  if (lat !== undefined) gps.push(asciiField(1, lat < 0 ? "S" : "N"), rationalField(2, Math.abs(lat), little));
+  if (lon !== undefined) gps.push(asciiField(3, lon < 0 ? "W" : "E"), rationalField(4, Math.abs(lon), little));
   if (exif.length > 0) first.push(pointerField(0x8769));
   if (gps.length > 0) first.push(pointerField(0x8825));
   // Lay out IFD0, then the EXIF IFD, then the GPS IFD, each pointer filled once its place is known.

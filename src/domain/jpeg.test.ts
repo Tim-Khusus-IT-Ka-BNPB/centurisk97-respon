@@ -88,13 +88,13 @@ describe("readExif", () => {
     expect(readExif(new Uint8Array([0xff, 0xd8, 0xff, 0xe1, 0, 1, 0, 0]))).toBeNull();
   });
 
-  test("an IFD that points past its block, or a value of another type, is skipped", () => {
+  test("an IFD that runs past its block is not readable; a value of another type is skipped", () => {
     // IFD0 claims two entries but the block ends after the first; its pointer to the EXIF IFD is out of range.
     const tiff = [0x4d, 0x4d, 0, 42, 0, 0, 0, 8, 0, 2, 0x87, 0x69, 0, 4, 0, 0, 0, 1, 0, 0, 0x40, 0];
     const exif = readExif(
       new Uint8Array([0xff, 0xd8, ...segment(0xe1, [0x45, 0x78, 0x69, 0x66, 0, 0, ...tiff]), 0xff, 0xda, 0, 2]),
     );
-    expect(exif).toEqual({ camera: false, time: null, point: null });
+    expect(exif).toBeNull();
     // Make written as a SHORT is not text; a GPS latitude with a zero denominator is not a number.
     const odd = [0x4d, 0x4d, 0, 42, 0, 0, 0, 8, 0, 1, 0x01, 0x0f, 0, 3, 0, 0, 0, 1, 0, 1, 0, 0, 0, 0, 0, 0];
     expect(
@@ -103,17 +103,13 @@ describe("readExif", () => {
     ).toBe(false);
   });
 
-  test("an IFD whose offset is past the block reads as empty", () => {
+  test("an IFD whose offset is past the block is not readable", () => {
     const tiff = [0x4d, 0x4d, 0, 42, 0, 0, 0x10, 0];
     expect(
       readExif(
         new Uint8Array([0xff, 0xd8, ...segment(0xe1, [0x45, 0x78, 0x69, 0x66, 0, 0, ...tiff]), 0xff, 0xda, 0, 2]),
       ),
-    ).toEqual({
-      camera: false,
-      time: null,
-      point: null,
-    });
+    ).toBeNull();
   });
 
   test("a camera time with no offset keeps the offset unknown, and headers with no scan read as null", () => {
