@@ -6,6 +6,8 @@ This repo rebuilds the Lapor module of [poskokarhutla](https://github.com/terasu
 
 How it is built: typed contracts between pages and API, layered code (route, service, repository) with pure domain rules, every user-facing word in one copy catalogue, every rule enforced on the server, and nothing merged without type checks, lint, 100% unit coverage and browser tests at phone, tablet and desktop widths.
 
+Staging: https://lapor-bencana.centurisk97.id/lapor, synthetic data only.
+
 Status: the guided report (identity and consent, place by search or GPS, hazard, questions, photos, summary, send), the ticket with its rating, the tracking page and "Laporan saya" work end to end locally. Staging is not set up yet.
 
 ## Where things are
@@ -100,3 +102,15 @@ Stop the server with Ctrl+C before the next start. One sent to the background is
    ```
 
 Server and test output, Worker logs (`.wrangler/logs`) and test results stay on your machine and are ignored by git. Local Playwright traces are kept only for failed tests; CI keeps none.
+
+## Staging
+
+Its own Worker (`lapor-bencana-staging`), D1 database, R2 bucket and address, declared under `env.staging` in `wrangler.jsonc`. It shares only the Cloudflare account and the `centurisk97.id` zone with upstream, and never reads upstream's data. Synthetic data only: no real report, number or name.
+
+```bash
+export CLOUDFLARE_ACCOUNT_ID=<the account id>
+CI=1 pnpm exec wrangler d1 migrations apply lapor-bencana-staging --remote --env staging
+pnpm deploy:staging
+```
+
+`KEY_HMAC_SECRET` is a Worker secret (`wrangler secret put KEY_HMAC_SECRET --name lapor-bencana-staging`), never a file. The seeded test sessions are keyed with it, so a new secret means seeding again. The model is off until a key is set as a secret and `MODEL_MODE` is `live`.
