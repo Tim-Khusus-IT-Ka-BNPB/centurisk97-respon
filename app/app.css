@@ -1,0 +1,251 @@
+@import "tailwindcss";
+@import "@fontsource-variable/plus-jakarta-sans";
+
+/* Evacuation route signage: one navy ink on a near-white ground, one signal colour for 112. */
+:root {
+  color-scheme: light dark;
+  --bg: oklch(97.5% 0.005 255);
+  --surface: oklch(100% 0 0);
+  --sunken: oklch(95% 0.012 255);
+  --ink: oklch(25% 0.07 256);
+  --muted: oklch(45% 0.04 258);
+  --line: oklch(88% 0.012 255);
+  --control: oklch(55% 0.03 258);
+  --primary: oklch(32% 0.1 256);
+  --on-primary: oklch(100% 0 0);
+  --selected: oklch(94% 0.03 255);
+  --focus: oklch(52% 0.17 255);
+  --signal: oklch(50% 0.17 35);
+  --on-signal: oklch(100% 0 0);
+  --signal-tint: oklch(95% 0.03 45);
+  --danger: oklch(50% 0.19 27);
+  --danger-tint: oklch(96% 0.02 27);
+  --warn-tint: oklch(95% 0.05 85);
+  --warn-icon: oklch(52% 0.11 75);
+  --dock-shadow: oklch(25% 0.07 256 / 0.1);
+  /* BNPB's orange from the emblem, for the one main action on navy. */
+  --accent: oklch(74% 0.17 60);
+  --on-accent: oklch(22% 0.07 256);
+  --hero: oklch(27% 0.09 257);
+  --on-hero: oklch(98% 0.005 255);
+  --on-hero-muted: oklch(84% 0.03 255);
+  --hero-line: oklch(100% 0 0 / 0.07);
+  --header: oklch(100% 0 0);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: oklch(17% 0.03 256);
+    --surface: oklch(21% 0.035 256);
+    --sunken: oklch(25% 0.04 256);
+    --ink: oklch(95% 0.01 255);
+    --muted: oklch(78% 0.03 255);
+    --line: oklch(32% 0.035 256);
+    --control: oklch(62% 0.03 256);
+    --primary: oklch(82% 0.09 252);
+    --on-primary: oklch(17% 0.03 256);
+    --selected: oklch(29% 0.05 255);
+    --focus: oklch(78% 0.11 252);
+    --signal: oklch(74% 0.14 45);
+    --on-signal: oklch(17% 0.03 256);
+    --signal-tint: oklch(26% 0.05 40);
+    --danger: oklch(76% 0.14 27);
+    --danger-tint: oklch(25% 0.05 27);
+    --warn-tint: oklch(27% 0.04 80);
+    --warn-icon: oklch(80% 0.12 80);
+    --dock-shadow: oklch(0% 0 0 / 0.4);
+    --accent: oklch(76% 0.16 62);
+    --on-accent: oklch(20% 0.05 256);
+    --hero: oklch(22% 0.06 257);
+    --on-hero: oklch(96% 0.01 255);
+    --on-hero-muted: oklch(80% 0.03 255);
+    --hero-line: oklch(100% 0 0 / 0.05);
+    --header: oklch(19% 0.035 256);
+  }
+}
+
+@theme inline {
+  --font-sans: "Plus Jakarta Sans Variable", system-ui, -apple-system, "Segoe UI", "Noto Sans", sans-serif;
+  --color-bg: var(--bg);
+  --color-surface: var(--surface);
+  --color-sunken: var(--sunken);
+  --color-ink: var(--ink);
+  --color-muted: var(--muted);
+  --color-line: var(--line);
+  --color-control: var(--control);
+  --color-primary: var(--primary);
+  --color-on-primary: var(--on-primary);
+  --color-selected: var(--selected);
+  --color-focus: var(--focus);
+  --color-signal: var(--signal);
+  --color-on-signal: var(--on-signal);
+  --color-signal-tint: var(--signal-tint);
+  --color-danger: var(--danger);
+  --color-danger-tint: var(--danger-tint);
+  --color-warn-tint: var(--warn-tint);
+  --color-warn-icon: var(--warn-icon);
+  --color-accent: var(--accent);
+  --color-on-accent: var(--on-accent);
+  --color-hero: var(--hero);
+  --color-on-hero: var(--on-hero);
+  --color-on-hero-muted: var(--on-hero-muted);
+  --color-header: var(--header);
+}
+
+@theme {
+  /* Insets and gaps stay in px, so 200% text gets the width instead of wider padding. */
+  --spacing: 4px;
+  --breakpoint-md: 37.5rem;
+  --breakpoint-lg: 60rem;
+  --container-tiles: 22rem;
+  --container-actions: 24rem;
+  --text-meta: 0.875rem;
+  --text-meta--line-height: 1.45;
+  --text-body: 1rem;
+  --text-body--line-height: 1.5;
+  --text-card: 1.125rem;
+  --text-card--line-height: 1.35;
+  --text-page: 1.375rem;
+  --text-page--line-height: 1.3;
+  --text-ticket: 1.75rem;
+  --text-ticket--line-height: 1.2;
+  --text-display: clamp(2rem, 1.4rem + 2.6vw, 3.25rem);
+  --text-display--line-height: 1.1;
+  --text-section: clamp(1.375rem, 1.2rem + 0.8vw, 1.75rem);
+  --text-section--line-height: 1.25;
+  --radius-control: 8px;
+  --radius-card: 12px;
+  --radius-chip: 4px;
+  --spacing-target-min: 44px;
+  --spacing-target: 48px;
+  --spacing-target-main: 56px;
+  --shadow-dock: 0 -2px 8px var(--dock-shadow);
+  --shadow-card: 0 1px 2px var(--dock-shadow), 0 6px 16px var(--dock-shadow);
+  --ease-settle: cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@layer base {
+  html {
+    scroll-behavior: smooth;
+    scrollbar-color: var(--control) transparent;
+    -webkit-text-size-adjust: 100%;
+  }
+  body {
+    background-color: var(--bg);
+    color: var(--ink);
+    caret-color: var(--primary);
+    accent-color: var(--primary);
+    overflow-x: hidden;
+    /* Words break only between words; only the reporter's own bubbles may break inside one. */
+    overflow-wrap: break-word;
+  }
+  ::selection {
+    background-color: var(--selected);
+    color: var(--ink);
+  }
+  :focus-visible {
+    outline: 2px solid var(--focus);
+    outline-offset: 2px;
+  }
+  a {
+    text-underline-offset: 0.2em;
+  }
+  /* A heading takes focus so a screen reader starts there; it is not a control, so no ring. */
+  [tabindex="-1"]:focus {
+    outline: none;
+  }
+}
+
+/* The one authored motion: the new card settles in, opaque from the first frame. */
+@keyframes settle {
+  from {
+    transform: translateY(8px);
+  }
+  to {
+    transform: none;
+  }
+}
+
+@utility animate-settle {
+  animation: settle 200ms var(--ease-settle);
+}
+
+/* Reveals that need no script: a field shows when the answer that asks for it is checked. */
+@utility reveal-officer {
+  display: none;
+  form:has(input[name="role"][value="claimedOfficer"]:checked) & {
+    display: flex;
+  }
+}
+
+@utility reveal-other-date {
+  display: none;
+  form:has(input[name="optionIds"][value="otherDate"]:checked) & {
+    display: flex;
+  }
+}
+
+@utility hide-when-older {
+  form:has(input[name="optionIds"][value="olderThan30Days"]:checked) & {
+    display: none;
+  }
+}
+
+@utility reveal-other-text {
+  display: none;
+  form:has(input[name="optionIds"][value="other"]:checked) & {
+    display: flex;
+  }
+}
+
+/* The surface every card and panel sits on. */
+@utility card-surface {
+  border-radius: var(--radius-card);
+  border: 1px solid var(--line);
+  background-color: var(--surface);
+  box-shadow: var(--shadow-card);
+}
+
+/* Contour lines, as on a hazard map, faint behind the home's opening band. */
+@utility contours {
+  background-color: var(--hero);
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='600' height='400' fill='none' stroke='white' stroke-width='1.2'%3E%3Cpath d='M-20 320c80-40 140-10 210-50s90-110 170-120 140 40 260 10'/%3E%3Cpath d='M-20 350c90-35 150-5 225-45s100-115 180-122 150 45 235 20'/%3E%3Cpath d='M-20 380c95-30 160 0 240-40s110-120 190-125 160 50 210 30'/%3E%3Cpath d='M-20 60c70 30 120 70 200 50s120-60 200-40 120 60 240 40'/%3E%3Cpath d='M-20 30c75 32 130 76 210 56s125-62 205-42 130 64 225 44'/%3E%3Cpath d='M380 220c30-30 80-30 100 0s-10 60-50 60-80-30-50-60z'/%3E%3Cpath d='M360 222c40-48 110-46 140 0s-15 85-70 85-110-40-70-85z'/%3E%3C/svg%3E");
+  background-size: 600px 400px;
+  background-blend-mode: normal;
+  position: relative;
+  &::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: var(--hero);
+    opacity: 0.88;
+    pointer-events: none;
+  }
+}
+
+@utility grow-box {
+  field-sizing: content;
+  min-height: calc(1lh + 1.5rem);
+  max-height: calc(4lh + 1.5rem);
+}
+
+/* On a short screen (true at 200% text) the box leaves the dock and follows the live card, so
+   the card has the whole screen. */
+@utility dock {
+  position: sticky;
+  bottom: 0;
+  box-shadow: var(--shadow-dock);
+  @media (max-height: 30em) {
+    position: static;
+    box-shadow: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+  .animate-settle {
+    animation: none;
+  }
+}
