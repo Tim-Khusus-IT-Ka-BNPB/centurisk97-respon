@@ -186,4 +186,18 @@ export const COLUMN_CLASSES: Readonly<Record<string, TableClasses>> = {
       search_text: PUB,
     },
   },
+  place_village_shape: {
+    retention: "with its snapshot",
+    columns: {
+      snapshot_id: I,
+      code: PUB,
+      min_lat: PUB,
+      min_lon: PUB,
+      max_lat: PUB,
+      max_lon: PUB,
+      centre_lat: PUB,
+      centre_lon: PUB,
+      rings: PUB,
+    },
+  },
 };

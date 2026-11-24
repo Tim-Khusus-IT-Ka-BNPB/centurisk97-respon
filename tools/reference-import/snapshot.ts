@@ -1,5 +1,6 @@
 import type { PlaceRecords } from "../../src/domain/placeFile.ts";
 import { placeSearchText } from "../../src/domain/placeText.ts";
+import type { ShapeRecord } from "../../src/domain/shapeFile.ts";
 import { atomically, type Database, type Query, row, sql } from "../../src/platform/database.ts";
 
 const KEEP_SNAPSHOTS = 2;
@@ -10,7 +11,7 @@ const BATCH_STATEMENTS = 200;
 export type SnapshotMeta = { readonly source: string; readonly dataDate: string; readonly checksum: string };
 export type SnapshotWrite = { readonly kind: "written"; readonly snapshotId: number } | { readonly kind: "unchanged" };
 
-type Table = "place_regency" | "place_district" | "place_village";
+type Table = "place_regency" | "place_district" | "place_village" | "place_village_shape";
 type Rows = Record<string, string | number>[];
 
 const COLUMNS: Readonly<Record<Table, readonly string[]>> = {
@@ -37,12 +38,23 @@ const COLUMNS: Readonly<Record<Table, readonly string[]>> = {
     "province_name",
     "search_text",
   ],
+  place_village_shape: [
+    "snapshot_id",
+    "code",
+    "min_lat",
+    "min_lon",
+    "max_lat",
+    "max_lon",
+    "centre_lat",
+    "centre_lon",
+    "rings",
+  ],
 };
 
-// Multi-row inserts, each under the value limit.
+// Multi-row inserts, each under the value limit. An outline can be large, so each goes alone.
 function inserts(table: Table, rows: Rows): Query[] {
   const columns = COLUMNS[table];
-  const perStatement = Math.floor(MAX_VALUES / columns.length);
+  const perStatement = table === "place_village_shape" ? 1 : Math.floor(MAX_VALUES / columns.length);
   const statements: Query[] = [];
   for (let start = 0; start < rows.length; start += perStatement) {
     const chunk = rows.slice(start, start + perStatement);
@@ -57,7 +69,12 @@ function inserts(table: Table, rows: Rows): Query[] {
 
 // The words each level is found by: a regency by its name and province, a district by its name
 // and regency, a village by its name, district and regency (upstream's word match).
-function rowsOf(records: PlaceRecords, snapshotId: number): Readonly<Record<Table, Rows>> {
+function rowsOf(
+  records: PlaceRecords,
+  shapes: readonly ShapeRecord[],
+  snapshotId: number,
+): Readonly<Record<Table, Rows>> {
+  const villages = new Set(records.villages.map((v) => v.code));
   return {
     place_regency: records.regencies.map((r) => ({
       snapshot_id: snapshotId,
@@ -90,13 +107,32 @@ function rowsOf(records: PlaceRecords, snapshotId: number): Readonly<Record<Tabl
       province_name: v.provinceName,
       search_text: placeSearchText(v.name, v.districtName, v.regencyName),
     })),
+    // An outline of a village the names file does not hold has nothing to name it, so it is left out.
+    place_village_shape: shapes
+      .filter((shape) => villages.has(shape.code))
+      .map((shape) => ({
+        snapshot_id: snapshotId,
+        code: shape.code,
+        min_lat: shape.minLat,
+        min_lon: shape.minLon,
+        max_lat: shape.maxLat,
+        max_lon: shape.maxLon,
+        centre_lat: shape.centreLat,
+        centre_lon: shape.centreLon,
+        rings: JSON.stringify(shape.rings),
+      })),
   };
 }
 
 // Writes a new snapshot unseen, then makes it the one searched in one batch, so a search sees
 // the old snapshot or the new one, never half of one. A write that stops halfway leaves an
 // inactive snapshot, removed by later imports. The same file twice writes nothing.
-export async function writeSnapshot(db: Database, records: PlaceRecords, meta: SnapshotMeta): Promise<SnapshotWrite> {
+export async function writeSnapshot(
+  db: Database,
+  records: PlaceRecords,
+  shapes: readonly ShapeRecord[],
+  meta: SnapshotMeta,
+): Promise<SnapshotWrite> {
   const current = await row(db, sql`select id from place_snapshot where active = 1 and checksum = ${meta.checksum}`);
   if (current) return { kind: "unchanged" };
   const created = (await row<{ id: number }>(
@@ -106,9 +142,9 @@ export async function writeSnapshot(db: Database, records: PlaceRecords, meta: S
         ${meta.checksum})
       returning id`,
   )) as { id: number };
-  const rows = rowsOf(records, created.id);
-  const statements = (["place_regency", "place_district", "place_village"] as const).flatMap((table) =>
-    inserts(table, rows[table]),
+  const rows = rowsOf(records, shapes, created.id);
+  const statements = (["place_regency", "place_district", "place_village", "place_village_shape"] as const).flatMap(
+    (table) => inserts(table, rows[table]),
   );
   for (let start = 0; start < statements.length; start += BATCH_STATEMENTS)
     await atomically(db, statements.slice(start, start + BATCH_STATEMENTS));

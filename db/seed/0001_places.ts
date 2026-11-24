@@ -5,7 +5,9 @@ import { readPlaceFile } from "../../tools/reference-import/read.ts";
 // what the tests need (more than 10 "sukamaju" villages, one large regency, a WIT and a WITA
 // regency). It is far below the upstream floor, so it is loaded with the floor off.
 const VILLAGES = "db/reference/villages.json";
+// Upstream's outlines of exactly those villages, one FeatureCollection.
+const SHAPES = "db/reference/village-shapes.json";
 
 export default async function seedPlaces(db: Database): Promise<void> {
-  await readPlaceFile(db, VILLAGES, { source: "seed", withFloor: false });
+  await readPlaceFile(db, VILLAGES, { source: "seed", withFloor: false, shapesPath: SHAPES });
 }

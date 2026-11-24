@@ -1,4 +1,5 @@
 import type { PlaceValue } from "../../domain/fieldState";
+import type { Centre, Outline, Point, Ring } from "../../domain/geo";
 import type { AreaLevel } from "../../domain/placeSearch";
 import { type Database, empty, type Query, row, rows, sql } from "../../platform/database";
 
@@ -29,6 +30,77 @@ export async function activeVillage(db: Database, code: string): Promise<PlaceVa
     regencyName: found.regency_name,
     provinceName: found.province_name,
   };
+}
+
+// Names of villages of one snapshot by code, in the shape of a place picked by search.
+export async function villagesOf(
+  db: Database,
+  snapshotId: number,
+  codes: readonly string[],
+): Promise<Map<string, PlaceValue>> {
+  const list = codes.slice(1).reduce((fragment, code) => sql`${fragment}, ${code}`, sql`${codes[0]}`);
+  const found = await rows<VillageRow>(
+    db,
+    sql`select snapshot_id, code, name, district_name, regency_name, province_name from place_village
+      where snapshot_id = ${snapshotId} and code in (${list})`,
+  );
+  return new Map(
+    found.map((one) => [
+      one.code,
+      {
+        villageCode: one.code,
+        precision: "villageLevel",
+        snapshotId: one.snapshot_id,
+        villageName: one.name,
+        districtName: one.district_name,
+        regencyName: one.regency_name,
+        provinceName: one.province_name,
+      },
+    ]),
+  );
+}
+
+// Outlines are found through the centre index: a village whose centre lies further than this
+// from the point in latitude is not tested. No village outline upstream is that tall.
+const OUTLINE_WINDOW_DEG = 1;
+
+// Outlines whose box holds the point.
+export async function outlinesAround(db: Database, snapshotId: number, point: Point): Promise<Outline[]> {
+  const found = await rows<{ code: string; rings: string }>(
+    db,
+    sql`select code, rings from place_village_shape
+      where snapshot_id = ${snapshotId}
+        and centre_lat between ${point.lat - OUTLINE_WINDOW_DEG} and ${point.lat + OUTLINE_WINDOW_DEG}
+        and min_lat <= ${point.lat} and max_lat >= ${point.lat}
+        and min_lon <= ${point.lon} and max_lon >= ${point.lon}`,
+  );
+  return found.map((one) => ({ code: one.code, rings: JSON.parse(one.rings) as Ring[] }));
+}
+
+// Village centres within a square of `windowDeg` around the point.
+export async function centresAround(
+  db: Database,
+  snapshotId: number,
+  point: Point,
+  windowDeg: number,
+): Promise<Centre[]> {
+  const found = await rows<{ code: string; centre_lat: number; centre_lon: number }>(
+    db,
+    sql`select code, centre_lat, centre_lon from place_village_shape
+      where snapshot_id = ${snapshotId}
+        and centre_lat between ${point.lat - windowDeg} and ${point.lat + windowDeg}
+        and centre_lon between ${point.lon - windowDeg} and ${point.lon + windowDeg}`,
+  );
+  return found.map((one) => ({ code: one.code, centre: { lat: one.centre_lat, lon: one.centre_lon } }));
+}
+
+// The centre of a village of the snapshot a place was picked from, or null with no outline.
+export async function villageCentre(db: Database, snapshotId: number, code: string): Promise<Point | null> {
+  const found = await row<{ centre_lat: number; centre_lon: number }>(
+    db,
+    sql`select centre_lat, centre_lon from place_village_shape where snapshot_id = ${snapshotId} and code = ${code}`,
+  );
+  return found ? { lat: found.centre_lat, lon: found.centre_lon } : null;
 }
 
 export type ActiveSnapshot = { readonly id: number; readonly dataDate: string };
