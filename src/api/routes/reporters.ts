@@ -85,7 +85,9 @@ export function addReporterRoutes(api: Api): void {
       if (result.deviceKey !== null) {
         setCookie(c, DEVICE_COOKIE, result.deviceKey, {
           httpOnly: true,
-          secure: true,
+          // Every request in production is https. WebKit drops a Secure cookie sent over plain
+          // http, even from localhost, so the local and test servers send it without.
+          secure: new URL(c.req.url).protocol === "https:",
           sameSite: "Lax",
           path: "/",
           maxAge: DEVICE_KEY_DAYS * 24 * 60 * 60,
