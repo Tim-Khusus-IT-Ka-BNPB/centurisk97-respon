@@ -9,14 +9,33 @@ describe("who owns a draft", () => {
     expect(ownsDraft({ kind: "device", deviceId: "d2" }, draft)).toBe(false);
     expect(ownsDraft({ kind: "session", reporterId: "r1" }, draft)).toBe(true);
     expect(ownsDraft({ kind: "session", reporterId: "r2" }, draft)).toBe(false);
-    expect(ownsDraft({ kind: "staff", role: "deskOfficer" }, draft)).toBe(false);
+    expect(
+      ownsDraft(
+        {
+          kind: "staff",
+          staffId: "staff-desk-1",
+          role: "deskOfficer",
+          label: "Petugas Uji",
+          scope: { level: "national" },
+        },
+        draft,
+      ),
+    ).toBe(false);
     expect(ownsDraft({ kind: "anonymous" }, draft)).toBe(false);
   });
 
   test("the slot of a principal's own drafts", () => {
     expect(ownerSlotOf({ kind: "device", deviceId: "d1" })).toBe("d1");
     expect(ownerSlotOf({ kind: "session", reporterId: "r1" })).toBe("session");
-    expect(ownerSlotOf({ kind: "staff", role: "deskOfficer" })).toBeNull();
+    expect(
+      ownerSlotOf({
+        kind: "staff",
+        staffId: "staff-desk-1",
+        role: "deskOfficer",
+        label: "Petugas Uji",
+        scope: { level: "national" },
+      }),
+    ).toBeNull();
     expect(ownerSlotOf({ kind: "anonymous" })).toBeNull();
   });
 });

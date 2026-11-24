@@ -42,7 +42,16 @@ export const COLUMN_CLASSES: Readonly<Record<string, TableClasses>> = {
   },
   seeded_session: {
     retention: "seed data, local, test and staging only",
-    columns: { token_hash: I, kind: I, reporter_id: I, staff_role: I },
+    columns: {
+      token_hash: I,
+      kind: I,
+      reporter_id: I,
+      staff_role: I,
+      staff_id: I,
+      staff_label: I,
+      scope_level: I,
+      scope_code: I,
+    },
   },
   report_draft: {
     retention: "content nulled at send, cancel, expiry or removal; the empty row 30 days after ended_at, swept",
@@ -126,7 +135,21 @@ export const COLUMN_CLASSES: Readonly<Record<string, TableClasses>> = {
   ticket: { retention: "with the report", columns: { ticket_number: I, report_id: I, status: I, updated_at: I } },
   ticket_history: {
     retention: "with the report; append-only",
-    columns: { id: I, ticket_number: I, from_status: I, to_status: I, actor: I, note: I, at: I },
+    columns: {
+      id: I,
+      ticket_number: I,
+      from_status: I,
+      to_status: I,
+      actor: I,
+      actor_id: I,
+      actor_label: I,
+      note: I,
+      at: I,
+    },
+  },
+  staff_action: {
+    retention: "with the report; append-only",
+    columns: { id: I, ticket_number: I, staff_id: I, staff_label: I, staff_kind: I, action: I, at: I },
   },
   ticket_day_counter: { retention: "kept, one row a day", columns: { wib_date: I, last_n: I } },
   rate_counter: {

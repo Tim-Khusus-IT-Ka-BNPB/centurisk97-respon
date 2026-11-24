@@ -15,12 +15,44 @@ export type SyntheticLabel = (typeof SYNTHETIC_REPORTERS)[number]["label"];
 // Seeded identity sessions (local, test and staging only; refused in production). The cookie
 // "seeded_session" carries the token; only its SHA-256 is stored.
 export const SEEDED_SESSIONS = [
-  { token: "seeded-session-reporter-a-local-only", kind: "reporter", reporter: "A", staffRole: null },
-  { token: "seeded-session-reporter-b-local-only", kind: "reporter", reporter: "B", staffRole: null },
-  { token: "seeded-session-desk-officer-local-only", kind: "staff", reporter: null, staffRole: "deskOfficer" },
+  { token: "seeded-session-reporter-a-local-only", kind: "reporter", reporter: "A", staff: null },
+  { token: "seeded-session-reporter-b-local-only", kind: "reporter", reporter: "B", staff: null },
+  {
+    token: "seeded-session-desk-officer-local-only",
+    kind: "staff",
+    reporter: null,
+    staff: { id: "staff-desk-1", role: "deskOfficer", label: "Pusdalops BNPB, Petugas Uji", scope: null },
+  },
+  {
+    token: "seeded-session-bpbd-regency-local-only",
+    kind: "staff",
+    reporter: null,
+    staff: {
+      id: "staff-bpbd-1108",
+      role: "regionalOfficer",
+      label: "BPBD Kabupaten Uji Satu, Petugas Uji",
+      scope: { level: "regency", code: "11.08" },
+    },
+  },
+  {
+    token: "seeded-session-bpbd-province-local-only",
+    kind: "staff",
+    reporter: null,
+    staff: {
+      id: "staff-bpbd-12",
+      role: "regionalOfficer",
+      label: "BPBD Provinsi Uji Dua, Petugas Uji",
+      scope: { level: "province", code: "12" },
+    },
+  },
 ] as const satisfies readonly {
   token: string;
   kind: "reporter" | "staff";
   reporter: SyntheticLabel | null;
-  staffRole: "deskOfficer" | null;
+  staff: {
+    id: string;
+    role: "deskOfficer" | "regionalOfficer";
+    label: string;
+    scope: { level: "province" | "regency"; code: string } | null;
+  } | null;
 }[];

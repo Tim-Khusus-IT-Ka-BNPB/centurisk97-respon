@@ -82,6 +82,20 @@ describe("schema", () => {
     expect(await refusal(sql`update ticket_history set note = 'x'`)).toBe("append-only");
     expect(await refusal(sql`delete from ticket_history`)).toBe("append-only");
     expect(await refusal(sql`delete from report where id = ${reportId}`)).toBe("FOREIGN KEY");
+    // A staff row names its officer; a system row names none.
+    const history = (actor: string, id: string | null, label: string | null) =>
+      sql`insert into ticket_history (ticket_number, to_status, actor, actor_id, actor_label, at)
+        values (${ticket}, 'seen', ${actor}, ${id}, ${label}, ${NOW})`;
+    expect(await refusal(history("staff", null, null))).toBe("CHECK");
+    expect(await refusal(history("system", "s1", "Uji"))).toBe("CHECK");
+    expect(await refusal(history("staff", "s1", "Uji"))).toBe("ok");
+    const action = (name: string) =>
+      sql`insert into staff_action (ticket_number, staff_id, staff_label, staff_kind, action, at)
+        values (${ticket}, 's1', 'Uji', 'deskOfficer', ${name}, ${NOW})`;
+    expect(await refusal(action("delete"))).toBe("CHECK");
+    expect(await refusal(action("view"))).toBe("ok");
+    expect(await refusal(sql`update staff_action set action = 'status'`)).toBe("append-only");
+    expect(await refusal(sql`delete from staff_action`)).toBe("append-only");
   });
 
   test("one open draft per number and slot, enforced by the database", async () => {

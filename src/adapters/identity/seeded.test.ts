@@ -1,6 +1,8 @@
 import { describe, expect, test } from "vitest";
+import { SEEDED_SESSIONS } from "../../../db/synthetic/reporters";
 import { api } from "../../api/app";
 import { browser, freshNumber, manualClock, query, testBindings } from "../../testing/api";
+import { seededIdentity } from "./seeded";
 
 const clock = manualClock("2026-11-24T03:00:00.000Z");
 const { bindings } = testBindings({}, { clock });
@@ -36,5 +38,24 @@ describe("device last seen", () => {
     phone.cookies.set("device_key", "not-a-key-we-issued");
     const me = await phone.call("GET", "/me");
     expect(me.json).toMatchObject({ knownReporters: [], session: null });
+  });
+});
+
+describe("seeded staff", () => {
+  const resolve = (index: number) =>
+    seededIdentity(bindings.db, clock).resolve(
+      new Headers({ cookie: `seeded_session=${(SEEDED_SESSIONS[index] as { token: string }).token}` }),
+    );
+
+  test("a staff session names the account, its label and where it may work", async () => {
+    expect(await resolve(2)).toEqual({
+      kind: "staff",
+      staffId: "staff-desk-1",
+      role: "deskOfficer",
+      label: "Pusdalops BNPB, Petugas Uji",
+      scope: { level: "national" },
+    });
+    expect(await resolve(3)).toMatchObject({ role: "regionalOfficer", scope: { level: "regency", code: "11.08" } });
+    expect(await resolve(4)).toMatchObject({ role: "regionalOfficer", scope: { level: "province", code: "12" } });
   });
 });

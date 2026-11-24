@@ -8,6 +8,7 @@ export default async function seedIdentities(db: Database): Promise<void> {
   const secret = process.env.KEY_HMAC_SECRET;
   if (!secret) throw new Error("Setting KEY_HMAC_SECRET is missing. It must equal the one in .dev.vars.");
   for (const session of SEEDED_SESSIONS) {
+    const staff = session.staff as (typeof SEEDED_SESSIONS)[number]["staff"];
     let reporterId: string | null = null;
     if (session.reporter !== null) {
       const reporter = SYNTHETIC_REPORTERS.find((candidate) => candidate.label === session.reporter);
@@ -24,9 +25,11 @@ export default async function seedIdentities(db: Database): Promise<void> {
     }
     await run(
       db,
-      sql`insert into seeded_session (token_hash, kind, reporter_id, staff_role)
-        values (${await sha256Hex(session.token)}, ${session.kind}, ${reporterId}, ${session.staffRole})
-        on conflict (token_hash) do nothing`,
+      sql`insert into seeded_session (token_hash, kind, reporter_id, staff_role, staff_id, staff_label, scope_level, scope_code)
+        values (${await sha256Hex(session.token)}, ${session.kind}, ${reporterId}, ${staff?.role ?? null}, ${staff?.id ?? null},
+          ${staff?.label ?? null}, ${staff === null ? null : (staff.scope?.level ?? "national")}, ${staff?.scope?.code ?? null})
+        on conflict (token_hash) do update set staff_role = excluded.staff_role, staff_id = excluded.staff_id,
+          staff_label = excluded.staff_label, scope_level = excluded.scope_level, scope_code = excluded.scope_code`,
     );
   }
 }
