@@ -1,8 +1,13 @@
+import { readFileSync } from "node:fs";
 import { type APIRequestContext, type Browser, expect, type Page, test } from "@playwright/test";
+import { exifDateTime, withExif } from "../src/testing/jpegs.ts";
 import { noSidewaysScroll, ownAddress, syntheticNumber } from "./support.ts";
 
 const DESK_CODE = "seeded-session-desk-officer-local-only";
 const PACE_MS = 3100;
+// Inside the seed outline of Desa Cot Seumiyong, Aceh Utara (WIB).
+const HERE = { lat: 5.14705, lon: 97.0482 };
+const BASE = new Uint8Array(readFileSync("db/synthetic/photo-base.jpg"));
 
 test.beforeEach(async ({ context }) => ownAddress(context));
 
@@ -11,7 +16,11 @@ type Draft = { draftId: string; revision: number; card: Card };
 
 // The reporter's side is walked through the API from its own browser context: this spec is
 // about the desk, and the report flow has specs of its own.
-async function sendReport(browser: Browser, baseURL: string): Promise<{ ticketNumber: string; token: string }> {
+async function sendReport(
+  browser: Browser,
+  baseURL: string,
+  withPhoto = false,
+): Promise<{ ticketNumber: string; token: string }> {
   const part = () => Math.floor(Math.random() * 250) + 1;
   const context = await browser.newContext({
     extraHTTPHeaders: {
@@ -49,13 +58,33 @@ async function sendReport(browser: Browser, baseURL: string): Promise<{ ticketNu
       case "numberForm":
         return { optionIds: ["allNone"] };
       case "photos":
-        return { optionIds: ["cannotSend"] };
+        return { optionIds: [photoSent ? "continue" : "cannotSend"] };
       default:
         return { optionIds: ["unknown"] };
     }
   };
+  let photoSent = false;
   for (let step = 0; step < 60 && draft.card.kind !== "summary"; step++) {
     await new Promise((resolve) => setTimeout(resolve, PACE_MS));
+    if (withPhoto && draft.card.kind === "photos" && !photoSent) {
+      const photo = withExif(BASE, { make: "Uji", model: "Kamera", dateTime: exifDateTime(Date.now() - 10_000, 420) });
+      const sent = await api.fetch(`/api/lapor/drafts/${draft.draftId}/photos`, {
+        method: "POST",
+        multipart: {
+          photo: { name: "foto.jpg", mimeType: "image/jpeg", buffer: Buffer.from(photo) },
+          revision: String(draft.revision),
+          turnKey: crypto.randomUUID(),
+          lat: String(HERE.lat),
+          lon: String(HERE.lon),
+          accuracy: "20",
+          readAt: String(Date.now() - 30_000),
+        },
+      });
+      expect(sent.status()).toBe(200);
+      draft = (await sent.json()) as Draft;
+      photoSent = true;
+      continue;
+    }
     draft = await call<Draft>("POST", `/drafts/${draft.draftId}/turns`, {
       revision: draft.revision,
       turnKey: crypto.randomUUID(),
@@ -151,4 +180,34 @@ test("signing out ends the desk session", async ({ page }) => {
   await signIn(page);
   await page.getByRole("button", { name: "Keluar" }).click();
   await expect(page.getByRole("heading", { name: "Masuk meja laporan" })).toBeVisible();
+});
+
+test("the map and the gallery show the filtered reports, and a page with no script lists every point", async ({
+  page,
+  browser,
+  baseURL,
+}, info) => {
+  test.setTimeout(240_000);
+  const script = !info.project.name.includes("no-script");
+  const { ticketNumber } = await sendReport(browser, baseURL as string, true);
+  await signIn(page);
+  await page.getByLabel("Nomor tiket").fill(ticketNumber);
+  await page.getByRole("button", { name: "Terapkan" }).click();
+  await page.getByRole("navigation", { name: "Tampilan laporan" }).getByRole("link", { name: "Peta" }).click();
+  await expect(page.getByRole("heading", { name: /Peta laporan/ })).toContainText("1 titik");
+  if (script) await expect(page.locator("button.desk-marker")).toHaveCount(1, { timeout: 20_000 });
+  await page.getByText("Daftar titik (1)").click();
+  await expect(page.getByRole("link", { name: ticketNumber })).toBeVisible();
+  await expect(page.getByText(/^5\.\d{6}, 97\.\d{6}, perkiraan tingkat desa$/)).toBeVisible();
+  await noSidewaysScroll(page);
+  await page.screenshot({ path: info.outputPath("map.png"), fullPage: true });
+
+  await page.getByRole("navigation", { name: "Tampilan laporan" }).getByRole("link", { name: "Galeri" }).click();
+  await expect(page.getByRole("heading", { name: /Galeri foto/ })).toContainText("1 foto");
+  const image = page.getByRole("img", { name: `Foto laporan ${ticketNumber}` });
+  await expect(image).toBeVisible();
+  await expect.poll(() => image.evaluate((element) => (element as HTMLImageElement).naturalWidth)).toBeGreaterThan(0);
+  await expect(page.getByText("Lokasi GPS perangkat")).toBeVisible();
+  await noSidewaysScroll(page);
+  await page.screenshot({ path: info.outputPath("gallery.png"), fullPage: true });
 });
