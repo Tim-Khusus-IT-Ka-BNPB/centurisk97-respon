@@ -103,9 +103,11 @@ async function sendReport(
 }
 
 async function signIn(page: Page): Promise<void> {
-  await page.goto("/lapor/meja");
+  // Typing before the page has hydrated can lose the code on a slow machine, so wait for it to settle.
+  await page.goto("/lapor/meja", { waitUntil: "networkidle" });
   await expect(page.getByRole("heading", { name: "Masuk meja laporan" })).toBeVisible();
   await page.getByLabel("Kode masuk").fill(DESK_CODE);
+  await expect(page.getByLabel("Kode masuk")).toHaveValue(DESK_CODE);
   await page.getByRole("button", { name: "Masuk", exact: true }).click();
   await expect(page.getByRole("heading", { level: 1, name: "Meja laporan" })).toBeVisible();
 }
@@ -166,7 +168,7 @@ test("a desk officer finds a new report, reads where each value came from, and o
 });
 
 test("the desk asks for a staff code, and a wrong code is named on its field", async ({ page }) => {
-  await page.goto("/lapor/meja");
+  await page.goto("/lapor/meja", { waitUntil: "networkidle" });
   await expect(page.getByRole("heading", { name: "Masuk meja laporan" })).toBeVisible();
   await expect(page.getByText("Daftar laporan")).toHaveCount(0);
   await page.getByLabel("Kode masuk").fill("bukan-kode");
