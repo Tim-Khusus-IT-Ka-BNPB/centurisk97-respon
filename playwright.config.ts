@@ -11,7 +11,8 @@ export default defineConfig({
   workers: 1,
   forbidOnly: ci,
   retries: 0,
-  reporter: ci ? [["list"]] : [["list"], ["html", { open: "never", outputFolder: "playwright-report" }]],
+  // CI prints each failure as it happens, so a run cut off by its time limit still shows why.
+  reporter: ci ? [["line"]] : [["list"], ["html", { open: "never", outputFolder: "playwright-report" }]],
   use: {
     baseURL: `http://localhost:${appPort}`,
     // Traces and videos record typed names and numbers, so CI never keeps them.

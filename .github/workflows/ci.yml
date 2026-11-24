@@ -46,12 +46,55 @@ jobs:
           pnpm db:seed
       - name: Unit and integration tests with coverage
         run: pnpm test
-      - name: Browsers
-        run: pnpm exec playwright install --with-deps chromium webkit
-      - name: End-to-end tests
-        run: pnpm test:e2e
+      - name: Build
+        run: pnpm build
       - name: Bundle budget
         run: pnpm bundle:check
+
+  # One job per browser project: the walks are paced under the message limit, so together they
+  # take longer than one job may run.
+  e2e:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    strategy:
+      fail-fast: false
+      matrix:
+        project:
+          - chromium
+          - webkit
+          - chromium-320
+          - chromium-tablet
+          - chromium-desktop
+          - webkit-desktop
+          - chromium-no-script
+          - webkit-no-script
+    env:
+      CI: "true"
+      APP_ENV: test
+      KEY_HMAC_SECRET: ci-only-sample-hmac-key-at-least-32-bytes
+      MODEL_STUB_PORT: "8790"
+      MODEL_STUB_DELAY_MS: "0"
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version-file: .nvmrc
+      - name: Install pnpm
+        run: npm install -g "$(node -p 'require("./package.json").packageManager')"
+      - name: Install
+        run: pnpm install --frozen-lockfile
+      - name: Worker settings for the run
+        run: cp .dev.vars.example .dev.vars
+      - name: Browser
+        run: pnpm exec playwright install --with-deps "${MATRIX_PROJECT%%-*}"
+        env:
+          MATRIX_PROJECT: ${{ matrix.project }}
+      - name: End-to-end tests
+        run: pnpm test:e2e --project "$MATRIX_PROJECT"
+        env:
+          MATRIX_PROJECT: ${{ matrix.project }}
 
   # Its own job, so its quarter hour runs beside the browser tests and not inside their time limit.
   mutation:
