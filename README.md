@@ -6,7 +6,7 @@ This repo rebuilds the Lapor module of [poskokarhutla](https://github.com/terasu
 
 How it is built: typed contracts between pages and API, layered code (route, service, repository) with pure domain rules, every user-facing word in one copy catalogue, every rule enforced on the server, and nothing merged without type checks, lint, 100% unit coverage and browser tests at phone, tablet and desktop widths.
 
-Status: the guided report (identity and consent, place, hazard, questions, summary, send) works end to end locally. Staging is not set up yet.
+Status: the guided report (identity and consent, place by search or GPS, hazard, questions, photos, summary, send) works end to end locally. Staging is not set up yet.
 
 ## Where things are
 
@@ -23,7 +23,7 @@ Status: the guided report (identity and consent, place, hazard, questions, summa
 
 ## Run it from a fresh clone
 
-Needs Node 26.3 (see `.nvmrc`) and pnpm 10.34.5 (the `packageManager` field; `npm install -g pnpm@10.34.5`). The database is Cloudflare D1, this product's own, separate from upstream's; locally wrangler runs it on disk under `.wrangler/`. No database server and no containers.
+Needs Node 26.3 (see `.nvmrc`) and pnpm 10.34.5 (the `packageManager` field; `npm install -g pnpm@10.34.5`). The database is Cloudflare D1, this product's own, separate from upstream's; locally wrangler runs it on disk under `.wrangler/`. Photos go to an R2 bucket of its own (`PHOTOS`), which wrangler also keeps on disk locally. No database server and no containers.
 
 1. Install. This also wires the git hooks in `.githooks/`.
 
@@ -56,7 +56,7 @@ Needs Node 26.3 (see `.nvmrc`) and pnpm 10.34.5 (the `packageManager` field; `np
    pnpm sweep:local         # fires the scheduled expiry sweep on the running dev server
    ```
 
-   Place data. The seed loads a small pinned cut of the village file. To search the whole country, import upstream's `public/data/desa_cari.json`; a file under 80,000 villages or 500 regencies is refused, and the same file twice writes nothing.
+   Place data. The seed loads a small pinned cut of the village file and the outlines of those villages, which GPS reads a point against. To cover the whole country, import upstream's `public/data/desa_cari.json`; its outlines are read from `public/geo/desa/` beside it, or from a folder given as a second argument. A file under 80,000 villages or 500 regencies, or outlines for fewer than 80,000 of its villages, is refused, and the same files twice write nothing.
 
    ```bash
    pnpm reference:import ../poskokarhutla/public/data/desa_cari.json
