@@ -15,9 +15,11 @@ import { LIMITS, rollingRetryAt } from "../domain/limits";
 import { formatTicketNumber, ticketDay } from "../domain/ticketNumber";
 import type { DraftContent } from "../domain/turn/content";
 import { atomically, decide, holds, sql } from "../platform/database";
+import { sha256Hex } from "../platform/keys";
 import type { Principal } from "../ports/identity";
 import type { ServiceBindings } from "./bindings";
 import { LIFE_LINE } from "./draftView";
+import { trackingToken } from "./tracking";
 import { type Answer, ownedDraft, viewOf } from "./turn";
 
 // The fault switch of local and test: the send fails after its inserts, before commit.
@@ -66,6 +68,8 @@ async function sendOnce(
   const day = ticketDay(nowMs);
   const ticketNumber = ticketNumberOf(formatTicketNumber(day, 1).slice(0, -3), day);
   const content = draft.content as DraftContent;
+  const reportId = crypto.randomUUID();
+  const trackingHash = await sha256Hex(await trackingToken(bindings.settings.keyHmacSecret, reportId));
   const consent = await latestConsent(db, profile.id);
   // Removed with its number between the reads: decide again on what is there now.
   if (consent === null) return null;
@@ -77,6 +81,8 @@ async function sendOnce(
     holds(sendsBelow(draft.numberKey, draft.ownerSlot, since, max)),
     nextSequence(day),
     ...insertReport({
+      reportId,
+      trackingHash,
       ticketNumber,
       draftId: draft.id,
       reporterId: draft.reporterId,

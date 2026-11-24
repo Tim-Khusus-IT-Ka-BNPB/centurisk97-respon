@@ -8,6 +8,7 @@ import { addDraftRoutes } from "./routes/drafts";
 import { addPhotoRoutes } from "./routes/photos";
 import { addPlaceRoutes } from "./routes/places";
 import { addReporterRoutes } from "./routes/reporters";
+import { addTrackingRoutes } from "./routes/tracking";
 
 export const api = createApi();
 
@@ -45,3 +46,4 @@ addReporterRoutes(api);
 addDraftRoutes(api);
 addPlaceRoutes(api);
 addPhotoRoutes(api);
+addTrackingRoutes(api);

@@ -41,7 +41,12 @@ describe("numbers known on this device", () => {
   });
 
   test("a device with nothing known, and a staff session, list nobody", async () => {
-    expect(await me(browser(fetchApi))).toEqual({ knownReporters: [], privacyVersion: 1, session: null });
+    expect(await me(browser(fetchApi))).toEqual({
+      reports: [],
+      knownReporters: [],
+      privacyVersion: 1,
+      session: null,
+    });
     const desk = browser(fetchApi);
     desk.cookies.set("seeded_session", SEEDED_SESSIONS[2].token);
     expect((await me(desk)).session).toEqual({ kind: "staff" });

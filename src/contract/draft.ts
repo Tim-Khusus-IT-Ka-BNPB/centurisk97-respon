@@ -8,6 +8,7 @@ import {
   reporterRoleSchema,
   timeSchema,
 } from "./common";
+import { ownReportSchema } from "./tracking";
 
 const transcriptEntrySchema = z.discriminatedUnion("speaker", [
   // The reporter's own words come back masked, for example "[nama pelapor]".
@@ -61,6 +62,8 @@ export const meResponseSchema = z.object({
         .nullable(),
     }),
   ),
+  // "Laporan saya": the sent reports of this device's numbers, or of the session's number.
+  reports: z.array(ownReportSchema),
   privacyVersion: z.number().int().positive(),
   // A main-site session, if any. It never carries the number.
   session: z.object({ kind: z.enum(["reporter", "staff"]) }).nullable(),

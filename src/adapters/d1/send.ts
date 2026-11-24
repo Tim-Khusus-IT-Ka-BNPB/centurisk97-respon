@@ -43,6 +43,9 @@ export const ticketNumberOf = (prefix: string, wibDate: string): Query =>
   sql`(${prefix} || '-' || printf('%02d', (select last_n from ticket_day_counter where wib_date = ${wibDate})))`;
 
 export type NewReport = {
+  readonly reportId: string;
+  // SHA-256 of the tracking link's secret, made from the report id.
+  readonly trackingHash: string;
   readonly ticketNumber: Query;
   readonly draftId: string;
   readonly reporterId: string;
@@ -67,15 +70,15 @@ export type NewReport = {
 // Report, its first version, the ticket at "new" and its first history row, as one part of the send batch.
 export function insertReport(report: NewReport): Query[] {
   const code = report.villageCode;
-  const reportId = crypto.randomUUID();
+  const { reportId } = report;
   const ticket = sql`(select ticket_number from report where id = ${reportId})`;
   const who = report.reporter;
   return [
     sql`insert into report (id, ticket_number, draft_id, reporter_id, number_key, owner_slot, number_unverified, hazard_type,
-        village_code, district_code, regency_code, province_code, sent_at)
+        village_code, district_code, regency_code, province_code, sent_at, tracking_hash)
       values (${reportId}, ${report.ticketNumber}, ${report.draftId}, ${report.reporterId}, ${report.numberKey},
         ${report.ownerSlot}, ${report.numberUnverified}, ${report.hazardType}, ${code}, ${code.slice(0, 8)},
-        ${code.slice(0, 5)}, ${code.slice(0, 2)}, ${report.sentAt})
+        ${code.slice(0, 5)}, ${code.slice(0, 2)}, ${report.sentAt}, ${report.trackingHash})
       returning ticket_number`,
     sql`insert into report_version (report_id, version, fields, reporter_name, reporter_number, reporter_role,
         officer_regency, officer_position, privacy_version, consent_agreed_at, complete_percent, created_at)

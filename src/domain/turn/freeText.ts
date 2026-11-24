@@ -16,16 +16,20 @@ export type FreeTextKind =
   | { readonly kind: "cancel" }
   | { readonly kind: "tooLong"; readonly length: number }
   | { readonly kind: "refused"; readonly topic: TopicVerdict }
+  // "cek status": the reporter's sent reports are listed, nothing in the draft changes.
+  | { readonly kind: "status" }
   | { readonly kind: "story" };
 
 const BACK_WORDS = /^(?:kembali|balik|salah pilih|undo)$/i;
 const CANCEL_WORDS = /^(?:batal|batalkan|batalkan laporan)$/i;
+const STATUS_WORDS = /^(?:cek\s+)?status(?:\s+laporan(?:\s+saya)?)?$/i;
 
 // What a typed message is, before anything reaches the model: a command, too long, off topic, or a story.
 export function classifyFreeText(text: string): FreeTextKind {
   const words = tidy(text).replace(/[.!]+$/, "");
   if (BACK_WORDS.test(words)) return { kind: "back" };
   if (CANCEL_WORDS.test(words)) return { kind: "cancel" };
+  if (STATUS_WORDS.test(words)) return { kind: "status" };
   if (text.length > LENGTHS.message.max) return { kind: "tooLong", length: text.length };
   const topic = topicGate(text);
   return topic ? { kind: "refused", topic } : { kind: "story" };

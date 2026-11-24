@@ -26,6 +26,12 @@ exports[`limits table > rows as agreed 1`] = `
     "subject": "address",
     "window": "clockHour",
   },
+  "address.tracking": {
+    "effect": "refuse",
+    "max": 300,
+    "subject": "address",
+    "window": "clockHour",
+  },
   "device.messageHour": {
     "effect": "refuse",
     "max": 150,
@@ -67,6 +73,12 @@ exports[`limits table > rows as agreed 1`] = `
     "max": 30,
     "subject": "draft",
     "window": "draftLife",
+  },
+  "rating.hour": {
+    "effect": "refuse",
+    "max": 30,
+    "subject": "numberSlot",
+    "window": "clockHour",
   },
   "send.rolling": {
     "effect": "refuse",

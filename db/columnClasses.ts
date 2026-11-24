@@ -103,6 +103,7 @@ export const COLUMN_CLASSES: Readonly<Record<string, TableClasses>> = {
       regency_code: I,
       province_code: I,
       sent_at: I,
+      tracking_hash: I,
     },
   },
   report_version: {
@@ -216,6 +217,14 @@ export const COLUMN_CLASSES: Readonly<Record<string, TableClasses>> = {
       time_source: I,
       received_at: I,
     },
+  },
+  report_rating: {
+    retention: "with its report",
+    columns: { report_id: I, rating: I, rated_at: I },
+  },
+  reference_file: {
+    retention: "replaced by the next import of the same file",
+    columns: { name: I, data_date: PUB, source: PUB, body: PUB, checksum: I, imported_at: I },
   },
   photo_removal: {
     retention: "until the sweep has deleted the file from the photo store",

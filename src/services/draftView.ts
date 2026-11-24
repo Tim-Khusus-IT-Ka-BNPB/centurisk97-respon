@@ -2,6 +2,7 @@ import { DRAFT_LIFE_MS, type DraftRecord, type TranscriptRow } from "../adapters
 import type { PhotoRecord } from "../adapters/d1/photos";
 import type { Card } from "../contract/card";
 import type { DraftBody } from "../contract/draft";
+import type { Tracking } from "../contract/tracking";
 import { isFinal } from "../domain/draftStates";
 import { provinceZone, type Zone } from "../domain/eventTime";
 import { completePercent } from "../domain/fields/applicable";
@@ -26,7 +27,14 @@ export function draftZone(villageCode: string | null): Zone {
   return provinceZone(villageCode === null ? null : villageCode.slice(0, 2));
 }
 
-type SentTicket = { readonly ticketNumber: string; readonly sentAt: Date };
+export type SentTicket = {
+  readonly ticketNumber: string;
+  readonly sentAt: Date;
+  readonly firstName: string;
+  readonly rating: number | null;
+  readonly trackingToken: string;
+  readonly tracking: Tracking;
+};
 
 type ViewInput = {
   readonly draft: DraftRecord;
@@ -45,9 +53,13 @@ function endedCard(ticket: SentTicket | null, cardId: string): Card {
       kind: "sent",
       titleKey: "card.sent.title",
       promptKey: "card.sent.body",
-      params: { ticketNumber: ticket.ticketNumber },
+      params: { ticketNumber: ticket.ticketNumber, firstName: ticket.firstName },
       ticketNumber: ticket.ticketNumber,
       sentAt: at(ticket.sentAt, "WIB"),
+      firstName: ticket.firstName,
+      rating: ticket.rating,
+      trackingToken: ticket.trackingToken,
+      tracking: ticket.tracking,
     };
   return { cardId, kind: "cancelled", titleKey: "card.cancelled.title", promptKey: "card.cancelled.body", params: {} };
 }

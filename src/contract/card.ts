@@ -9,6 +9,7 @@ import {
   valueOriginSchema,
   zoneSchema,
 } from "./common";
+import { trackingSchema } from "./tracking";
 
 export const CARD_KINDS = [
   "placeSearch",
@@ -235,7 +236,19 @@ export const cardSchema = z.discriminatedUnion("kind", [
     kind: z.literal("confirm"),
     confirmId: z.enum(["cancelDraft", "replaceDraft", "removeProfile", "declineConsent"]),
   }),
-  z.object({ ...base, kind: z.literal("sent"), ticketNumber: z.string(), sentAt: timeSchema }),
+  z.object({
+    ...base,
+    kind: z.literal("sent"),
+    ticketNumber: z.string(),
+    sentAt: timeSchema,
+    // Shown on the thank-you screen; the reporter's own name, to its owner only.
+    firstName: z.string(),
+    // null until the reporter rates; the thank-you screen shows until then (K81).
+    rating: z.number().int().min(1).max(5).nullable(),
+    // The secret of the tracking link, which travels in the link's fragment.
+    trackingToken: z.string(),
+    tracking: trackingSchema,
+  }),
   z.object({ ...base, kind: z.literal("cancelled") }),
 ]);
 

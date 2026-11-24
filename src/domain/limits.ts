@@ -27,6 +27,8 @@ export const LIMITS = {
   "address.messages": { subject: "address", window: "clockHour", max: 2000, effect: "refuse" },
   "address.searches": { subject: "address", window: "clockHour", max: 1000, effect: "refuse" },
   "address.draftReads": { subject: "address", window: "clockHour", max: 2000, effect: "refuse" },
+  "address.tracking": { subject: "address", window: "clockHour", max: 300, effect: "refuse" },
+  "rating.hour": { subject: "numberSlot", window: "clockHour", max: 30, effect: "refuse" },
   "model.draft": { subject: "draft", window: "draftLife", max: 30, effect: "templatesOnly" },
   "model.day": { subject: "number", window: "wibDay", max: 150, effect: "templatesOnly" },
 } as const satisfies Record<string, LimitRow>;

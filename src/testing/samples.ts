@@ -1,6 +1,7 @@
 import type { Card, CardKind } from "../contract/card";
 import type { DraftBody, MeResponse } from "../contract/draft";
 import type { ErrorEnvelope } from "../contract/errors";
+import type { Tracking } from "../contract/tracking";
 import { EMPTY_CONTENT, type PlaceReading } from "../domain/turn/content";
 import { type CardContext, cardFor } from "../services/cards";
 
@@ -132,6 +133,24 @@ const SAMPLE_PHOTOS: CardContext["photos"] = [
     far: false,
   },
 ];
+
+const SAMPLE_TRACKING: Tracking = {
+  ticketNumber: "LA-231126-01",
+  sentAt: at("2026-11-23T02:00:00.000Z"),
+  stages: [
+    { status: "new", reachedAt: at("2026-11-23T02:00:00.000Z") },
+    { status: "seen", reachedAt: null },
+    { status: "under_review", reachedAt: null },
+    { status: "in_handling", reachedAt: null },
+    { status: "closed", reachedAt: null },
+  ],
+  hazardType: "flood",
+  hazardSubtype: "riverOverflow",
+  place: { villageName: "Sukamaju", districtName: "Contoh", regencyName: "Aceh Utara" },
+  eventTime: { kind: "dateOnly", localDate: "2026-11-23", zone: "WIB" },
+  photoCount: 2,
+  contact: { level: "regency", name: "Aceh Utara", phone: "0800-1111-2222" },
+};
 
 export const SAMPLE_DRAFTS: Readonly<Record<CardKind, DraftBody>> = {
   placeSearch: draft(
@@ -318,9 +337,13 @@ export const SAMPLE_DRAFTS: Readonly<Record<CardKind, DraftBody>> = {
       kind: "sent",
       titleKey: "card.sent.title",
       promptKey: "card.sent.body",
-      params: { ticketNumber: "LA-231126-01" },
+      params: { ticketNumber: "LA-231126-01", firstName: "Uji" },
       ticketNumber: "LA-231126-01",
       sentAt: at("2026-11-23T02:00:00.000Z"),
+      firstName: "Uji",
+      rating: null,
+      trackingToken: "0123456789abcdef0123456789abcdef",
+      tracking: SAMPLE_TRACKING,
     },
     { canGoBack: false },
   ),
@@ -346,6 +369,15 @@ export const SAMPLE_FIELD_ERROR: ErrorEnvelope = {
 };
 
 export const SAMPLE_ME: MeResponse = {
+  reports: [
+    {
+      ticketNumber: "LA-231126-01",
+      hazardType: "flood",
+      sentAt: at("2026-11-23T02:00:00.000Z"),
+      status: "new",
+      trackingToken: "0123456789abcdef0123456789abcdef",
+    },
+  ],
   knownReporters: [
     {
       profileId: "1c2d3e4f-5a6b-4c7d-8e9f-0a1b2c3d4e5f",

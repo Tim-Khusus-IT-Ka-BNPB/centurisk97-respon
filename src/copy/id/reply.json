@@ -1,5 +1,7 @@
 {
   "reply.sympathy": "Kami ikut prihatin atas kejadian ini.",
   "reply.thanks": "Terima kasih sudah melapor.",
-  "reply.calm": "Tetap tenang, laporan Anda sedang kami catat."
+  "reply.calm": "Tetap tenang, laporan Anda sedang kami catat.",
+  "reply.status.list": "Laporan terkirim dari nomor ini di perangkat ini: {count}. Nomor tiket: {tickets}. Status tiap laporan ada di Laporan saya di halaman awal.",
+  "reply.status.none": "Belum ada laporan terkirim dari nomor ini di perangkat ini."
 }

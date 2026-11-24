@@ -1,12 +1,15 @@
 import { mkdir, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { afterAll, beforeAll, describe, expect, test } from "vitest";
+import { afterAll, beforeAll, describe, expect, test, vi } from "vitest";
 import { type Database, rows, sql } from "../src/platform/database.ts";
 import { PlaceFileRefused, readPlaceFile } from "../tools/reference-import/read.ts";
 
 // The importer writes to this file's own in-memory D1 database, as pnpm reference:import writes
 // to the local one.
+// Each test writes whole snapshots or sends several reports; under a full parallel run they need more time.
+vi.setConfig({ testTimeout: 90_000 });
+
 const db = (globalThis as { testD1?: Database }).testD1 as Database;
 const query = <T>(strings: TemplateStringsArray, ...values: unknown[]) => rows<T>(db, sql(strings, ...values));
 const SEED = "db/reference/villages.json";

@@ -11,6 +11,8 @@
     "src/domain/placeText.ts",
     "src/domain/placeFile.ts",
     "src/domain/shapeFile.ts",
+    "src/domain/contacts.ts",
+    "src/domain/education.ts",
     "src/testing/jpegs.ts",
     "src/domain/modelMessage.ts",
     "vite.config.ts",

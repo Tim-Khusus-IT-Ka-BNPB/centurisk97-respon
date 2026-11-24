@@ -17,7 +17,7 @@ import {
 } from "../adapters/d1/drafts";
 import { draftPhotos, type PhotoRecord } from "../adapters/d1/photos";
 import { activeVillage } from "../adapters/d1/places";
-import { sentTicket } from "../adapters/d1/send";
+import { type ReportRecord, reportByDraft } from "../adapters/d1/reports";
 import type { DraftBody } from "../contract/draft";
 import { isFinal } from "../domain/draftStates";
 import { chosenHazardType } from "../domain/fields/applicable";
@@ -39,11 +39,12 @@ import { atomically, changedOne, sql } from "../platform/database";
 import type { Principal } from "../ports/identity";
 import type { ServiceBindings } from "./bindings";
 import { cardFor } from "./cards";
-import { draftView, draftZone, LIFE_LINE, type Notice, noticesOnRead } from "./draftView";
+import { draftView, draftZone, LIFE_LINE, type Notice, noticesOnRead, type SentTicket } from "./draftView";
 import { answerLine, extractFrom } from "./extract";
 import { checkLimits, type LimitRefusal } from "./limits";
 import { locatePlace } from "./places";
 import { phraseOf } from "./summary";
+import { myReports, trackingOf, trackingToken } from "./tracking";
 
 export type TurnRequest = {
   readonly revision: number;
@@ -91,6 +92,19 @@ export async function ownedDraft(bindings: ServiceBindings, principal: Principal
   return { kind: "owned", draft };
 }
 
+// What the sent card shows: the ticket, the thank-you name, the rating, the tracking link and view.
+async function sentDetails(bindings: ServiceBindings, draftId: string): Promise<SentTicket> {
+  const report = (await reportByDraft(bindings.db, draftId)) as ReportRecord;
+  return {
+    ticketNumber: report.ticketNumber,
+    sentAt: report.sentAt,
+    firstName: report.reporterName.split(" ")[0] as string,
+    rating: report.rating,
+    trackingToken: await trackingToken(bindings.settings.keyHmacSecret, report.id),
+    tracking: await trackingOf(bindings, report),
+  };
+}
+
 export async function viewOf(
   bindings: ServiceBindings,
   draft: DraftRecord,
@@ -98,7 +112,7 @@ export async function viewOf(
   turnKey: string | null,
   photos?: readonly PhotoRecord[],
 ): Promise<DraftBody> {
-  const ticket = draft.state === "sent" ? await sentTicket(bindings.db, draft.id) : null;
+  const ticket = draft.state === "sent" ? await sentDetails(bindings, draft.id) : null;
   return draftView({
     draft,
     transcript: await transcript(bindings.db, draft.id),
@@ -165,7 +179,13 @@ function noticesOf(outcome: Extract<TurnOutcome, { kind: "next" }>, extraLife: b
   let life = extraLife;
   for (const notice of outcome.notices) {
     if (notice.kind === "lifeLine") life = true;
-    else notices.push({ kind: notice.kind, copyKey: notice.copyKey, params: {}, retryAt: null });
+    else
+      notices.push({
+        kind: notice.kind,
+        copyKey: notice.copyKey,
+        params: "params" in notice ? { ...notice.params } : {},
+        retryAt: null,
+      });
   }
   return life ? [LIFE_LINE, ...notices] : notices;
 }
@@ -188,6 +208,7 @@ function nearbyVillage(content: DraftContent, code: string | null) {
 
 async function prepare(
   bindings: ServiceBindings,
+  principal: Principal,
   draft: DraftRecord,
   request: TurnRequest,
   question: Question,
@@ -201,6 +222,13 @@ async function prepare(
     if (kind.kind === "tooLong")
       return { errors: [{ fieldId: "text", rule: "message.tooLong", params: { length: kind.length } }] };
     if (kind.kind === "refused") return { input: { kind: "refused", topic: kind.topic }, messages: [] };
+    if (kind.kind === "status") {
+      const reports = await myReports(bindings, principal);
+      return {
+        input: { kind: "status", tickets: reports.map((report) => report.ticketNumber) },
+        messages: [{ speaker: "reporter", textMasked: maskText(request.text, reporter) }],
+      };
+    }
     const message = maskText(request.text, reporter);
     const extraction = await extractFrom(bindings, draft, content, message, draft.templatesOnly);
     const messages: NewMessage[] = [{ speaker: "reporter", textMasked: message }];
@@ -269,7 +297,7 @@ export async function takeTurn(
   const before = turnDraft(draft);
   const question = currentQuestion(before);
   const photos = await draftPhotos(bindings.db, draft.id);
-  const prepared = await prepare(bindings, draft, request, question, photos);
+  const prepared = await prepare(bindings, principal, draft, request, question, photos);
   if ("errors" in prepared)
     return {
       kind: "invalid",
@@ -332,7 +360,7 @@ async function commit(
     lines.push(...messages);
     for (const notice of notices)
       if (notice.kind === "refusal")
-        lines.push({ speaker: "assistant", copyKey: notice.copyKey, params: {}, cardKind: null });
+        lines.push({ speaker: "assistant", copyKey: notice.copyKey, params: notice.params, cardKind: null });
     const card = cardFor(currentQuestion(next), next.content, {
       cardId: "",
       nowMs: at.getTime(),

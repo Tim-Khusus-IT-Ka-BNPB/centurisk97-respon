@@ -18,6 +18,8 @@ const ERROR_CODES = [
   "turn.keyReused",
   "place.unavailable",
   "send.failed",
+  "tracking.notFound",
+  "report.notFound",
 ] as const;
 
 export type ErrorCode = (typeof ERROR_CODES)[number] | `limit.${LimitId}`;

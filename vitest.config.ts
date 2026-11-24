@@ -31,7 +31,7 @@ export default defineConfig({
     ],
     coverage: {
       provider: "v8",
-      include: ["src/**/*.{ts,tsx}", "app/**/*.{ts,tsx}", "tools/reference-import/{read,snapshot}.ts"],
+      include: ["src/**/*.{ts,tsx}", "app/**/*.{ts,tsx}", "tools/reference-import/{read,snapshot,file}.ts"],
       // Entry shells with no logic of their own; the end-to-end suite runs them.
       exclude: [
         "**/*.test.{ts,tsx}",

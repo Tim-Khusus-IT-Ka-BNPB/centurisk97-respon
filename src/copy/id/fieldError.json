@@ -28,5 +28,6 @@
   "fieldError.photo.tooMany": "Paling banyak 10 foto per laporan. Foto ini tidak disimpan. Tekan Lanjut untuk ke ringkasan.",
   "fieldError.photo.notNow": "Foto belum diperlukan sekarang. Lanjutkan pertanyaan laporan dulu.",
   "fieldError.photo.broken": "Foto ini rusak atau tidak bisa dibaca, jadi tidak disimpan. Ambil ulang dengan kamera.",
-  "fieldError.photo.unreadable": "Foto tidak terbaca atau terlalu besar untuk diperkecil. Ambil ulang dengan kamera."
+  "fieldError.photo.unreadable": "Foto tidak terbaca atau terlalu besar untuk diperkecil. Ambil ulang dengan kamera.",
+  "fieldError.rating.range": "Nilai harus angka bulat 1 sampai 5. Pilih salah satu dari lima pilihan di atas."
 }

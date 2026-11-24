@@ -26,6 +26,7 @@ import { hmacKey, sha256Hex } from "../platform/keys";
 import type { Principal } from "../ports/identity";
 import type { ServiceBindings } from "./bindings";
 import { draftZone, LIFE_LINE, at as shownAt } from "./draftView";
+import { myReports } from "./tracking";
 
 const DEVICE_KEY_BYTES = 32;
 
@@ -185,7 +186,8 @@ export async function removeProfile(
   });
 }
 
-// GET /me: the numbers known on this device or in this session, each with its open draft.
+// GET /me: the numbers known on this device or in this session, each with its open draft, and
+// the reports sent from them.
 export async function knownReporters(bindings: ServiceBindings, principal: Principal): Promise<MeResponse> {
   const nowMs = bindings.clock.now();
   const where =
@@ -196,6 +198,7 @@ export async function knownReporters(bindings: ServiceBindings, principal: Princ
         : null;
   const rows = where === null ? [] : await knownProfiles(bindings.db, where, new Date(nowMs - DRAFT_LIFE_MS));
   return {
+    reports: await myReports(bindings, principal),
     knownReporters: rows.map((row) => ({
       profileId: row.id,
       name: row.name,

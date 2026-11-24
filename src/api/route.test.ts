@@ -12,6 +12,7 @@ describe("route list", () => {
       { key: "DELETE /api/lapor/me/profiles/:profileId", policy: "reporter" },
       { key: "GET /api/lapor/drafts/:draftId", policy: "reporter" },
       { key: "GET /api/lapor/drafts/:draftId/photos/:photoId", policy: "public" },
+      { key: "GET /api/lapor/education", policy: "public" },
       { key: "GET /api/lapor/health", policy: "public" },
       { key: "GET /api/lapor/me", policy: "public" },
       { key: "GET /api/lapor/places/districts/:code/villages", policy: "public" },
@@ -22,6 +23,8 @@ describe("route list", () => {
       { key: "POST /api/lapor/drafts/:draftId/photos", policy: "reporter" },
       { key: "POST /api/lapor/drafts/:draftId/send", policy: "reporter" },
       { key: "POST /api/lapor/drafts/:draftId/turns", policy: "reporter" },
+      { key: "POST /api/lapor/reports/:ticketNumber/rating", policy: "reporter" },
+      { key: "POST /api/lapor/tracking", policy: "public" },
     ]);
     expect(routes.filter((route) => route.policy === null)).toEqual([]);
   });
@@ -250,12 +253,15 @@ describe("response schemas and the OpenAPI document", () => {
       "/api/lapor/drafts/{draftId}/photos/{photoId}",
       "/api/lapor/drafts/{draftId}/send",
       "/api/lapor/drafts/{draftId}/turns",
+      "/api/lapor/education",
       "/api/lapor/health",
       "/api/lapor/me",
       "/api/lapor/me/profiles/{profileId}",
       "/api/lapor/places/districts/{code}/villages",
       "/api/lapor/places/regencies/{code}/villages",
       "/api/lapor/places/search",
+      "/api/lapor/reports/{ticketNumber}/rating",
+      "/api/lapor/tracking",
     ]);
     const turns = document.paths?.["/api/lapor/drafts/{draftId}/turns"]?.post?.responses ?? {};
     expect(Object.keys(turns).sort()).toEqual([

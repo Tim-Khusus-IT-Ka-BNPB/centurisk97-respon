@@ -17,5 +17,7 @@
   "error.network.lost": "Sambungan terputus sebelum jawaban tersimpan. Isian Anda masih ada. Ketuk kirim lagi; jawaban tidak tercatat dua kali.",
   "error.card.noOptions": "Pilihan untuk pertanyaan ini tidak bisa dimuat. Laporan Anda tetap tersimpan. Muat ulang halaman.",
   "error.place.unavailable": "Pencarian tempat belum bisa dipakai karena data wilayah tidak terbaca. Laporan Anda tetap tersimpan di langkah ini. Cari lagi dalam beberapa menit.",
-  "error.send.failed": "Laporan belum terkirim karena layanan sedang terganggu. Semua jawaban tetap tersimpan. Ketuk Kirim sekali lagi."
+  "error.send.failed": "Laporan belum terkirim karena layanan sedang terganggu. Semua jawaban tetap tersimpan. Ketuk Kirim sekali lagi.",
+  "error.tracking.notFound": "Laporan tidak ditemukan.",
+  "error.report.notFound": "Laporan tidak ditemukan, atau tidak bisa dinilai dari perangkat ini. Buka laporan dari perangkat yang Anda pakai untuk melapor."
 }

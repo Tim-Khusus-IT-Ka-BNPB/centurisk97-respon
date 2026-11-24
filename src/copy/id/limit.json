@@ -9,5 +9,7 @@
   "limit.address.bindings": "Jaringan internet yang Anda pakai sedang dipakai banyak pelapor, jadi pelapor baru dari jaringan ini dibatasi {limit} per jam. Laporan Anda tetap tersimpan. Lanjutkan mulai {retryTime}, atau pakai jaringan lain.",
   "limit.address.messages": "Jaringan internet yang Anda pakai sedang dipakai banyak pelapor, jadi pesan dari jaringan ini dibatasi {limit} per jam. Laporan Anda tetap tersimpan. Lanjutkan mulai {retryTime}, atau pakai jaringan lain.",
   "limit.address.searches": "Jaringan internet yang Anda pakai sedang dipakai banyak pelapor, jadi pencarian tempat dari jaringan ini dibatasi {limit} per jam. Laporan Anda tetap tersimpan. Lanjutkan mulai {retryTime}, atau pakai jaringan lain.",
-  "limit.address.draftReads": "Jaringan internet yang Anda pakai sedang dipakai banyak pelapor, jadi pembukaan laporan dari jaringan ini dibatasi {limit} per jam. Laporan Anda tetap tersimpan. Lanjutkan mulai {retryTime}, atau pakai jaringan lain."
+  "limit.address.draftReads": "Jaringan internet yang Anda pakai sedang dipakai banyak pelapor, jadi pembukaan laporan dari jaringan ini dibatasi {limit} per jam. Laporan Anda tetap tersimpan. Lanjutkan mulai {retryTime}, atau pakai jaringan lain.",
+  "limit.address.tracking": "Halaman lacak sudah dibuka {limit} kali dalam satu jam dari jaringan ini. Buka lagi mulai {retryTime}.",
+  "limit.rating.hour": "Batas penilaian tercapai: paling banyak {limit} penilaian per jam untuk nomor ini. Nilai lagi mulai {retryTime}."
 }

@@ -34,6 +34,8 @@ export type TurnInput =
   | { readonly kind: "answer"; readonly answer: CardAnswer; readonly village: PlaceValue | null }
   | { readonly kind: "story"; readonly message: MaskedText; readonly extraction: Extraction }
   | { readonly kind: "located"; readonly result: LocateResult }
+  // "cek status": the sent reports of this number on this device, newest first.
+  | { readonly kind: "status"; readonly tickets: readonly string[] }
   | { readonly kind: "refused"; readonly topic: TopicVerdict }
   | { readonly kind: "back" }
   | { readonly kind: "editGroup"; readonly groupId: GroupId }
@@ -42,7 +44,7 @@ export type TurnInput =
   | { readonly kind: "dismiss" };
 
 type TurnNotice =
-  | { readonly kind: "refusal"; readonly copyKey: string }
+  | { readonly kind: "refusal"; readonly copyKey: string; readonly params?: Readonly<Record<string, string | number>> }
   | { readonly kind: "danger"; readonly copyKey: string }
   | { readonly kind: "lifeLine" };
 
@@ -117,6 +119,12 @@ export function runTurn(draft: TurnDraft, input: TurnInput, context: AnswerConte
       );
     case "refused":
       return refuse(draft, input.topic);
+    case "status": {
+      // Answered in the chat; the question on screen stays as it was.
+      const copyKey = input.tickets.length > 0 ? "reply.status.list" : "reply.status.none";
+      const params = { count: input.tickets.length, tickets: input.tickets.join(", ") };
+      return settle(draft, [{ kind: "refusal", copyKey, params }]);
+    }
     case "located": {
       // A reading is taken on the place card, or again from the nearby list.
       if (question.kind !== "place" && question.kind !== "placeConfirm") return { kind: "stale" };
