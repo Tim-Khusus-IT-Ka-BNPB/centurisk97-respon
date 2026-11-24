@@ -88,5 +88,11 @@
   "desk.gallery.alt": "Foto laporan {ticket}",
   "desk.gallery.received": "Diterima {date}, pukul {time} {zone}",
   "desk.photos": "Foto pelapor",
-  "desk.photos.empty": "Pelapor tidak mengirim foto."
+  "desk.photos.empty": "Pelapor tidak mengirim foto.",
+  "desk.map.cluster": "{count} laporan berdekatan: {parts}. Ketuk untuk memperbesar.",
+  "desk.map.legend.cluster": "Lingkaran berangka adalah beberapa laporan yang berdekatan. Cincinnya terbagi menurut warna status di atas. Ketuk untuk memperbesar, atau untuk melihat daftarnya bila semuanya di titik yang sama.",
+  "desk.map.clusterList": "{count} laporan di titik yang sama",
+  "desk.map.clusterPart.open": "{count} belum ditangani",
+  "desk.map.clusterPart.working": "{count} sedang ditangani",
+  "desk.map.clusterPart.done": "{count} ditutup"
 }

@@ -329,6 +329,7 @@ function Legend() {
         ))}
       </ul>
       <p className="text-muted">{t("desk.map.legend.hazard")}</p>
+      <p className="text-muted">{t("desk.map.legend.cluster")}</p>
     </div>
   );
 }

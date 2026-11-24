@@ -2,7 +2,19 @@ import "maplibre-gl/dist/maplibre-gl.css";
 // MapLibre runs its tile work in a web worker loaded from its own file; the bundle ships that file here.
 import workerUrl from "maplibre-gl/dist/maplibre-gl-worker.mjs?url";
 import { useEffect, useRef } from "react";
-import { boundsOf, INDONESIA, type MapPoint, markerElement, popupElement, TILE_STYLE } from "../../lib/deskMap";
+import {
+  boundsOf,
+  CLUSTER_MAX_ZOOM,
+  clusterElement,
+  clusterIndex,
+  clusterList,
+  INDONESIA,
+  itemsIn,
+  type MapPoint,
+  markerElement,
+  popupElement,
+  TILE_STYLE,
+} from "../../lib/deskMap";
 import { useText } from "../../lib/text";
 
 // The map itself, drawn in the browser only: MapLibre loads after the page, so the page and its
@@ -28,17 +40,44 @@ export function DeskMapCanvas({ points, label }: { readonly points: readonly Map
       map.once("idle", () => {
         element.dataset.ready = "true";
       });
-      for (const point of points)
-        new maplibre.Marker({ element: markerElement(point, t) })
-          .setLngLat([point.lon, point.lat])
-          .setPopup(new maplibre.Popup({ offset: 18 }).setDOMContent(popupElement(point, t)))
-          .addTo(map);
+      // Markers are drawn for the clusters and points in view, again after every zoom or pan.
+      const index = clusterIndex(points);
+      let drawn: { remove(): void }[] = [];
+      const draw = () => {
+        for (const marker of drawn) marker.remove();
+        const box = map.getBounds();
+        drawn = itemsIn(index, [box.getWest(), box.getSouth(), box.getEast(), box.getNorth()], map.getZoom()).map(
+          (item) => {
+            if (item.kind === "point")
+              return new maplibre.Marker({ element: markerElement(item.point, t) })
+                .setLngLat([item.point.lon, item.point.lat])
+                .setPopup(new maplibre.Popup({ offset: 18 }).setDOMContent(popupElement(item.point, t)))
+                .addTo(map);
+            const button = clusterElement(item.count, item.tally, t);
+            const zoom = index.getClusterExpansionZoom(item.id);
+            const marker = new maplibre.Marker({ element: button }).setLngLat([item.lon, item.lat]);
+            if (zoom > CLUSTER_MAX_ZOOM)
+              marker.setPopup(
+                new maplibre.Popup({ offset: 24 }).setDOMContent(
+                  clusterList(
+                    index.getLeaves(item.id, Number.POSITIVE_INFINITY).map((leaf) => leaf.properties),
+                    t,
+                  ),
+                ),
+              );
+            else button.addEventListener("click", () => map.easeTo({ center: [item.lon, item.lat], zoom }));
+            return marker.addTo(map);
+          },
+        );
+      };
+      map.on("moveend", draw);
       const bounds = boundsOf(points);
       // The container may reach its final size after the map was made, so measure again on load
       // and only then fit the points.
       map.once("load", () => {
         map.resize();
         if (bounds !== null) map.fitBounds(bounds, { padding: 48, maxZoom: 13, duration: 0 });
+        draw();
       });
       remove = () => map.remove();
     });
