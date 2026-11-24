@@ -10,8 +10,9 @@ import type { ApiEnv } from "./context";
 import { refuse } from "./envelope";
 
 // Who may call a route. "reporter" needs a device or session principal; a draft it does not own
-// answers 404 inside the handler, the same as a draft that does not exist.
-export type Policy = "public" | "reporter";
+// answers 404 inside the handler, the same as a draft that does not exist. "staff" needs a staff
+// account; what it may do there is decided in the service, by role and region.
+export type Policy = "public" | "reporter" | "staff";
 
 export const API_BASE = "/api/lapor";
 const MAX_BODY_BYTES = 16 * 1024;
@@ -67,6 +68,7 @@ function policyGuard(policy: Policy) {
       if (principal === undefined || principal.kind === "anonymous") return refuse(c, 401, "auth.signInFirst");
       if (principal.kind === "staff") return refuse(c, 404, "draft.notFound");
     }
+    if (policy === "staff" && c.var.principal?.kind !== "staff") return refuse(c, 401, "auth.staffSignInFirst");
     await next();
   });
 }
@@ -113,6 +115,14 @@ function sharedResponses(method: string, policy: Policy) {
       ? {}
       : { 403: refusal("Not sent from this site"), 413: refusal("Body over 16 KB, or 12 MB for a photo") }),
     ...(policy === "reporter" ? { 401: refusal("No reporter"), 404: refusal("Not found for this reporter") } : {}),
+    ...(policy === "staff"
+      ? {
+          401: refusal("No staff account"),
+          403: refusal("Not sent from this site, or not allowed for this account"),
+          404: refusal("No such report for this account"),
+          429: refusal("Over this account's hourly desk limit"),
+        }
+      : {}),
   };
 }
 

@@ -1,7 +1,15 @@
 import { z } from "zod";
 import { hazardTypeSchema, timeSchema, zoneSchema } from "./common";
 
-const ticketStatusSchema = z.enum(["new", "seen", "under_review", "forwarded", "in_handling", "closed", "invalid"]);
+export const ticketStatusSchema = z.enum([
+  "new",
+  "seen",
+  "under_review",
+  "forwarded",
+  "in_handling",
+  "closed",
+  "invalid",
+]);
 
 // Who to call: the regency's or province's BPBD from the contact file, else BNPB's 117.
 const contactSchema = z.discriminatedUnion("level", [
@@ -11,7 +19,7 @@ const contactSchema = z.discriminatedUnion("level", [
 ]);
 
 // The time of the event as the reporter gave it, in the report's zone.
-const eventTimeSchema = z.discriminatedUnion("kind", [
+export const eventTimeSchema = z.discriminatedUnion("kind", [
   z.object({ kind: z.literal("dateTime"), localDate: z.iso.date(), localTime: z.string(), zone: zoneSchema }),
   z.object({ kind: z.literal("dateOnly"), localDate: z.iso.date(), zone: zoneSchema }),
   z.object({ kind: z.literal("olderThan30Days") }),

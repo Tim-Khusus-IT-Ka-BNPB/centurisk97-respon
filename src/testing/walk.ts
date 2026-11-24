@@ -80,3 +80,34 @@ export async function walkTo(
   }
   return { draft, turns };
 }
+
+// A typed number's consent, or a new draft from a profile already on this device.
+export async function startDraft(phone: Phone, number: string, name = "Uji Satu"): Promise<DraftBody> {
+  const answer = await phone.call("POST", "/consent", {
+    role: "citizen",
+    name,
+    number,
+    privacyVersion: 1,
+    agree: true,
+  });
+  if (answer.status === 201) return answer.draft;
+  const me = await phone.call("GET", "/me");
+  const profileId = (me.json as { knownReporters: { profileId: string }[] }).knownReporters[0]?.profileId;
+  return (await phone.call("POST", "/drafts", { profileId, replaceOpenDraft: true })).draft;
+}
+
+// Walks a started draft to the summary and sends it; answers the ticket number.
+export async function sendDraft(
+  phone: Phone,
+  started: DraftBody,
+  villageCode: string,
+  options: WalkOptions,
+): Promise<string> {
+  const { draft } = await walkTo(phone, started, villageCode, options);
+  const sent = await phone.call("POST", `/drafts/${draft.draftId}/send`, {
+    revision: draft.revision,
+    turnKey: crypto.randomUUID(),
+  });
+  expect(sent.status, JSON.stringify(sent.json)).toBe(201);
+  return (sent.json as { ticketNumber: string }).ticketNumber;
+}

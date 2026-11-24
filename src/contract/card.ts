@@ -136,7 +136,7 @@ const rowValueSchema = z.discriminatedUnion("kind", [
   }),
 ]);
 
-const summaryGroupSchema = z.object({
+export const summaryGroupSchema = z.object({
   groupId: z.string(),
   rows: z.array(
     z.object({

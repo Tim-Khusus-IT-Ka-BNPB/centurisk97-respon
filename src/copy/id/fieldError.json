@@ -29,5 +29,7 @@
   "fieldError.photo.notNow": "Foto belum diperlukan sekarang. Lanjutkan pertanyaan laporan dulu.",
   "fieldError.photo.broken": "Foto ini rusak atau tidak bisa dibaca, jadi tidak disimpan. Ambil ulang dengan kamera.",
   "fieldError.photo.unreadable": "Foto tidak terbaca atau terlalu besar untuk diperkecil. Ambil ulang dengan kamera.",
-  "fieldError.rating.range": "Nilai harus angka bulat 1 sampai 5. Pilih salah satu dari lima pilihan di atas."
+  "fieldError.rating.range": "Nilai harus angka bulat 1 sampai 5. Pilih salah satu dari lima pilihan di atas.",
+  "fieldError.ticketNumber.format": "Nomor tiket ditulis seperti LA-241126-01. Periksa lagi nomornya, lalu cari.",
+  "fieldError.staffCode.unknown": "Kode masuk tidak dikenal. Periksa kode dari admin, lalu masuk lagi."
 }

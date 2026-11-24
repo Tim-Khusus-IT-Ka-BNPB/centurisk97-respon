@@ -9,7 +9,10 @@ describe("route list", () => {
   test("every route of the app declares a policy", () => {
     const routes = routeList(api);
     expect(routes).toEqual([
+      { key: "DELETE /api/lapor/desk/session", policy: "public" },
       { key: "DELETE /api/lapor/me/profiles/:profileId", policy: "reporter" },
+      { key: "GET /api/lapor/desk/reports", policy: "staff" },
+      { key: "GET /api/lapor/desk/reports/:ticketNumber", policy: "staff" },
       { key: "GET /api/lapor/drafts/:draftId", policy: "reporter" },
       { key: "GET /api/lapor/drafts/:draftId/photos/:photoId", policy: "public" },
       { key: "GET /api/lapor/education", policy: "public" },
@@ -19,6 +22,8 @@ describe("route list", () => {
       { key: "GET /api/lapor/places/regencies/:code/villages", policy: "public" },
       { key: "GET /api/lapor/places/search", policy: "public" },
       { key: "POST /api/lapor/consent", policy: "public" },
+      { key: "POST /api/lapor/desk/reports/:ticketNumber/view", policy: "staff" },
+      { key: "POST /api/lapor/desk/session", policy: "public" },
       { key: "POST /api/lapor/drafts", policy: "reporter" },
       { key: "POST /api/lapor/drafts/:draftId/photos", policy: "reporter" },
       { key: "POST /api/lapor/drafts/:draftId/send", policy: "reporter" },
@@ -117,7 +122,16 @@ describe("policy, origin, address and size checks", () => {
   });
 
   test("staff gets 404 like a draft that does not exist", async () => {
-    const { response, json } = await call({ kind: "staff", role: "deskOfficer" }, post({ text: "air" }));
+    const { response, json } = await call(
+      {
+        kind: "staff",
+        staffId: "staff-desk-1",
+        role: "deskOfficer",
+        label: "Petugas Uji",
+        scope: { level: "national" },
+      },
+      post({ text: "air" }),
+    );
     expect(response.status).toBe(404);
     expect(json?.error).toEqual({ code: "draft.notFound", copyKey: "error.draft.notFound", params: {} });
   });
@@ -247,6 +261,10 @@ describe("response schemas and the OpenAPI document", () => {
     const paths = Object.keys(document.paths ?? {}).sort();
     expect(paths).toEqual([
       "/api/lapor/consent",
+      "/api/lapor/desk/reports",
+      "/api/lapor/desk/reports/{ticketNumber}",
+      "/api/lapor/desk/reports/{ticketNumber}/view",
+      "/api/lapor/desk/session",
       "/api/lapor/drafts",
       "/api/lapor/drafts/{draftId}",
       "/api/lapor/drafts/{draftId}/photos",

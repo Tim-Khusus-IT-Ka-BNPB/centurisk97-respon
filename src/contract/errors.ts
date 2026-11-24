@@ -20,6 +20,9 @@ const ERROR_CODES = [
   "send.failed",
   "tracking.notFound",
   "report.notFound",
+  "auth.staffSignInFirst",
+  "desk.notAllowed",
+  "desk.reportNotFound",
 ] as const;
 
 export type ErrorCode = (typeof ERROR_CODES)[number] | `limit.${LimitId}`;
