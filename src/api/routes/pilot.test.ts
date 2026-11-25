@@ -50,7 +50,7 @@ describe("a number that is not allowed (AC-01)", () => {
   test("taken away in the middle of a report, the chat falls silent and its news stops", async () => {
     const one = chat(fetchApi, { now: clock.now });
     const ticket = await sent(one);
-    await one.send("1");
+    await one.send("ya");
     const waiting = async () =>
       ((await machine.call("GET", "/kabar")).json.kabar as { nomor: string }[]).filter((item) => item.nomor === ticket);
     expect(await waiting()).toHaveLength(1);
