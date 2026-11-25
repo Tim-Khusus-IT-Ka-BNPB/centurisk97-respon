@@ -2,13 +2,13 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { Link, useSearchParams } from "react-router";
 import type { OneTapSent, OneTapStart } from "../../../src/contract/emergency";
 import type { ErrorEnvelope } from "../../../src/contract/errors";
-import { cn } from "../../lib/cn";
 import { readPosition } from "../../lib/device";
 import { useHydrated } from "../../lib/hooks";
 import { limitText } from "../../lib/status";
 import { useText } from "../../lib/text";
 import { Button, buttonStyles } from "../atoms/Button";
 import { Icon } from "../atoms/Icon";
+import { CallRow } from "../molecules/CallRow";
 import { Notice } from "../molecules/Notice";
 import { trackingPath } from "./cards/TicketCards";
 
@@ -41,32 +41,6 @@ async function sendPoint(onSending: () => void): Promise<Step> {
   }
 }
 
-function Call({
-  label,
-  phone,
-  first = false,
-}: {
-  readonly label: string;
-  readonly phone: string;
-  readonly first?: boolean;
-}) {
-  return (
-    <a
-      href={`tel:${phone.replace(/[^\d+]/g, "")}`}
-      className={cn(
-        buttonStyles({ variant: first ? "signal" : "secondary", size: "main" }),
-        "justify-between text-start tabular-nums",
-      )}
-    >
-      <span className="inline-flex min-w-0 items-center gap-2">
-        <Icon name="phone" className="size-5" />
-        {label}
-      </span>
-      <span className="font-bold whitespace-nowrap">{phone}</span>
-    </a>
-  );
-}
-
 // "Darurat sekali ketuk": who to call at once, and the phone's point on its way to the desk.
 export function OneTapScreen({ start }: { readonly start: OneTapStart }) {
   const t = useText();
@@ -91,22 +65,19 @@ export function OneTapScreen({ start }: { readonly start: OneTapStart }) {
   return (
     <div className="flex flex-col gap-6">
       <h1 className="text-page font-bold">{t("emergency.title")}</h1>
-      <section
-        aria-labelledby="call-now"
-        className="flex flex-col gap-3 card-surface border-signal bg-signal-tint p-4 md:p-5"
-      >
+      <section aria-labelledby="call-now" className="flex flex-col gap-3 rounded-card bg-signal-tint p-4 md:p-6">
         <h2 id="call-now" className="text-card font-bold">
           {t("emergency.callNow")}
         </h2>
-        <Call label={t("emergency.call112")} phone="112" first />
-        <Call label={t("emergency.call117")} phone="117" />
+        <CallRow number="112" label={t("emergency.call112")} first />
+        <CallRow number="117" label={t("emergency.call117")} />
         {contact.level === "national" ? (
           <p className="text-meta">{t("emergency.noBpbd")}</p>
         ) : (
-          <Call label={t("emergency.callBpbd", { name: contact.name })} phone={contact.phone} />
+          <CallRow number={contact.phone} label={t("emergency.callBpbd", { name: contact.name })} />
         )}
       </section>
-      <section aria-labelledby="point" className="flex flex-col gap-4 card-surface p-4 md:p-5">
+      <section aria-labelledby="point" className="flex flex-col gap-4 card-surface p-4 md:p-6">
         <h2 id="point" className="text-card font-bold">
           {t("emergency.point")}
         </h2>

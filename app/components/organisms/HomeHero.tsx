@@ -4,37 +4,34 @@ import { buttonStyles } from "../atoms/Button";
 import { Icon } from "../atoms/Icon";
 import { EmergencyPanel } from "./EmergencyPanel";
 
-// The opening band: what the service is for, the one way in, and the number to call when a life is at risk.
-export function HomeHero({ known }: { readonly known: boolean }) {
+// The opening band: what the service is for, the ways in, and the numbers to call when a life is at
+// risk. Who has sent a report is led to it; anyone else to how reporting goes.
+export function HomeHero({ known, sent }: { readonly known: boolean; readonly sent: boolean }) {
   const t = useText();
   return (
     <section aria-labelledby="home-heading" className="contours text-on-hero">
-      <div className="relative mx-auto grid max-w-[72rem] gap-8 px-4 py-12 md:px-6 md:py-16 lg:grid-cols-[1fr_22rem] lg:items-center lg:gap-16 lg:py-20">
+      <div className="mx-auto grid max-w-[72rem] grid-cols-[minmax(0,1fr)] gap-9 px-4 py-10 md:px-6 md:py-16 lg:grid-cols-[minmax(0,1fr)_23rem] lg:items-center lg:gap-20 lg:py-24">
         <div className="flex flex-col gap-5">
-          <p className="text-meta font-semibold text-accent">{t("home.hero.kicker")}</p>
-          <h1 id="home-heading" className="max-w-[18ch] text-display font-extrabold tracking-[-0.025em] text-balance">
+          <h1 id="home-heading" className="max-w-[19ch] text-display font-extrabold tracking-[-0.02em] text-balance">
             {t("home.hero.title")}
           </h1>
-          <p className="max-w-[56ch] text-card text-on-hero-muted">{t("home.lead")}</p>
-          <div className="flex flex-wrap gap-3 pt-2">
+          <p className="max-w-[52ch] text-card text-on-hero-muted text-pretty">{t("home.lead")}</p>
+          <div className="flex flex-col gap-3 pt-2 sm:flex-row sm:flex-wrap sm:items-center">
             <Link
               to="/lapor/report?darurat=1"
-              className={buttonStyles({ variant: "signal", size: "main", className: "w-full px-8 sm:w-auto" })}
+              className={buttonStyles({ variant: "signal", size: "main", className: "px-7" })}
             >
               <Icon name="triangleAlert" className="size-5" />
               {t("home.emergency")}
             </Link>
-            <Link
-              to="/lapor/report"
-              className={buttonStyles({ variant: "accent", size: "main", className: "w-full px-8 sm:w-auto" })}
-            >
+            <Link to="/lapor/report" className={buttonStyles({ variant: "accent", size: "main", className: "px-7" })}>
               {t("home.report")}
             </Link>
             <a
-              href="#steps"
-              className={buttonStyles({ variant: "onHero", size: "main", className: "w-full sm:w-auto" })}
+              href={sent ? "#laporan-saya" : "#steps"}
+              className="inline-flex min-h-target items-center justify-center gap-1.5 rounded-control px-3 font-semibold text-on-hero underline decoration-on-hero-muted/50 underline-offset-4 hover:decoration-on-hero"
             >
-              {t("home.hero.howTo")}
+              {t(sent ? "home.reports.check" : "home.hero.howTo")}
             </a>
           </div>
         </div>

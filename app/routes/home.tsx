@@ -18,10 +18,14 @@ export async function loader({ context }: Route.LoaderArgs) {
   return { me, texts: pickTexts(PAGE_TEXTS.home) };
 }
 
-export default function HomeRoute({ loaderData }: Route.ComponentProps) {
+export default function HomeRoute({ loaderData: { me, texts } }: Route.ComponentProps) {
   return (
-    <Page texts={loaderData.texts} wide hero={<HomeHero known={(loaderData.me?.knownReporters.length ?? 0) > 0} />}>
-      <HomeScreen me={loaderData.me} />
+    <Page
+      texts={texts}
+      wide
+      hero={<HomeHero known={Boolean(me?.knownReporters.length)} sent={Boolean(me?.reports.length)} />}
+    >
+      <HomeScreen me={me} />
     </Page>
   );
 }

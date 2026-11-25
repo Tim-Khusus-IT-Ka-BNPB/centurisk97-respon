@@ -13,7 +13,7 @@ export function ContactItem({
   readonly wide?: boolean;
 }) {
   return (
-    <div className={cn("flex min-w-0 flex-col gap-0.5", wide && "sm:col-span-2")}>
+    <div className={cn("flex min-w-0 flex-col gap-0.5", wide && "sm:col-span-2 lg:col-span-1")}>
       <dt className="text-meta text-muted">{label}</dt>
       <dd className="min-w-0 font-semibold [overflow-wrap:anywhere] tabular-nums">
         {href ? (

@@ -234,7 +234,7 @@ describe("the home", () => {
   test("one way to report, the resume offer per open draft, and the contacts as links", async () => {
     renderPage(
       <>
-        <HomeHero known={false} />
+        <HomeHero known={false} sent={false} />
         <HomeScreen
           me={{ ...SAMPLE_ME, knownReporters: [withDraft, { ...profile, profileId: "p-2", openDraft: null }] }}
         />
@@ -247,7 +247,8 @@ describe("the home", () => {
       await screen.findByRole("heading", { level: 1, name: "Laporkan kejadian bencana di sekitar Anda" }),
     ).toBeTruthy();
     expect(screen.getByRole("link", { name: "Lapor kejadian" }).getAttribute("href")).toBe("/lapor/report");
-    expect(screen.getByRole("link", { name: "Darurat terpadu 112" }).getAttribute("href")).toBe("tel:112");
+    expect(screen.getByRole("link", { name: "112 Darurat terpadu" }).getAttribute("href")).toBe("tel:112");
+    expect(screen.getByRole("link", { name: "Lihat cara melapor" }).getAttribute("href")).toBe("#steps");
     expect(screen.getByRole("heading", { level: 2, name: "Cara melapor" })).toBeTruthy();
     expect(screen.getAllByRole("heading", { name: "Ada laporan yang belum selesai" })).toHaveLength(1);
     expect(screen.getByRole("link", { name: "Buat laporan baru" }).getAttribute("href")).toBe(
@@ -258,7 +259,13 @@ describe("the home", () => {
   });
 
   test("Laporan saya lists each sent report with its stage and tracking link; Cek status laporan leads there", async () => {
-    renderPage(<HomeScreen me={SAMPLE_ME} />, { path: "/lapor" });
+    renderPage(
+      <>
+        <HomeHero known sent />
+        <HomeScreen me={SAMPLE_ME} />
+      </>,
+      { path: "/lapor" },
+    );
     const list = await screen.findByRole("region", { name: "Laporan saya" });
     expect(list.id).toBe("laporan-saya");
     expect(screen.getByRole("link", { name: "Cek status laporan" }).getAttribute("href")).toBe("#laporan-saya");
