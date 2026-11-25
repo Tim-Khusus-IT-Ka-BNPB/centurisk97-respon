@@ -168,6 +168,7 @@ function photosText(card: CardOf<"photos">): string {
           badge: t(`card.photos.badge.${last.badge}`) + (last.far ? `, ${lowerFirst(t("card.photos.badge.far"))}` : ""),
         }),
     locate && t("whatsapp.photos.locate"),
+    last !== undefined && t("whatsapp.photos.remove"),
     numbered(cardChoices(card)),
   );
 }

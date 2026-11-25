@@ -7,7 +7,18 @@ import { said } from "./reply";
 // conversation itself knows.
 
 export type Command =
-  | { readonly kind: "help" | "start" | "emergency" | "repeat" | "newsStop" | "newsStart" | "identity" }
+  | {
+      readonly kind:
+        | "help"
+        | "start"
+        | "emergency"
+        | "repeat"
+        | "newsStop"
+        | "newsStart"
+        | "identity"
+        | "dropPhoto"
+        | "dataRights";
+    }
   | { readonly kind: "status" | "document" | "addNews"; readonly ticketNumber: string | null };
 
 const WORDS = [
@@ -18,6 +29,8 @@ const WORDS = [
   ["newsStop", /^(?:berhenti|hentikan|stop|matikan) kabar$/],
   ["newsStart", /^(?:nyalakan|hidupkan|mulai) kabar$/],
   ["identity", /^ganti (?:nama|data|identitas)$/],
+  ["dropPhoto", /^hapus(?: foto)?(?: terakhir| tadi)?$/],
+  ["dataRights", /^(?:tolong |minta )?hapus(?:kan)? (?:semua )?(?:data|nomor|identitas|akun)(?: saya)?$/],
 ] as const;
 
 const ABOUT_TICKET = [

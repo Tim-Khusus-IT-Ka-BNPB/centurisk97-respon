@@ -82,6 +82,19 @@ describe("two messages at once", () => {
     expect((await one.photo(cameraJpeg())).text).toMatch(/^\*Foto 1 dari 10 diterima\*/);
   });
 
+  test("a photo taken back while the report moves on is told to be tried again", async () => {
+    const { one, use } = world();
+    await known(one);
+    await reach(one, /^\*Foto kejadian/m);
+    await one.photo(cameraJpeg());
+    use(
+      losesOnce("delete from draft_photo", async () => {
+        await query`update report_draft set revision = revision + 1 where id = ${await latestDraft(one.number)}`;
+      }),
+    );
+    expect((await one.send("hapus foto")).text).toMatch(/^Pesan sebelumnya masih diproses[\s\S]*Foto 1 dari 10/);
+  });
+
   test("photos that keep losing are told to be sent again", async () => {
     const { one, use } = world();
     await known(one);

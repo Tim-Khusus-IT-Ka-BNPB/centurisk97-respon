@@ -416,6 +416,19 @@ describe("photos (AC-06)", () => {
     expect((await one.send("lanjut")).text).toMatch(/3 foto, 2 dengan lokasi terekam/);
   });
 
+  test("sent by mistake, the last one is taken back in the photo step", async () => {
+    const one = open();
+    await known(one);
+    expect((await one.send("hapus foto")).text).toMatch(/^Belum ada foto yang bisa dihapus[\s\S]*\*RT dan RW\*/);
+    await reach(one, /^\*Foto kejadian/m);
+    expect((await one.send("hapus foto")).text).toMatch(/^Belum ada foto yang bisa dihapus/);
+    expect((await one.photo(cameraJpeg())).text).toContain("Salah foto? Ketik *hapus foto*");
+    await one.photo(cameraJpeg());
+    expect((await one.send("hapus foto")).text).toMatch(/^Foto terakhir sudah dihapus\.\n\n\*Foto 1 dari 10/);
+    expect((await one.send("hapus")).text).toMatch(/^Foto terakhir sudah dihapus\.\n\n\*Foto kejadian\*/);
+    expect(await photos(one)).toEqual([]);
+  });
+
   test("refused when it is no photo, or one too many", async () => {
     const one = open();
     await known(one);
@@ -673,6 +686,20 @@ describe("an emergency", () => {
     for (const text of ["darurat", "1", "1", "Uji Satu"]) await one.send(text);
     await one.share(VILLAGE.lat, VILLAGE.lon);
     expect((await one.send("1")).text).toMatch(/^\*Kejadian apa yang sedang terjadi/);
+  });
+
+  test("a command is nobody's name, and whoever asks for their data to go is told how", async () => {
+    const one = open();
+    const rights = /^\*Menghapus data Anda\*[\s\S]*persuratan@bnpb\.go\.id[\s\S]*\/lapor\/privacy/;
+    expect((await one.send("hapus data saya")).text).toMatch(rights);
+    for (const text of ["lapor", "1", "1"]) await one.send(text);
+    expect((await one.send("status")).text).toMatch(/^Jawaban itu belum terbaca[\s\S]*Nama Anda/);
+    expect((await one.send("hapus data saya")).text).toMatch(/^\*Menghapus data Anda\*[\s\S]*Nama Anda/);
+    expect((await one.send("Uji Satu")).text).toMatch(/^Melapor sebagai Uji Satu/);
+    expect((await one.send("hapus data saya")).text).toMatch(/^\*Menghapus data Anda\*[\s\S]*\*Lokasi kejadian\*/);
+    await one.send("batal");
+    await one.send("1");
+    expect((await one.send("hapus data saya")).text).toMatch(rights);
   });
 
   test("lapor and ulangi ask the same again, and blame nobody", async () => {

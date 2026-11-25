@@ -10,6 +10,17 @@ describe("commands", () => {
     ["newsStop", ["berhenti kabar", "hentikan kabar", "stop kabar", "matikan kabar"]],
     ["newsStart", ["nyalakan kabar", "hidupkan kabar", "mulai kabar"]],
     ["identity", ["ganti nama", "ganti data", "ganti identitas"]],
+    ["dropPhoto", ["hapus", "hapus foto", "Hapus foto terakhir.", "hapus foto tadi", "hapus terakhir"]],
+    [
+      "dataRights",
+      [
+        "hapus data",
+        "hapus data saya",
+        "Tolong hapus semua data saya",
+        "minta hapus nomor saya",
+        "hapuskan identitas",
+      ].concat("hapus akun saya"),
+    ],
   ])("%s", (kind, texts) => {
     for (const text of texts) expect(readCommand(text), text).toEqual({ kind });
   });
@@ -37,6 +48,10 @@ describe("commands", () => {
   test("a sentence is no command, nor is a word beside a command that names no ticket", () => {
     for (const text of [
       "",
+      "hapus foto saya semua",
+      "foto hapus",
+      "jangan hapus data saya",
+      "hapus data saya dong semuanya",
       "lapor ada banjir",
       "saya mau lapor",
       "bantuan apa",

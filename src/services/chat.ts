@@ -2,6 +2,7 @@ import { type ChatSession, chatSession, forgetChat, saveChatSession } from "../a
 import { addNewsChoice, newsChoice } from "../adapters/d1/chatNews";
 import { DRAFT_LIFE_MS, type DraftRecord, loadDraft, openDraftOf, touchDraft } from "../adapters/d1/drafts";
 import { followUpState } from "../adapters/d1/followUp";
+import { draftPhotos } from "../adapters/d1/photos";
 import { isAllowed } from "../adapters/d1/pilot";
 import { makeEmergency, type ProfileRow, profileBySlot, reporterIdOf, updateProfile } from "../adapters/d1/reporters";
 import type { Card } from "../contract/card";
@@ -66,7 +67,7 @@ import {
 } from "./chatWords";
 import { startFollowUp } from "./followUp";
 import { checkLimits } from "./limits";
-import { addPhoto, placePhotos } from "./photos";
+import { addPhoto, placePhotos, removePhoto } from "./photos";
 import { areaVillages, searchPlaces } from "./places";
 import { giveConsent, startDraft } from "./reporters";
 import { sendDraft } from "./send";
@@ -607,11 +608,14 @@ async function identityReply(chat: Chat, step: IdentityStep, text: string): Prom
   const command = readCommand(text)?.kind;
   if (command === "help") return { text: message(t("whatsapp.help"), ask), step };
   if (command === "start" || command === "repeat") return { text: ask, step };
+  if (command === "dataRights") return { text: message(dataRights(chat), ask), step };
   if (command === "emergency")
     return {
       text: message(t("whatsapp.emergency.now"), t("notice.lifeLine"), ask),
       step: { ...step, emergency: true },
     };
+  // A command is nobody's name.
+  if (command !== undefined) return { text: message(t("whatsapp.unclear"), ask), step };
   const move = identityMove(step, text, identityChoices(step), chat.nowMs);
   switch (move.kind) {
     case "ask":
@@ -743,6 +747,22 @@ function changeIdentity(chat: Chat): Reply {
   return { text: identityText(chat, step), step };
 }
 
+const dataRights = (chat: Chat): string =>
+  t("whatsapp.dataRights", { link: `${chat.bindings.settings.appOrigin}/lapor/privacy` });
+
+// The last photo of the photo step, taken back.
+async function dropPhoto(chat: Chat, draft: DraftRecord): Promise<Reply> {
+  const last = (await draftPhotos(chat.bindings.db, draft.id)).at(-1);
+  if (draft.state !== "photos" || last === undefined)
+    return { text: message(t("whatsapp.photos.noneToRemove"), await againOf(chat, draft)) };
+  const key = crypto.randomUUID();
+  const { bindings, principal } = chat;
+  const turnOf = { revision: draft.revision, turnKey: key };
+  const answer = await removePhoto(bindings, principal, null, draft.id, last.id, turnOf, key);
+  const reply = await worded(chat, draft, answer, "answer", null);
+  return { text: message(answer.kind === "ok" && t("whatsapp.photos.removed"), reply.text) };
+}
+
 async function commandInDraft(chat: Chat, draft: DraftRecord, command: Command): Promise<Reply> {
   const again = () => againOf(chat, draft);
   switch (command.kind) {
@@ -759,6 +779,10 @@ async function commandInDraft(chat: Chat, draft: DraftRecord, command: Command):
       return { text: message(await setNews(chat, command.kind === "newsStart"), await again()) };
     case "identity":
       return changeIdentity(chat);
+    case "dropPhoto":
+      return dropPhoto(chat, draft);
+    case "dataRights":
+      return { text: message(dataRights(chat), await again()) };
     case "addNews":
       return draft.followUpOf !== null && (command.ticketNumber ?? draft.followUpOf) === draft.followUpOf
         ? { text: await again() }
@@ -790,6 +814,8 @@ async function commandIdle(chat: Chat, command: Command): Promise<Reply> {
       return { text: await setNews(chat, command.kind === "newsStart") };
     case "identity":
       return changeIdentity(chat);
+    case "dataRights":
+      return { text: dataRights(chat) };
     case "addNews":
       return addNews(chat, command.ticketNumber, "");
     default:
@@ -829,6 +855,8 @@ async function idle(chat: Chat, text: string): Promise<Reply> {
   return aboutTicket(chat, { kind: "aboutTicket", tickets, mayBeNew: true, text: told });
 }
 
+const WITHOUT_PROFILE: readonly Command["kind"][] = ["start", "emergency", "dataRights"];
+
 async function respond(chat: Chat, text: string): Promise<Reply> {
   const { step } = chat.session;
   const command = readCommand(text);
@@ -837,9 +865,9 @@ async function respond(chat: Chat, text: string): Promise<Reply> {
   if (step && isIdentityStep(step) && !urgent) return identityReply(chat, step, text);
   const { draft, expired } = await currentDraft(chat);
   if (draft !== null) return command ? commandInDraft(chat, draft, command) : answerCard(chat, draft, text);
-  // A number nobody agreed for has no reports: any command of it but an emergency starts there.
+  // A number nobody agreed for has no reports: any other command of it starts there.
   const reply =
-    command && (chat.profile !== null || command.kind === "emergency" || command.kind === "start")
+    command && (chat.profile !== null || WITHOUT_PROFILE.includes(command.kind))
       ? await commandIdle(chat, command)
       : await idle(chat, text);
   return expired ? { ...reply, text: message(t("whatsapp.expired"), reply.text) } : reply;
