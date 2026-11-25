@@ -54,6 +54,16 @@ export const waitingNewsSchema = z.object({
 
 export type WaitingNews = z.infer<typeof waitingNewsSchema>;
 
+// The owner's command about a number: allow it, as a BPBD's when `peran` says so, or take it away.
+export const pilotChangeSchema = z.object({
+  wa,
+  peran: z.literal("bpbd").nullable().optional(),
+  kab: z.string().max(120).nullable().optional(),
+  cabut: z.boolean().optional(),
+});
+
+export const pilotListSchema = z.object({ wa: z.array(z.string()) });
+
 export const okSchema = z.object({ ok: z.literal(true) });
 
 export const languagesSchema = z.object({ bahasa: z.array(z.object({ kode: z.string(), nama: z.string() })) });

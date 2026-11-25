@@ -2,6 +2,7 @@ import { type ChatSession, chatSession, forgetChat, saveChatSession } from "../a
 import { addNewsChoice, newsChoice } from "../adapters/d1/chatNews";
 import { DRAFT_LIFE_MS, type DraftRecord, loadDraft, openDraftOf, touchDraft } from "../adapters/d1/drafts";
 import { followUpState } from "../adapters/d1/followUp";
+import { isAllowed } from "../adapters/d1/pilot";
 import { latestConsent, makeEmergency, type ProfileRow, profileBySlot, reporterIdOf } from "../adapters/d1/reporters";
 import type { Card } from "../contract/card";
 import type { DraftBody } from "../contract/draft";
@@ -86,15 +87,18 @@ type Reply = { readonly text: string; readonly step?: ChatStep | null; readonly 
 
 export type ChatAnswer =
   | { readonly kind: "reply"; readonly text: string }
+  // Not a number of the pilot: nothing is read of it, kept or sent.
+  | { readonly kind: "notAllowed" }
   // A photo that is not asked for now, with what is.
   | { readonly kind: "notNow"; readonly text: string }
   | { readonly kind: "limit"; readonly text: string; readonly retryAtMs: number };
 
 const MESSAGE_LIMITS = ["message.minute", "message.hour", "message.day"] as const;
 
-async function openChat(bindings: ServiceBindings, number: string): Promise<Chat> {
+async function openChat(bindings: ServiceBindings, number: string): Promise<Chat | null> {
   const nowMs = bindings.clock.now();
   const numberKey = await hmacKey(bindings.settings.keyHmacSecret, "number", number);
+  if (!(await isAllowed(bindings.db, numberKey))) return null;
   const reporterId = await reporterIdOf(bindings.db, numberKey);
   return {
     bindings,
@@ -831,6 +835,7 @@ export type ChatMessage = { readonly text: string } | { readonly point: Point };
 // One message of a number. The number is in its stored form, as the gateway's route read it.
 export async function chatMessage(bindings: ServiceBindings, number: string, sent: ChatMessage): Promise<ChatAnswer> {
   const chat = await openChat(bindings, number);
+  if (chat === null) return { kind: "notAllowed" };
   const refused = await overLimit(chat);
   if (refused) return refused;
   const reply = "point" in sent ? await located(chat, sent.point) : await respond(chat, sent.text);
@@ -847,6 +852,7 @@ export async function chatPhoto(
   sentAtMs: number,
 ): Promise<ChatAnswer> {
   const chat = await openChat(bindings, number);
+  if (chat === null) return { kind: "notAllowed" };
   const refused = await overLimit(chat);
   if (refused) return refused;
   const { step, shared } = chat.session;

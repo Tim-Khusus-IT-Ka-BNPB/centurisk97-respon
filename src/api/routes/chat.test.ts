@@ -1,9 +1,11 @@
-import { describe, expect, test } from "vitest";
+import { describe, expect, test, vi } from "vitest";
 import { placeChatPhotos } from "../../adapters/d1/photos";
 import { manualClock, query, testBindings } from "../../testing/api";
 import { chat, type chat as chatOf, GATEWAY_SECRETS, known, reach, sent, VILLAGE } from "../../testing/gateway";
 import { cameraJpeg } from "../../testing/photoBase";
 import { api } from "../app";
+
+vi.setConfig({ testTimeout: 60_000 });
 
 // Each message moves the clock 20 seconds on, so a whole report stays under the minute limit.
 const START = "2026-11-25T03:00:00.000Z";

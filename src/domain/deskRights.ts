@@ -19,6 +19,7 @@ export type DeskCapability =
   | "addHandling"
   | "takeReport"
   | "readResponse"
+  | "managePilot"
   | "readIdentity"
   | "revealIdentity"
   | "downloadDocument";
@@ -37,6 +38,7 @@ const HOLDERS: Readonly<Record<DeskCapability, readonly StaffRole[]>> = {
   addHandling: ["deskOfficer", "regionalOfficer"],
   takeReport: ["regionalOfficer"],
   readResponse: ["deskOfficer"],
+  managePilot: ["deskOfficer"],
   readIdentity: ["deskOfficer"],
   revealIdentity: ["regionalOfficer"],
   downloadDocument: ["deskOfficer", "regionalOfficer"],

@@ -26,6 +26,11 @@ type LoggedAction =
   | "document"
   | "documentPack";
 
+// A change of what no report is about.
+export const staffRow = (staff: StaffPrincipal, action: "pilotAllow" | "pilotRemove", at: Date): Query =>
+  sql`insert into staff_action (staff_id, staff_label, staff_kind, action, at)
+    values (${staff.staffId}, ${staff.label}, ${staff.role}, ${action}, ${at})`;
+
 export const actionRow = (staff: StaffPrincipal, ticketNumber: string, action: LoggedAction, at: Date): Query =>
   sql`insert into staff_action (ticket_number, staff_id, staff_label, staff_kind, action, at)
     values (${ticketNumber}, ${staff.staffId}, ${staff.label}, ${staff.role}, ${action}, ${at})`;

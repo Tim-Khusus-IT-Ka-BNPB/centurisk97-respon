@@ -1,6 +1,6 @@
 import { signedText } from "../domain/gateway";
-import { sha256Hex, signText } from "../platform/keys";
-import { freshNumber } from "./api";
+import { hmacKey, sha256Hex, signText } from "../platform/keys";
+import { freshNumber, query } from "./api";
 
 const TEST_GATEWAY = { id: "uji-1", secret: "uji-gateway-secret-at-least-32-bytes-long" } as const;
 export const GATEWAY_SECRETS = `${TEST_GATEWAY.id}=${TEST_GATEWAY.secret}`;
@@ -53,11 +53,26 @@ export function gateway(fetchApi: Fetch, defaults: GatewayOptions = {}) {
 
 const base64 = (bytes: Uint8Array) => btoa(Array.from(bytes, (byte) => String.fromCharCode(byte)).join(""));
 
+export const numberKey = (number: string) => hmacKey(import.meta.env.KEY_HMAC_SECRET as string, "number", number);
+
+// Puts a number on the pilot list.
+export async function allow(number: string, officerRegency: string | null = null): Promise<void> {
+  await query`insert into pilot_number (number_key, number, officer_regency, added_by, added_at)
+    values (${await numberKey(number)}, ${number}, ${officerRegency}, 'uji', '2026-11-25T00:00:00.000Z')
+    on conflict (number_key) do nothing`;
+}
+
 // One reporter's chat: each call is a message they send, answered with what they receive.
 export function chat(fetchApi: Fetch, options: GatewayOptions = {}, number = freshNumber().stored) {
-  const { call } = gateway(fetchApi, options);
+  const machine = gateway(fetchApi, options);
   // The gateway writes a number as 62 and the rest.
   const wa = number.slice(1);
+  let allowed: Promise<void> | null = null;
+  const call = async (method: string, path: string, body: unknown) => {
+    allowed ??= allow(number);
+    await allowed;
+    return machine.call(method, path, body);
+  };
   return {
     number,
     send: (teks: string) => call("POST", "/pesan", { wa, saluran: "wa", teks }),

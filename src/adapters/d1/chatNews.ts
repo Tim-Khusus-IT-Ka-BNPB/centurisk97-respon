@@ -18,7 +18,7 @@ export async function addNewsChoice(db: Database, numberKey: string, choice: New
   await run(db, sql`insert into news_choice (number_key, choice, at) values (${numberKey}, ${choice}, ${at})`);
 }
 
-// What waits for a gateway: notices of a report of a proved number, written after that number said
+// What waits for a gateway: notices of a report of a proved number still allowed, written after it said
 // yes, or a document it asked for; not stopped, not sent yet, and not older than `since`.
 const WAITING = (since: Date): Query => sql`
   from notice n
@@ -27,6 +27,7 @@ const WAITING = (since: Date): Query => sql`
   left join report_news w on w.report_id = r.id
   left join news_choice c on c.id = (select max(m.id) from news_choice m where m.number_key = r.number_key)
   where n.at >= ${since} and r.owner_slot = ${SESSION_SLOT} and r.number_unverified = 0 and coalesce(w.stopped, 0) = 0
+    and exists (select 1 from pilot_number a where a.number_key = r.number_key)
     and not exists (select 1 from notice_delivery d where d.notice_id = n.id)
     and ((n.kind = 'document' and n.at >= coalesce(c.at, '')) or (c.choice = 'yes' and n.at >= c.at))`;
 

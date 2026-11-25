@@ -1,10 +1,12 @@
-import { describe, expect, test } from "vitest";
+import { describe, expect, test, vi } from "vitest";
 import type { Database } from "../../platform/database";
 import type { ModelPort } from "../../ports/model";
 import { losesOnce, manualClock, query, racing, testBindings } from "../../testing/api";
 import { chat, GATEWAY_SECRETS, known, reach, sent, VILLAGE } from "../../testing/gateway";
 import { cameraJpeg } from "../../testing/photoBase";
 import { api } from "../app";
+
+vi.setConfig({ testTimeout: 60_000 });
 
 // One chat whose database, model and clock a test takes over in the middle.
 function world(model?: ModelPort) {

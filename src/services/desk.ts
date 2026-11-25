@@ -93,6 +93,7 @@ function queueItem(staff: StaffPrincipal, found: QueueRow): DeskQueue["items"][n
     reporter: { name: mayUse(staff.role, "readIdentity") ? found.reporterName : null, role: found.reporterRole },
     numberUnverified: found.numberUnverified,
     door: found.door,
+    officerConfirmed: found.officerConfirmed,
     emergency: found.emergency,
     taker: found.taker,
     news: found.news,
@@ -217,6 +218,7 @@ export async function deskSummary(
       byHas: counts.byHas,
       emergencies: await emergencyList(bindings, staff),
       mayReadResponse: mayUse(staff.role, "readResponse"),
+      mayManagePilot: mayUse(staff.role, "managePilot"),
     },
   };
 }

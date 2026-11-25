@@ -286,6 +286,14 @@ export const COLUMN_CLASSES: Readonly<Record<string, TableClasses>> = {
       version: I,
     },
   },
+  pilot_number: {
+    retention: "until taken off the list",
+    columns: { number_key: I, number: P, officer_regency: P, added_by: I, added_at: I },
+  },
+  pilot_change: {
+    retention: "kept; append-only, with the number's key alone",
+    columns: { id: I, number_key: I, change: I, by_kind: I, by_id: I, at: I },
+  },
   gateway_message: {
     retention: "2 days after received_at, swept",
     columns: { gateway_id: I, message_id: I, received_at: I },

@@ -20,6 +20,8 @@
   "fieldError.text.tooLong": "{label} terlalu panjang: {length} huruf, paling banyak {max}. Teks Anda masih ada. Pendekkan lalu simpan lagi.",
   "fieldError.message.tooLong": "Pesan terlalu panjang: {length} dari paling banyak 2.000 huruf. Pesan belum terkirim dan masih ada di kotak. Pendekkan, atau bagi menjadi dua pesan.",
   "fieldError.location.invalid": "Lokasi yang terbaca tidak sah. Tekan Pakai lokasi saat ini lagi, atau cari nama tempat.",
+  "fieldError.pilot.exists": "Nomor ini sudah ada di daftar. Cabut dulu bila ingin mengubah BPBD-nya.",
+  "fieldError.pilot.full": "Daftar sudah penuh, paling banyak {max} nomor. Cabut nomor yang tidak dipakai, lalu izinkan lagi.",
   "fieldError.photo.notCamera": "Foto harus diambil langsung dengan kamera ponsel. Tangkapan layar dan gambar hasil sunting tidak diterima. Tekan Ambil foto lalu potret langsung.",
   "fieldError.photo.notFresh": "Foto ini diambil lebih dari 5 menit lalu. Ambil foto baru langsung dengan kamera.",
   "fieldError.photo.notRecent": "Foto ini bukan rekaman baru. Ambil foto langsung dengan kamera.",

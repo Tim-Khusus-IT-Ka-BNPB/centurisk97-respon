@@ -1,11 +1,17 @@
 import { describe, expect, test } from "vitest";
 import { failingDatabase, freshNumber, manualClock, query, testBindings } from "../../testing/api";
-import { GATEWAY_SECRETS, gateway } from "../../testing/gateway";
+import { allow, GATEWAY_SECRETS, gateway } from "../../testing/gateway";
 import { api } from "../app";
 
 const { bindings } = testBindings({ GATEWAY_SECRETS: `${GATEWAY_SECRETS} uji-2=${"x".repeat(32)}` });
 const one = gateway((request) => api.app.fetch(request, bindings));
 const body = () => ({ wa: freshNumber().stored.slice(1), saluran: "wa", teks: "halo" });
+// The same from a number of the pilot.
+const allowedBody = async () => {
+  const { stored } = freshNumber();
+  await allow(stored);
+  return { wa: stored.slice(1), saluran: "wa", teks: "halo" };
+};
 
 const codeOf = (json: Record<string, unknown>) => (json.error as { code: string }).code;
 const ids = async (messageId: string) =>
@@ -13,7 +19,7 @@ const ids = async (messageId: string) =>
 
 describe("a gateway's signed calls (AC-05)", () => {
   test("a signed message is answered, once", async () => {
-    const sent = body();
+    const sent = await allowedBody();
     const messageId = crypto.randomUUID();
     const first = await one.call("POST", "/pesan", sent, { messageId });
     expect(first.status).toBe(200);
@@ -69,7 +75,7 @@ describe("a gateway's signed calls (AC-05)", () => {
 
   test("a write that fails on our side gives its message id back", async () => {
     const messageId = crypto.randomUUID();
-    const sent = body();
+    const sent = await allowedBody();
     // The id is taken, then everything after it fails.
     const failing = {
       ...bindings,
@@ -137,6 +143,7 @@ describe("what a gateway sends", () => {
 
   test("a message over 16 KB is refused, a photo is not", async () => {
     expect((await one.call("POST", "/pesan", { ...body(), teks: "x".repeat(17_000) })).status).toBe(413);
-    expect((await one.call("POST", "/foto", { wa: body().wa, data: "A".repeat(40_000) })).status).toBe(409);
+    const { wa } = await allowedBody();
+    expect((await one.call("POST", "/foto", { wa, data: "A".repeat(40_000) })).status).toBe(409);
   });
 });

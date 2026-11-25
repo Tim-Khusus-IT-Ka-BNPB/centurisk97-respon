@@ -3,6 +3,7 @@
   "whatsapp.language": "Bahasa Indonesia",
   "whatsapp.refused.number": "Nomor WhatsApp tidak sah.",
   "whatsapp.refused.news": "Kabar tidak ada atau sudah ditandai.",
+  "whatsapp.refused.pilot": "Nomor ini belum diizinkan memakai layanan lapor (masa uji).",
   "whatsapp.refused.photo": "Foto tidak terbaca.",
   "whatsapp.option": "{n}. {label}",
   "whatsapp.optionNote": "{n}. {label} ({note})",
