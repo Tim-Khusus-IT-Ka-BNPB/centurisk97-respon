@@ -24,6 +24,7 @@ import {
   EmergencyChip,
   ImpactStrip,
   NewsChip,
+  roleText,
   StatusChip,
   spacedNumber,
   Taker,
@@ -224,7 +225,7 @@ function Reporter({ report, identity }: { readonly report: DeskReport; readonly 
     return (
       <Form method="post" replace preventScrollReset className="flex flex-col gap-3">
         <input type="hidden" name="action" value="identity" />
-        <p className="text-muted">{t(`desk.role.${report.reporter.role}`)}</p>
+        <p className="text-muted">{roleText(t, report)}</p>
         <p className="text-meta text-muted">{t("desk.identity.hint")}</p>
         <Button variant="secondary" className="self-start" busyLabel={asking ? t("desk.identity.busy") : null}>
           {t("desk.identity.show")}
@@ -235,7 +236,7 @@ function Reporter({ report, identity }: { readonly report: DeskReport; readonly 
     <>
       <div className="flex flex-col gap-1">
         <p className="font-semibold">{identity.name}</p>
-        <p className="text-muted">{t(`desk.role.${report.reporter.role}`)}</p>
+        <p className="text-muted">{roleText(t, report)}</p>
         {identity.officerRegency !== null ? (
           <p>
             {t("desk.reporter.officer", {

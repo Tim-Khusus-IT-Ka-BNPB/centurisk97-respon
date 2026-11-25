@@ -3,6 +3,7 @@ import type {
   DeskGallery,
   DeskIdentity,
   DeskMap,
+  DeskPilot,
   DeskQueue,
   DeskReport,
   DeskResponse,
@@ -145,6 +146,22 @@ export async function loadDeskResponse(month: string | null, api: ApiCall): Prom
   return { kind: "response", texts: texts(), response: (await response.json()) as DeskResponse, summary };
 }
 
+export type DeskPilotLoad =
+  | DeskRefusal
+  | {
+      readonly kind: "pilot";
+      readonly texts: Texts;
+      readonly pilot: DeskPilot;
+      readonly summary: DeskSummary | null;
+    };
+
+// GET /lapor/meja/pilot: the numbers the WhatsApp pilot serves.
+export async function loadDeskPilot(api: ApiCall): Promise<DeskPilotLoad> {
+  const [response, summary] = await Promise.all([api("GET", "/desk/pilot"), summaryOf(api, "")]);
+  if (!response.ok) return refusalOf(response);
+  return { kind: "pilot", texts: texts(), pilot: (await response.json()) as DeskPilot, summary };
+}
+
 export type DeskActed =
   | { readonly kind: "redirect"; readonly location: string; readonly headers: Headers }
   | { readonly kind: "render"; readonly status: number; readonly envelope: ErrorEnvelope };
@@ -171,13 +188,17 @@ export async function actOnDesk(form: FormData, api: ApiCall): Promise<DeskActed
   return { kind: "render", status: response.status, envelope: (await response.json()) as ErrorEnvelope };
 }
 
-type DeskReportActed =
+// A form posted: kept and led on, or drawn again with what was typed.
+type DeskPosted =
   | Extract<DeskActed, { kind: "redirect" }>
+  | (Extract<DeskActed, { kind: "render" }> & { readonly typed: DeskTyped });
+
+type DeskReportActed =
+  | DeskPosted
   // Nothing to show but the page as it is now.
   | { readonly kind: "done" }
   // Who reported, drawn on the page that asked and kept nowhere.
-  | { readonly kind: "identity"; readonly identity: DeskIdentity }
-  | (Extract<DeskActed, { kind: "render" }> & { readonly typed: DeskTyped });
+  | { readonly kind: "identity"; readonly identity: DeskIdentity };
 
 // The photo and the officer's reading, as the API takes them.
 function proofForm(form: FormData): FormData {
@@ -243,6 +264,20 @@ export async function actOnDeskReport(ticketNumber: string, form: FormData, api:
   if (path === "identity") return { kind: "identity", identity: (await response.json()) as DeskIdentity };
   if (form.get("action") === "opened") return { kind: "done" };
   return redirectTo(`/lapor/meja/${ticket}${path === "view" ? "" : `?saved=${path}`}`, response);
+}
+
+// POST /lapor/meja/pilot: a number allowed, or taken away after its confirm.
+export async function actOnDeskPilot(form: FormData, api: ApiCall): Promise<DeskPosted> {
+  const remove = formText(form, "action") === "remove";
+  const response = remove
+    ? await api("DELETE", `/desk/pilot/${encodeURIComponent(formText(form, "key"))}`, { confirm: true })
+    : await api("POST", "/desk/pilot", {
+        number: formText(form, "number"),
+        officerRegency: formText(form, "officerRegency"),
+      });
+  if (response.ok) return redirectTo(`/lapor/meja/pilot?saved=${remove ? "removed" : "allowed"}`, response);
+  const envelope = (await response.json()) as ErrorEnvelope;
+  return { kind: "render", status: response.status, envelope, typed: typedIn(form) };
 }
 
 // POST /lapor/meja/<ticket>/documents: a version as a file, or an emergency's pack.

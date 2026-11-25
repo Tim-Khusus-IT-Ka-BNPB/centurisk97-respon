@@ -14,6 +14,7 @@ import { deskLink, STATUSES, StatusDot } from "./parts";
 
 const NONE: DeskSummary["emergencies"] = [];
 const RESPONSE = "/lapor/meja/respons";
+const PILOT = "/lapor/meja/pilot";
 
 const VIEW_ICON: Readonly<Record<DeskView, IconName>> = { list: "list", map: "map", gallery: "images" };
 
@@ -141,6 +142,14 @@ function DeskNav({ place }: { readonly place: DeskPlace }) {
             <Link to={RESPONSE} aria-current={pathname === RESPONSE ? "page" : undefined} className={item}>
               <Icon name="clock" className={navIcon} />
               {t("desk.response.title")}
+            </Link>
+          </li>
+        ) : null}
+        {summary?.mayManagePilot ? (
+          <li>
+            <Link to={PILOT} aria-current={pathname === PILOT ? "page" : undefined} className={item}>
+              <Icon name="messageSquare" className={navIcon} />
+              {t("desk.pilot.title")}
             </Link>
           </li>
         ) : null}

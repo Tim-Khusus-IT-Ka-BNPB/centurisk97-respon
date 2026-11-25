@@ -24,6 +24,7 @@ import {
   type Item,
   isFiltered,
   NewsChip,
+  roleText,
   StatusChip,
   Taker,
   UnverifiedMark,
@@ -135,7 +136,7 @@ function QueueTable({ items }: { readonly items: readonly Item[] }) {
               <td className={cell}>
                 <span className="flex flex-col items-start gap-1">
                   {item.reporter.name === null ? null : <span>{item.reporter.name}</span>}
-                  <span className="text-meta text-muted">{t(`desk.role.${item.reporter.role}`)}</span>
+                  <span className="text-meta text-muted">{roleText(t, item)}</span>
                   {item.numberUnverified ? <UnverifiedMark /> : null}
                   {item.door === "chat" ? <ChatMark /> : null}
                   {item.taker === null ? null : <Taker taker={item.taker} />}
@@ -176,7 +177,7 @@ function QueueCards({ items }: { readonly items: readonly Item[] }) {
             {item.taker === null ? null : <Taker taker={item.taker} />}
             <span className="flex flex-wrap items-center justify-between gap-2 mt-auto border-t border-line pt-2.5 text-meta">
               <span className="flex flex-wrap items-center gap-2">
-                <span>{item.reporter.name ?? t(`desk.role.${item.reporter.role}`)}</span>
+                <span>{item.reporter.name ?? roleText(t, item)}</span>
                 {item.numberUnverified ? <UnverifiedMark /> : null}
                 {item.door === "chat" ? <ChatMark /> : null}
               </span>

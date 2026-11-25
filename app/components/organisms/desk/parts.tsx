@@ -102,6 +102,12 @@ export function UnverifiedMark() {
   );
 }
 
+// Who reported, by role; a claimed officer says whether the pilot list confirms them.
+export const roleText = (
+  t: Text,
+  item: { readonly reporter: Pick<Item["reporter"], "role">; readonly officerConfirmed: boolean },
+): string => t(t.variant(`desk.role.${item.reporter.role}`, item.officerConfirmed ? "confirmed" : null));
+
 // Raised as an emergency; the words carry it, the colour repeats it.
 export function EmergencyChip() {
   const t = useText();
