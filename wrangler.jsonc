@@ -24,7 +24,7 @@
   ],
   "env": {
     // Shared nothing with upstream but the Cloudflare account and the centurisk97.id zone: its own
-    // Worker, database, bucket and address. Synthetic data only. KEY_HMAC_SECRET is a Worker secret.
+    // Worker, database, bucket and address. Synthetic data only. KEY_HMAC_SECRET and MODEL_API_KEY are Worker secrets.
     "staging": {
       "name": "lapor-bencana-staging",
       "routes": [{ "pattern": "lapor-bencana.centurisk97.id", "custom_domain": true }],
@@ -42,7 +42,10 @@
         "APP_ENV": "staging",
         "APP_ORIGIN": "https://lapor-bencana.centurisk97.id",
         "IDENTITY_ADAPTER": "seeded",
-        "MODEL_MODE": "off",
+        // The key is the Worker secret MODEL_API_KEY, never written in a file.
+        "MODEL_MODE": "live",
+        "MODEL_BASE_URL": "https://api.anthropic.com",
+        "MODEL_NAME": "claude-sonnet-5-5",
         "LOG_LEVEL": "info"
       }
     }
