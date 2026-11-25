@@ -58,6 +58,11 @@ function ReportRow({ report }: { readonly report: OwnReport }) {
             <span className="rounded-chip bg-selected px-2 py-0.5 text-meta font-semibold text-primary">
               {t(`stage.long.${report.status}`)}
             </span>
+            {report.unread === 0 ? null : (
+              <span className="rounded-chip bg-primary px-2 py-0.5 text-meta font-bold text-on-primary">
+                {t("home.reports.unread", { count: report.unread })}
+              </span>
+            )}
           </span>
           <span className="text-meta text-muted">
             {t("home.reports.row", {

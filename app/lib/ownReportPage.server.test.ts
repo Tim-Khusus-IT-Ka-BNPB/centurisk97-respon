@@ -38,17 +38,35 @@ describe("the reporter's own report page", () => {
   test("news opens its draft; a refusal is drawn on the page", async () => {
     const draftId = "0a1b2c3d-4e5f-4a6b-8c7d-8e9f0a1b2c3d";
     const started = fakeApi(() => Response.json({ draftId }, { status: 201 }));
-    expect(await actOnOwnReport("LA-1", started.api)).toEqual({
+    const followUp = form({ action: "followUp" });
+    expect(await actOnOwnReport("LA-1", followUp, started.api)).toEqual({
       kind: "redirect",
       location: `/lapor/report/${draftId}`,
     });
     expect(started.calls).toEqual([{ method: "POST", path: "/reports/LA-1/follow-ups", body: undefined }]);
     const closed = envelope("followUp.closed");
-    expect(await actOnOwnReport("LA-1", fakeApi(() => Response.json(closed, { status: 409 })).api)).toEqual({
+    expect(await actOnOwnReport("LA-1", followUp, fakeApi(() => Response.json(closed, { status: 409 })).api)).toEqual({
       kind: "render",
       status: 409,
       envelope: closed,
     });
+  });
+
+  test("news is read, stopped or wanted again; reading leads nowhere, the others say so on the page", async () => {
+    const posted = async (action: string) => {
+      const { api, calls } = fakeApi(() => new Response(null, { status: 204 }));
+      return [await actOnOwnReport("LA-1", form({ action }), api), calls];
+    };
+    const call = (act: string) => [{ method: "POST", path: "/reports/LA-1/news", body: { act } }];
+    expect(await posted("newsRead")).toEqual([{ kind: "done" }, call("read")]);
+    expect(await posted("newsStop")).toEqual([
+      { kind: "redirect", location: "/lapor/reports/LA-1?saved=newsStop" },
+      call("stop"),
+    ]);
+    expect(await posted("newsStart")).toEqual([
+      { kind: "redirect", location: "/lapor/reports/LA-1?saved=newsStart" },
+      call("start"),
+    ]);
   });
 
   test("a file is passed on as it came; a refused one leads back to the page with the reason", async () => {

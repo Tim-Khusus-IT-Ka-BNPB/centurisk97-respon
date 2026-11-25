@@ -1,0 +1,17 @@
+{
+  "news.title": "Kabar petugas",
+  "news.unread": "{count} baru",
+  "news.new": "Baru",
+  "news.empty": "Belum ada kabar. Balasan petugas dan perubahan status tampil di sini.",
+  "news.reply": "Balasan petugas",
+  "news.actions": "Tindakan petugas",
+  "news.correction": "Koreksi petugas di lapangan",
+  "news.read": "Tandai sudah dibaca",
+  "news.lead": "Kabar baru ditandai di daftar Laporan saya.",
+  "news.stop": "Hentikan kabar",
+  "news.stopped": "Kabar dihentikan, jadi tidak ada yang ditandai baru. Status dan balasan tetap bisa dibaca di sini.",
+  "news.start": "Nyalakan kabar",
+  "news.busy": "Menyimpan...",
+  "news.saved.stop": "Kabar untuk laporan ini dihentikan.",
+  "news.saved.start": "Kabar untuk laporan ini dinyalakan lagi."
+}

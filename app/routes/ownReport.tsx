@@ -1,4 +1,4 @@
-import { data, redirect } from "react-router";
+import { data, redirect, type ShouldRevalidateFunctionArgs } from "react-router";
 import { RefusedScreen } from "../components/organisms/DraftScreen";
 import { OwnReportScreen } from "../components/organisms/OwnReportScreen";
 import { Page } from "../components/templates/Page";
@@ -21,11 +21,15 @@ export async function loader({ params, context }: Route.LoaderArgs) {
   return data(load, { status: load.kind === "refused" ? load.status : 200 });
 }
 
-export async function action({ params, context }: Route.ActionArgs) {
-  const acted = await actOnOwnReport(params.ticketNumber, context.api);
+export async function action({ params, request, context }: Route.ActionArgs) {
+  const acted = await actOnOwnReport(params.ticketNumber, await request.formData(), context.api);
   if (acted.kind === "redirect") return redirect(acted.location, 303);
-  return data({ envelope: acted.envelope }, { status: acted.status });
+  return acted.kind === "done" ? null : data({ envelope: acted.envelope }, { status: acted.status });
 }
+
+// News marked as read keeps its marks on the page it was read on.
+export const shouldRevalidate = ({ formData, defaultShouldRevalidate }: ShouldRevalidateFunctionArgs) =>
+  formData?.get("action") === "newsRead" ? false : defaultShouldRevalidate;
 
 export default function OwnReportRoute({ loaderData, actionData }: Route.ComponentProps) {
   return (

@@ -135,8 +135,27 @@ describe("route modules", () => {
   test("news is started by a post that leads to its draft, or drawn with its refusal", async () => {
     const params = { ticketNumber: "LA-231126-01" };
     const path = "POST /reports/LA-231126-01/follow-ups";
+    const request = (action: string) => post("http://localhost/lapor/reports/LA-231126-01", [["action", action]]);
     const act = (answer: () => Response) =>
-      ownReport.action({ params, context: { api: api({ [path]: answer }) } } as Args);
+      ownReport.action({ params, request: request("followUp"), context: { api: api({ [path]: answer }) } } as Args);
+    const read = () => new Response(null, { status: 204 });
+    expect(
+      await ownReport.action({
+        params,
+        request: request("newsRead"),
+        context: { api: api({ "POST /reports/LA-231126-01/news": read }) },
+      } as Args),
+    ).toBeNull();
+    // Read news keeps its marks for this visit; any other act reads the page again.
+    const revalidates = (action: string | null) => {
+      const formData = new FormData();
+      if (action !== null) formData.set("action", action);
+      return ownReport.shouldRevalidate({
+        formData: action === null ? undefined : formData,
+        defaultShouldRevalidate: true,
+      } as Args);
+    };
+    expect([revalidates("newsRead"), revalidates("newsStop"), revalidates(null)]).toEqual([false, true, true]);
     const started = (await act(json({ draftId: "d-9" }, 201))) as Response;
     expect([started.status, started.headers.get("location")]).toEqual([303, "/lapor/report/d-9"]);
     const closed = apiEnvelope("followUp.closed", { params: { reason: "followUp.closed.tooLate" } });

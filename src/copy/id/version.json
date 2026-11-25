@@ -3,6 +3,7 @@
   "version.own.lead": "Unduh laporan ini sebagai berkas untuk dikirim atau dicetak. Nama dan nomor Anda tidak dimuat.",
   "version.desk.lead": "Nama dan nomor pelapor tidak dimuat. Setiap unduhan tercatat atas akun Anda.",
   "version.name": "Versi {version}",
+  "version.at": "{date}, {time} {zone}",
   "version.newest": "Terbaru",
   "version.maker.own.first": "Laporan awal Anda",
   "version.maker.own.reporter": "Kabar tambahan Anda",

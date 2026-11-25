@@ -132,7 +132,7 @@ describe("moving a ticket", () => {
     fireEvent.click(screen.getByRole("radio", { name: "Sedang ditelaah" }));
     fireEvent.click(screen.getByRole("button", { name: "Simpan status" }));
     expect(await screen.findByRole("button", { name: "Menyimpan..." })).toBeTruthy();
-    expect(screen.getByRole("button", { name: "Simpan balasan" })).toBeTruthy();
+    expect(screen.getByRole("button", { name: "Kirim balasan" })).toBeTruthy();
   });
 });
 
@@ -315,7 +315,15 @@ describe("a check on site", () => {
 });
 
 describe("writing back", () => {
-  test("replies are listed with their officer and time, and the form says they are not delivered yet", async () => {
+  test("a reporter who stopped the news is named as such before a reply is written", async () => {
+    const view = await draw({ report: REPORT });
+    expect(screen.queryByText(/Pelapor menghentikan kabar/)).toBeNull();
+    view?.unmount?.();
+    await draw({ report: { ...REPORT, newsStopped: true } });
+    expect(screen.getByText(/Pelapor menghentikan kabar/)).toBeTruthy();
+  });
+
+  test("replies are listed with their officer and time, and the form says where the reporter reads them", async () => {
     await draw({
       report: {
         ...REPORT,
@@ -326,7 +334,7 @@ describe("writing back", () => {
       },
     });
     expect(fold("Balas pelapor (2)").open).toBe(false);
-    expect(screen.getByText(/Pelapor menerimanya mulai fitur kabar/)).toBeTruthy();
+    expect(screen.getByText(/Pelapor membacanya di halaman laporannya/)).toBeTruthy();
     const rows = within(screen.getByRole("list")).getAllByRole("listitem");
     expect(rows.map((row) => row.textContent)).toEqual([
       "Terima kasihPetugas Uji, 24 November 2026, pukul 09.30 WIB",
@@ -349,7 +357,7 @@ describe("writing back", () => {
   test("a reply on its way says so", async () => {
     await draw({}, { action: never });
     fireEvent.change(screen.getByLabelText("Balasan"), { target: { value: "Kami cek" } });
-    fireEvent.click(screen.getByRole("button", { name: "Simpan balasan" }));
+    fireEvent.click(screen.getByRole("button", { name: "Kirim balasan" }));
     expect(await screen.findByRole("button", { name: "Menyimpan..." })).toBeTruthy();
     expect(screen.getByRole("button", { name: "Simpan status" })).toBeTruthy();
   });

@@ -1,7 +1,7 @@
 import type { ReactNode } from "react";
 import type { ReportVersion } from "../../../src/contract/ownReport";
 import type { Text } from "../../../src/copy/text";
-import { clockTime, longDate } from "../../../src/copy/time";
+import { clockTime, shortDate } from "../../../src/copy/time";
 import { rowParts } from "../../../src/copy/values";
 import { useText } from "../../lib/text";
 import { buttonStyles } from "../atoms/Button";
@@ -109,7 +109,7 @@ export function VersionList({
                   <p className="text-meta text-muted tabular-nums">
                     {t(`version.maker.${voice}.${maker}`)}
                     {", "}
-                    {t("stage.reachedAt", { date: longDate(one.at), time: clockTime(one.at), zone: one.at.zone })}
+                    {t("version.at", { date: shortDate(one.at), time: clockTime(one.at), zone: one.at.zone })}
                   </p>
                 </div>
               </div>

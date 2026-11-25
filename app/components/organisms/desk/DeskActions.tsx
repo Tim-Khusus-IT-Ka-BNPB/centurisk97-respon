@@ -15,6 +15,7 @@ import { Input, Textarea } from "../../atoms/controls";
 import { Icon } from "../../atoms/Icon";
 import type { IconName } from "../../atoms/icons";
 import { Field, FieldError } from "../../molecules/Field";
+import { Notice } from "../../molecules/Notice";
 import { type Status, StatusDot, when } from "./parts";
 
 type FormProps = {
@@ -319,6 +320,11 @@ function ReplyForm({ report, envelope, typed }: FormProps) {
   const busyLabel = useBusy("reply");
   return (
     <>
+      {report.newsStopped ? (
+        <Notice kind="info">
+          <p>{t("desk.reply.stopped")}</p>
+        </Notice>
+      ) : null}
       <Form method="post" preventScrollReset className="flex flex-col gap-4">
         <input type="hidden" name="action" value="reply" />
         <Field

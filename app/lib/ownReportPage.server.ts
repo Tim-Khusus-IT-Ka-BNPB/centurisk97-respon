@@ -30,15 +30,24 @@ export async function loadOwnReport(ticketNumber: string, api: ApiCall): Promise
 
 export type OwnReportActed =
   | { readonly kind: "redirect"; readonly location: string }
+  // Nothing to show but the page as it is now.
+  | { readonly kind: "done" }
   | { readonly kind: "render"; readonly status: number; readonly envelope: ErrorEnvelope };
 
-// POST /lapor/reports/<ticket>: "Tambah kabar" opens its draft.
-export async function actOnOwnReport(ticketNumber: string, api: ApiCall): Promise<OwnReportActed> {
-  const response = await api("POST", `/reports/${encodeURIComponent(ticketNumber)}/follow-ups`);
+const NEWS_ACTS = { newsRead: "read", newsStop: "stop", newsStart: "start" } as const;
+
+// POST /lapor/reports/<ticket>: "Tambah kabar" opens its draft; the news is read, stopped or
+// wanted again. Reading leads nowhere, so the marks stay for this visit.
+export async function actOnOwnReport(ticketNumber: string, form: FormData, api: ApiCall): Promise<OwnReportActed> {
+  const path = `/reports/${encodeURIComponent(ticketNumber)}`;
+  const action = String(form.get("action"));
+  const act = NEWS_ACTS[action as keyof typeof NEWS_ACTS] as "read" | "stop" | "start" | undefined;
+  const response = act ? await api("POST", `${path}/news`, { act }) : await api("POST", `${path}/follow-ups`);
   if (!response.ok)
     return { kind: "render", status: response.status, envelope: (await response.json()) as ErrorEnvelope };
-  const { draftId } = (await response.json()) as { draftId: string };
-  return { kind: "redirect", location: `/lapor/report/${draftId}` };
+  if (act === "read") return { kind: "done" };
+  if (act) return { kind: "redirect", location: `/lapor${path}?saved=${action}` };
+  return { kind: "redirect", location: `/lapor/report/${((await response.json()) as { draftId: string }).draftId}` };
 }
 
 const FILE_NAME = /^v(\d{1,3})\.(pdf|docx)$/;

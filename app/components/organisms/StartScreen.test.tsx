@@ -291,6 +291,7 @@ describe("the home", () => {
     expect(within(list).getByText("LA-231126-01")).toBeTruthy();
     expect(within(list).getByText("Banjir, dikirim 23 November 2026 pukul 09.00 WIB")).toBeTruthy();
     expect(within(list).getByText("Laporan diterima")).toBeTruthy();
+    expect(within(list).getByText("2 kabar baru")).toBeTruthy();
     // The whole row is the link, so it is named by the ticket and its stage too.
     const row = within(list).getByRole("link", { name: /LA-231126-01.*Laporan diterima.*Buka laporan/ });
     expect(row.getAttribute("href")).toBe("/lapor/reports/LA-231126-01");

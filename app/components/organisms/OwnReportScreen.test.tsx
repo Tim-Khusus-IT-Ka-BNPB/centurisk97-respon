@@ -28,12 +28,10 @@ describe("the reporter's own report", () => {
     draw();
     const documents = within(await screen.findByRole("region", { name: "Dokumen laporan" }));
     const [second, first] = documents.getAllByRole("listitem").filter((item) => item.textContent?.startsWith("Versi"));
-    expect(second?.textContent).toContain(
-      "Versi 2TerbaruKoreksi petugas di lapangan, 23 November 2026, pukul 12.00 WIB",
-    );
+    expect(second?.textContent).toContain("Versi 2TerbaruKoreksi petugas di lapangan, 23 Nov 2026, 12.00 WIB");
     expect(second?.textContent).toContain("Meninggal: belum didata menjadi 2 orang");
     expect(second?.textContent).toContain("Hilang: belum didata menjadi tidak ada");
-    expect(first?.textContent).toContain("Versi 1Laporan awal Anda, 23 November 2026, pukul 09.00 WIB");
+    expect(first?.textContent).toContain("Versi 1Laporan awal Anda, 23 Nov 2026, 09.00 WIB");
     expect(first?.textContent).not.toContain("Terbaru");
     for (const [name, file] of [
       ["Unduh PDF versi 2", "v2.pdf"],
@@ -114,5 +112,30 @@ describe("the reporter's own report", () => {
     view.unmount();
     draw(OWN_REPORT, `${PATH}?saved=cancelled`);
     expect((await screen.findByRole("status")).textContent).toBe("Kabar dibatalkan. Laporan ini tidak berubah.");
+  });
+
+  test("the news stopped or started is told; a limit on it is told with its time", async () => {
+    const view = draw(OWN_REPORT, `${PATH}?saved=newsStop`);
+    expect((await screen.findByRole("status")).textContent).toBe("Kabar untuk laporan ini dihentikan.");
+    view.unmount();
+    const started = draw(OWN_REPORT, `${PATH}?saved=newsStart`);
+    expect((await screen.findByRole("status")).textContent).toBe("Kabar untuk laporan ini dinyalakan lagi.");
+    started.unmount();
+    const other = draw(OWN_REPORT, `${PATH}?saved=toString`);
+    await screen.findByRole("heading", { level: 1 });
+    expect(screen.queryByRole("status")).toBeNull();
+    other.unmount();
+    const refused = (one: ReturnType<typeof envelope>) =>
+      renderPage(<OwnReportScreen report={OWN_REPORT} envelope={one} />, { path: PATH });
+    const limited = refused(
+      envelope("limit.news.hour", {
+        params: { limit: 120 },
+        retryAt: { utc: "2026-11-23T05:00:00.000Z", zone: "WIB" },
+      }),
+    );
+    expect(await screen.findByText(/paling banyak 120 kali per jam/)).toBeTruthy();
+    limited.unmount();
+    refused(envelope("report.notFound"));
+    expect((await screen.findByRole("alert")).textContent).toContain("Laporan tidak ditemukan");
   });
 });

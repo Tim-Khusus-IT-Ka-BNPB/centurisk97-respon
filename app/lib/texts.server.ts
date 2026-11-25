@@ -87,6 +87,8 @@ export const PAGE_TEXTS = {
     ...SHELL,
     "ownReport.",
     "followUp.",
+    "news.",
+    "common.retryTime.",
     "error.",
     "limit.",
     "version.",
