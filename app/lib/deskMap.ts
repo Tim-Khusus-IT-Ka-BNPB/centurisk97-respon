@@ -1,7 +1,7 @@
 import Supercluster from "supercluster";
 import type { DeskMap } from "../../src/contract/desk";
 import { ICONS, type IconName } from "../components/atoms/icons";
-import { HAZARD_ICONS } from "./hazardIcons";
+import { hazardIcon } from "./hazardIcons";
 import type { Text } from "./text";
 
 export type MapPoint = DeskMap["points"][number];
@@ -69,7 +69,7 @@ export function markerElement(point: MapPoint, t: Text): HTMLButtonElement {
       status: `stage.short.${point.status}`,
     }),
   );
-  button.appendChild(iconElement(HAZARD_ICONS[point.hazardType] as IconName));
+  button.appendChild(iconElement(hazardIcon(point.hazardType)));
   return button;
 }
 

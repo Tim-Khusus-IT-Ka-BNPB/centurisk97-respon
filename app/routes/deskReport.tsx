@@ -1,6 +1,7 @@
 import { data, redirect } from "react-router";
-import { DeskRefused, DeskReportView, DeskSignIn } from "../components/organisms/DeskScreens";
-import { Page } from "../components/templates/Page";
+import { DeskReportView } from "../components/organisms/desk/DeskReport";
+import { DeskRefused, DeskSignIn } from "../components/organisms/desk/DeskSignIn";
+import { Page, WithTexts } from "../components/templates/Page";
 import { actOnDeskReport, loadDeskReport } from "../lib/deskPage.server";
 import { pageMeta } from "../lib/meta";
 import type { Route } from "./+types/deskReport";
@@ -23,16 +24,15 @@ export async function action({ params, context }: Route.ActionArgs) {
 
 export default function DeskReportRoute({ loaderData, actionData }: Route.ComponentProps) {
   const load = loaderData;
+  if (load.kind === "report")
+    return (
+      <WithTexts texts={load.texts}>
+        <DeskReportView report={load.report} summary={load.summary} refusal={actionData ?? null} />
+      </WithTexts>
+    );
   return (
     <Page texts={load.texts} publicPage={false} wide>
-      {actionData ? <DeskRefused envelope={actionData} /> : null}
-      {load.kind === "report" ? (
-        <DeskReportView report={load.report} />
-      ) : load.kind === "refused" ? (
-        <DeskRefused envelope={load.envelope} />
-      ) : (
-        <DeskSignIn envelope={null} />
-      )}
+      {load.kind === "refused" ? <DeskRefused envelope={load.envelope} /> : <DeskSignIn envelope={null} />}
     </Page>
   );
 }

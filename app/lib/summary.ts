@@ -100,6 +100,25 @@ export function rowView(t: Text, row: Row, hazardType: string | null): RowView {
   return { kind: "value", text: text.trim() };
 }
 
+// A row as label and value apart, for a layout that sets them in columns: the value in the
+// summary's words with its unit, or null with the empty state to mark instead.
+export function rowParts(
+  t: Text,
+  row: Row,
+  hazardType: string | null,
+): {
+  readonly label: string;
+  readonly value: string | null;
+  readonly state: "value" | "none" | "confirmedUnknown" | "notYetKnown";
+} {
+  const label = t(t.variant(`field.${row.fieldId}.label`, hazardType));
+  if (row.state !== "value" || row.value === null)
+    return { label, value: null, state: row.state === "value" ? "notYetKnown" : row.state };
+  const unitKey = row.value.kind === "count" ? unitKeyOf(row.fieldId) : null;
+  const value = valueLines(t, row.fieldId, row.value).join(", ");
+  return { label, value: unitKey ? `${value} ${t(unitKey)}` : value, state: "value" };
+}
+
 // The hazard type picked, which selects per-hazard label variants.
 export function hazardOf(groups: readonly Group[]): string | null {
   for (const group of groups)

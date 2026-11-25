@@ -13,6 +13,12 @@ const dayMonthYear = new Intl.DateTimeFormat("id-ID", {
   timeZone: "UTC",
 });
 const dayMonth = new Intl.DateTimeFormat("id-ID", { day: "numeric", month: "long", timeZone: "UTC" });
+const shortDayMonthYear = new Intl.DateTimeFormat("id-ID", {
+  day: "numeric",
+  month: "short",
+  year: "numeric",
+  timeZone: "UTC",
+});
 
 const shifted = ({ utc, zone }: Instant) => new Date(Date.parse(utc) + OFFSET_HOURS[zone] * HOUR_MS);
 const two = (value: number) => String(value).padStart(2, "0");
@@ -25,6 +31,12 @@ export function clockTime(instant: Instant): string {
 
 // "23 November 2026" in the instant's zone.
 export const longDate = (instant: Instant) => dayMonthYear.format(shifted(instant));
+
+// "23 Nov 2026" in the instant's zone, for dense lists.
+export const shortDate = (instant: Instant) => shortDayMonthYear.format(shifted(instant));
+
+// "23 Nov 2026" for a local date string such as "2026-11-23".
+export const localShortDate = (localDate: string) => shortDayMonthYear.format(new Date(`${localDate}T00:00:00Z`));
 
 // "23 November 2026" for a local date string such as "2026-11-23".
 export const localDateText = (localDate: string) => dayMonthYear.format(new Date(`${localDate}T00:00:00Z`));

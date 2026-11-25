@@ -20,7 +20,7 @@ const CHIPS: Readonly<Record<"confirmedUnknown" | "notYetKnown", { icon: IconNam
 };
 
 // The three empty states differ by word and by shape, never by colour alone.
-function StateMark({ state }: { readonly state: "none" | "confirmedUnknown" | "notYetKnown" }) {
+export function StateMark({ state }: { readonly state: "none" | "confirmedUnknown" | "notYetKnown" }) {
   const t = useText();
   if (state === "none")
     return (
@@ -38,7 +38,7 @@ function StateMark({ state }: { readonly state: "none" | "confirmedUnknown" | "n
   );
 }
 
-export function SummaryRow({ view }: { readonly view: RowView }) {
+function SummaryRow({ view }: { readonly view: RowView }) {
   if (view.kind === "value") return <li className="break-words">{view.text}</li>;
   return (
     <li className="break-words">

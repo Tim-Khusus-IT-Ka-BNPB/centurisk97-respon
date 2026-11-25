@@ -305,6 +305,22 @@
   outline: 2px solid var(--focus);
   outline-offset: 2px;
 }
+.desk-dot {
+  display: inline-block;
+  width: 0.625rem;
+  height: 0.625rem;
+  border-radius: 9999px;
+  flex-shrink: 0;
+}
+.desk-dot-open {
+  background: var(--warn-icon);
+}
+.desk-dot-working {
+  background: var(--primary);
+}
+.desk-dot-done {
+  border: 2px solid var(--muted);
+}
 .desk-cluster {
   position: relative;
   display: grid;

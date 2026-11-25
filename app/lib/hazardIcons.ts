@@ -13,3 +13,6 @@ export const HAZARD_ICONS: Readonly<Record<string, IconName>> = {
   volcanicEruption: "mountainSnow",
   buildingFire: "flame",
 };
+
+// The desk also lists old reports of the legacy "other" type, which has no icon of its own.
+export const hazardIcon = (id: string): IconName => HAZARD_ICONS[id] ?? "circleHelp";

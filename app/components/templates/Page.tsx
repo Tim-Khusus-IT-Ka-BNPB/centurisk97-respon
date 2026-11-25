@@ -5,6 +5,12 @@ import { PageBanner } from "../organisms/PageBanner";
 import { SiteFooter } from "../organisms/SiteFooter";
 import { SiteHeader } from "../organisms/SiteHeader";
 
+// A page that draws its own frame (the desk) still needs its share of the copy.
+export function WithTexts({ texts, children }: { readonly texts: Texts; readonly children: ReactNode }) {
+  const text = useMemo(() => makeText(texts), [texts]);
+  return <TextContext.Provider value={text}>{children}</TextContext.Provider>;
+}
+
 // Every page: the copy it was handed, the header band, its column, and on public pages the footer.
 export function Page({
   texts,

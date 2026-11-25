@@ -1,5 +1,5 @@
 import type { ApiCall } from "../../src/api/bridge";
-import type { DeskGallery, DeskMap, DeskQueue, DeskReport } from "../../src/contract/desk";
+import type { DeskGallery, DeskMap, DeskQueue, DeskReport, DeskSummary } from "../../src/contract/desk";
 import type { ErrorEnvelope } from "../../src/contract/errors";
 import { DESK_VIEWS, type DeskFilters, type DeskShown, type DeskView } from "./deskTypes";
 import type { Texts } from "./text";
@@ -18,15 +18,28 @@ export type DeskQueueLoad =
       readonly filters: DeskFilters;
       // What the view read: none when the search was refused.
       readonly shown: DeskShown | null;
+      // The counts beside the status queues and the hazard chips; null when they cannot be read.
+      readonly summary: DeskSummary | null;
       // A refused search: the queue is drawn without results and the field says why.
       readonly envelope: ErrorEnvelope | null;
     };
 
 export type DeskReportLoad =
   | DeskRefusal
-  | { readonly kind: "report"; readonly texts: Texts; readonly report: DeskReport };
+  | {
+      readonly kind: "report";
+      readonly texts: Texts;
+      readonly report: DeskReport;
+      readonly summary: DeskSummary | null;
+    };
 
 const texts = () => pickTexts(PAGE_TEXTS.desk);
+
+// The side menu's counts. A refusal here leaves the menu without them, never the page.
+async function summaryOf(api: ApiCall, query: string): Promise<DeskSummary | null> {
+  const response = await api("GET", `/desk/summary${query}`);
+  return response.ok ? ((await response.json()) as DeskSummary) : null;
+}
 
 export function filtersOf(search: URLSearchParams): DeskFilters {
   const page = Number(search.get("page") ?? "1");
@@ -62,7 +75,10 @@ export async function loadDeskQueue(url: URL, api: ApiCall): Promise<DeskQueueLo
   // The map and the gallery are not paged.
   const query = queueQuery(filters.view === "list" ? filters : { ...filters, page: 1 });
   const path = { list: "/desk/reports", map: "/desk/map", gallery: "/desk/photos" }[filters.view];
-  const response = await api("GET", `${path}${query}`);
+  const [response, summary] = await Promise.all([
+    api("GET", `${path}${query}`),
+    summaryOf(api, queueQuery({ ...filters, page: 1 })),
+  ]);
   if (response.ok) {
     const body = await response.json();
     const shown =
@@ -71,17 +87,27 @@ export async function loadDeskQueue(url: URL, api: ApiCall): Promise<DeskQueueLo
         : filters.view === "map"
           ? { view: "map" as const, map: body as DeskMap }
           : { view: "gallery" as const, gallery: body as DeskGallery };
-    return { kind: "queue", texts: texts(), filters, shown, envelope: null };
+    return { kind: "queue", texts: texts(), filters, shown, summary, envelope: null };
   }
   if (response.status === 422)
-    return { kind: "queue", texts: texts(), filters, shown: null, envelope: (await response.json()) as ErrorEnvelope };
+    return {
+      kind: "queue",
+      texts: texts(),
+      filters,
+      shown: null,
+      summary,
+      envelope: (await response.json()) as ErrorEnvelope,
+    };
   return refusalOf(response);
 }
 
 // GET /lapor/meja/<ticket>.
 export async function loadDeskReport(ticketNumber: string, api: ApiCall): Promise<DeskReportLoad> {
-  const response = await api("GET", `/desk/reports/${encodeURIComponent(ticketNumber)}`);
-  if (response.ok) return { kind: "report", texts: texts(), report: (await response.json()) as DeskReport };
+  const [response, summary] = await Promise.all([
+    api("GET", `/desk/reports/${encodeURIComponent(ticketNumber)}`),
+    summaryOf(api, ""),
+  ]);
+  if (response.ok) return { kind: "report", texts: texts(), report: (await response.json()) as DeskReport, summary };
   return refusalOf(response);
 }
 

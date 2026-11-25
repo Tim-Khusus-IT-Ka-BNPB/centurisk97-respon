@@ -70,11 +70,31 @@ describe("the map and the gallery", () => {
     const gallery = await loadDeskQueue(new URL("http://x/lapor/meja?view=gallery"), api);
     expect(gallery).toMatchObject({ kind: "queue", shown: { view: "gallery", gallery: { photos: [] } } });
     await loadDeskQueue(new URL("http://x/lapor/meja?view=nope"), api);
+    // Each view reads its route and the side menu's counts under the same filters.
     expect(calls.map((call) => call.path)).toEqual([
       "/desk/map?status=new&period=all",
+      "/desk/summary?status=new&period=all",
       "/desk/photos?period=all",
+      "/desk/summary?period=all",
       "/desk/reports?period=all",
+      "/desk/summary?period=all",
     ]);
+  });
+});
+
+describe("the side menu's counts", () => {
+  test("come with the page when they can be read, and are left out when they cannot", async () => {
+    const SUMMARY = { account: { label: "Petugas" }, total: 1, byStatus: {}, byHazard: {} };
+    const read = fakeApi((_method, path) =>
+      path.startsWith("/desk/summary") ? Response.json(SUMMARY) : Response.json({ items: [] }),
+    );
+    expect(await loadDeskQueue(new URL("http://x/lapor/meja"), read.api)).toMatchObject({ summary: SUMMARY });
+    const limited = fakeApi((_method, path) =>
+      path.startsWith("/desk/summary")
+        ? Response.json(envelope("limit.desk.read"), { status: 429 })
+        : Response.json({ ticketNumber: "LA-1" }),
+    );
+    expect(await loadDeskReport("LA-1", limited.api)).toMatchObject({ kind: "report", summary: null });
   });
 });
 
@@ -93,6 +113,7 @@ describe("a report on the desk", () => {
     });
     expect(calls.map((call) => `${call.method} ${call.path}`)).toEqual([
       "GET /desk/reports/LA-241126-01",
+      "GET /desk/summary",
       "POST /desk/reports/LA-241126-01/view",
     ]);
     const refused = await actOnDeskReport(

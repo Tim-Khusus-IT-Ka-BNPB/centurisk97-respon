@@ -1,6 +1,7 @@
 import { data, redirect } from "react-router";
-import { DeskQueueView, DeskRefused, DeskSignIn } from "../components/organisms/DeskScreens";
-import { Page } from "../components/templates/Page";
+import { DeskQueueView } from "../components/organisms/desk/DeskQueue";
+import { DeskRefused, DeskSignIn } from "../components/organisms/desk/DeskSignIn";
+import { Page, WithTexts } from "../components/templates/Page";
 import { actOnDesk, loadDeskQueue } from "../lib/deskPage.server";
 import { pageMeta } from "../lib/meta";
 import type { Route } from "./+types/desk";
@@ -23,11 +24,15 @@ export async function action({ request, context }: Route.ActionArgs) {
 
 export default function DeskRoute({ loaderData, actionData }: Route.ComponentProps) {
   const load = loaderData;
+  if (load.kind === "queue")
+    return (
+      <WithTexts texts={load.texts}>
+        <DeskQueueView shown={load.shown} summary={load.summary} filters={load.filters} envelope={load.envelope} />
+      </WithTexts>
+    );
   return (
     <Page texts={load.texts} publicPage={false} wide>
-      {load.kind === "queue" ? (
-        <DeskQueueView shown={load.shown} filters={load.filters} envelope={load.envelope} />
-      ) : load.kind === "refused" ? (
+      {load.kind === "refused" ? (
         <DeskRefused envelope={load.envelope} />
       ) : (
         <DeskSignIn envelope={actionData ?? null} />

@@ -6,6 +6,7 @@ import { SAMPLE_DRAFTS, SAMPLE_FIELD_ERROR, SAMPLE_ME } from "../../src/testing/
 import { LOST } from "../lib/network";
 import { PAGE_TEXTS, pickTexts } from "../lib/texts.server";
 import * as root from "../root";
+import { SUMMARY } from "../testing/desk";
 import { never, renderPage } from "../testing/render";
 import AboutRoute, * as about from "./about";
 import DeskRoute, * as desk from "./desk";
@@ -275,13 +276,13 @@ describe("desk routes", () => {
       unwrap(
         await desk.loader({
           request: new Request("http://x/lapor/meja"),
-          context: { api: api({ "GET /desk/reports": answer }) },
+          context: { api: api({ "GET /desk/reports": answer, "GET /desk/summary": json(SUMMARY) }) },
         } as Args),
       );
     const queue = await load(json(QUEUE));
     expect(queue.init?.status).toBe(200);
     renderPage(routeElement(DeskRoute, { loaderData: queue.data, actionData: undefined }), { path: "/lapor/meja" });
-    expect(await screen.findByText("Masuk sebagai Petugas Uji")).toBeTruthy();
+    expect(await screen.findAllByText("Masuk sebagai Pusdalops BNPB, Petugas Uji")).toHaveLength(2);
     cleanup();
     const signIn = await load(json(signInFirst, 401));
     renderPage(routeElement(DeskRoute, { loaderData: signIn.data, actionData: undefined }), { path: "/lapor/meja" });
@@ -335,12 +336,13 @@ describe("desk routes", () => {
       history: [],
       reporterWords: [],
       photos: [],
+      impact: { dead: null, missing: null, injured: null, displaced: null, houses: null },
     };
     const load = async (answer: () => Response) =>
       unwrap(
         await deskReport.loader({
           params: { ticketNumber: "LA-241126-01" },
-          context: { api: api({ "GET /desk/reports/LA-241126-01": answer }) },
+          context: { api: api({ "GET /desk/reports/LA-241126-01": answer, "GET /desk/summary": json(SUMMARY) }) },
         } as Args),
       );
     const read = await load(json(REPORT));
@@ -357,10 +359,16 @@ describe("desk routes", () => {
     cleanup();
     const refused = await load(json(notAllowed, 404));
     expect(refused.init?.status).toBe(404);
-    renderPage(routeElement(DeskReportRoute, { loaderData: refused.data, actionData: notAllowed }), {
+    renderPage(routeElement(DeskReportRoute, { loaderData: refused.data, actionData: undefined }), {
       path: "/lapor/meja/x",
     });
-    expect(await screen.findAllByRole("heading", { name: "Meja laporan belum bisa dibuka" })).toHaveLength(2);
+    expect(await screen.findByRole("heading", { name: "Meja laporan belum bisa dibuka" })).toBeTruthy();
+    cleanup();
+    // A refused open shows above the report it was for.
+    renderPage(routeElement(DeskReportRoute, { loaderData: read.data, actionData: notAllowed }), {
+      path: "/lapor/meja/LA-241126-01",
+    });
+    expect((await screen.findByRole("alert")).textContent).toContain("belum berhak");
     const viewed = await deskReport.action({
       params: { ticketNumber: "LA-241126-01" },
       context: { api: api({ "POST /desk/reports/LA-241126-01/view": json(REPORT) }) },
