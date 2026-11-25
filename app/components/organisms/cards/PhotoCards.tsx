@@ -33,7 +33,7 @@ function RemovePhoto({ photo, n }: { readonly photo: Photo; readonly n: number }
       <Button
         variant="quietDanger"
         size="min"
-        className="px-2 py-1"
+        className="-ms-2 px-2 py-1"
         aria-label={t("card.photos.removeOf", { n })}
         busyLabel={busy ? t("card.photos.removing") : null}
       >
