@@ -109,7 +109,8 @@ async function signIn(page: Page): Promise<void> {
   await page.getByLabel("Kode masuk").fill(DESK_CODE);
   await expect(page.getByLabel("Kode masuk")).toHaveValue(DESK_CODE);
   await page.getByRole("button", { name: "Masuk", exact: true }).click();
-  await expect(page.getByRole("heading", { level: 1, name: "Daftar laporan" })).toBeVisible();
+  // The desk opens on the map.
+  await expect(page.getByRole("heading", { level: 1, name: "Peta laporan" })).toBeVisible();
 }
 
 // Search one ticket from the filter bar.
@@ -121,7 +122,7 @@ async function searchTicket(page: Page, ticketNumber: string): Promise<void> {
 }
 
 // A view of the desk, from the side menu on a wide screen or the tabs on a phone.
-const viewLink = (page: Page, name: "Peta" | "Galeri") =>
+const viewLink = (page: Page, name: "Daftar" | "Galeri") =>
   page.getByRole("link", { name: new RegExp(`^${name}( laporan| foto)?$`) });
 
 test("a desk officer finds a new report, reads where each value came from, and opening it shows the reporter it was seen", async ({
@@ -134,6 +135,8 @@ test("a desk officer finds a new report, reads where each value came from, and o
   const { ticketNumber, token } = await sendReport(browser, baseURL as string);
 
   await signIn(page);
+  await viewLink(page, "Daftar").click();
+  await expect(page.getByRole("heading", { level: 1, name: "Daftar laporan" })).toBeVisible();
   await searchTicket(page, ticketNumber);
   // A table row on a wide screen, a card on a phone.
   const row = page.locator("tr:visible, li:visible").filter({ hasText: ticketNumber });
@@ -188,7 +191,7 @@ test("a desk officer finds a new report, reads where each value came from, and o
 test("the desk asks for a staff code, and a wrong code is named on its field", async ({ page }) => {
   await page.goto("/lapor/meja", { waitUntil: "networkidle" });
   await expect(page.getByRole("heading", { name: "Masuk meja laporan" })).toBeVisible();
-  await expect(page.getByText("Daftar laporan")).toHaveCount(0);
+  await expect(page.getByText("Peta laporan")).toHaveCount(0);
   await page.getByLabel("Kode masuk").fill("bukan-kode");
   await page.getByRole("button", { name: "Masuk", exact: true }).click();
   await expect(page.getByText("Kode masuk tidak dikenal. Periksa kode dari admin, lalu masuk lagi.")).toBeVisible();
@@ -215,9 +218,9 @@ test("the map and the gallery show the filtered reports, and a page with no scri
   const { ticketNumber } = await sendReport(browser, baseURL as string, true);
   await signIn(page);
   await searchTicket(page, ticketNumber);
-  await viewLink(page, "Peta").click();
-  await expect(page.getByRole("heading", { level: 1, name: "Peta laporan" })).toBeVisible();
-  await expect(page.getByText("1 titik", { exact: true })).toBeVisible();
+  const panel = page.getByRole("region", { name: "Laporan di peta" });
+  await expect(panel.getByText("1 laporan", { exact: true })).toBeVisible();
+  await expect(panel.getByRole("link", { name: /^Ada foto, 1 laporan$/ })).toBeVisible();
   if (script) {
     await expect(page.locator("button.desk-marker")).toHaveCount(1, { timeout: 20_000 });
     await expect(page.getByRole("region", { name: "Peta laporan", exact: true })).toHaveAttribute(
@@ -229,7 +232,7 @@ test("the map and the gallery show the filtered reports, and a page with no scri
     );
   }
   await page.getByText("Daftar titik (1)").click();
-  await expect(page.getByRole("link", { name: ticketNumber })).toBeVisible();
+  await expect(panel.getByRole("link", { name: ticketNumber, exact: true })).toBeVisible();
   await expect(page.getByText(/^5\.\d{6}, 97\.\d{6}, perkiraan tingkat desa$/)).toBeVisible();
   await noSidewaysScroll(page);
   await page.screenshot({ path: info.outputPath("map.png"), fullPage: true });
