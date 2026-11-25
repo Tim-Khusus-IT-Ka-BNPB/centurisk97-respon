@@ -48,7 +48,7 @@ const onDesk = async (ticket: string, act: string, body: object = {}) => {
 async function listening(answers: Parameters<typeof sent>[1] = []) {
   const one = open();
   const ticket = await sent(one, answers);
-  await one.send("1");
+  await one.send("ya");
   await drain(one);
   return { one, ticket };
 }
@@ -59,15 +59,18 @@ describe("asked once, and no until said (AC-01)", () => {
     await known(one);
     await reach(one, /^\*Ringkasan laporan/m);
     const { text } = await one.send("1");
-    expect(text).toMatch(/\*Mau menerima dokumen dan kabar laporan di chat ini\?\*[\s\S]*1\. Ya\n2\. Tidak/);
+    expect(text).toMatch(
+      /\*Mau menerima dokumen dan kabar laporan di chat ini\?\*[\s\S]*Balas \*ya\* atau \*tidak\*\.$/,
+    );
     const ticket = (/LA-\d{6}-\d{2,}/.exec(text) as RegExpExecArray)[0];
     await onDesk(ticket, "view");
     await onDesk(ticket, "replies", { text: "Terima kasih" });
     expect(await waiting(one)).toEqual([]);
     expect((await read(ticket)).chatNews).toEqual({ wanted: false, waiting: 0, lastSentAt: null });
     expect((await read(ticket)).replies[0]?.chat).toBeNull();
-    expect((await one.send("3")).text).toMatch(/^Pilihannya 1 sampai 2[\s\S]*Mau menerima dokumen/);
-    expect((await one.send("2")).text).toMatch(/^Tidak ada kabar yang dikirim di chat ini/);
+    // A number is no word given: the "1" that sent the report, sent twice, agrees to nothing.
+    for (const text of ["1", "2", "3"]) expect((await one.send(text)).text, text).toMatch(/^\*Mau menerima dokumen/);
+    expect((await one.send("tidak")).text).toMatch(/^Tidak ada kabar yang dikirim di chat ini/);
     expect(await waiting(one)).toEqual([]);
     // Never asked again.
     await one.send("lapor");
@@ -83,7 +86,7 @@ describe("asked once, and no until said (AC-01)", () => {
   test("words in place of an answer leave it at no", async () => {
     const one = open();
     await sent(one);
-    expect((await one.send("terima kasih")).text).toMatch(/Ketik salah satu/);
+    expect((await one.send("terima kasih")).text).toMatch(/^Sama-sama/);
     expect((await one.send("1")).text).toMatch(/Ketik salah satu/);
     expect(await waiting(one)).toEqual([]);
   });

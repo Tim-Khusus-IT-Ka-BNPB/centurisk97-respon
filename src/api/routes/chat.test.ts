@@ -230,6 +230,14 @@ describe("the place", () => {
     const nearby = (await one.send("bukan")).text;
     expect(nearby).toMatch(/1\. Desa\/Kel\. .+ km dari titik Anda/);
     expect((await one.send("99")).text).toMatch(/^Pilihannya 1 sampai \d/);
+    // None of them: a name is looked for, and what is no place, or too short for one, keeps the list.
+    for (const text of ["tempatnya entah", "di", "x".repeat(200)])
+      expect((await one.send(text)).text, text).toMatch(/^Jawaban itu belum terbaca[\s\S]*km dari titik Anda/);
+    expect((await one.send("sukamaju karo")).text).toContain("Sukamaju");
+    expect((await one.send("1")).text).toMatch(/^\*RT dan RW\*/);
+    await one.send("kembali");
+    await one.share(VILLAGE.lat, VILLAGE.lon);
+    await one.send("bukan");
     expect((await one.send("kembali")).text).toContain("1. Benar");
     await one.send("2");
     expect((await one.send("1")).text).toMatch(/^\*RT dan RW\*/);
@@ -592,7 +600,10 @@ describe("reports already sent", () => {
     await one.send("1");
     // Anything else leaves the question behind.
     await one.send("banjir lagi");
-    expect((await one.send("terima kasih")).text).toMatch(/Ketik salah satu/);
+    expect((await one.send("terima kasih")).text).toMatch(/^Sama-sama/);
+    // No event is named, but near a report a sentence may be news of it; two words are not.
+    expect((await one.send("sungai sudah meluap")).text).toMatch(/^\*Kabar ini tentang apa\?\*/);
+    expect((await one.send("selamat pagi")).text).toMatch(/Ketik salah satu/);
     const second = await sentAgain(one);
     const which = (await one.send("kabar")).text;
     expect(which).toContain(`1. Kabar untuk ${second} (Banjir)\n2. Kabar untuk ${first} (Banjir)`);
@@ -603,6 +614,7 @@ describe("reports already sent", () => {
     later.clock.advance(73 * 3_600_000);
     expect((await one.send(`kabar ${first}`)).text).toMatch(/^Kabar bisa ditambah sampai 72 jam/);
     expect((await one.send("kabar")).text).toMatch(/^Belum ada laporan dari chat ini yang bisa ditambah kabar/);
+    expect((await one.send("sungai sudah meluap")).text).toMatch(/Ketik salah satu/);
   });
 
   test("news told too late to send says why", async () => {
@@ -661,6 +673,15 @@ describe("an emergency", () => {
     for (const text of ["darurat", "1", "1", "Uji Satu"]) await one.send(text);
     await one.share(VILLAGE.lat, VILLAGE.lon);
     expect((await one.send("1")).text).toMatch(/^\*Kejadian apa yang sedang terjadi/);
+  });
+
+  test("lapor and ulangi ask the same again, and blame nobody", async () => {
+    const one = open();
+    const consent = (await one.send("lapor")).text;
+    for (const text of ["lapor", "ulangi"]) {
+      const again = (await one.send(text)).text;
+      expect(consent.endsWith(again), again).toBe(true);
+    }
   });
 
   test("said while the reporter is being asked who they are, it is no name of theirs", async () => {

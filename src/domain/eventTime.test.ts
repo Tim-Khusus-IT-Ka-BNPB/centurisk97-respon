@@ -166,6 +166,10 @@ describe("event time from typed words", () => {
       expect(dateOf(text), text).toEqual({ error: "dateRequired" });
     for (const text of ["1/4", "4 januari 2025"]) expect(dateOf(text), text).toEqual({ error: "tooOld" });
     expect(dateOf("4/13")).toEqual({ error: "dateFormat" });
+    // Midnight of the day told.
+    expect(value("5 jan", "WIB", Date.UTC(2026, 0, 4, 17, 0))).toEqual({
+      value: { kind: "dateOnly", localDate: "2026-01-05", zone: "WIB" },
+    });
     expect(value("4 januari jam 9", "WIB", Date.UTC(2026, 0, 5, 5, 0))).toEqual({
       value: { kind: "dateTime", localDate: "2026-01-04", localTime: "09:00", zone: "WIB" },
     });

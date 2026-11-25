@@ -8,7 +8,14 @@ import type { Card } from "../contract/card";
 import type { DraftBody } from "../contract/draft";
 import { hazardKey } from "../copy/hazardKey";
 import { longDate, retryText } from "../copy/time";
-import { type Command, newsWithTicket, readCommand, tellsOfEvent } from "../domain/chat/commands";
+import {
+  type Command,
+  mayBeNews,
+  newsWithTicket,
+  readCommand,
+  saysThanks,
+  tellsOfEvent,
+} from "../domain/chat/commands";
 import {
   type Choice,
   readChoice,
@@ -291,6 +298,20 @@ function foundPlaces(
   return { text, step: { kind: "places", revision: draft.revision, places, area } };
 }
 
+// None of the villages near the point: another is named, and looked for as on the place question.
+async function elsewhere(chat: Chat, draft: DraftRecord, card: Card, text: string): Promise<Reply> {
+  const query = text.trim();
+  const long = query.length >= LENGTHS.placeQuery.min && query.length <= LENGTHS.placeQuery.max;
+  const found = long ? await searchPlaces(chat.bindings, query, async () => null) : null;
+  if (found?.kind !== "ok" || found.value.items.length === 0) return unclear(card, t("whatsapp.unclear"));
+  let at = draft;
+  while (at.state === "place_confirm") {
+    await turn(chat, at, { kind: "back" });
+    at = await fresh(chat, at.id);
+  }
+  return foundPlaces(at, query, found);
+}
+
 function counts(chat: Chat, draft: DraftRecord, card: Extract<Card, { kind: "numberForm" }>, text: string) {
   const read = readNumbers(text, card.fields.length);
   if (read.kind === "words") return words(chat, draft, text);
@@ -380,7 +401,8 @@ async function answerCard(chat: Chat, draft: DraftRecord, text: string): Promise
             : { kind: "answer", villageCode: read.ids[0] as string },
         );
       if (read.kind !== "words") return unclear(card, notChosen(read));
-      return classifyFreeText(text).kind === "story" ? unclear(card, t("whatsapp.unclear")) : words(chat, draft, text);
+      if (classifyFreeText(text).kind !== "story") return words(chat, draft, text);
+      return card.nearby === null ? unclear(card, t("whatsapp.unclear")) : elsewhere(chat, draft, card, text);
     }
     case "neighbourhood": {
       const read = readNeighbourhood(text);
@@ -439,7 +461,7 @@ const newsChoices = (): Choice[] => [
   { id: "no", label: t("whatsapp.wantNews.no"), means: "no" },
 ];
 
-const wantNewsText = () => message(t("whatsapp.wantNews"), numbered(newsChoices()), t("whatsapp.hint.one"));
+const wantNewsText = () => message(t("whatsapp.wantNews"), t("whatsapp.wantNews.hint"));
 
 // A version just sent: its document comes to a number that wants news, and a number never asked is
 // asked, once (D32). Not answered is no.
@@ -584,6 +606,7 @@ async function identityReply(chat: Chat, step: IdentityStep, text: string): Prom
     return { text: t(chat.profile === null ? "whatsapp.identity.cancelled" : "whatsapp.identity.kept") };
   const command = readCommand(text)?.kind;
   if (command === "help") return { text: message(t("whatsapp.help"), ask), step };
+  if (command === "start" || command === "repeat") return { text: ask, step };
   if (command === "emergency")
     return {
       text: message(t("whatsapp.emergency.now"), t("notice.lifeLine"), ask),
@@ -671,10 +694,11 @@ async function news(chat: Chat, ticketNumber: string, told: string): Promise<Rep
       return { text: t("whatsapp.status.notFound", { ticketNumber }) };
     case "closed":
       return { text: t(`followUp.closed.${started.reason}`) };
-    case "openExists":
-      return { text: message(t("whatsapp.news.finishFirst"), await cardOf(chat, await fresh(chat, started.draftId))) };
-    default:
-      return { text: t("whatsapp.limit", { retryTime: retryWords(chat, started.refusal.retryAtMs as number) }) };
+    default: {
+      // Another report is open; the door has counted the message, so no limit is met here.
+      const { draftId } = started as Extract<typeof started, { kind: "openExists" }>;
+      return { text: message(t("whatsapp.news.finishFirst"), await cardOf(chat, await fresh(chat, draftId))) };
+    }
   }
 }
 
@@ -790,15 +814,17 @@ async function idle(chat: Chat, text: string): Promise<Reply> {
   }
   if (step?.kind === "wantNews") {
     const read = readChoice(text, newsChoices());
-    if (read.kind === "picked") return wantNews(chat, step.ticketNumber, read.ids[0] === "yes");
-    if (read.kind !== "words") return { text: message(notChosen(read), wantNewsText()), step };
+    // A "1" sent twice for the report agrees to nothing: news is agreed to in words.
+    if (read.kind === "picked" && /\p{L}/u.test(text)) return wantNews(chat, step.ticketNumber, read.ids[0] === "yes");
+    if (read.kind !== "words") return { text: wantNewsText(), step };
   }
   if (chat.profile === null) return welcome(chat, false, tellsOfEvent(text));
   const named = newsWithTicket(text);
   if (named) return addNews(chat, named.ticketNumber, named.rest);
-  if (!tellsOfEvent(text)) return { text: menu() };
+  if (saysThanks(text)) return { text: t("whatsapp.thanks") };
+  if (!mayBeNews(text)) return { text: menu() };
   const tickets = (await openToNews(chat)).map((one) => one.ticketNumber);
-  if (tickets.length === 0) return startReport(chat, false, text);
+  if (tickets.length === 0) return tellsOfEvent(text) ? startReport(chat, false, text) : { text: menu() };
   const told = maskText(text, { name: chat.profile.name, number: chat.number });
   return aboutTicket(chat, { kind: "aboutTicket", tickets, mayBeNew: true, text: told });
 }

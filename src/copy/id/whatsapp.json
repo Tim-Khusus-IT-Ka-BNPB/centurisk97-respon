@@ -48,7 +48,7 @@
   "whatsapp.place.areaCut": "Baru {shown} dari {total}. Tulis nama desanya untuk menyaring.",
   "whatsapp.place.none": "Tidak ada tempat yang cocok dengan \"{query}\". Periksa ejaannya, atau tulis nama kecamatan atau kabupaten/kotanya.",
   "whatsapp.place.unavailable": "Daftar tempat sedang tidak bisa dibuka. Bagikan lokasi, atau tulis lagi beberapa menit lagi.",
-  "whatsapp.placeConfirm.nearby": "Balas dengan angkanya, atau bagikan lokasi lagi.",
+  "whatsapp.placeConfirm.nearby": "Balas dengan angkanya, tulis nama desa atau kelurahannya, atau bagikan lokasi lagi.",
   "whatsapp.placeConfirm.row": "Desa/Kel. {village}, Kec. {district}, {km} km dari titik Anda",
   "whatsapp.location.notNow": "Lokasi kejadian sudah tercatat, jadi lokasi ini tidak mengubahnya.",
   "whatsapp.location.photos": "Lokasi dicatat untuk {count} foto.",
@@ -102,6 +102,7 @@
   "whatsapp.confirm.back": "Lanjutkan mengisi",
 
   "whatsapp.wantNews": "*Mau menerima dokumen dan kabar laporan di chat ini?*\nDokumen PDF laporan Anda, balasan petugas, dan perubahan statusnya.",
+  "whatsapp.wantNews.hint": "Balas *ya* atau *tidak*.",
   "whatsapp.wantNews.yes": "Ya",
   "whatsapp.wantNews.no": "Tidak",
   "whatsapp.newsOn": "Kabar dinyalakan. Balasan petugas dan perubahan status dikirim di chat ini. Ketik *berhenti kabar* kapan saja untuk berhenti.",
@@ -143,6 +144,7 @@
 
   "whatsapp.resume": "Anda masih mengisi laporan ini. Ketik *batal* untuk membatalkannya.",
   "whatsapp.emergency.now": "Laporan ini sekarang laporan darurat: cukup lokasi, kejadian, dan korban.",
+  "whatsapp.thanks": "Sama-sama. Ketik *status* untuk melihat laporan Anda, atau *bantuan* untuk pilihan lain. Bila nyawa terancam, telepon 112.",
   "whatsapp.menu": "*{appName}*\nKetik salah satu:\n\n• *lapor* untuk melaporkan kejadian bencana\n• *darurat* untuk laporan singkat bila keadaan mendesak\n• *status* untuk melihat laporan Anda\n• *kabar* untuk menambah kabar ke laporan terkirim\n• *dokumen* untuk menerima PDF laporan\n• *berhenti kabar* atau *nyalakan kabar*\n\nBila nyawa terancam, telepon 112.",
   "whatsapp.help": "*Cara menjawab*\n• Balas dengan angka pilihan, atau tulis jawabannya\n• *kembali* untuk mengubah jawaban sebelumnya\n• *ulangi* untuk melihat pertanyaan ini lagi\n• *batal* untuk membatalkan laporan\n• *status* untuk melihat laporan yang sudah terkirim\n\nLaporan yang belum selesai tersimpan 24 jam."
 }

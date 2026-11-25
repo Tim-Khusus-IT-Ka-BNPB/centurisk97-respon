@@ -124,10 +124,9 @@ function relativeDay(text: string, localNowMs: number): number | null {
 
 // The last such day: this year's, or last year's when this year's is still to come.
 function lastSuchDay(day: string, month: number, localNowMs: number): string {
-  const today = new Date(localNowMs).toISOString();
   const inYear = (year: number) => `${year}-${pad(month)}-${pad(Number(day))}`;
-  const year = Number(today.slice(0, 4));
-  return inYear(year) > today ? inYear(year - 1) : inYear(year);
+  const year = new Date(localNowMs).getUTCFullYear();
+  return inYear(Date.parse(inYear(year)) > localNowMs ? year - 1 : year);
 }
 
 function dayAndMonth(text: string, localNowMs: number): { date: string; matched: string } | null {
