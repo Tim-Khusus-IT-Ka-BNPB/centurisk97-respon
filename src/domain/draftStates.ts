@@ -2,8 +2,9 @@
 // draft exists and lives on the start page only, so it is not a stored state. "kembali" is not a
 // move: it restores an earlier snapshot.
 export const DRAFT_MOVES = {
-  place: ["place_confirm", "neighbourhood", "cancelled", "expired"],
-  place_confirm: ["neighbourhood", "place", "cancelled", "expired"],
+  // An emergency goes from its place to its questions, with no neighbourhood between.
+  place: ["place_confirm", "neighbourhood", "asking", "cancelled", "expired"],
+  place_confirm: ["neighbourhood", "asking", "place", "cancelled", "expired"],
   neighbourhood: ["asking", "cancelled", "expired"],
   asking: ["guided_chronology", "free_story", "photos", "summary", "cancelled", "expired"],
   guided_chronology: ["asking", "photos", "cancelled", "expired"],

@@ -1,4 +1,5 @@
 import type { ChronologyAnswers } from "../chronology/sentence";
+import type { VictimAnswer } from "../emergency";
 import type { FieldStates, PlaceValue } from "../fieldState";
 import type { FieldId, GroupId } from "../fields/catalogue";
 import type { HazardTypeId } from "../hazards";
@@ -32,6 +33,8 @@ export type DraftContent = {
   // Absent in drafts stored before the GPS and photo steps existed, read as null.
   readonly placeReading?: PlaceReading | null;
   readonly photosDone?: PhotosDone | null;
+  // An emergency report: whether anyone is hurt, missing or trapped, null until asked.
+  readonly emergency?: { readonly victims: VictimAnswer | null } | null;
 };
 
 // How many times each field was answered while still empty. A second empty answer settles it.
@@ -39,11 +42,14 @@ export type AskedCounts = Readonly<Partial<Record<FieldId, number>>>;
 
 export const EMPTY_CONTENT: DraftContent = { states: {}, chronology: null, guesses: [], overlay: null, danger: null };
 
+export const EMERGENCY_CONTENT: DraftContent = { ...EMPTY_CONTENT, emergency: { victims: null } };
+
 export type Question =
   | { readonly kind: "place" }
   | { readonly kind: "placeConfirm" }
   | { readonly kind: "neighbourhood" }
   | { readonly kind: "choice"; readonly fieldId: FieldId }
+  | { readonly kind: "emergencyVictims" }
   | { readonly kind: "multiChoice"; readonly fieldId: FieldId }
   | { readonly kind: "chronologyStep"; readonly step: number }
   | { readonly kind: "chronologyReview" }

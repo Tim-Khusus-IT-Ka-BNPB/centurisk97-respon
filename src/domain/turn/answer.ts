@@ -1,3 +1,4 @@
+import { isVictimAnswer } from "../emergency";
 import type { FieldState, PlaceValue } from "../fieldState";
 import { fieldsForHazard } from "../fields/applicable";
 import type { FieldId } from "../fields/catalogue";
@@ -59,6 +60,13 @@ function answerPhotos(answer: CardAnswer, content: DraftContent, photoCount: num
   if (option === "continue" && photoCount > 0) return applied({ ...content, photosDone: "continued" });
   if (option === "cannotSend" && photoCount === 0) return applied({ ...content, photosDone: "cannotSend" });
   return STALE;
+}
+
+// "Ada orang terluka, hilang, atau terjebak?": one of three taps.
+function answerVictims(answer: CardAnswer, content: DraftContent): Applied {
+  const [victims, ...rest] = answer.optionIds;
+  if (rest.length > 0 || !isVictimAnswer(victims)) return STALE;
+  return applied({ ...content, emergency: { victims } });
 }
 
 function answerNeighbourhood(answer: CardAnswer, content: DraftContent): Applied {
@@ -166,6 +174,8 @@ function dispatch(
       return answerPlaceConfirm(answer, content, village);
     case "photos":
       return answerPhotos(answer, content, context.photoCount);
+    case "emergencyVictims":
+      return answerVictims(answer, content);
     case "neighbourhood":
       return answerNeighbourhood(answer, content);
     case "choice":

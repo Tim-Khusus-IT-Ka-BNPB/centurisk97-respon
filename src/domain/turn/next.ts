@@ -1,5 +1,6 @@
 import { chronologySteps } from "../chronology";
 import type { DraftState } from "../draftStates";
+import type { VictimAnswer } from "../emergency";
 import type { FieldState } from "../fieldState";
 import { applicableFields, chosenHazardType } from "../fields/applicable";
 import type { FieldDefinition, FieldId } from "../fields/catalogue";
@@ -46,11 +47,21 @@ function questionFor(
   }
 }
 
+// An emergency asks only what happened and whether anyone is hurt, then for photos (K68).
+function emergencyQuestion(content: DraftContent, victims: VictimAnswer | null): Question {
+  const { overlay } = content;
+  const reopened = overlay?.kind === "edit" && !overlay.done.includes("hazardType");
+  if (reopened || content.states.hazardType === undefined) return { kind: "choice", fieldId: "hazardType" };
+  if (victims === null) return { kind: "emergencyVictims" };
+  return content.photosDone ? { kind: "summary" } : { kind: "photos" };
+}
+
 // What the reporter is asked next. Code decides this from the field table alone: first every
 // applicable field never asked, in table order, then each field left empty once more, then the summary.
 export function nextQuestion(_state: DraftState, content: DraftContent, asked: AskedCounts): Question {
   if (content.overlay?.kind === "cancelConfirm") return { kind: "cancelConfirm" };
   if (content.states.place === undefined) return content.placeReading ? { kind: "placeConfirm" } : { kind: "place" };
+  if (content.emergency) return emergencyQuestion(content, content.emergency.victims);
   if (content.states.neighbourhood === undefined) return { kind: "neighbourhood" };
   const fields = applicableFields(content.states).filter(isAsked);
   const unasked = fields.filter((field) => content.states[field.id as FieldId] === undefined);

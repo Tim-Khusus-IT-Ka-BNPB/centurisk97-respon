@@ -1,7 +1,7 @@
 import { localDate } from "./eventTime";
 import { DAY_MS, HOUR_MS, MINUTE_MS } from "./time";
 
-type LimitWindow = "minute" | "clockHour" | "wibDay" | "rolling24h" | "draftLife" | "standing";
+type LimitWindow = "minute" | "clockHour" | "wibDay" | "rolling24h" | "rolling30m" | "draftLife" | "standing";
 
 type LimitSubject = "numberSlot" | "device" | "address" | "draft" | "number" | "staff";
 
@@ -32,6 +32,10 @@ export const LIMITS = {
   "model.draft": { subject: "draft", window: "draftLife", max: 30, effect: "templatesOnly" },
   "model.day": { subject: "number", window: "wibDay", max: 150, effect: "templatesOnly" },
   "address.staffSignIn": { subject: "address", window: "clockHour", max: 30, effect: "refuse" },
+  "oneTap.device": { subject: "device", window: "rolling30m", max: 1, effect: "refuse" },
+  "oneTap.number": { subject: "number", window: "rolling24h", max: 3, effect: "refuse" },
+  "address.oneTap": { subject: "address", window: "clockHour", max: 3, effect: "refuse" },
+  "desk.alarm": { subject: "staff", window: "clockHour", max: 400, effect: "refuse" },
   "desk.read": { subject: "staff", window: "clockHour", max: 1200, effect: "refuse" },
   "desk.write": { subject: "staff", window: "clockHour", max: 120, effect: "refuse" },
 } as const satisfies Record<string, LimitRow>;

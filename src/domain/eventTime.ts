@@ -40,6 +40,11 @@ export function localDate(instantMs: number, zone: Zone): string {
   return new Date(instantMs + zoneOffsetMs(zone)).toISOString().slice(0, 10);
 }
 
+// The local clock time ("HH:MM") of an instant in a zone.
+export function localClock(instantMs: number, zone: Zone): string {
+  return new Date(instantMs + zoneOffsetMs(zone)).toISOString().slice(11, 16);
+}
+
 const TIME = /^(\d{2}):(\d{2})$/;
 
 // A real calendar date written exactly as YYYY-MM-DD.

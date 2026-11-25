@@ -1,6 +1,6 @@
 import { describe, expect, test } from "vitest";
 import type { FieldState, FieldStates } from "../fieldState";
-import { type DraftContent, EMPTY_CONTENT, type Question, questionFields } from "./content";
+import { type DraftContent, EMERGENCY_CONTENT, EMPTY_CONTENT, type Question, questionFields } from "./content";
 import { nextQuestion, stateFor } from "./next";
 import { choiceOptions, isExclusiveOption } from "./options";
 
@@ -282,5 +282,46 @@ describe("the GPS reading and the photo step", () => {
     expect(nextQuestion("place", content({}, { placeReading: reading }), {})).toEqual({ kind: "placeConfirm" });
     expect(next(floodAllBut(), {}, { photosDone: null })).toEqual({ kind: "photos" });
     expect(next(floodAllBut(), {}, { photosDone: "continued" })).toEqual({ kind: "summary" });
+  });
+});
+
+describe("an emergency", () => {
+  const place = placed.place as FieldState;
+  const emergency = (victims: "yes" | null) => ({ emergency: { victims } });
+
+  test("asks for its place, what happened, whether anyone is hurt, then photos, and nothing else", () => {
+    expect(next({}, {}, emergency(null))).toEqual({ kind: "place" });
+    expect(next({ place }, {}, emergency(null))).toEqual({ kind: "choice", fieldId: "hazardType" });
+    const told = { place, hazardType: tapped("flood") };
+    expect(next(told, {}, emergency(null))).toEqual({ kind: "emergencyVictims" });
+    expect(next(told, {}, { ...emergency("yes"), photosDone: null })).toEqual({ kind: "photos" });
+    expect(next(told, {}, emergency("yes"))).toEqual({ kind: "summary" });
+  });
+
+  test("reopened from the summary asks what happened again, once", () => {
+    const told = { place, hazardType: tapped("flood") };
+    const edit = (done: ("hazardType" | "chronology")[]) => ({
+      ...emergency("yes"),
+      overlay: { kind: "edit" as const, groupId: "event" as const, done },
+    });
+    expect(next(told, {}, edit([]))).toEqual({ kind: "choice", fieldId: "hazardType" });
+    expect(next(told, {}, edit(["chronology"]))).toEqual({ kind: "choice", fieldId: "hazardType" });
+    expect(next(told, {}, edit(["hazardType"]))).toEqual({ kind: "summary" });
+    expect(next(told, {}, { ...emergency("yes"), overlay: { kind: "cancelConfirm" } })).toEqual({
+      kind: "cancelConfirm",
+    });
+  });
+
+  test("its question about victims is asked in the asking state and settles no field", () => {
+    expect(stateFor({ kind: "emergencyVictims" }, "place")).toBe("asking");
+    expect(questionFields({ kind: "emergencyVictims" })).toEqual([]);
+  });
+
+  test("starts with nothing told and nothing said of victims", () => {
+    expect(EMERGENCY_CONTENT).toEqual({ ...EMPTY_CONTENT, emergency: { victims: null } });
+  });
+
+  test("a draft that is not one is asked as before", () => {
+    expect(next({ place }, {}, { emergency: null })).toEqual({ kind: "neighbourhood" });
   });
 });

@@ -279,3 +279,18 @@ describe("the GPS reading and the photo step", () => {
       expect(run(given, count)).toEqual({ kind: "stale" });
   });
 });
+
+describe("victims of an emergency", () => {
+  const content = with_({}, { emergency: { victims: null } });
+  const victims = (...optionIds: string[]) => apply({ kind: "emergencyVictims" }, answer(optionIds), content);
+
+  test.each(["yes", "no", "unknown"] as const)("%s is kept", (id) => {
+    expect(victims(id)).toMatchObject({ kind: "applied", content: { emergency: { victims: id } } });
+  });
+
+  test("none, two, or an answer not offered is stale", () => {
+    expect(victims()).toEqual({ kind: "stale" });
+    expect(victims("yes", "no")).toEqual({ kind: "stale" });
+    expect(victims("maybe")).toEqual({ kind: "stale" });
+  });
+});

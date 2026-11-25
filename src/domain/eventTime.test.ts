@@ -1,5 +1,5 @@
 import { describe, expect, test } from "vitest";
-import { checkEventTime, localDate, parseEventTimeText, provinceZone, zoneOffsetMs } from "./eventTime";
+import { checkEventTime, localClock, localDate, parseEventTimeText, provinceZone, zoneOffsetMs } from "./eventTime";
 
 // 14.30 WIB on 19 November 2026.
 const now = Date.UTC(2026, 10, 19, 7, 30);
@@ -23,6 +23,8 @@ describe("zone of a province", () => {
     const lateEvening = Date.UTC(2026, 10, 19, 15, 30);
     expect(localDate(lateEvening, "WIB")).toBe("2026-11-19");
     expect(localDate(lateEvening, "WIT")).toBe("2026-11-20");
+    expect(localClock(Date.parse("2026-11-19T17:05:00.000Z"), "WIB")).toBe("00:05");
+    expect(localClock(Date.parse("2026-11-19T17:05:00.000Z"), "WIT")).toBe("02:05");
   });
 });
 

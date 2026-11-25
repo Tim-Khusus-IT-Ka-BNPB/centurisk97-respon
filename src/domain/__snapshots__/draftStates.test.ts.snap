@@ -37,11 +37,13 @@ exports[`draft states > the state map as agreed 1`] = `
   "place": [
     "place_confirm",
     "neighbourhood",
+    "asking",
     "cancelled",
     "expired",
   ],
   "place_confirm": [
     "neighbourhood",
+    "asking",
     "place",
     "cancelled",
     "expired",

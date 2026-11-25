@@ -20,6 +20,12 @@ exports[`limits table > rows as agreed 1`] = `
     "subject": "address",
     "window": "clockHour",
   },
+  "address.oneTap": {
+    "effect": "refuse",
+    "max": 3,
+    "subject": "address",
+    "window": "clockHour",
+  },
   "address.searches": {
     "effect": "refuse",
     "max": 1000,
@@ -36,6 +42,12 @@ exports[`limits table > rows as agreed 1`] = `
     "effect": "refuse",
     "max": 300,
     "subject": "address",
+    "window": "clockHour",
+  },
+  "desk.alarm": {
+    "effect": "refuse",
+    "max": 400,
+    "subject": "staff",
     "window": "clockHour",
   },
   "desk.read": {
@@ -91,6 +103,18 @@ exports[`limits table > rows as agreed 1`] = `
     "max": 30,
     "subject": "draft",
     "window": "draftLife",
+  },
+  "oneTap.device": {
+    "effect": "refuse",
+    "max": 1,
+    "subject": "device",
+    "window": "rolling30m",
+  },
+  "oneTap.number": {
+    "effect": "refuse",
+    "max": 3,
+    "subject": "number",
+    "window": "rolling24h",
   },
   "rating.hour": {
     "effect": "refuse",
