@@ -42,3 +42,9 @@ test("the api answers health", async ({ request }) => {
   expect(response.status()).toBe(200);
   expect(await response.text()).toBe("ok");
 });
+
+test("the site root leads to the service", async ({ page }) => {
+  await page.goto("/");
+  await expect(page).toHaveURL(/\/lapor$/);
+  await expect(page.getByRole("link", { name: "Lapor kejadian" })).toBeVisible();
+});

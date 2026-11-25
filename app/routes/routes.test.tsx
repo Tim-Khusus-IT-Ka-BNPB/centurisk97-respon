@@ -14,6 +14,7 @@ import DeskReportRoute, * as deskReport from "./deskReport";
 import DraftRoute, * as draft from "./draft";
 import HelpRoute, * as help from "./help";
 import HomeRoute, * as home from "./home";
+import * as rootIndex from "./index";
 import NotFoundRoute, * as notFound from "./notFound";
 import PrivacyRoute, * as privacy from "./privacy";
 import StartRoute, * as start from "./start";
@@ -410,5 +411,13 @@ describe("theme route", () => {
       context: { api: answer },
     } as Args)) as Response;
     expect(away.headers.get("location")).toBe("/lapor");
+  });
+});
+
+describe("the site root", () => {
+  test("leads to the service under /lapor", () => {
+    const answer = rootIndex.loader() as Response;
+    expect(answer.status).toBe(302);
+    expect(answer.headers.get("location")).toBe("/lapor");
   });
 });
