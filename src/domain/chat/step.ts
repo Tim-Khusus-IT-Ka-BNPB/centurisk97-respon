@@ -38,7 +38,10 @@ export type TicketStep = {
   readonly text: string;
 };
 
-export type ChatStep = IdentityStep | CardStep | TicketStep;
+// After the first report of a number: whether news of it may come in the chat (D32).
+type NewsStep = { readonly kind: "wantNews"; readonly ticketNumber: string };
+
+export type ChatStep = IdentityStep | CardStep | TicketStep | NewsStep;
 
 const IDENTITY_KINDS: readonly string[] = ["consent", "role", "name", "officerRegency", "officerPosition"];
 

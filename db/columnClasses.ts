@@ -297,7 +297,15 @@ export const COLUMN_CLASSES: Readonly<Record<string, TableClasses>> = {
   },
   notice: {
     retention: "with its report",
-    columns: { id: I, ticket_number: I, kind: I, history_id: I, reply_id: I, at: I },
+    columns: { id: I, ticket_number: I, kind: I, history_id: I, reply_id: I, version: I, at: I },
+  },
+  notice_delivery: {
+    retention: "with its notice; append-only",
+    columns: { notice_id: I, gateway_id: I, at: I },
+  },
+  news_choice: {
+    retention: "waits on counsel, as the reports of its number; append-only",
+    columns: { id: I, number_key: I, choice: I, at: I },
   },
   report_news: {
     retention: "with its report",
