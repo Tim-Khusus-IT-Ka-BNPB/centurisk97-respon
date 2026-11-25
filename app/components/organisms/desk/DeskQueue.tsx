@@ -80,7 +80,7 @@ const cell = "border-t border-line px-4 py-3.5 align-top";
 const head = "px-4 py-3 text-meta font-semibold text-muted";
 
 // The event takes what the others leave.
-const WIDTH = { ticket: "w-44", event: "", impact: "w-60", sent: "w-48", reporter: "w-40" } as const;
+const WIDTH = { ticket: "w-44", event: "", impact: "w-58", sent: "w-48", reporter: "w-42" } as const;
 
 // A screen wide enough to leave the event its room reads the queue as a table; the ticket is the
 // row's link.

@@ -44,7 +44,7 @@
   "desk.pilot.empty": "Belum ada nomor yang diizinkan. Selama daftar ini kosong, WhatsApp tidak melayani siapa pun.",
   "desk.pilot.citizen": "Warga",
   "desk.pilot.officer": "BPBD {regency}",
-  "desk.pilot.addedBy": "Diizinkan {label}",
+  "desk.pilot.addedBy": "Diizinkan oleh {label}",
   "desk.pilot.noReports": "Belum melapor",
   "desk.pilot.reports": "{count} laporan",
   "desk.pilot.last": "terakhir {at}",

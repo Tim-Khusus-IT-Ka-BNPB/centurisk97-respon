@@ -5,7 +5,7 @@
   "fieldError.name.tooLong": "Nama terlalu panjang: {length} huruf, paling banyak 80. Pendekkan Nama, tidak ada yang dipotong otomatis.",
   "fieldError.name.tooShort": "Nama terlalu pendek. Tulis paling sedikit 2 huruf.",
   "fieldError.number.format": "Nomor WhatsApp belum terbaca. Tulis nomor yang diawali 08, 62 atau +62, dengan 9 sampai 13 angka sesudah +62.",
-  "fieldError.officerRegency.tooShort": "Tulis nama kabupaten atau kota BPBD Anda, paling sedikit 3 huruf.",
+  "fieldError.officerRegency.tooShort": "Tulis nama kabupaten atau kota BPBD, paling sedikit 3 huruf.",
   "fieldError.officerPosition.tooShort": "Tulis jabatan Anda, paling sedikit 2 huruf.",
   "fieldError.query.tooShort": "Kata pencarian terlalu pendek. Ketik paling sedikit 3 huruf.",
   "fieldError.query.tooLong": "Kata pencarian terlalu panjang. Pakai paling banyak 60 huruf, cukup nama tempatnya.",

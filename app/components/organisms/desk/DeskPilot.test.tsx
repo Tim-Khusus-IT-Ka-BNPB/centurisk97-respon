@@ -43,7 +43,7 @@ describe("the numbers of the WhatsApp pilot", () => {
     const rows = within(screen.getByRole("region", { name: "Nomor yang diizinkan" })).getAllByRole("listitem");
     expect(rows).toHaveLength(2);
     expect(rows[0]?.textContent).toContain("+62 800-0000-0101BPBD Kabupaten Uji");
-    expect(rows[0]?.textContent).toContain("Diizinkan Pusdalops BNPB, Petugas Uji24 Nov 2026, 09.30 WIB");
+    expect(rows[0]?.textContent).toContain("Diizinkan oleh Pusdalops BNPB, Petugas Uji24 Nov 2026, 09.30 WIB");
     expect(rows[0]?.textContent).toContain("3 laporanterakhir 24 Nov 2026");
     expect(rows[1]?.textContent).toContain("Warga");
     expect(rows[1]?.textContent).toContain("Belum melapor");

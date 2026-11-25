@@ -20,16 +20,17 @@ type Item = DeskPilot["items"][number];
 const SAVED = ["allowed", "removed"];
 const FIELDS = ["number", "officerRegency"] as const;
 
-// Taking a number away says what stops before the button that does it.
+// Taking a number away says what stops before the button that does it; the word that opens it keeps
+// its place at the end of the row.
 function Remove({ item }: { readonly item: Item }) {
   const t = useText();
   const navigation = useNavigation();
   const busy = navigation.formData?.get("key") === item.key;
   return (
-    <details className="group md:col-start-4 md:row-start-1 md:open:col-span-full md:open:col-start-1 md:open:row-start-2">
+    <details className="md:col-span-full">
       <summary
         aria-label={t("desk.pilot.removeOf", { number: spacedNumber(item.number) })}
-        className="inline-flex min-h-target-min cursor-pointer list-none items-center rounded-control px-3 font-semibold text-danger hover:bg-danger-tint [&::-webkit-details-marker]:hidden"
+        className="absolute end-1 top-1.5 md:end-2 inline-flex min-h-target-min cursor-pointer list-none items-center rounded-control px-3 font-semibold text-danger hover:bg-danger-tint [&::-webkit-details-marker]:hidden"
       >
         {t("desk.pilot.remove")}
       </summary>
@@ -37,7 +38,7 @@ function Remove({ item }: { readonly item: Item }) {
         method="post"
         replace
         preventScrollReset
-        className="mt-2 flex flex-col gap-3 rounded-control bg-danger-tint p-3 md:flex-row md:items-center md:justify-between md:gap-6"
+        className="mt-2 flex flex-col gap-3 rounded-control bg-danger-tint p-3 md:mt-4 md:flex-row md:items-center md:justify-between md:gap-6"
       >
         <input type="hidden" name="action" value="remove" />
         <input type="hidden" name="key" value={item.key} />
@@ -53,7 +54,7 @@ function Remove({ item }: { readonly item: Item }) {
 function Row({ item }: { readonly item: Item }) {
   const t = useText();
   return (
-    <li className="grid gap-x-6 gap-y-2 px-4 py-4 md:grid-cols-[minmax(0,1.1fr)_minmax(0,1.4fr)_minmax(0,0.9fr)_auto] md:items-center md:px-5">
+    <li className="relative grid gap-x-6 gap-y-2 px-4 py-4 md:grid-cols-[minmax(0,1.1fr)_minmax(0,1.4fr)_minmax(0,0.9fr)_4rem] md:gap-y-0 md:px-5">
       <span className="flex min-w-0 flex-col items-start gap-1">
         <span className="font-semibold whitespace-nowrap tabular-nums">{spacedNumber(item.number)}</span>
         <span className="text-meta text-muted break-words">
