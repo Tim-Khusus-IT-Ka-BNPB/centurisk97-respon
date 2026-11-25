@@ -118,7 +118,7 @@ describe("a report on the desk", () => {
     const moved = await saved("?saved=status");
     expect(screen.getByRole("status").textContent).toBe("Status tersimpan. Tiket sekarang: Sudah dilihat petugas.");
     moved.unmount();
-    const replied = await saved("?saved=reply");
+    const replied = await saved("?saved=replies");
     expect(screen.getByRole("status").textContent).toBe("Balasan tersimpan. Status tiket: Sudah dilihat petugas.");
     replied.unmount();
     await saved("?saved=nope");
@@ -145,15 +145,21 @@ describe("a report on the desk", () => {
         summary={SUMMARY}
         refusal={{
           ...envelope("request.invalidFields"),
-          fields: [{ fieldId: "note", copyKey: "fieldError.staffReason.tooShort", params: { min: 5 } }],
+          fields: [
+            {
+              fieldId: "note",
+              copyKey: "fieldError.staffText.tooShort",
+              params: { label: "desk.move.note.reason", min: 5 },
+            },
+          ],
         }}
-        typed={{ to: "invalid", note: "dup", reply: "" }}
+        typed={{ values: { to: "invalid", note: "dup" }, actions: [] }}
       />,
       PATH,
     );
     expect(screen.queryByRole("alert")).toBeNull();
     const actions = within(screen.getByRole("region", { name: "Tindak lanjut" }));
-    expect(actions.getByText(/Alasan terlalu pendek/)).toBeTruthy();
+    expect(actions.getByText(/Alasan untuk pelapor terlalu pendek/)).toBeTruthy();
   });
 
   test("an account that must ask for identity sees none, is told it is logged, and asks with a button", async () => {
@@ -174,11 +180,80 @@ describe("a report on the desk", () => {
   test("the history names the regency a report was forwarded to", async () => {
     const history = [
       ...REPORT.history,
-      { status: "forwarded" as const, at: SENT, actor: "Petugas Uji", note: null, forwardedTo: "Aceh Utara" },
+      {
+        status: "forwarded" as const,
+        at: SENT,
+        actor: "Petugas Uji",
+        note: null,
+        forwardedTo: "Aceh Utara",
+        event: null,
+        detail: null,
+      },
     ];
     await renderDesk(<DeskReportView report={{ ...REPORT, history }} summary={SUMMARY} />, PATH);
     expect(
       within(screen.getByRole("region", { name: "Riwayat tiket" })).getByText("Diteruskan ke meja BPBD Aceh Utara"),
     ).toBeTruthy();
+  });
+
+  test("work is told in the history, and what was done is shown with its photos", async () => {
+    const event = { at: SENT, actor: "Petugas Uji", forwardedTo: null, status: "in_handling" as const };
+    await renderDesk(
+      <DeskReportView
+        report={{
+          ...REPORT,
+          status: "in_handling",
+          history: [
+            ...REPORT.history,
+            { ...event, note: null, event: "actions", detail: { actions: ["Evakuasi warga", "Sedot sumur"] } },
+            {
+              ...event,
+              note: "Dicek ke kepala desa",
+              event: "fieldCheck",
+              detail: {
+                result: "partly",
+                changes: [
+                  { fieldId: "dead", from: 3, to: 2 },
+                  { fieldId: "injured", from: null, to: 1 },
+                ],
+              },
+            },
+          ],
+          actions: [{ label: "Evakuasi warga", at: SENT, actor: "Petugas Uji" }],
+          proofs: [
+            { proofId: "p1", hasPoint: true, at: SENT, actor: "Petugas Uji" },
+            { proofId: "p2", hasPoint: false, at: SENT, actor: "Petugas Uji" },
+          ],
+        }}
+        summary={SUMMARY}
+      />,
+      PATH,
+    );
+    const history = within(screen.getByRole("region", { name: "Riwayat tiket" }));
+    expect(history.getByText("Tindakan dicatat")).toBeTruthy();
+    expect(history.getByText("Evakuasi warga, Sedot sumur")).toBeTruthy();
+    expect(history.getByText("Pengecekan lapangan: Sebagian benar")).toBeTruthy();
+    expect(history.getByText("Meninggal: 3 menjadi 2")).toBeTruthy();
+    expect(history.getByText("Luka-luka: belum didata menjadi 1")).toBeTruthy();
+    const handling = within(screen.getByRole("region", { name: "Penanganan" }));
+    expect(handling.getByText("Evakuasi warga")).toBeTruthy();
+    expect(handling.getByRole("img", { name: "Foto penanganan 1" }).getAttribute("src")).toBe(
+      "/api/lapor/desk/proofs/p1",
+    );
+    expect(handling.getByText("Titik GPS petugas tersimpan")).toBeTruthy();
+    expect(handling.getByText("Tanpa titik GPS")).toBeTruthy();
+  });
+
+  test("photos with no action told, and actions with no photo, are each shown alone", async () => {
+    const proofs = [{ proofId: "p1", hasPoint: true, at: SENT, actor: "Petugas Uji" }];
+    const view = await renderDesk(<DeskReportView report={{ ...REPORT, proofs }} summary={SUMMARY} />, PATH);
+    expect(within(screen.getByRole("region", { name: "Penanganan" })).getAllByRole("img")).toHaveLength(1);
+    view.unmount();
+    const actions = [{ label: "Evakuasi warga", at: SENT, actor: "Petugas Uji" }];
+    const other = await renderDesk(<DeskReportView report={{ ...REPORT, actions }} summary={SUMMARY} />, PATH);
+    expect(within(screen.getByRole("region", { name: "Penanganan" })).queryByRole("img")).toBeNull();
+    other.unmount();
+    await renderDesk(<DeskReportView report={REPORT} summary={SUMMARY} />, PATH);
+    expect(screen.queryByRole("region", { name: "Penanganan" })).toBeNull();
   });
 });

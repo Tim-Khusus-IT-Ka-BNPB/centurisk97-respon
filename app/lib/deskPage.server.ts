@@ -150,26 +150,65 @@ type DeskReportActed =
   | { readonly kind: "identity"; readonly identity: DeskIdentity }
   | (Extract<DeskActed, { kind: "render" }> & { readonly typed: DeskTyped });
 
-// POST /lapor/meja/<ticket>: the officer moved the ticket or wrote back, named on the page after.
-// Asking who reported is answered on the page. With none of these it was opened, so it is logged
-// and a new ticket is seen.
+// The photo and the officer's reading, as the API takes them.
+function proofForm(form: FormData): FormData {
+  const proof = new FormData();
+  for (const name of ["photo", "lat", "lon", "accuracy", "readAt"]) {
+    const value = form.get(name);
+    if (value !== null) proof.set(name, value);
+  }
+  return proof;
+}
+
+// What each of the page's forms posts, by its action. Anything else is the report being opened, so
+// it is logged and a new ticket is seen.
+function deskPost(form: FormData): readonly [path: string, body?: unknown] {
+  const text = (name: string) => formText(form, name);
+  const revision = Number(text("revision"));
+  const done = { actions: form.getAll("actions"), otherAction: text("otherAction") };
+  switch (text("action")) {
+    case "status":
+      return ["status", { to: text("to"), note: text("note"), revision, ...done }];
+    case "reply":
+      return ["replies", { text: text("reply") }];
+    case "check":
+      return [
+        "checks",
+        {
+          result: text("result"),
+          note: text("checkNote"),
+          boxes: Object.fromEntries(
+            [...form.keys()].filter((name) => name.startsWith("box.")).map((name) => [name.slice(4), text(name)]),
+          ),
+          revision,
+        },
+      ];
+    case "actions":
+      return ["actions", done];
+    case "proof":
+      return ["proofs", proofForm(form)];
+    case "identity":
+      return ["identity"];
+    default:
+      return ["view"];
+  }
+}
+
+const typedIn = (form: FormData): DeskTyped => ({
+  values: Object.fromEntries([...form].flatMap(([name, value]) => (typeof value === "string" ? [[name, value]] : []))),
+  actions: form.getAll("actions").map(String),
+});
+
+// POST /lapor/meja/<ticket>: one of the page's forms. A change kept is named on the page after;
+// asking who reported is answered on the page itself.
 export async function actOnDeskReport(ticketNumber: string, form: FormData, api: ApiCall): Promise<DeskReportActed> {
   const ticket = encodeURIComponent(ticketNumber);
-  const action = formText(form, "action");
-  const typed = { to: formText(form, "to"), note: formText(form, "note"), reply: formText(form, "reply") };
-  const saved = action === "status" || action === "reply" ? `?saved=${action}` : "";
-  const response =
-    action === "status"
-      ? await api("POST", `/desk/reports/${ticket}/status`, {
-          to: typed.to,
-          note: typed.note,
-          revision: Number(formText(form, "revision")),
-        })
-      : action === "reply"
-        ? await api("POST", `/desk/reports/${ticket}/replies`, { text: typed.reply })
-        : await api("POST", `/desk/reports/${ticket}/${action === "identity" ? "identity" : "view"}`);
-  if (!response.ok)
-    return { kind: "render", status: response.status, envelope: (await response.json()) as ErrorEnvelope, typed };
-  if (action === "identity") return { kind: "identity", identity: (await response.json()) as DeskIdentity };
-  return redirectTo(`/lapor/meja/${ticket}${saved}`, response);
+  const [path, body] = deskPost(form);
+  const response = await api("POST", `/desk/reports/${ticket}/${path}`, body);
+  if (!response.ok) {
+    const envelope = (await response.json()) as ErrorEnvelope;
+    return { kind: "render", status: response.status, envelope, typed: typedIn(form) };
+  }
+  if (path === "identity") return { kind: "identity", identity: (await response.json()) as DeskIdentity };
+  return redirectTo(`/lapor/meja/${ticket}${path === "view" ? "" : `?saved=${path}`}`, response);
 }

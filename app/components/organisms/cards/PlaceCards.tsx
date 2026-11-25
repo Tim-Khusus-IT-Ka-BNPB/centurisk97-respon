@@ -1,9 +1,9 @@
-import { type ReactNode, useState, useSyncExternalStore } from "react";
+import { type ReactNode, useState } from "react";
 import { Form, Link, useNavigation, useSubmit } from "react-router";
 import type { Card } from "../../../../src/contract/card";
 import { readPosition } from "../../../lib/device";
 import { problemOf } from "../../../lib/envelope";
-import { useBusy } from "../../../lib/hooks";
+import { useBusy, useHydrated } from "../../../lib/hooks";
 import { areaName, type PlaceItem, rowText, searchStatus } from "../../../lib/place";
 import { breakAfterSlash } from "../../../lib/slash";
 import { useText } from "../../../lib/text";
@@ -20,15 +20,6 @@ const row =
 
 type SearchCard = Extract<Card, { kind: "placeSearch" | "regencyVillages" }>;
 type ConfirmCard = Extract<Card, { kind: "placeConfirm" }>;
-
-const noSubscribe = () => () => {};
-// True once the page runs script; the server render and a page with no script draw without it.
-export const useHydrated = () =>
-  useSyncExternalStore(
-    noSubscribe,
-    () => true,
-    () => false,
-  );
 
 type Locating =
   | { readonly kind: "idle" | "reading" }

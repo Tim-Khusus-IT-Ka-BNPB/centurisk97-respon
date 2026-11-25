@@ -4,13 +4,12 @@ import type { Card } from "../../../../src/contract/card";
 import type { Tracking } from "../../../../src/contract/tracking";
 import { qrModules, qrPath } from "../../../../src/domain/qr";
 import { problemOf } from "../../../lib/envelope";
-import { useBusy, useMountFocus } from "../../../lib/hooks";
+import { useBusy, useHydrated, useMountFocus } from "../../../lib/hooks";
 import { useText } from "../../../lib/text";
 import { buttonStyles } from "../../atoms/Button";
 import { Icon } from "../../atoms/Icon";
 import { FieldError } from "../../molecules/Field";
 import { headingIdOf, useDraftView } from "./CardShell";
-import { useHydrated } from "./PlaceCards";
 
 type SentCardData = Extract<Card, { kind: "sent" }>;
 

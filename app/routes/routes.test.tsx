@@ -336,6 +336,10 @@ describe("desk routes", () => {
       photos: [],
       nextStatuses: [],
       revision: 0,
+      revisable: [],
+      offeredActions: [],
+      actions: [],
+      proofs: [],
       replies: [],
       impact: { dead: null, missing: null, injured: null, displaced: null, houses: null },
     };

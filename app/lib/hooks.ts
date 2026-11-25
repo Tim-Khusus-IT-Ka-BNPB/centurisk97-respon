@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, useSyncExternalStore } from "react";
 import { useNavigation } from "react-router";
 import { INTENT } from "./turnForm";
 
@@ -51,3 +51,12 @@ export function useWaitingUntil(untilMs: number | null): boolean {
   }, [untilMs]);
   return waiting;
 }
+
+const noSubscribe = () => () => {};
+// True once the page runs script; the server render and a page with no script draw without it.
+export const useHydrated = () =>
+  useSyncExternalStore(
+    noSubscribe,
+    () => true,
+    () => false,
+  );

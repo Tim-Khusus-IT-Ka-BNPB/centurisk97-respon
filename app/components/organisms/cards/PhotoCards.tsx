@@ -4,14 +4,13 @@ import type { Card } from "../../../../src/contract/card";
 import { isRecentFile, type Position, photoFix, preparePhoto } from "../../../lib/device";
 import type { FieldProblem } from "../../../lib/envelope";
 import { problemOf } from "../../../lib/envelope";
-import { useBusy } from "../../../lib/hooks";
+import { useBusy, useHydrated } from "../../../lib/hooks";
 import { useText } from "../../../lib/text";
 import { clockTime } from "../../../lib/time";
 import { Button, buttonStyles } from "../../atoms/Button";
 import { Icon } from "../../atoms/Icon";
 import { FieldError } from "../../molecules/Field";
 import { CardShell, TurnForm, useDraftView } from "./CardShell";
-import { useHydrated } from "./PlaceCards";
 
 type PhotosCard = Extract<Card, { kind: "photos" }>;
 type Photo = PhotosCard["photos"][number];

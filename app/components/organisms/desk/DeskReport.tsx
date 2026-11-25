@@ -6,8 +6,8 @@ import type { DeskTyped } from "../../../lib/deskTypes";
 import { cardProblem, isLimit } from "../../../lib/envelope";
 import { limitText } from "../../../lib/status";
 import { hazardOf, rowParts } from "../../../lib/summary";
-import { useText } from "../../../lib/text";
-import { Button } from "../../atoms/Button";
+import { type Text, useText } from "../../../lib/text";
+import { Button, buttonStyles } from "../../atoms/Button";
 import { Icon } from "../../atoms/Icon";
 import { Notice } from "../../molecules/Notice";
 import { StateMark } from "../cards/SummaryCards";
@@ -15,6 +15,8 @@ import { DeskActions } from "./DeskActions";
 import { Hazard, PhotoFigure } from "./DeskQueue";
 import { DeskShell } from "./DeskShell";
 import { Houses, StatusChip, spacedNumber, UnverifiedChip, Victims, when } from "./parts";
+
+const SAVED = ["status", "replies", "checks", "actions", "proofs"];
 
 const ALL = { view: "map", status: "", hazardType: "", period: "all", ticket: "", has: "", page: 1 } as const;
 
@@ -64,11 +66,66 @@ function Section({
 }) {
   return (
     <section aria-labelledby={id} className="flex flex-col gap-3 card-surface p-4 md:p-5">
-      <h2 id={id} className="text-card font-bold">
+      <h2 id={id} className="scroll-mt-20 text-card font-bold">
         {title}
       </h2>
       {children}
     </section>
+  );
+}
+
+// A history row's name: the status it reached, or the work it tells of.
+function historyTitle(t: Text, entry: DeskReport["history"][number]): string {
+  if (entry.event === "actions") return t("desk.handling.actions");
+  if (entry.event === "fieldCheck")
+    return t("desk.history.check", { result: `desk.check.result.${entry.detail?.result}` });
+  return t(`stage.long.${entry.status}`);
+}
+
+// What was done: its actions, and the photos of it.
+function Handling({ report }: { readonly report: DeskReport }) {
+  const t = useText();
+  if (report.actions.length === 0 && report.proofs.length === 0) return null;
+  return (
+    <Section id="desk-handling" title={t("desk.handling")}>
+      {report.actions.length === 0 ? null : (
+        <ul className="flex flex-col gap-2">
+          {report.actions.map((action) => (
+            <li key={action.label} className="flex items-start gap-2">
+              <Icon name="circleCheck" className="mt-0.5 size-5 text-primary" />
+              <span className="flex min-w-0 flex-col">
+                <span className="font-semibold break-words">{action.label}</span>
+                <span className="text-meta text-muted tabular-nums">
+                  {t("desk.reply.by", { actor: action.actor, at: when(t, "desk.history.at", action.at) })}
+                </span>
+              </span>
+            </li>
+          ))}
+        </ul>
+      )}
+      {report.proofs.length === 0 ? null : (
+        <ul className="grid grid-cols-2 gap-3 sm:grid-cols-3">
+          {report.proofs.map((proof, index) => (
+            <li key={proof.proofId}>
+              <figure className="flex flex-col gap-2">
+                <a href={`/api/lapor/desk/proofs/${proof.proofId}`}>
+                  <img
+                    src={`/api/lapor/desk/proofs/${proof.proofId}`}
+                    alt={t("desk.proof.alt", { n: index + 1 })}
+                    loading="lazy"
+                    className="aspect-[4/3] w-full rounded-control bg-sunken object-cover"
+                  />
+                </a>
+                <figcaption className="flex flex-col text-meta text-muted tabular-nums">
+                  <span>{when(t, "desk.history.at", proof.at)}</span>
+                  <span>{t(proof.hasPoint ? "desk.proof.point" : "desk.proof.noPoint")}</span>
+                </figcaption>
+              </figure>
+            </li>
+          ))}
+        </ul>
+      )}
+    </Section>
   );
 }
 
@@ -149,7 +206,7 @@ export function DeskReportView({
           <p>{t(problem.copyKey, problem.params)}</p>
         </Notice>
       )}
-      {refusal === null && (saved === "status" || saved === "reply") ? (
+      {refusal === null && saved !== null && SAVED.includes(saved) ? (
         <div role="status">
           <Notice kind="info">
             <p>{t(`desk.saved.${saved}`, { status: `stage.long.${report.status}` })}</p>
@@ -180,17 +237,13 @@ export function DeskReportView({
           </div>
         </div>
         <MarkSeen report={report} />
+        <a href="#desk-actions" className={buttonStyles({ variant: "secondary", className: "self-start xl:hidden" })}>
+          <Icon name="wrench" className="size-5" />
+          {t("desk.actions")}
+        </a>
       </header>
-      {/* On a phone: the work first, then the report, then its history. */}
+      {/* On a phone the report is read first; the link in its header leads to the work under it. */}
       <div className="grid gap-5 xl:grid-cols-[minmax(0,1fr)_25rem] xl:grid-rows-[auto_1fr] xl:items-start">
-        <div className="flex min-w-0 flex-col gap-5 xl:col-start-2 xl:row-start-1">
-          <Section id="desk-actions" title={t("desk.actions")}>
-            <DeskActions report={report} envelope={refusal} typed={typed} />
-          </Section>
-          <Section id="desk-reporter" title={t("desk.reporter")}>
-            <Reporter report={report} identity={report.reporter.identity ?? identity} />
-          </Section>
-        </div>
         <div className="flex min-w-0 flex-col gap-5 xl:col-start-1 xl:row-span-2 xl:row-start-1">
           <Section id="desk-photos" title={t("desk.photos")}>
             {report.photos.length === 0 ? (
@@ -205,6 +258,7 @@ export function DeskReportView({
               </ul>
             )}
           </Section>
+          <Handling report={report} />
           <Section id="desk-values" title={t("desk.values")}>
             <p className="-mt-2 text-meta text-muted">{t("desk.complete", { percent: report.completePercent })}</p>
             {report.groups.map((group) => (
@@ -234,6 +288,14 @@ export function DeskReportView({
             ))}
           </Section>
         </div>
+        <div className="flex min-w-0 flex-col gap-5 xl:col-start-2 xl:row-start-1">
+          <Section id="desk-actions" title={t("desk.actions")}>
+            <DeskActions report={report} envelope={refusal} typed={typed} />
+          </Section>
+          <Section id="desk-reporter" title={t("desk.reporter")}>
+            <Reporter report={report} identity={report.reporter.identity ?? identity} />
+          </Section>
+        </div>
         <div className="flex min-w-0 flex-col gap-5 xl:col-start-2 xl:row-start-2">
           <Section id="desk-history" title={t("desk.history")}>
             <ol className="flex flex-col">
@@ -246,9 +308,19 @@ export function DeskReportView({
                     ) : null}
                   </span>
                   <span className="flex min-w-0 flex-col">
-                    <span className="font-semibold">{t(`stage.long.${entry.status}`)}</span>
+                    <span className="font-semibold">{historyTitle(t, entry)}</span>
                     <span className="text-meta text-muted tabular-nums">{when(t, "desk.history.at", entry.at)}</span>
                     <span className="text-meta">{entry.actor ?? t("desk.history.system")}</span>
+                    {(entry.detail?.changes ?? []).map((change) => (
+                      <span key={change.fieldId}>
+                        {t("desk.history.change", {
+                          label: `field.${change.fieldId}.label`,
+                          from: change.from === null ? "desk.impact.unknown" : change.from,
+                          to: change.to,
+                        })}
+                      </span>
+                    ))}
+                    {entry.detail?.actions ? <span>{entry.detail.actions.join(", ")}</span> : null}
                     {entry.forwardedTo === null ? null : (
                       <span>{t("desk.history.forwardedTo", { regency: entry.forwardedTo })}</span>
                     )}

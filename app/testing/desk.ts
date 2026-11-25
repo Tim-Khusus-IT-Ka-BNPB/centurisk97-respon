@@ -102,13 +102,15 @@ export const REPORT: DeskReport = {
     },
   ],
   history: [
-    { status: "new", at: SENT, actor: null, note: null, forwardedTo: null },
+    { status: "new", at: SENT, actor: null, note: null, forwardedTo: null, event: null, detail: null },
     {
       status: "seen",
       at: { ...SENT, utc: "2026-11-24T02:40:00.000Z" },
       actor: "Pusdalops BNPB, Petugas Uji",
       note: "Dicek",
       forwardedTo: null,
+      event: null,
+      detail: null,
     },
   ],
   reporterWords: [{ text: "banjir, dua orang meninggal", at: SENT }],
@@ -118,6 +120,16 @@ export const REPORT: DeskReport = {
     { status: "invalid", note: "reason" },
   ],
   revision: 1,
+  revisable: [
+    { fieldId: "dead", unit: "people", max: 100_000, count: 2 },
+    { fieldId: "injured", unit: "people", max: 1_000_000, count: null },
+  ],
+  offeredActions: [
+    { code: "evakuasi", label: "Evakuasi warga" },
+    { code: "logistik", label: "Distribusi logistik" },
+  ],
+  actions: [],
+  proofs: [],
   replies: [],
 };
 

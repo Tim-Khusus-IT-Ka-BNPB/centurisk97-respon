@@ -145,15 +145,64 @@ describe("a change to a ticket", () => {
     );
     expect(moved).toMatchObject({ kind: "redirect", location: "/lapor/meja/LA-241126-01?saved=status" });
     const replied = await actOnDeskReport("LA-241126-01", form({ action: "reply", reply: "Kami cek" }), api);
-    expect(replied).toMatchObject({ kind: "redirect", location: "/lapor/meja/LA-241126-01?saved=reply" });
+    expect(replied).toMatchObject({ kind: "redirect", location: "/lapor/meja/LA-241126-01?saved=replies" });
     expect(calls).toEqual([
       {
         method: "POST",
         path: "/desk/reports/LA-241126-01/status",
-        body: { to: "under_review", note: "Dicek", revision: 3 },
+        body: { to: "under_review", note: "Dicek", revision: 3, actions: [], otherAction: "" },
       },
       { method: "POST", path: "/desk/reports/LA-241126-01/replies", body: { text: "Kami cek" } },
     ]);
+  });
+
+  test("a check sends its figures by field, and what was done its boxes", async () => {
+    const { api, calls } = fakeApi(() => Response.json({}));
+    const checked = await actOnDeskReport(
+      "LA-241126-01",
+      form({
+        action: "check",
+        result: "partly",
+        checkNote: "Dicek",
+        "box.dead": "2",
+        "box.injured": "",
+        revision: "4",
+      }),
+      api,
+    );
+    expect(checked).toMatchObject({ location: "/lapor/meja/LA-241126-01?saved=checks" });
+    const done = form({ action: "actions", otherAction: "Sedot sumur" });
+    done.append("actions", "evakuasi");
+    done.append("actions", "logistik");
+    expect(await actOnDeskReport("LA-241126-01", done, api)).toMatchObject({
+      location: "/lapor/meja/LA-241126-01?saved=actions",
+    });
+    expect(calls.map((call) => [call.path, call.body])).toEqual([
+      [
+        "/desk/reports/LA-241126-01/checks",
+        { result: "partly", note: "Dicek", boxes: { dead: "2", injured: "" }, revision: 4 },
+      ],
+      ["/desk/reports/LA-241126-01/actions", { actions: ["evakuasi", "logistik"], otherAction: "Sedot sumur" }],
+    ]);
+  });
+
+  test("a photo of the work goes on as a form with only its own boxes, and comes back with none when refused", async () => {
+    const photo = new File(["x"], "a.jpg", { type: "image/jpeg" });
+    const proof = form({ action: "proof", lat: "5.1", lon: "97", extra: "x" });
+    proof.set("photo", photo);
+    const kept = fakeApi(() => Response.json({}));
+    expect(await actOnDeskReport("LA-241126-01", proof, kept.api)).toMatchObject({
+      location: "/lapor/meja/LA-241126-01?saved=proofs",
+    });
+    const sent = kept.calls[0]?.body as FormData;
+    expect([...sent.keys()].sort()).toEqual(["lat", "lon", "photo"]);
+    const refused = await actOnDeskReport(
+      "LA-241126-01",
+      proof,
+      fakeApi(() => Response.json(envelope("request.invalidFields"), { status: 422 })).api,
+    );
+    expect(refused).toMatchObject({ typed: { values: { action: "proof", lat: "5.1" }, actions: [] } });
+    expect((refused as { typed: { values: object } }).typed.values).not.toHaveProperty("photo");
   });
 
   test("asking who reported answers on the page, with nothing in the address", async () => {
@@ -172,7 +221,11 @@ describe("a change to a ticket", () => {
       form({ action: "status", to: "invalid", note: "dup", revision: "3" }),
       fakeApi(() => Response.json(envelope("request.invalidFields"), { status: 422 })).api,
     );
-    expect(refused).toMatchObject({ kind: "render", status: 422, typed: { to: "invalid", note: "dup", reply: "" } });
+    expect(refused).toMatchObject({
+      kind: "render",
+      status: 422,
+      typed: { values: { action: "status", to: "invalid", note: "dup", revision: "3" }, actions: [] },
+    });
   });
 });
 

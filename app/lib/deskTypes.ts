@@ -12,7 +12,10 @@ export type DeskShown =
   | { readonly view: "gallery"; readonly gallery: DeskGallery };
 
 // What a refused change held, typed by the officer.
-export type DeskTyped = { readonly to: string; readonly note: string; readonly reply: string };
+export type DeskTyped = {
+  readonly values: Readonly<Record<string, string>>;
+  readonly actions: readonly string[];
+};
 
 export type DeskFilters = {
   readonly view: DeskView;
