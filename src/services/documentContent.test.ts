@@ -32,6 +32,7 @@ const source = (states: FieldStates, more: Partial<DocumentSource> = {}): Docume
   reporterRole: "citizen",
   officerRegency: null,
   numberUnverified: false,
+  door: "web",
   emergency: null,
   photos: [],
   photosLeft: 0,
@@ -57,6 +58,18 @@ describe("what a document says", () => {
       "Lokasi|Desa/Kel. Contoh, Kec. Baktiya, Aceh Utara, Aceh, Titik GPS, ketelitian ±12 m. Titik 5.10000, 97.20000|Dipilih pelapor",
     );
     expect(texts(from)).toContain("Nomor pelapor|Sudah diverifikasi");
+  });
+
+  test("what was written in a chat says so, and a location shared there tells no accuracy", () => {
+    const place = {
+      ...PLACE,
+      value: { ...PLACE.value, precision: "chatLocation", point: { lat: 5.1, lon: 97.2, accuracyM: null } },
+    } as const;
+    const from = source({ place, dead: count(2) }, { door: "chat" });
+    expect(texts(from)).toContain("Meninggal|2 orang|Ditulis pelapor di chat");
+    expect(texts(from)).toContain(
+      "Lokasi|Desa/Kel. Contoh, Kec. Baktiya, Aceh Utara, Aceh, Lokasi dibagikan lewat WhatsApp. Titik 5.10000, 97.20000|Dipilih pelapor",
+    );
   });
 
   test("the headline names the hazard, its kind when known, or says it is not known", () => {

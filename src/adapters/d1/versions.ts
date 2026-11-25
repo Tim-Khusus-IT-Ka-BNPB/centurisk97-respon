@@ -1,6 +1,7 @@
 import type { EmergencyKind, VictimAnswer } from "../../domain/emergency";
 import type { FieldStates } from "../../domain/fieldState";
 import type { ReporterRole } from "../../domain/identityForm";
+import type { Door } from "../../domain/ownership";
 import { type Database, parsed, row, rows, sql } from "../../platform/database";
 
 // Who made a version: the reporter by sending or adding news, or an officer by a check on site.
@@ -40,6 +41,7 @@ type VersionDetail = VersionRow & {
   readonly reporterRole: ReporterRole;
   readonly officerRegency: string | null;
   readonly numberUnverified: boolean;
+  readonly door: Door;
   readonly note: string | null;
   readonly draftId: string;
   readonly villageCode: string;
@@ -51,6 +53,7 @@ type StoredDetail = Stored & {
   reporter_role: ReporterRole;
   officer_regency: string | null;
   number_unverified: number;
+  door: Door;
   draft_id: string;
   village_code: string;
   sent_at: string;
@@ -67,7 +70,7 @@ export async function versionDetail(
   const found = await row<StoredDetail>(
     db,
     sql`select v.version, v.created_at, v.fields, ${CHECK_NOTE} as note, v.reporter_role, v.officer_regency,
-        r.number_unverified, r.draft_id, r.village_code, r.sent_at, r.emergency, r.emergency_victims
+        r.number_unverified, r.door, r.draft_id, r.village_code, r.sent_at, r.emergency, r.emergency_victims
       from report_version v join report r on r.id = v.report_id
       where r.ticket_number = ${ticketNumber} and v.version = ${version}`,
   );
@@ -78,6 +81,7 @@ export async function versionDetail(
         reporterRole: found.reporter_role,
         officerRegency: found.officer_regency,
         numberUnverified: found.number_unverified === 1,
+        door: found.door,
         note: found.note,
         draftId: found.draft_id,
         villageCode: found.village_code,

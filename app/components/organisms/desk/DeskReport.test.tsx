@@ -38,6 +38,16 @@ describe("a report on the desk", () => {
     expect(screen.getByRole("alert").textContent).toContain("Dokumen belum bisa diunduh.");
   });
 
+  test("one that came through WhatsApp says so, and where its values were written", async () => {
+    const chat = { ...REPORT, door: "chat" as const, numberUnverified: false };
+    await renderDesk(<DeskReportView report={chat} summary={SUMMARY} />, PATH);
+    const header = screen.getByRole("heading", { level: 1 }).closest("header") as HTMLElement;
+    expect(within(header).getByText("Lewat WhatsApp")).toBeTruthy();
+    expect(screen.getByText("Laporan ini dikirim dari WhatsApp nomor ini.")).toBeTruthy();
+    expect(screen.getAllByText("Ditulis pelapor di chat").length).toBeGreaterThan(0);
+    expect(screen.queryByText("Diisi pelapor di kotak isian")).toBeNull();
+  });
+
   test("its point on a small map, or none where its village has no outline", async () => {
     const view = await renderDesk(<DeskReportView report={REPORT} summary={SUMMARY} />, PATH);
     expect(drawn.points).toEqual([REPORT.point]);

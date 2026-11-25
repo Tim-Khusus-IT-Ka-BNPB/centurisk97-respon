@@ -31,6 +31,22 @@ const POINT = {
 
 const table = () => within(screen.getByRole("table"));
 
+test("a report that came through WhatsApp is marked in the table and the cards", async () => {
+  const [item] = queue().items as [ReturnType<typeof queue>["items"][number]];
+  await renderDesk(
+    <DeskQueueView
+      shown={list(queue({ items: [{ ...item, door: "chat", numberUnverified: false }], total: 1 }))}
+      summary={SUMMARY}
+      filters={FILTERS}
+      envelope={null}
+    />,
+    { path: "/lapor/meja" },
+  );
+  expect(table().getByText("Lewat WhatsApp")).toBeTruthy();
+  expect(screen.getAllByText("Lewat WhatsApp")).toHaveLength(2);
+  expect(screen.queryByText("Nomor belum diverifikasi")).toBeNull();
+});
+
 test("a report with news no officer has acted on is marked in the table and the cards", async () => {
   const [item] = queue().items as [ReturnType<typeof queue>["items"][number]];
   await renderDesk(

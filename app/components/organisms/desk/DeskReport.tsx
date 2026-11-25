@@ -20,6 +20,7 @@ import { DeskShell } from "./DeskShell";
 import { DeskValues } from "./DeskValues";
 import {
   ALL_FILTERS,
+  ChatChip,
   EmergencyChip,
   ImpactStrip,
   NewsChip,
@@ -252,6 +253,7 @@ function Reporter({ report, identity }: { readonly report: DeskReport; readonly 
         {t("desk.reporter.call", { number: spacedNumber(identity.number) })}
       </a>
       {report.numberUnverified ? <p className="text-meta text-muted">{t("desk.reporter.unverifiedHint")}</p> : null}
+      {report.door === "chat" ? <p className="text-meta text-muted">{t("desk.reporter.chatHint")}</p> : null}
     </>
   );
 }
@@ -313,6 +315,7 @@ export function DeskReportView({
               {report.emergency === null ? null : <EmergencyChip />}
               {report.news ? <NewsChip /> : null}
               {report.numberUnverified ? <UnverifiedChip /> : null}
+              {report.door === "chat" ? <ChatChip /> : null}
             </div>
             <Hazard item={report} />
             <div className="flex flex-col gap-0.5">

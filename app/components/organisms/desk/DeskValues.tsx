@@ -7,7 +7,15 @@ type Row = DeskReport["groups"][number]["rows"][number];
 
 // One value: what was asked, what is known of it, and at the end of the line where it came from;
 // on a phone a long value takes its line alone.
-function ValueRow({ row, hazardType }: { readonly row: Row; readonly hazardType: Parameters<typeof rowParts>[2] }) {
+function ValueRow({
+  row,
+  hazardType,
+  door,
+}: {
+  readonly row: Row;
+  readonly hazardType: Parameters<typeof rowParts>[2];
+  readonly door: DeskReport["door"];
+}) {
   const t = useText();
   const parts = rowParts(t, row, hazardType);
   const origin = row.state === "notYetKnown" ? null : row.origin;
@@ -22,7 +30,9 @@ function ValueRow({ row, hazardType }: { readonly row: Row; readonly hazardType:
         )}
         {row.quote === null ? null : <q className="block text-meta text-muted italic">{row.quote}</q>}
       </dd>
-      {origin === null ? null : <dd className="text-meta text-muted sm:text-end">{t(`desk.origin.${origin}`)}</dd>}
+      {origin === null ? null : (
+        <dd className="text-meta text-muted sm:text-end">{t(t.variant(`desk.origin.${origin}`, door))}</dd>
+      )}
     </div>
   );
 }
@@ -46,7 +56,7 @@ export function DeskValues({ report }: { readonly report: DeskReport }) {
           </h3>
           <dl className="divide-y divide-line">
             {group.rows.map((row) => (
-              <ValueRow key={row.fieldId} row={row} hazardType={hazardType} />
+              <ValueRow key={row.fieldId} row={row} hazardType={hazardType} door={report.door} />
             ))}
           </dl>
         </div>

@@ -124,6 +124,27 @@ export function NewsChip() {
   );
 }
 
+// The report came through a WhatsApp chat, so its number is the reporter's own.
+export function ChatMark() {
+  const t = useText();
+  return (
+    <span className="inline-flex items-start gap-1 text-meta text-muted">
+      <Icon name="messageSquare" className="mt-0.5 size-4" />
+      {t("desk.door.chat")}
+    </span>
+  );
+}
+
+export function ChatChip() {
+  const t = useText();
+  return (
+    <span className="inline-flex items-center gap-1 rounded-chip border border-line bg-surface px-2 py-0.5 text-meta">
+      <Icon name="messageSquare" className="size-4" />
+      {t("desk.door.chat")}
+    </span>
+  );
+}
+
 export function UnverifiedChip() {
   const t = useText();
   return (
