@@ -5,7 +5,7 @@ import { Icon } from "../atoms/Icon";
 import type { IconName } from "../atoms/icons";
 
 const tile =
-  "flex min-h-target-main w-full min-w-0 flex-col items-start gap-2 rounded-control border border-control bg-surface p-3 text-start @tiles:flex-row @tiles:gap-3 text-ink hover:bg-[color-mix(in_oklch,var(--surface),var(--ink)_4%)]";
+  "flex min-h-target-main w-full min-w-0 flex-col items-start gap-2 rounded-control border border-control bg-surface p-3 text-start text-ink hover:border-primary hover:bg-[color-mix(in_oklab,var(--surface),var(--selected)_55%)] @row:flex-row @row:items-center @row:gap-3";
 
 type TileText = {
   readonly label: string;
@@ -18,11 +18,15 @@ type TileText = {
 function TileBody({ label, note, extra, icon }: TileText) {
   return (
     <>
-      {icon ? <Icon name={icon} className="mt-0.5" /> : null}
+      {icon ? (
+        <span className="flex size-10 shrink-0 items-center justify-center rounded-control bg-selected text-primary">
+          <Icon name={icon} />
+        </span>
+      ) : null}
       <span className="flex min-w-0 flex-col gap-0.5 break-words">
         <span className="text-body font-semibold">{breakAfterSlash(label)}</span>
         {extra ? <span className="text-meta font-semibold text-ink">{extra}</span> : null}
-        {note ? <span className="text-meta text-muted">{breakAfterSlash(note)}</span> : null}
+        {note ? <span className="text-meta text-pretty text-muted">{breakAfterSlash(note)}</span> : null}
       </span>
     </>
   );
@@ -101,7 +105,7 @@ export function TileCheck({
         aria-invalid={describedBy ? true : undefined}
         aria-describedby={describedBy}
         onChange={onChange}
-        className="mt-0.5 size-5 shrink-0"
+        className="size-5 shrink-0"
       />
       <TileBody {...text} />
     </label>

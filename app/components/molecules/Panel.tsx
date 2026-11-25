@@ -20,13 +20,13 @@ export function Panel({
   return (
     <section
       aria-labelledby={id}
-      className="@container flex min-w-0 animate-settle flex-col gap-4 card-surface p-4 md:p-5"
+      className="@container flex min-w-0 animate-settle flex-col gap-5 card-surface p-5 md:p-7"
     >
       <div className="flex flex-col gap-2">
-        <h2 id={id} ref={heading} tabIndex={-1} autoFocus={focusHeading} className="text-card font-bold text-balance">
+        <h2 id={id} ref={heading} tabIndex={-1} autoFocus={focusHeading} className="text-page font-bold text-balance">
           {title}
         </h2>
-        {lead ? <p>{lead}</p> : null}
+        {lead ? <p className="text-muted">{lead}</p> : null}
       </div>
       {children}
     </section>

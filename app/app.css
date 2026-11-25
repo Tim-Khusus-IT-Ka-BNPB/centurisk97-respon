@@ -4,25 +4,32 @@
 /* Evacuation route signage: one navy ink on a near-white ground, one signal colour for 112. */
 :root {
   color-scheme: light;
-  --bg: oklch(97.5% 0.005 255);
+  --bg: oklch(97.8% 0.005 255);
   --surface: oklch(100% 0 0);
   --sunken: oklch(95% 0.012 255);
   --ink: oklch(25% 0.07 256);
   --muted: oklch(45% 0.04 258);
-  --line: oklch(88% 0.012 255);
-  --control: oklch(55% 0.03 258);
-  --primary: oklch(32% 0.1 256);
+  --line: oklch(90.5% 0.01 255);
+  --control: oklch(62% 0.027 258);
+  --primary: oklch(37% 0.125 258);
   --on-primary: oklch(100% 0 0);
-  --selected: oklch(94% 0.03 255);
+  --selected: oklch(94.5% 0.028 255);
   --focus: oklch(52% 0.17 255);
-  --signal: oklch(50% 0.17 35);
+  --signal: oklch(53% 0.205 28);
   --on-signal: oklch(100% 0 0);
-  --signal-tint: oklch(95% 0.03 45);
+  --signal-deep: oklch(45% 0.18 28);
+  /* The picked part of a segmented switch. */
+  --thumb: oklch(100% 0 0);
+  --signal-tint: oklch(96.5% 0.018 28);
   --danger: oklch(50% 0.19 27);
   --danger-tint: oklch(96% 0.02 27);
   --warn-tint: oklch(95% 0.05 85);
-  --warn-icon: oklch(52% 0.11 75);
+  --warn-icon: oklch(50% 0.11 65);
+  /* Reports nobody has handled yet, on dots and markers; words sit beside it. */
+  --open: oklch(62% 0.15 58);
+  --on-open: oklch(100% 0 0);
   --dock-shadow: oklch(25% 0.07 256 / 0.1);
+  --card-shadow: oklch(25% 0.07 256 / 0.05);
   /* BNPB's orange from the emblem, for the one main action on navy. */
   --accent: oklch(74% 0.17 60);
   --on-accent: oklch(22% 0.07 256);
@@ -47,14 +54,19 @@
   --on-primary: oklch(17% 0.03 256);
   --selected: oklch(29% 0.05 255);
   --focus: oklch(78% 0.11 252);
-  --signal: oklch(74% 0.14 45);
-  --on-signal: oklch(17% 0.03 256);
-  --signal-tint: oklch(26% 0.05 40);
+  --signal: oklch(57% 0.205 27);
+  --on-signal: oklch(100% 0 0);
+  --signal-deep: oklch(47% 0.18 27);
+  --thumb: oklch(36% 0.05 256);
+  --signal-tint: oklch(26% 0.05 30);
   --danger: oklch(76% 0.14 27);
   --danger-tint: oklch(25% 0.05 27);
   --warn-tint: oklch(27% 0.04 80);
   --warn-icon: oklch(80% 0.12 80);
+  --open: oklch(80% 0.13 75);
+  --on-open: oklch(17% 0.03 256);
   --dock-shadow: oklch(0% 0 0 / 0.4);
+  --card-shadow: oklch(0% 0 0 / 0.2);
   --accent: oklch(76% 0.16 62);
   --on-accent: oklch(20% 0.05 256);
   --hero: oklch(22% 0.06 257);
@@ -79,6 +91,8 @@
   --color-focus: var(--focus);
   --color-signal: var(--signal);
   --color-on-signal: var(--on-signal);
+  --color-signal-deep: var(--signal-deep);
+  --color-thumb: var(--thumb);
   --color-signal-tint: var(--signal-tint);
   --color-danger: var(--danger);
   --color-danger-tint: var(--danger-tint);
@@ -97,6 +111,8 @@
   --spacing: 4px;
   --breakpoint-md: 37.5rem;
   --breakpoint-lg: 60rem;
+  /* Wide enough for an icon or a box beside its words; text at 200% stacks them. */
+  --container-row: 13rem;
   --container-tiles: 22rem;
   --container-actions: 24rem;
   --text-meta: 0.875rem;
@@ -120,7 +136,8 @@
   --spacing-target: 48px;
   --spacing-target-main: 56px;
   --shadow-dock: 0 -2px 8px var(--dock-shadow);
-  --shadow-card: 0 1px 2px var(--dock-shadow), 0 6px 16px var(--dock-shadow);
+  --shadow-card: 0 1px 2px var(--card-shadow), 0 2px 8px var(--card-shadow);
+  --shadow-float: 0 2px 4px var(--dock-shadow), 0 8px 24px var(--dock-shadow);
   --ease-settle: cubic-bezier(0.16, 1, 0.3, 1);
 }
 
@@ -143,6 +160,8 @@
     overflow-x: hidden;
     /* Words break only between words; only the reporter's own bubbles may break inside one. */
     overflow-wrap: break-word;
+    /* The typeface sets words very close together. */
+    word-spacing: 0.06em;
   }
   ::selection {
     background-color: var(--selected);
@@ -211,20 +230,50 @@
   box-shadow: var(--shadow-card);
 }
 
-/* Contour lines, as on a hazard map, faint behind the home's opening band. */
+/* Contour lines, as on a hazard map, faint behind the home's opening band. One drawing, never tiled. */
 @utility contours {
-  background-color: var(--hero);
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='600' height='400' fill='none' stroke='white' stroke-width='1.2'%3E%3Cpath d='M-20 320c80-40 140-10 210-50s90-110 170-120 140 40 260 10'/%3E%3Cpath d='M-20 350c90-35 150-5 225-45s100-115 180-122 150 45 235 20'/%3E%3Cpath d='M-20 380c95-30 160 0 240-40s110-120 190-125 160 50 210 30'/%3E%3Cpath d='M-20 60c70 30 120 70 200 50s120-60 200-40 120 60 240 40'/%3E%3Cpath d='M-20 30c75 32 130 76 210 56s125-62 205-42 130 64 225 44'/%3E%3Cpath d='M380 220c30-30 80-30 100 0s-10 60-50 60-80-30-50-60z'/%3E%3Cpath d='M360 222c40-48 110-46 140 0s-15 85-70 85-110-40-70-85z'/%3E%3C/svg%3E");
-  background-size: 600px 400px;
-  background-blend-mode: normal;
-  position: relative;
-  &::before {
+  background: var(--hero) url("./assets/contours.svg") right center / cover no-repeat;
+}
+
+/* A row that scrolls sideways fades where more of it waits. */
+@utility fade-x {
+  mask-image: linear-gradient(to right, black calc(100% - 2.5rem), transparent);
+  padding-inline-end: 2.5rem;
+  scrollbar-width: none;
+}
+
+/* A figure: its name and meaning on the left, its box on the right; stacked where words are large. */
+@utility number-row {
+  display: grid;
+  row-gap: 2px;
+  padding-block: 12px;
+  &:first-child {
+    padding-block-start: 0;
+  }
+  @container (min-width: 13rem) {
+    grid-template-columns: minmax(0, 1fr) auto;
+    column-gap: 16px;
+    align-items: center;
+    & > input {
+      grid-column: 2;
+      grid-row: 1 / span 2;
+    }
+    & > [id$="-error"] {
+      grid-column: 1 / -1;
+      padding-block-start: 4px;
+    }
+  }
+}
+
+/* The line from one reached stage to the next. */
+@utility stage-line {
+  &:not(:last-child)::before {
     content: "";
     position: absolute;
-    inset: 0;
-    background: var(--hero);
-    opacity: 0.88;
-    pointer-events: none;
+    inset-block: 2rem 0;
+    inset-inline-start: calc(1rem - 1px);
+    width: 2px;
+    background: var(--line);
   }
 }
 
@@ -282,7 +331,7 @@
   flex-shrink: 0;
 }
 .desk-dot-open {
-  background: var(--warn-icon);
+  background: var(--open);
 }
 .desk-dot-working {
   background: var(--primary);
@@ -320,7 +369,7 @@
   stroke-width: 6;
 }
 .desk-ring-open {
-  stroke: var(--warn-icon);
+  stroke: var(--open);
 }
 .desk-ring-working {
   stroke: var(--primary);
@@ -356,8 +405,8 @@
   outline-offset: 2px;
 }
 .desk-marker-open {
-  background: var(--warn-icon);
-  color: var(--surface);
+  background: var(--open);
+  color: var(--on-open);
 }
 .desk-marker-emergency {
   background: var(--signal);

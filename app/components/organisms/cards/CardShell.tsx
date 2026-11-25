@@ -105,7 +105,7 @@ export function CardShell({ card, title, prompt, progress, focusId, ownProblem =
       aria-labelledby={headingIdOf(card)}
       data-card-kind={card.kind}
       data-card-id={card.cardId}
-      className="@container flex min-w-0 animate-settle flex-col gap-4 card-surface p-4 md:p-5"
+      className="@container flex min-w-0 animate-settle flex-col gap-4 card-surface p-4 md:p-6"
     >
       {problem ? <Notice kind={refusal ? "refusal" : "error"}>{t(problem.copyKey, problem.params)}</Notice> : null}
       {networkLost ? <Notice kind="error">{t("error.network.lost")}</Notice> : null}
@@ -115,13 +115,13 @@ export function CardShell({ card, title, prompt, progress, focusId, ownProblem =
           tabIndex={-1}
           ref={heading}
           autoFocus={headingFocus}
-          className="text-card font-bold text-balance"
+          className="text-page font-bold text-balance"
         >
           {breakAfterSlash(title)}
         </h2>
         {lifeLine ? <LifeLine /> : null}
         {progress ? <p className="text-meta text-muted tabular-nums">{progress}</p> : null}
-        {prompt ? <p className="text-body">{breakAfterSlash(prompt)}</p> : null}
+        {prompt ? <p className="text-body text-muted">{breakAfterSlash(prompt)}</p> : null}
       </div>
       {warnings.map((notice) => (
         <Notice key={notice.copyKey} kind="danger">
