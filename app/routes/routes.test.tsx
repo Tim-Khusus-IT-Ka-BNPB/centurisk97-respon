@@ -406,6 +406,7 @@ describe("desk routes", () => {
       nextStatuses: [],
       revision: 0,
       mayTake: false,
+      point: null,
       revisable: [],
       offeredActions: [],
       actions: [],

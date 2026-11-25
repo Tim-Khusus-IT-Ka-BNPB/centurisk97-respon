@@ -75,6 +75,16 @@ export const REPORT: DeskReport = {
       officerPosition: "Staf",
     },
   },
+  point: {
+    ticketNumber: "LA-241126-01",
+    status: "seen",
+    hazardType: "flood",
+    villageName: "Sukamaju",
+    precision: "gpsPoint",
+    emergency: false,
+    lat: 5.1,
+    lon: 97.1,
+  },
   groups: [
     {
       groupId: "event",

@@ -96,21 +96,21 @@ const deskPhotoSchema = z.object({
   receivedAt: timeSchema,
 });
 
+const mapPointSchema = z.object({
+  ticketNumber: z.string(),
+  status: ticketStatusSchema,
+  hazardType: hazardTypeSchema,
+  villageName: z.string(),
+  // A village picked by search sits at the village's centre, never at a made-up point.
+  precision: z.enum(["gpsPoint", "estimate", "villageLevel"]),
+  emergency: z.boolean(),
+  lat: z.number(),
+  lon: z.number(),
+});
+
 export const deskMapSchema = z.object({
   account: accountSchema,
-  points: z.array(
-    z.object({
-      ticketNumber: z.string(),
-      status: ticketStatusSchema,
-      hazardType: hazardTypeSchema,
-      villageName: z.string(),
-      // A village picked by search sits at the village's centre, never at a made-up point.
-      precision: z.enum(["gpsPoint", "estimate", "villageLevel"]),
-      emergency: z.boolean(),
-      lat: z.number(),
-      lon: z.number(),
-    }),
-  ),
+  points: z.array(mapPointSchema),
   // More reports match than the map draws; the newest are drawn.
   cut: z.boolean(),
 });
@@ -139,6 +139,8 @@ export const deskReportSchema = queueItemSchema.extend({
   account: accountSchema,
   // Null when the account must ask for it, each time logged.
   reporter: z.object({ role: reporterRoleSchema, identity: deskIdentitySchema.nullable() }),
+  // Where it is on the map; null where its village has no outline to place it in.
+  point: mapPointSchema.nullable(),
   groups: z.array(deskGroupSchema),
   history: z.array(
     z.object({

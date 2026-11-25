@@ -6,6 +6,7 @@ import {
   facetCounts,
   galleryPhotos,
   logIdentityView,
+  type MapPoint,
   mapPoints,
   markViewed,
   moveTicket,
@@ -117,6 +118,11 @@ const filtersOf = (
   has: query.has,
 });
 
+const pointView = (point: MapPoint): DeskMap["points"][number] => ({
+  ...point,
+  hazardType: point.hazardType as DeskMap["points"][number]["hazardType"],
+});
+
 const photoView = (photo: DeskPhoto): DeskGallery["photos"][number] => {
   const zone = draftZone(photo.villageCode);
   return {
@@ -142,10 +148,7 @@ export async function deskMap(
     kind: "ok",
     body: {
       account: { label: staff.label },
-      points: found.slice(0, MAP_POINTS).map((point) => ({
-        ...point,
-        hazardType: point.hazardType as DeskMap["points"][number]["hazardType"],
-      })),
+      points: found.slice(0, MAP_POINTS).map(pointView),
       cut: found.length > MAP_POINTS,
     },
   };
@@ -259,6 +262,8 @@ async function reportBody(bindings: ServiceBindings, staff: StaffPrincipal, tick
   const zone = draftZone(found.villageCode);
   const states = found.states as FieldStates;
   const place = fieldValue<PlaceValue>(found.states, "place");
+  const only = { status: null, hazardType: null, sentFromMs: null, ticketNumber, has: null };
+  const [point] = await mapPoints(bindings.db, { scope: staff.scope, ...only }, 1);
   const body: DeskReport = {
     ...queueItem(staff, found),
     account: { label: staff.label },
@@ -266,6 +271,7 @@ async function reportBody(bindings: ServiceBindings, staff: StaffPrincipal, tick
       role: found.reporterRole,
       identity: mayUse(staff.role, "readIdentity") ? identityOf(found) : null,
     },
+    point: point === undefined ? null : pointView(point),
     groups: summaryGroups(states).map((group) => ({
       ...group,
       rows: group.rows.map((one) => {
