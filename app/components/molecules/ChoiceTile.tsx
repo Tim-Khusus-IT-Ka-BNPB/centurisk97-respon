@@ -5,7 +5,7 @@ import { Icon } from "../atoms/Icon";
 import type { IconName } from "../atoms/icons";
 
 const tile =
-  "flex min-h-target-main w-full min-w-0 flex-col items-start gap-2 rounded-control border border-control bg-surface p-3 text-start text-ink hover:border-primary hover:bg-[color-mix(in_oklab,var(--surface),var(--selected)_55%)] @row:flex-row @row:items-center @row:gap-3";
+  "flex min-h-target-main w-full min-w-0 flex-col items-start gap-2 rounded-control border border-control bg-surface p-3 text-start text-ink transition-colors duration-100 motion-reduce:transition-none hover:border-primary hover:bg-[color-mix(in_oklab,var(--surface),var(--selected)_55%)] @row:flex-row @row:items-center @row:gap-3";
 
 type TileText = {
   readonly label: string;

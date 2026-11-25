@@ -207,13 +207,14 @@ describe("identity and consent", () => {
   test("the number is read back before anything is stored, with Ganti then Ya", async () => {
     const values = { ...EMPTY, role: "citizen", name: "Uji Satu", number: "080000000001" };
     draw(page({ view: "form" }), acted({ view: "readBack", readBack: "+62 800 0000 0001", values }));
-    expect(await screen.findByText("Nomor ini yang akan dicatat: +62 800 0000 0001. Benar?")).toBeTruthy();
+    expect(await screen.findByText("Nomor ini yang akan dicatat. Benar?")).toBeTruthy();
+    expect(screen.getByText("+62 800 0000 0001")).toBeTruthy();
     expect((document.querySelector('input[name="number"]') as HTMLInputElement).value).toBe("080000000001");
     expect(screen.getByRole("button", { name: "Ganti" }).getAttribute("value")).toBe("changeNumber");
     fireEvent.click(screen.getByRole("button", { name: "Ya" }));
     await screen.findByRole("button", { name: "Menyimpan jawaban..." });
     draw(page({ view: "form" }), acted({ view: "readBack", values }));
-    expect(await screen.findByText(/akan dicatat: \. Benar\?/)).toBeTruthy();
+    expect(await screen.findByText("Nomor ini yang akan dicatat. Benar?")).toBeTruthy();
   });
 
   test("a decline asks first and keeps every value for the way back; the decline itself shows 112", async () => {

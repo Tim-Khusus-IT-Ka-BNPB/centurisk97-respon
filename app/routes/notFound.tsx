@@ -20,10 +20,12 @@ export const loader = () => data({ texts: pickTexts(PAGE_TEXTS.notFound) }, { st
 function NotFoundScreen() {
   const t = useText();
   return (
-    <div className="flex max-w-[65ch] flex-col items-start gap-5">
-      <p className="text-card">{t("notFound.body")}</p>
-      <Link to="/lapor" className={buttonStyles({ variant: "primary" })}>
+    <div className="flex flex-col gap-3 sm:flex-row">
+      <Link to="/lapor" className={buttonStyles({ variant: "primary", size: "main", className: "px-7" })}>
         {t("notFound.home")}
+      </Link>
+      <Link to="/lapor/help" className={buttonStyles({ size: "main", className: "px-7" })}>
+        {t("help.title")}
       </Link>
     </div>
   );
@@ -31,7 +33,7 @@ function NotFoundScreen() {
 
 export default function NotFoundRoute({ loaderData }: Route.ComponentProps) {
   return (
-    <Page texts={loaderData.texts} wide banner={{ title: "notFound.title" }}>
+    <Page texts={loaderData.texts} wide banner={{ title: "notFound.title", lead: "notFound.body" }}>
       <NotFoundScreen />
     </Page>
   );

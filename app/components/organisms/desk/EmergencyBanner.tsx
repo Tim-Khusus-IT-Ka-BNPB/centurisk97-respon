@@ -2,10 +2,11 @@ import { useEffect, useRef, useState } from "react";
 import { Link } from "react-router";
 import type { DeskEmergencies, DeskEmergency } from "../../../../src/contract/desk";
 import { alarmReady, alarmSound, askForAlarm, notify } from "../../../lib/alarm";
+import { hazardLabel } from "../../../lib/deskMap";
 import { useHydrated } from "../../../lib/hooks";
 import { useText } from "../../../lib/text";
 import { Icon } from "../../atoms/Icon";
-import { hazardLabel, whenShort } from "./parts";
+import { whenShort } from "./parts";
 
 const REFRESH_MS = 20_000;
 

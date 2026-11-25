@@ -3,6 +3,7 @@ import { text } from "../testing/render";
 import {
   boundsOf,
   CLUSTER_MAX_ZOOM,
+  type ClusterTally,
   clusterElement,
   clusterIndex,
   clusterList,
@@ -110,10 +111,12 @@ describe("desk map pieces", () => {
   test("a popup holds the ticket, type and status, the village with its precision, and the way to the report", () => {
     const popup = popupElement({ ...POINT, villageName: "<b>Sukamaju</b>" }, text);
     expect([...popup.querySelectorAll("p")].map((line) => line.textContent)).toEqual([
-      "LA-241126-01",
-      "Banjir, Dilihat",
+      "Banjir",
       "<b>Sukamaju</b>, perkiraan tingkat desa",
+      "LA-241126-01, Dilihat",
     ]);
+    // One tap told no hazard.
+    expect(popupElement({ ...POINT, hazardType: "other" }, text).textContent).toContain("Jenis belum diketahui");
     expect(popup.querySelector("b")).toBeNull();
     const link = popup.querySelector("a") as HTMLAnchorElement;
     expect(link.getAttribute("href")).toBe("/lapor/meja/LA-241126-01");
@@ -140,7 +143,7 @@ describe("clusters", () => {
     ]);
     const far = itemsIn(index, WORLD, 4.7);
     const cluster = far.find((item) => item.kind === "cluster");
-    expect(cluster).toMatchObject({ kind: "cluster", count: 3, tally: { open: 0, working: 1, done: 2 } });
+    expect(cluster).toMatchObject({ kind: "cluster", count: 3, tally: { open: 0, working: 1, done: 2, alarm: 0 } });
     expect(far.filter((item) => item.kind === "point")).toHaveLength(1);
     expect(itemsIn(index, WORLD, CLUSTER_MAX_ZOOM).every((item) => item.kind === "point")).toBe(true);
   });
@@ -148,8 +151,8 @@ describe("clusters", () => {
   test("a cluster counts its reports per status group", () => {
     const tallyOf = (statuses: MapPoint["status"][]) =>
       (itemsIn(clusterIndex(statuses.map((status, n) => near(n, status))), WORLD, 3)[0] as { tally: unknown }).tally;
-    expect(tallyOf(["closed", "new", "in_handling", "seen"])).toEqual({ open: 2, working: 1, done: 1 });
-    expect(tallyOf(["closed", "invalid"])).toEqual({ open: 0, working: 0, done: 2 });
+    expect(tallyOf(["closed", "new", "in_handling", "seen"])).toEqual({ open: 2, working: 1, done: 1, alarm: 0 });
+    expect(tallyOf(["closed", "invalid"])).toEqual({ open: 0, working: 0, done: 2, alarm: 0 });
   });
 
   test("points at one spot never split, so the index says they expand past the last zoom", () => {
@@ -160,7 +163,7 @@ describe("clusters", () => {
   });
 
   test("a cluster button names its count per group and draws each group's share of the ring", () => {
-    const button = clusterElement(4, { open: 1, working: 0, done: 3 }, text);
+    const button = clusterElement(4, { open: 1, working: 0, done: 3, alarm: 0 }, text);
     expect(button.textContent).toBe("4");
     expect(button.type).toBe("button");
     expect(button.className).toBe("desk-cluster");
@@ -179,9 +182,22 @@ describe("clusters", () => {
     ]);
     expect(arcs.map((arc) => arc.getAttribute("stroke-dashoffset"))).toEqual(["0", String(-full / 4)]);
     expect(button.querySelector("svg")?.getAttribute("aria-hidden")).toBe("true");
-    expect(clusterElement(10, { open: 0, working: 10, done: 0 }, text).className).toBe(
+    expect(clusterElement(10, { open: 0, working: 10, done: 0, alarm: 0 }, text).className).toBe(
       "desk-cluster desk-cluster-large",
     );
+  });
+
+  test("a cluster holding emergencies nobody has opened is marked and says so", () => {
+    const points = [near(1, "new"), { ...near(2, "new"), emergency: true }, { ...near(3, "seen"), emergency: true }];
+    const [only] = itemsIn(clusterIndex(points), WORLD, 3) as { count: number; tally: ClusterTally }[];
+    expect(only?.tally).toEqual({ open: 3, working: 0, done: 0, alarm: 1 });
+    const button = clusterElement(3, only?.tally as ClusterTally, text);
+    expect(button.getAttribute("aria-label")).toBe(
+      "3 laporan berdekatan: 1 darurat belum dibuka, 3 belum ditangani. Ketuk untuk memperbesar.",
+    );
+    expect(button.querySelectorAll(".desk-cluster-alarm svg")).toHaveLength(1);
+    const calm = clusterElement(1, { open: 1, working: 0, done: 0, alarm: 0 }, text);
+    expect(calm.querySelector(".desk-cluster-alarm")).toBeNull();
   });
 
   test("a same-spot list links every report with its type and status", () => {

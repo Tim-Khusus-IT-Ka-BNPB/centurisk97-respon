@@ -23,6 +23,14 @@ describe("a report on the desk", () => {
     const view = await renderDesk(<DeskReportView report={REPORT} summary={SUMMARY} />, PATH);
     expect(drawn.points).toEqual([REPORT.point]);
     view.unmount();
+    const photo = { ticketNumber: "LA-241126-01", badge: "none" as const, far: false, takenAt: SENT, receivedAt: SENT };
+    const photos = ["1", "2"].map((n) => ({ ...photo, photoId: `${n}1111111-1111-4111-8111-111111111111` }));
+    const many = await renderDesk(<DeskReportView report={{ ...REPORT, photos }} summary={SUMMARY} />, PATH);
+    const shown = within(screen.getByRole("region", { name: "Foto pelapor" }));
+    expect(shown.getAllByRole("img")).toHaveLength(2);
+    // The photos are on their own report's page, so nothing leads to it.
+    expect(shown.queryByRole("link", { name: "LA-241126-01" })).toBeNull();
+    many.unmount();
     await renderDesk(<DeskReportView report={{ ...REPORT, point: null }} summary={SUMMARY} />, PATH);
     expect(screen.queryByRole("region", { name: /Titik laporan/ })).toBeNull();
   });

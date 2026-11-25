@@ -76,7 +76,7 @@ function ActionFields({ report, envelope, typed }: FormProps) {
             {offered.map((action, index) => (
               <label
                 key={action.code}
-                className="flex min-h-target-min cursor-pointer items-center gap-2.5 rounded-control px-2 py-1 text-meta hover:bg-sunken has-checked:bg-selected has-checked:font-semibold has-focus-visible:outline-2 has-focus-visible:outline-focus"
+                className="flex min-h-target-min cursor-pointer items-start gap-2.5 rounded-control px-2 py-2.5 text-meta hover:bg-sunken has-checked:bg-selected has-checked:font-semibold has-focus-visible:outline-2 has-focus-visible:outline-focus"
               >
                 <input
                   id={index === 0 ? "actions" : undefined}
@@ -85,7 +85,7 @@ function ActionFields({ report, envelope, typed }: FormProps) {
                   name="actions"
                   value={action.code}
                   defaultChecked={typed?.actions.includes(action.code)}
-                  className="size-4 shrink-0"
+                  className="mt-0.5 size-4 shrink-0"
                 />
                 {action.label}
               </label>
@@ -152,7 +152,7 @@ function StatusForm({ report, envelope, typed }: FormProps) {
       >
         {(control) => <Textarea {...control} rows={3} defaultValue={typed?.values.note} />}
       </Field>
-      <Button type="submit" variant="primary" className="self-start" busyLabel={busyLabel}>
+      <Button type="submit" variant="primary" busyLabel={busyLabel}>
         {t("desk.move.submit")}
       </Button>
     </Form>
@@ -167,7 +167,7 @@ function AddActions(props: FormProps) {
     <Form method="post" preventScrollReset className="flex flex-col gap-4">
       <input type="hidden" name="action" value="actions" />
       <ActionFields {...props} />
-      <Button type="submit" variant="secondary" className="self-start" busyLabel={busyLabel}>
+      <Button type="submit" variant="secondary" busyLabel={busyLabel}>
         {t("desk.actions.add")}
       </Button>
     </Form>
@@ -206,7 +206,7 @@ function ProofForm({ report, envelope }: Omit<FormProps, "typed">) {
       <label
         htmlFor="proof"
         aria-disabled={busy ? true : undefined}
-        className={buttonStyles({ variant: "secondary", className: "cursor-pointer self-start" })}
+        className={buttonStyles({ variant: "secondary", className: "cursor-pointer" })}
       >
         <Icon name="camera" className="size-5" />
         {busy ? t("desk.proof.busy") : t("desk.proof.take")}
@@ -228,11 +228,7 @@ function ProofForm({ report, envelope }: Omit<FormProps, "typed">) {
           void send(file);
         }}
       />
-      {hydrated ? null : (
-        <Button variant="secondary" className="self-start">
-          {t("desk.proof.submit")}
-        </Button>
-      )}
+      {hydrated ? null : <Button variant="secondary">{t("desk.proof.submit")}</Button>}
       <FieldError id="proof" problem={problem} />
     </Form>
   );
@@ -310,7 +306,7 @@ function CheckForm({ report, envelope, typed }: FormProps) {
       >
         {(control) => <Textarea {...control} rows={3} defaultValue={typed?.values.checkNote} />}
       </Field>
-      <Button type="submit" variant="secondary" className="self-start" busyLabel={busyLabel}>
+      <Button type="submit" variant="secondary" busyLabel={busyLabel}>
         {t("desk.check.submit")}
       </Button>
     </Form>
@@ -333,7 +329,7 @@ function ReplyForm({ report, envelope, typed }: FormProps) {
         >
           {(control) => <Textarea {...control} rows={3} defaultValue={typed?.values.reply} />}
         </Field>
-        <Button type="submit" variant="secondary" className="self-start" busyLabel={busyLabel}>
+        <Button type="submit" variant="secondary" busyLabel={busyLabel}>
           {t("desk.reply.submit")}
         </Button>
       </Form>

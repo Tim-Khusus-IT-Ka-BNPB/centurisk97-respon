@@ -2,6 +2,7 @@ import { Link } from "react-router";
 import type { DeskGallery, DeskQueue, DeskSummary } from "../../../../src/contract/desk";
 import type { ErrorEnvelope } from "../../../../src/contract/errors";
 import { cn } from "../../../lib/cn";
+import { hazardLabel } from "../../../lib/deskMap";
 import type { DeskFilters, DeskShown } from "../../../lib/deskTypes";
 import { hazardIcon } from "../../../lib/hazardIcons";
 import { valueLines } from "../../../lib/summary";
@@ -10,20 +11,18 @@ import { buttonStyles } from "../../atoms/Button";
 import { Icon } from "../../atoms/Icon";
 import type { IconName } from "../../atoms/icons";
 import { Notice } from "../../molecules/Notice";
-import { ClearFilters, FilterBar, ViewTabs } from "./DeskFilters";
+import { FilterBar, ViewTabs } from "./DeskFilters";
 import { DeskMapView } from "./DeskMap";
 import { DeskShell } from "./DeskShell";
 import {
   deskLink,
   EmergencyChip,
   eventShort,
-  hazardLabel,
   Impact,
   type Item,
   StatusChip,
   Taker,
   UnverifiedMark,
-  when,
   whenShort,
 } from "./parts";
 
@@ -76,7 +75,7 @@ const cell = "border-t border-line px-4 py-3.5 align-top";
 const head = "px-4 py-3 text-meta font-semibold text-muted";
 
 // The event takes what the others leave.
-const WIDTH = { ticket: "w-40", event: "", impact: "w-40", sent: "w-48", reporter: "w-52" } as const;
+const WIDTH = { ticket: "w-40", event: "", impact: "w-60", sent: "w-48", reporter: "w-44" } as const;
 
 // A wide screen reads the queue as a table; the ticket is the row's link.
 function QueueTable({ items }: { readonly items: readonly Item[] }) {
@@ -189,14 +188,13 @@ function Empty({ icon, text }: { readonly icon: IconName; readonly text: string 
         <Icon name={icon} className="size-7" />
       </span>
       <p className="max-w-[40ch] text-muted">{text}</p>
-      <ClearFilters filters={filters} />
     </div>
   );
 }
 
 function ListView({ queue, filters }: { readonly queue: DeskQueue; readonly filters: DeskFilters }) {
   const t = useText();
-  if (queue.items.length === 0) return <Empty icon="inbox" text={t("desk.empty")} filters={filters} />;
+  if (queue.items.length === 0) return <Empty icon="inbox" text={t("desk.empty")} />;
   return (
     <>
       <QueueTable items={queue.items} />
@@ -227,22 +225,31 @@ function ListView({ queue, filters }: { readonly queue: DeskQueue; readonly filt
 
 type Photo = DeskGallery["photos"][number];
 
-export function PhotoFigure({ photo }: { readonly photo: Photo }) {
+export function PhotoFigure({
+  photo,
+  own = false,
+}: {
+  readonly photo: Photo;
+  // On its own report's page: no card of its own, and no way to where one already is.
+  readonly own?: boolean;
+}) {
   const t = useText();
   return (
-    <figure className="flex flex-col gap-2 card-surface p-2">
-      <a href={`/api/lapor/desk/photos/${photo.photoId}`}>
+    <figure className={cn("flex flex-col gap-2", own ? "" : "card-surface p-2")}>
+      <a href={`/api/lapor/desk/photos/${photo.photoId}`} className="group rounded-control">
         <img
           src={`/api/lapor/desk/photos/${photo.photoId}`}
           alt={t("desk.gallery.alt", { ticket: photo.ticketNumber })}
           loading="lazy"
-          className="aspect-[4/3] w-full rounded-control bg-sunken object-cover"
+          className="aspect-[4/3] w-full rounded-control bg-sunken object-cover transition-opacity duration-150 group-hover:opacity-90 motion-reduce:transition-none"
         />
       </a>
-      <figcaption className="flex flex-col gap-1 px-1 pb-1 text-meta">
-        <Link to={`/lapor/meja/${photo.ticketNumber}`} className="font-bold tabular-nums">
-          {photo.ticketNumber}
-        </Link>
+      <figcaption className={cn("flex flex-col gap-1 text-meta", own ? "" : "px-1 pb-1")}>
+        {own ? null : (
+          <Link to={`/lapor/meja/${photo.ticketNumber}`} className="font-bold tabular-nums">
+            {photo.ticketNumber}
+          </Link>
+        )}
         <span className="inline-flex items-center gap-1">
           <Icon name={photo.badge === "none" ? "circleDashed" : "mapPin"} className="size-4" />
           {t(`card.photos.badge.${photo.badge}`)}
@@ -253,15 +260,15 @@ export function PhotoFigure({ photo }: { readonly photo: Photo }) {
             {t("card.photos.badge.far")}
           </span>
         ) : null}
-        <span className="text-muted tabular-nums">{when(t, "desk.gallery.received", photo.receivedAt)}</span>
+        <span className="text-muted tabular-nums">{whenShort(t, photo.receivedAt)}</span>
       </figcaption>
     </figure>
   );
 }
 
-function GalleryView({ gallery, filters }: { readonly gallery: DeskGallery; readonly filters: DeskFilters }) {
+function GalleryView({ gallery }: { readonly gallery: DeskGallery }) {
   const t = useText();
-  if (gallery.photos.length === 0) return <Empty icon="images" text={t("desk.gallery.empty")} filters={filters} />;
+  if (gallery.photos.length === 0) return <Empty icon="images" text={t("desk.gallery.empty")} />;
   return (
     <>
       {gallery.cut ? (

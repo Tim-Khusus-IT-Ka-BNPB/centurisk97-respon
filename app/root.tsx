@@ -1,6 +1,7 @@
 import type { ReactNode } from "react";
 import { Links, Meta, Outlet, Scripts, ScrollRestoration, useFetchers, useRouteLoaderData } from "react-router";
 import type { Route } from "./+types/root";
+import { NavProgress } from "./components/atoms/NavProgress";
 import { type Theme, themeFromCookie } from "./lib/theme";
 import "./app.css";
 
@@ -50,5 +51,10 @@ export function Layout({ children }: { children: ReactNode }) {
 }
 
 export default function App() {
-  return <Outlet />;
+  return (
+    <>
+      <NavProgress />
+      <Outlet />
+    </>
+  );
 }

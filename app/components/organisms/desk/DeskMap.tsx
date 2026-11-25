@@ -2,7 +2,7 @@ import { useMemo, useState } from "react";
 import { Link } from "react-router";
 import type { DeskMap, DeskQueue, DeskSummary } from "../../../../src/contract/desk";
 import type { ErrorEnvelope } from "../../../../src/contract/errors";
-import { GROUPS, STATUS_GROUPS } from "../../../lib/deskMap";
+import { GROUPS, hazardLabel, STATUS_GROUPS } from "../../../lib/deskMap";
 import type { DeskFilters } from "../../../lib/deskTypes";
 import { hazardIcon } from "../../../lib/hazardIcons";
 import { useText } from "../../../lib/text";
@@ -10,7 +10,7 @@ import { buttonStyles } from "../../atoms/Button";
 import { Icon } from "../../atoms/Icon";
 import { DeskMapCanvas } from "../DeskMapCanvas";
 import { ClearFilters, HasTiles, HazardChips, PeriodSegment, TicketSearch, ViewTabs } from "./DeskFilters";
-import { deskLink, EmergencyChip, hazardLabel, Impact, type Item, StatusChip, whenShort } from "./parts";
+import { deskLink, EmergencyChip, Impact, type Item, StatusChip, whenShort } from "./parts";
 
 function Legend() {
   const t = useText();
@@ -116,7 +116,6 @@ export function DeskMapView({
           className="flex flex-col gap-2 p-4 lg:absolute lg:inset-x-3 lg:top-3 lg:z-10 lg:flex-row lg:items-center lg:rounded-card lg:bg-surface lg:p-2 lg:shadow-float"
         >
           <HazardChips filters={filters} summary={summary} className="fade-x overflow-x-auto lg:flex-1" />
-          <PeriodSegment filters={filters} className="lg:shrink-0" />
           <ClearFilters filters={filters} className="self-start lg:shrink-0 lg:self-auto" />
         </section>
         <div className="relative h-[46dvh] min-h-72 lg:h-auto lg:min-h-0 lg:flex-1">
@@ -143,6 +142,7 @@ export function DeskMapView({
           {filters.status === "" ? null : (
             <p className="text-muted">{t("desk.heading.queue", { status: `stage.short.${filters.status}` })}</p>
           )}
+          <PeriodSegment filters={filters} className="w-full *:flex-1" />
           <TicketSearch filters={filters} envelope={envelope} />
           <HasTiles filters={filters} summary={summary} />
         </div>

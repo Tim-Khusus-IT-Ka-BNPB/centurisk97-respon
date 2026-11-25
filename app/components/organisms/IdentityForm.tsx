@@ -92,7 +92,10 @@ export function IdentityForm({ values, envelope, askNumber, profileId, editing, 
       )}
     </Field>
   );
-  const roleProblem = problemOf(envelope, "role");
+  const refusedRole = problemOf(envelope, "role");
+  // One of two, so it is told what to pick rather than what to fill in.
+  const roleProblem =
+    refusedRole?.copyKey === "fieldError.required" ? { copyKey: "identity.role.required", params: {} } : refusedRole;
   return (
     <Panel id="identity-heading" title={t("identity.title")} lead={t("identity.lead")} focusHeading={focus === null}>
       {unreadable ? <Notice kind="info">{t("start.error.knownUnreadable")}</Notice> : null}

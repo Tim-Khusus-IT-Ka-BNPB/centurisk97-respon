@@ -1,6 +1,7 @@
 {
   "identity.title": "Data pelapor",
   "identity.lead": "Sebelum melapor, kami catat data awal dulu.",
+  "identity.role.required": "Pilih Warga atau Petugas BPBD untuk melanjutkan.",
   "identity.role.label": "Melapor sebagai",
   "identity.role.citizen": "Warga",
   "identity.role.officer": "Petugas BPBD",
@@ -14,7 +15,7 @@
   "identity.officerPosition.label": "Jabatan",
   "identity.officerPosition.hint": "Jabatan Anda di BPBD, misalnya Staf.",
   "identity.readBack.title": "Periksa nomor Anda",
-  "identity.readBack.body": "Nomor ini yang akan dicatat: {number}. Benar?",
+  "identity.readBack.body": "Nomor ini yang akan dicatat. Benar?",
   "identity.readBack.yes": "Ya",
   "identity.readBack.change": "Ganti"
 }

@@ -86,11 +86,19 @@ function iconElement(name: IconName): SVGSVGElement {
   return svg;
 }
 
+// A hazard in words. "other" is never offered to a reporter: it is what one tap stores, which
+// tells no hazard.
+export const hazardLabel = (t: Text, id: MapPoint["hazardType"]) =>
+  t(id === "other" ? "desk.emergency.oneTap" : `hazard.${id}.label`);
+
+// An emergency nobody has opened yet.
+const alarming = (point: MapPoint) => point.emergency && point.status === "new";
+
 // A point's marker: a button named in words, its hazard's icon inside, its status group as a class.
 export function markerElement(point: MapPoint, t: Text): HTMLButtonElement {
   const button = document.createElement("button");
   button.type = "button";
-  const alarm = point.emergency && point.status === "new";
+  const alarm = alarming(point);
   button.className = `desk-marker desk-marker-${alarm ? "emergency" : STATUS_GROUPS[point.status]}`;
   button.setAttribute(
     "aria-label",
@@ -129,11 +137,12 @@ export function popupElement(point: MapPoint, t: Text): HTMLElement {
     element.textContent = text;
     box.appendChild(element);
   };
-  line(point.ticketNumber, "font-bold tabular-nums");
-  line(`${t(`hazard.${point.hazardType}.label`)}, ${t(`stage.short.${point.status}`)}`, "");
-  line(`${point.villageName}, ${t(`desk.map.precision.${point.precision}`)}`, "text-meta");
+  line(hazardLabel(t, point.hazardType), "text-body font-bold");
+  line(`${point.villageName}, ${t(`desk.map.precision.${point.precision}`)}`, "");
+  line(`${point.ticketNumber}, ${t(`stage.short.${point.status}`)}`, "text-muted tabular-nums");
   const link = document.createElement("a");
   link.href = `/lapor/meja/${point.ticketNumber}`;
+  link.className = "desk-popup-open";
   link.textContent = t("desk.map.open");
   box.appendChild(link);
   return box;
@@ -142,7 +151,8 @@ export function popupElement(point: MapPoint, t: Text): HTMLElement {
 // Nearby points merge into one numbered circle, recomputed on every zoom and pan. A cluster
 // counts its reports per status group; its ring shows the shares and its name says them.
 type Group = (typeof GROUPS)[number];
-export type ClusterTally = Record<Group, number>;
+// Its emergencies nobody has opened are counted too.
+export type ClusterTally = Record<Group, number> & { alarm: number };
 
 export type MapIndex = Supercluster<MapPoint, ClusterTally>;
 
@@ -153,8 +163,15 @@ export function clusterIndex(points: readonly MapPoint[]): MapIndex {
   return new Supercluster<MapPoint, ClusterTally>({
     radius: 56,
     maxZoom: CLUSTER_MAX_ZOOM,
-    map: (point) => ({ open: 0, working: 0, done: 0, [STATUS_GROUPS[point.status]]: 1 }),
+    map: (point) => ({
+      open: 0,
+      working: 0,
+      done: 0,
+      [STATUS_GROUPS[point.status]]: 1,
+      alarm: alarming(point) ? 1 : 0,
+    }),
     reduce: (into, from) => {
+      into.alarm += from.alarm;
       for (const group of GROUPS) into[group] += from[group];
     },
   }).load(
@@ -187,7 +204,12 @@ export function itemsIn(index: MapIndex, bounds: [number, number, number, number
           kind: "cluster",
           id: properties.cluster_id,
           count: properties.point_count,
-          tally: { open: properties.open, working: properties.working, done: properties.done },
+          tally: {
+            open: properties.open,
+            working: properties.working,
+            done: properties.done,
+            alarm: properties.alarm,
+          },
           lon,
           lat,
         }
@@ -204,6 +226,7 @@ export function clusterElement(count: number, tally: ClusterTally, t: Text): HTM
   const parts = GROUPS.filter((group) => tally[group] > 0).map((group) =>
     t(`desk.map.clusterPart.${group}`, { count: tally[group] }),
   );
+  if (tally.alarm > 0) parts.unshift(t("desk.map.clusterPart.alarm", { count: tally.alarm }));
   button.setAttribute("aria-label", t("desk.map.cluster", { count, parts: parts.join(", ") }));
   const ring = document.createElementNS(SVG, "svg");
   ring.setAttribute("viewBox", "0 0 44 44");
@@ -231,6 +254,12 @@ export function clusterElement(count: number, tally: ClusterTally, t: Text): HTM
   const number = document.createElement("span");
   number.textContent = String(count);
   button.appendChild(number);
+  if (tally.alarm > 0) {
+    const mark = document.createElement("span");
+    mark.className = "desk-cluster-alarm";
+    mark.appendChild(iconElement("triangleAlert"));
+    button.appendChild(mark);
+  }
   return button;
 }
 
@@ -255,7 +284,7 @@ export function clusterList(points: readonly MapPoint[], t: Text): HTMLElement {
     link.appendChild(dot);
     link.appendChild(
       document.createTextNode(
-        `${point.ticketNumber}, ${t(`hazard.${point.hazardType}.label`)}, ${t(`stage.short.${point.status}`)}`,
+        `${point.ticketNumber}, ${hazardLabel(t, point.hazardType)}, ${t(`stage.short.${point.status}`)}`,
       ),
     );
     item.appendChild(link);

@@ -2,6 +2,7 @@ import { type ReactNode, useEffect, useMemo } from "react";
 import { Form, Link, useNavigation, useSearchParams, useSubmit } from "react-router";
 import type { DeskIdentity, DeskReport, DeskSummary } from "../../../../src/contract/desk";
 import type { ErrorEnvelope } from "../../../../src/contract/errors";
+import { cn } from "../../../lib/cn";
 import type { DeskTyped } from "../../../lib/deskTypes";
 import { cardProblem, isLimit } from "../../../lib/envelope";
 import { limitText } from "../../../lib/status";
@@ -317,10 +318,10 @@ export function DeskReportView({
                   {t("desk.photos.empty")}
                 </p>
               ) : (
-                <ul className="grid grid-cols-2 gap-3">
+                <ul className={cn("grid gap-3", report.photos.length > 1 ? "grid-cols-2" : "")}>
                   {report.photos.map((photo) => (
                     <li key={photo.photoId}>
-                      <PhotoFigure photo={photo} />
+                      <PhotoFigure photo={photo} own />
                     </li>
                   ))}
                 </ul>

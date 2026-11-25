@@ -150,14 +150,22 @@ function ReadBack({ number, children }: { readonly number: string; readonly chil
   const t = useText();
   const busy = useBusy("consent", "action");
   return (
-    <Panel id="readback-heading" title={t("identity.readBack.title")} lead={t("identity.readBack.body", { number })}>
+    <Panel id="readback-heading" title={t("identity.readBack.title")} lead={t("identity.readBack.body")}>
+      <p className="rounded-control bg-sunken px-4 py-5 text-center text-ticket font-bold tabular-nums">{number}</p>
       <Form method="post">
         {children}
         <ActionRow>
-          <Button name="action" value="changeNumber">
+          <Button name="action" value="changeNumber" size="main" className="@actions:px-6">
             {t("identity.readBack.change")}
           </Button>
-          <Button name="action" value="consent" variant="primary" busyLabel={busy ? t("common.saving") : null}>
+          <Button
+            name="action"
+            value="consent"
+            variant="primary"
+            size="main"
+            className="@actions:flex-1"
+            busyLabel={busy ? t("common.saving") : null}
+          >
             {t("identity.readBack.yes")}
           </Button>
         </ActionRow>

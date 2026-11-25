@@ -5,6 +5,7 @@ import { useText } from "../../lib/text";
 import { localDateText } from "../../lib/time";
 import { buttonStyles } from "../atoms/Button";
 import { Icon } from "../atoms/Icon";
+import { CallRow } from "../molecules/CallRow";
 import { Step } from "../molecules/Step";
 import { PrivacyText } from "./PrivacyText";
 
@@ -165,11 +166,11 @@ export function AboutScreen() {
     <DocLayout index={ABOUT_SECTIONS.map((id) => ({ id: `about-${id}`, label: heading(id) }))}>
       {section(
         "what",
-        <ul className="flex flex-col gap-2">
+        <ul className="grid gap-x-8 gap-y-4 sm:grid-cols-3">
           {ABOUT_POINTS.map((point) => (
-            <li key={point}>
-              <strong className="block">{t(`about.card.${point}.title`)}</strong>
-              {t(`about.card.${point}.body`)}
+            <li key={point} className="flex flex-col gap-1 border-t-2 border-primary pt-3">
+              <strong>{t(`about.card.${point}.title`)}</strong>
+              <span className="text-muted">{t(`about.card.${point}.body`)}</span>
             </li>
           ))}
         </ul>,
@@ -208,16 +209,14 @@ export function AboutScreen() {
         "emergency",
         <>
           <p>{t("about.emergency.body")}</p>
-          <div className="flex flex-wrap gap-2">
+          <div className="grid gap-3 sm:grid-cols-2">
             {(["112", "117"] as const).map((line) => (
-              <a
+              <CallRow
                 key={line}
-                href={`tel:${t(`about.emergency.${line}`)}`}
-                className={buttonStyles({ variant: line === "112" ? "signal" : "secondary" })}
-              >
-                <Icon name="phone" />
-                {t(`about.emergency.${line}`)} {t(`about.emergency.${line}Label`)}
-              </a>
+                number={t(`about.emergency.${line}`)}
+                label={t(`about.emergency.${line}Label`)}
+                first={line === "112"}
+              />
             ))}
           </div>
         </>,

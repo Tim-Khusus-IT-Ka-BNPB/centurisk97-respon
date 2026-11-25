@@ -16,7 +16,7 @@ import { LifeLine, Notice } from "../../molecules/Notice";
 import { CardShell, TurnForm, useDraftView } from "./CardShell";
 
 const row =
-  "flex min-h-target-main w-full min-w-0 items-center gap-3 rounded-control border border-control bg-surface px-4 py-2 text-start text-ink hover:bg-[color-mix(in_oklch,var(--surface),var(--ink)_4%)]";
+  "flex min-h-target-main w-full min-w-0 items-center gap-3 rounded-control border border-control bg-surface px-4 py-2 text-start text-ink hover:border-primary hover:bg-[color-mix(in_oklab,var(--surface),var(--selected)_55%)]";
 
 type SearchCard = Extract<Card, { kind: "placeSearch" | "regencyVillages" }>;
 type ConfirmCard = Extract<Card, { kind: "placeConfirm" }>;
@@ -303,19 +303,22 @@ export function PlaceCard({ card }: { readonly card: SearchCard }) {
           focus={searched}
         >
           {(control) => (
-            <Input
-              {...control}
-              type="search"
-              enterKeyHint="search"
-              autoComplete="off"
-              defaultValue={card.query ?? ""}
-              placeholder={area ? undefined : t("card.placeSearch.placeholder")}
-            />
+            <div className="flex flex-wrap gap-2">
+              <Input
+                {...control}
+                type="search"
+                enterKeyHint="search"
+                autoComplete="off"
+                defaultValue={card.query ?? ""}
+                placeholder={area ? undefined : t("card.placeSearch.placeholder")}
+                className="min-w-[min(100%,9rem)] flex-1"
+              />
+              <Button variant={area ? "primary" : "secondary"}>
+                {t(area ? "card.regencyVillages.submit" : "card.placeSearch.submit")}
+              </Button>
+            </div>
           )}
         </Field>
-        <Button variant={area ? "primary" : "secondary"} className="@actions:self-start">
-          {t(area ? "card.regencyVillages.submit" : "card.placeSearch.submit")}
-        </Button>
       </Form>
       {unavailable ? <LifeLine /> : <Results card={card} />}
       {area ? (

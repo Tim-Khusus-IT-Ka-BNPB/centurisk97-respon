@@ -5,6 +5,7 @@ import type { ErrorEnvelope } from "../../../../src/contract/errors";
 import { DESK_HAS, DESK_PERIODS, type DeskHas } from "../../../../src/domain/deskQueue";
 import { HAZARD_TYPE_IDS, SELECTABLE_HAZARD_TYPES } from "../../../../src/domain/hazards";
 import { cn } from "../../../lib/cn";
+import { hazardLabel } from "../../../lib/deskMap";
 import { DESK_VIEWS, type DeskFilters } from "../../../lib/deskTypes";
 import { problemOf } from "../../../lib/envelope";
 import { hazardIcon } from "../../../lib/hazardIcons";
@@ -16,10 +17,10 @@ import { Icon } from "../../atoms/Icon";
 import type { IconName } from "../../atoms/icons";
 import { FieldError } from "../../molecules/Field";
 import { counted } from "./DeskShell";
-import { clearedLink, deskLink, hazardLabel, isFiltered } from "./parts";
+import { clearedLink, deskLink, isFiltered } from "./parts";
 
 const chip =
-  "inline-flex min-h-target-min shrink-0 items-center gap-2 rounded-control border border-line bg-surface px-3 text-ink no-underline hover:border-control lg:min-h-10 lg:text-[0.9375rem] aria-[current=true]:border-primary aria-[current=true]:bg-selected aria-[current=true]:font-semibold aria-[current=true]:text-primary";
+  "inline-flex min-h-target-min shrink-0 items-center gap-2 rounded-control border border-line bg-surface px-3 text-ink no-underline transition-colors duration-100 motion-reduce:transition-none hover:border-control lg:min-h-10 lg:text-[0.9375rem] aria-[current=true]:border-primary aria-[current=true]:bg-selected aria-[current=true]:font-semibold aria-[current=true]:text-primary";
 
 const switcher = "inline-flex w-fit max-w-full flex-wrap rounded-control bg-sunken p-1";
 
