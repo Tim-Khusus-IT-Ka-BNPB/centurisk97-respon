@@ -3,7 +3,7 @@ import { describe, expect, test, vi } from "vitest";
 import type { MapPoint } from "../../lib/deskMap";
 import { makeText, TextContext } from "../../lib/text";
 import { ALL_TEXTS } from "../../testing/render";
-import { DeskMapCanvas } from "./DeskMapCanvas";
+import { DeskMapCanvas, SMALL } from "./DeskMapCanvas";
 
 const made = vi.hoisted(() => ({ maps: [] as FakeMap[], markers: [] as FakeMarker[], workerUrl: "" }));
 
@@ -167,6 +167,21 @@ describe("the desk map canvas", () => {
     expect(region.dataset.ready).toBe("true");
     view.unmount();
     expect(map.removed).toBe(true);
+  });
+
+  test("a small map on its own page: one point in its middle, and nobody to tell what is in view", async () => {
+    made.maps.length = 0;
+    made.markers.length = 0;
+    render(
+      <TextContext.Provider value={TEXT}>
+        <DeskMapCanvas points={POINTS.slice(0, 1)} label="Titik" framing={SMALL} />
+      </TextContext.Provider>,
+    );
+    await waitFor(() => expect(made.maps).toHaveLength(1));
+    const map = made.maps[0] as FakeMap;
+    map.load?.();
+    expect(made.markers).toHaveLength(1);
+    expect(map.fitted).toMatchObject([[expect.anything(), { padding: 48, maxZoom: 11 }]]);
   });
 
   test("near points draw as a cluster that zooms in when tapped, and every move draws afresh", async () => {
