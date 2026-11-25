@@ -1,10 +1,11 @@
 import type { ChangeEvent } from "react";
 import type { Card } from "../../../../src/contract/card";
+import type { Text } from "../../../../src/copy/text";
 import { errorIdOf, problemOf } from "../../../lib/envelope";
 import { settleExclusive } from "../../../lib/exclusive";
 import { HAZARD_ICONS } from "../../../lib/hazardIcons";
 import { useBusy } from "../../../lib/hooks";
-import { type Text, useText } from "../../../lib/text";
+import { useText } from "../../../lib/text";
 import { Input } from "../../atoms/controls";
 import type { IconName } from "../../atoms/icons";
 import { TileButton, TileCheck, TileGrid } from "../../molecules/ChoiceTile";

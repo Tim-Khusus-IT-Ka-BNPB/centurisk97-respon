@@ -1,7 +1,7 @@
 import { useState } from "react";
 import type { Card } from "../../../../src/contract/card";
+import { unitKeyOf } from "../../../../src/copy/units";
 import { problemOf } from "../../../lib/envelope";
-import { unitKeyOf } from "../../../lib/fields";
 import { useBusy } from "../../../lib/hooks";
 import { useText } from "../../../lib/text";
 import { postedValue } from "../../../lib/turnForm";

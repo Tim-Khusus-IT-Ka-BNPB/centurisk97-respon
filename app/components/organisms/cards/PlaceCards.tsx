@@ -1,13 +1,13 @@
 import { type ReactNode, useState } from "react";
 import { Form, Link, useNavigation, useSubmit } from "react-router";
 import type { Card } from "../../../../src/contract/card";
+import { localDateText } from "../../../../src/copy/time";
 import { readPosition } from "../../../lib/device";
 import { problemOf } from "../../../lib/envelope";
 import { useBusy, useHydrated } from "../../../lib/hooks";
 import { areaName, type PlaceItem, rowText, searchStatus } from "../../../lib/place";
 import { breakAfterSlash } from "../../../lib/slash";
 import { useText } from "../../../lib/text";
-import { localDateText } from "../../../lib/time";
 import { Button, buttonStyles } from "../../atoms/Button";
 import { Input } from "../../atoms/controls";
 import { Icon } from "../../atoms/Icon";

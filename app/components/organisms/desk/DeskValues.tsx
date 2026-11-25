@@ -1,5 +1,5 @@
 import type { DeskReport } from "../../../../src/contract/desk";
-import { hazardOf, rowParts } from "../../../lib/summary";
+import { hazardOf, rowParts } from "../../../../src/copy/values";
 import { useText } from "../../../lib/text";
 import { StateMark } from "../cards/SummaryCards";
 

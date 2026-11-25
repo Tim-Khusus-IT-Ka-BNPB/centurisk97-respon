@@ -1,5 +1,6 @@
 import type { DeskReport } from "../../../../src/contract/desk";
-import { type Text, useText } from "../../../lib/text";
+import type { Text } from "../../../../src/copy/text";
+import { useText } from "../../../lib/text";
 import { when } from "./parts";
 
 type History = DeskReport["history"];

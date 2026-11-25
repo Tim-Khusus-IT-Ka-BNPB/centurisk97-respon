@@ -1,7 +1,7 @@
 import { Link } from "react-router";
 import type { DraftBody } from "../../../src/contract/draft";
+import { clockTime, longDate } from "../../../src/copy/time";
 import { useText } from "../../lib/text";
-import { clockTime, longDate } from "../../lib/time";
 import { ProgressBar } from "../atoms/ProgressBar";
 
 const heading = "text-meta font-semibold text-muted";

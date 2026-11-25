@@ -1,9 +1,9 @@
 import { Link } from "react-router";
 import type { MeResponse } from "../../../src/contract/draft";
+import { hazardKey } from "../../../src/copy/hazardKey";
+import { clockTime, longDate } from "../../../src/copy/time";
 import { hazardIcon } from "../../lib/hazardIcons";
-import { hazardKey } from "../../lib/hazardLabel";
 import { useText } from "../../lib/text";
-import { clockTime, longDate } from "../../lib/time";
 import { buttonStyles } from "../atoms/Button";
 import { Icon } from "../atoms/Icon";
 import { ActionRow } from "../molecules/layout";

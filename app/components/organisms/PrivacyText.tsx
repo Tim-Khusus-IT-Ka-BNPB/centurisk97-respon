@@ -1,7 +1,7 @@
+import { localDateText } from "../../../src/copy/time";
 import { PRIVACY } from "../../../src/domain/privacy";
 import { PRIVACY_META, PRIVACY_SECTIONS } from "../../lib/docs";
 import { useText } from "../../lib/text";
-import { localDateText } from "../../lib/time";
 
 const APP = { appName: "app.name" };
 

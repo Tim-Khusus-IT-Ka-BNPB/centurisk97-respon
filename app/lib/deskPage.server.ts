@@ -9,8 +9,8 @@ import type {
   DeskSummary,
 } from "../../src/contract/desk";
 import type { ErrorEnvelope } from "../../src/contract/errors";
+import type { Texts } from "../../src/copy/text";
 import { DESK_VIEWS, type DeskFilters, type DeskShown, type DeskTyped, type DeskView } from "./deskTypes";
-import type { Texts } from "./text";
 import { PAGE_TEXTS, pickTexts } from "./texts.server";
 
 // What a desk page shows when its read is refused: sign in, not this account, or a notice.

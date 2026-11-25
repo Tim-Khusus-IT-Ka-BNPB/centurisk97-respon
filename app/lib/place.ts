@@ -1,5 +1,5 @@
 import type { Card } from "../../src/contract/card";
-import type { Text } from "./text";
+import type { Text } from "../../src/copy/text";
 
 type Results = NonNullable<Extract<Card, { kind: "placeSearch" }>["places"]>;
 export type PlaceItem = Results["items"][number];

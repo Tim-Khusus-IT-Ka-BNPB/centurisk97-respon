@@ -1,7 +1,7 @@
-import type { Card } from "../../src/contract/card";
-import { unitKeyOf } from "./fields";
+import type { Card } from "../contract/card";
 import type { Text } from "./text";
 import { localClockText, localDateText } from "./time";
+import { unitKeyOf } from "./units";
 
 type Group = Extract<Card, { kind: "summary" }>["groups"][number];
 type Row = Group["rows"][number];

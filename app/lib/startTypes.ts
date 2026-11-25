@@ -1,6 +1,6 @@
 import type { MeResponse } from "../../src/contract/draft";
 import type { ErrorEnvelope } from "../../src/contract/errors";
-import type { Texts } from "./text";
+import type { Texts } from "../../src/copy/text";
 
 export type StartView =
   | "list"

@@ -1,12 +1,12 @@
 import { useEffect, useRef, useState } from "react";
 import { Form, useSubmit } from "react-router";
 import type { Card } from "../../../../src/contract/card";
+import { clockTime } from "../../../../src/copy/time";
 import { isRecentFile, type Position, photoFix, preparePhoto } from "../../../lib/device";
 import type { FieldProblem } from "../../../lib/envelope";
 import { problemOf } from "../../../lib/envelope";
 import { useBusy, useHydrated } from "../../../lib/hooks";
 import { useText } from "../../../lib/text";
-import { clockTime } from "../../../lib/time";
 import { Button, buttonStyles } from "../../atoms/Button";
 import { Icon } from "../../atoms/Icon";
 import { FieldError } from "../../molecules/Field";

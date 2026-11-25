@@ -1,6 +1,7 @@
 import { type ReactNode, useMemo } from "react";
+import { makeText, type Texts } from "../../../src/copy/text";
 import { cn } from "../../lib/cn";
-import { makeText, TextContext, type Texts } from "../../lib/text";
+import { TextContext } from "../../lib/text";
 import { PageBanner } from "../organisms/PageBanner";
 import { SiteFooter } from "../organisms/SiteFooter";
 import { SiteHeader } from "../organisms/SiteHeader";

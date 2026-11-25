@@ -2,13 +2,13 @@ import { describe, expect, test } from "vitest";
 import type { Card } from "../../src/contract/card";
 import type { DraftBody } from "../../src/contract/draft";
 import type { ErrorEnvelope } from "../../src/contract/errors";
+import { hazardOf, rowView, splitAround, valueLines } from "../../src/copy/values";
 import { FIELDS } from "../../src/domain/fields/catalogue";
 import { HAZARD_TYPE_IDS, subtypeChoices } from "../../src/domain/hazards";
 import { SAMPLE_DRAFTS } from "../../src/testing/samples";
 import { text as t } from "../testing/render";
 import { areaName, rowText, searchStatus } from "./place";
 import { limitText, statusText } from "./status";
-import { hazardOf, rowView, splitAround, valueLines } from "./summary";
 
 type Places = NonNullable<Extract<Card, { kind: "placeSearch" }>["places"]>;
 type Item = Places["items"][number];

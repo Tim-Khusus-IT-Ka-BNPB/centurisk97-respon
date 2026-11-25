@@ -1,11 +1,11 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router";
 import type { Tracking } from "../../../src/contract/tracking";
+import { hazardKey } from "../../../src/copy/hazardKey";
+import { clockTime, localClockText, localDateText, longDate } from "../../../src/copy/time";
 import { postForFile, postJson } from "../../lib/clientApi";
 import { cn } from "../../lib/cn";
-import { hazardKey } from "../../lib/hazardLabel";
 import { useText } from "../../lib/text";
-import { clockTime, localClockText, localDateText, longDate } from "../../lib/time";
 import { buttonStyles } from "../atoms/Button";
 import { Icon } from "../atoms/Icon";
 import { CallRow } from "../molecules/CallRow";

@@ -1,7 +1,8 @@
 import type { DraftBody } from "../../../src/contract/draft";
+import type { Text } from "../../../src/copy/text";
 import { cn } from "../../lib/cn";
 import { breakAfterSlash } from "../../lib/slash";
-import { type Text, useText } from "../../lib/text";
+import { useText } from "../../lib/text";
 import { Icon } from "../atoms/Icon";
 
 type Entry = DraftBody["transcript"][number];

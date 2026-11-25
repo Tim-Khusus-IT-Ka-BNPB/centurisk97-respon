@@ -1,11 +1,12 @@
 import type { ReactNode } from "react";
 import { Form, Link, useSearchParams } from "react-router";
 import type { MeResponse } from "../../../src/contract/draft";
+import type { Text } from "../../../src/copy/text";
+import { clockTime } from "../../../src/copy/time";
 import { cn } from "../../lib/cn";
 import { useBusy } from "../../lib/hooks";
 import type { IdentityValues, StartActionData, StartPageData } from "../../lib/startTypes";
-import { type Text, useText } from "../../lib/text";
-import { clockTime } from "../../lib/time";
+import { useText } from "../../lib/text";
 import { Button, buttonStyles } from "../atoms/Button";
 import { Icon } from "../atoms/Icon";
 import { ActionRow } from "../molecules/layout";

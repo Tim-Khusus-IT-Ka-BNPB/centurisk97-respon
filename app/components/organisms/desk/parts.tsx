@@ -1,10 +1,17 @@
 import type { DeskQueue } from "../../../../src/contract/desk";
+import type { Text } from "../../../../src/copy/text";
+import {
+  clockTime,
+  type Instant,
+  localClockText,
+  localShortDate,
+  longDate,
+  shortDate,
+} from "../../../../src/copy/time";
 import { cn } from "../../../lib/cn";
 import { STATUS_GROUPS } from "../../../lib/deskMap";
 import type { DeskFilters } from "../../../lib/deskTypes";
-import type { Text } from "../../../lib/text";
 import { useText } from "../../../lib/text";
-import { clockTime, type Instant, localClockText, localShortDate, longDate, shortDate } from "../../../lib/time";
 import { Icon } from "../../atoms/Icon";
 import type { IconName } from "../../atoms/icons";
 

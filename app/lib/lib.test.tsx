@@ -1,18 +1,18 @@
 import { render } from "@testing-library/react";
 import { describe, expect, test, vi } from "vitest";
 import type { ErrorEnvelope } from "../../src/contract/errors";
+import { makeText } from "../../src/copy/text";
+import { clockTime, localClockText, localDateText, longDate, retryText } from "../../src/copy/time";
+import { unitKeyOf } from "../../src/copy/units";
 import { SAMPLE_DRAFTS, SAMPLE_FIELD_ERROR, SAMPLE_STALE_TURN } from "../../src/testing/samples";
 import { text as t } from "../testing/render";
 import { isFinalCard } from "./cards";
 import { contactHref } from "./docs";
 import { cardProblem, errorIdOf, firstInvalid, hintIdOf, isLimit, problemOf } from "./envelope";
 import { settleExclusive } from "./exclusive";
-import { unitKeyOf } from "./fields";
 import { pageMeta } from "./meta";
 import { isLost, LOST, withinTimeout } from "./network";
 import { breakAfterSlash } from "./slash";
-import { makeText } from "./text";
-import { clockTime, localClockText, localDateText, longDate, retryText } from "./time";
 import { postedOf, postedValue, toTurnForm } from "./turnForm";
 
 const limitEnvelope = (retryAt: ErrorEnvelope["retryAt"]): ErrorEnvelope => ({

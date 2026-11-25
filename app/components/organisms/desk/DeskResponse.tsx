@@ -1,7 +1,8 @@
 import { Link } from "react-router";
 import type { DeskResponse, DeskSummary } from "../../../../src/contract/desk";
-import { type Text, useText } from "../../../lib/text";
-import { monthText } from "../../../lib/time";
+import type { Text } from "../../../../src/copy/text";
+import { monthText } from "../../../../src/copy/time";
+import { useText } from "../../../lib/text";
 import { buttonStyles } from "../../atoms/Button";
 import { Icon } from "../../atoms/Icon";
 import { Notice } from "../../molecules/Notice";

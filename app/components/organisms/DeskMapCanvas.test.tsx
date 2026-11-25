@@ -1,7 +1,8 @@
 import { cleanup, render, waitFor } from "@testing-library/react";
 import { describe, expect, test, vi } from "vitest";
+import { makeText } from "../../../src/copy/text";
 import type { MapPoint } from "../../lib/deskMap";
-import { makeText, TextContext } from "../../lib/text";
+import { TextContext } from "../../lib/text";
 import { ALL_TEXTS } from "../../testing/render";
 import { DeskMapCanvas, SMALL } from "./DeskMapCanvas";
 

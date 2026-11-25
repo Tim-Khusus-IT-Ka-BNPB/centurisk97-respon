@@ -1,6 +1,6 @@
 import { describe, expect, test } from "vitest";
+import { rowParts } from "../../../../src/copy/values";
 import { hazardIcon } from "../../../lib/hazardIcons";
-import { rowParts } from "../../../lib/summary";
 import { text } from "../../../testing/render";
 import { deskLink, eventShort, spacedNumber } from "./parts";
 

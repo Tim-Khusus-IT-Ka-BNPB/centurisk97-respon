@@ -1,11 +1,11 @@
 import { Link } from "react-router";
 import type { DeskGallery, DeskQueue, DeskSummary } from "../../../../src/contract/desk";
 import type { ErrorEnvelope } from "../../../../src/contract/errors";
+import { hazardKey } from "../../../../src/copy/hazardKey";
+import { valueLines } from "../../../../src/copy/values";
 import { cn } from "../../../lib/cn";
 import type { DeskFilters, DeskShown } from "../../../lib/deskTypes";
 import { hazardIcon } from "../../../lib/hazardIcons";
-import { hazardKey } from "../../../lib/hazardLabel";
-import { valueLines } from "../../../lib/summary";
 import { useText } from "../../../lib/text";
 import { buttonStyles } from "../../atoms/Button";
 import { Icon } from "../../atoms/Icon";

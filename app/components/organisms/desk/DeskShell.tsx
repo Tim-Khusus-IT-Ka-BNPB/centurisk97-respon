@@ -1,9 +1,10 @@
 import type { ReactNode } from "react";
 import { Form, Link, useLocation } from "react-router";
 import type { DeskSummary } from "../../../../src/contract/desk";
+import type { Text } from "../../../../src/copy/text";
 import { cn } from "../../../lib/cn";
 import { DESK_VIEWS, type DeskFilters, type DeskView } from "../../../lib/deskTypes";
-import { type Text, useText } from "../../../lib/text";
+import { useText } from "../../../lib/text";
 import { Emblem } from "../../atoms/Emblem";
 import { Icon } from "../../atoms/Icon";
 import type { IconName } from "../../atoms/icons";

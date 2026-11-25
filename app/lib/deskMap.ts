@@ -1,9 +1,9 @@
 import Supercluster from "supercluster";
 import type { DeskMap } from "../../src/contract/desk";
+import { hazardKey } from "../../src/copy/hazardKey";
+import type { Text } from "../../src/copy/text";
 import { ICONS, type IconName } from "../components/atoms/icons";
 import { hazardIcon } from "./hazardIcons";
-import { hazardKey } from "./hazardLabel";
-import type { Text } from "./text";
 
 export type MapPoint = DeskMap["points"][number];
 

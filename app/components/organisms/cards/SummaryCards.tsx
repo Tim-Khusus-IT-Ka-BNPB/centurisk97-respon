@@ -1,11 +1,11 @@
 import type { ReactNode } from "react";
 import { Form, Link } from "react-router";
 import type { Card } from "../../../../src/contract/card";
+import { clockTime, longDate } from "../../../../src/copy/time";
+import { hazardOf, type RowView, rowView } from "../../../../src/copy/values";
 import { cardProblem } from "../../../lib/envelope";
 import { useBusy, useMountFocus } from "../../../lib/hooks";
-import { hazardOf, type RowView, rowView } from "../../../lib/summary";
 import { useText } from "../../../lib/text";
-import { clockTime, longDate } from "../../../lib/time";
 import { Button, buttonStyles } from "../../atoms/Button";
 import { Icon } from "../../atoms/Icon";
 import type { IconName } from "../../atoms/icons";

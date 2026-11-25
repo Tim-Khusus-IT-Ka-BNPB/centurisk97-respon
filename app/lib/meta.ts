@@ -1,4 +1,4 @@
-import { makeText, type Texts } from "./text";
+import { makeText, type Texts } from "../../src/copy/text";
 
 // The one share picture of every page, served from the static files.
 const SHARE_IMAGE = { path: "/og/lapor.png", width: "1200", height: "630", type: "image/png" } as const;

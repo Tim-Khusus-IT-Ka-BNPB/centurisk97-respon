@@ -1,9 +1,9 @@
 import { useEffect, useRef, useState } from "react";
 import { Link } from "react-router";
 import type { DeskEmergencies, DeskEmergency } from "../../../../src/contract/desk";
+import { hazardKey } from "../../../../src/copy/hazardKey";
 import { alarmReady, alarmSound, askForAlarm, notify } from "../../../lib/alarm";
 import { getJson } from "../../../lib/clientApi";
-import { hazardKey } from "../../../lib/hazardLabel";
 import { useHydrated } from "../../../lib/hooks";
 import { useText } from "../../../lib/text";
 import { Icon } from "../../atoms/Icon";

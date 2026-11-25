@@ -1,11 +1,11 @@
 import { useMemo } from "react";
 import type { ErrorEnvelope } from "../../../src/contract/errors";
+import { clockTime, longDate } from "../../../src/copy/time";
 import { isFinalCard, pageNotices, refusedWords } from "../../lib/cards";
 import type { DraftActionData, DraftPageData } from "../../lib/draftTypes";
 import { isLimit } from "../../lib/envelope";
 import { limitText, statusText } from "../../lib/status";
 import { useText } from "../../lib/text";
-import { clockTime, longDate } from "../../lib/time";
 import { ProgressBar } from "../atoms/ProgressBar";
 import { LifeLine, Notice } from "../molecules/Notice";
 import { StatusRegion } from "../molecules/StatusRegion";

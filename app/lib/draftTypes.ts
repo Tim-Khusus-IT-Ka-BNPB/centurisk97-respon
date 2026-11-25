@@ -1,6 +1,6 @@
 import type { DraftBody } from "../../src/contract/draft";
 import type { ErrorEnvelope } from "../../src/contract/errors";
-import type { Texts } from "./text";
+import type { Texts } from "../../src/copy/text";
 import type { Posted } from "./turnForm";
 
 export type DraftPageData =

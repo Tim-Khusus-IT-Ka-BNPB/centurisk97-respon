@@ -1,8 +1,8 @@
 import { Fragment, type ReactNode } from "react";
 import { Link } from "react-router";
+import { localDateText } from "../../../src/copy/time";
 import { ABOUT_POINTS, ABOUT_STEPS, HELP_GROUPS, PRIVACY_SECTIONS } from "../../lib/docs";
 import { useText } from "../../lib/text";
-import { localDateText } from "../../lib/time";
 import { buttonStyles } from "../atoms/Button";
 import { Icon } from "../atoms/Icon";
 import { CallRow } from "../molecules/CallRow";

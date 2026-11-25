@@ -5,8 +5,9 @@ import { afterEach } from "vitest";
 import type { DraftBody } from "../../src/contract/draft";
 import type { ErrorEnvelope } from "../../src/contract/errors";
 import { copy } from "../../src/copy";
+import { makeText } from "../../src/copy/text";
 import { DraftContext, type DraftView } from "../components/organisms/cards/CardShell";
-import { makeText, TextContext } from "../lib/text";
+import { TextContext } from "../lib/text";
 import type { Posted } from "../lib/turnForm";
 
 afterEach(() => cleanup());

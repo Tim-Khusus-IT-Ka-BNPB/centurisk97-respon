@@ -1,9 +1,9 @@
 import type { DraftBody } from "../../src/contract/draft";
 import type { ErrorEnvelope } from "../../src/contract/errors";
+import type { Text } from "../../src/copy/text";
+import { retryText } from "../../src/copy/time";
 import { isLimit } from "./envelope";
 import { searchStatus } from "./place";
-import type { Text } from "./text";
-import { retryText } from "./time";
 
 // A limit's words with its retry time filled in.
 export function limitText(t: Text, envelope: ErrorEnvelope, nowMs: number): string {
