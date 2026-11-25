@@ -181,16 +181,8 @@ function QueueCards({ items }: { readonly items: readonly Item[] }) {
   );
 }
 
-// Nothing to show, and while something is filtered the way back to everything.
-function Empty({
-  icon,
-  text,
-  filters,
-}: {
-  readonly icon: IconName;
-  readonly text: string;
-  readonly filters: DeskFilters;
-}) {
+// Nothing to show. The way back to everything is in the filters above it.
+function Empty({ icon, text }: { readonly icon: IconName; readonly text: string }) {
   return (
     <div className="flex flex-col items-center gap-3 card-surface px-6 py-14 text-center">
       <span className="flex size-14 items-center justify-center rounded-full bg-sunken text-muted">
@@ -334,8 +326,9 @@ export function DeskQueueView({
         <ViewTabs filters={filters} />
       </div>
       <FilterBar filters={filters} summary={summary} envelope={envelope} />
+      {shown === null ? <Empty icon="search" text={t("desk.refusedSearch")} /> : null}
       {shown?.view === "list" ? <ListView queue={shown.queue} filters={filters} /> : null}
-      {shown?.view === "gallery" ? <GalleryView gallery={shown.gallery} filters={filters} /> : null}
+      {shown?.view === "gallery" ? <GalleryView gallery={shown.gallery} /> : null}
     </DeskShell>
   );
 }

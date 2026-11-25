@@ -51,14 +51,17 @@ export function DeskSignIn({ envelope }: { readonly envelope: ErrorEnvelope | nu
 // A refused read: what the envelope says, and the way back to the list.
 export function DeskRefused({ envelope }: { readonly envelope: ErrorEnvelope }) {
   const t = useText();
+  const missing = envelope.error.code === "desk.reportNotFound";
   return (
-    <Panel id="desk-refused" title={t("desk.refused.title")}>
-      <Notice kind={envelope.error.code.startsWith("limit.") ? "limit" : "error"}>
-        <p>{limitText(t, envelope, Date.now())}</p>
-      </Notice>
-      <Link to="/lapor/meja" className={buttonStyles({ variant: "secondary" })}>
-        {t("desk.refused.back")}
-      </Link>
-    </Panel>
+    <div className="mx-auto w-full max-w-[32rem] md:pt-10">
+      <Panel id="desk-refused" title={t(missing ? "desk.refused.missing" : "desk.refused.title")}>
+        <Notice kind={envelope.error.code.startsWith("limit.") ? "limit" : "error"}>
+          <p>{limitText(t, envelope, Date.now())}</p>
+        </Notice>
+        <Link to="/lapor/meja" className={buttonStyles({ variant: "primary", size: "main" })}>
+          {t("desk.refused.back")}
+        </Link>
+      </Panel>
+    </div>
   );
 }

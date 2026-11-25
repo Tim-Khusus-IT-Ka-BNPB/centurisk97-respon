@@ -9,6 +9,8 @@
   "desk.signIn.submit": "Masuk",
   "desk.signIn.busy": "Memeriksa kode...",
   "desk.refused.title": "Meja laporan belum bisa dibuka",
+  "desk.refused.missing": "Laporan tidak ditemukan",
+  "desk.refusedSearch": "Daftar tampil lagi setelah nomor tiket diperbaiki atau saringan dihapus.",
   "desk.refused.back": "Kembali ke meja laporan",
   "desk.count": "{count} laporan",
   "desk.filters": "Saring laporan",

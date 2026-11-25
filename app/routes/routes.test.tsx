@@ -440,6 +440,14 @@ describe("desk routes", () => {
     });
     expect(await screen.findByRole("heading", { name: "Meja laporan belum bisa dibuka" })).toBeTruthy();
     cleanup();
+    const missing = await load(
+      json({ ...notAllowed, error: { ...notAllowed.error, code: "desk.reportNotFound" } }, 404),
+    );
+    renderPage(routeElement(DeskReportRoute, { loaderData: missing.data, actionData: undefined }), {
+      path: "/lapor/meja/x",
+    });
+    expect(await screen.findByRole("heading", { name: "Laporan tidak ditemukan" })).toBeTruthy();
+    cleanup();
     // A refused open shows above the report it was for.
     renderPage(
       routeElement(DeskReportRoute, {

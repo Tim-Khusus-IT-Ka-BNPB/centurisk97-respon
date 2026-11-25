@@ -57,7 +57,16 @@ describe("the desk queue page", () => {
       new URL("http://x/lapor/meja?ticket=1"),
       fakeApi(() => Response.json(field, { status: 422 })).api,
     );
-    expect(searched).toMatchObject({ kind: "queue", shown: null, envelope: field });
+    expect(searched).toMatchObject({ kind: "queue", shown: null, envelope: field, summary: null });
+    // The menu's counts and the alarm are read again without the search.
+    const summary = { total: 3 };
+    const counted = await loadDeskQueue(
+      new URL("http://x/lapor/meja?ticket=1&status=new"),
+      fakeApi((_method, path) =>
+        path === "/desk/summary?status=new&period=all" ? Response.json(summary) : Response.json(field, { status: 422 }),
+      ).api,
+    );
+    expect(counted).toMatchObject({ shown: null, envelope: field, summary });
     const signIn = await loadDeskQueue(
       new URL("http://x/lapor/meja"),
       fakeApi(() => Response.json(envelope("auth.staffSignInFirst"), { status: 401 })).api,

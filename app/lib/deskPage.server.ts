@@ -104,13 +104,14 @@ export async function loadDeskQueue(url: URL, api: ApiCall): Promise<DeskQueueLo
           : { view: "gallery" as const, gallery: body as DeskGallery };
     return { kind: "queue", texts: texts(), filters, shown, summary, envelope: null };
   }
+  // A refused search keeps the menu, its counts and the alarm: they are read without the search.
   if (response.status === 422)
     return {
       kind: "queue",
       texts: texts(),
       filters,
       shown: null,
-      summary,
+      summary: await summaryOf(api, queueQuery({ ...filters, ticket: "", page: 1 })),
       envelope: (await response.json()) as ErrorEnvelope,
     };
   return refusalOf(response);
