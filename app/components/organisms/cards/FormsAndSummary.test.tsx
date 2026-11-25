@@ -182,6 +182,14 @@ describe("summary and the end of a draft", () => {
     await screen.findByRole("button", { name: "Mengirim laporan..." });
   });
 
+  test("an emergency's summary says so with what was told of victims, in place of how complete it is", async () => {
+    const card = SAMPLE_DRAFTS.summary.card as Extract<Card, { kind: "summary" }>;
+    draw({ ...SAMPLE_DRAFTS.summary, card: { ...card, emergency: { victims: "yes" } } });
+    expect(await screen.findByText("Laporan darurat, sedang berlangsung")).toBeTruthy();
+    expect(screen.getByText("Orang terluka, hilang, atau terjebak: Ya, ada")).toBeTruthy();
+    expect(screen.queryByText(/^Lengkap/)).toBeNull();
+  });
+
   test("a summary with no photos says so", async () => {
     const card = SAMPLE_DRAFTS.summary.card as Extract<Card, { kind: "summary" }>;
     draw({ ...SAMPLE_DRAFTS.summary, card: { ...card, photos: { count: 0, withPlace: 0 } } });

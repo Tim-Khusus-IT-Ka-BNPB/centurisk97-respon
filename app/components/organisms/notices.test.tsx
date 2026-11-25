@@ -162,6 +162,7 @@ const startPage = (extra: Partial<StartPageData> = {}): StartPageData => ({
   view: "list",
   profileId: null,
   editing: false,
+  emergency: false,
   texts: ALL_TEXTS,
   ...extra,
 });

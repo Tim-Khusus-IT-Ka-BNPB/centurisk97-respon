@@ -21,6 +21,7 @@ const page = (extra: Partial<StartPageData> = {}): StartPageData => ({
   view: "list",
   profileId: null,
   editing: false,
+  emergency: false,
   texts: ALL_TEXTS,
   ...extra,
 });
@@ -54,6 +55,17 @@ describe("numbers known on this device", () => {
       `/lapor/report/${withDraft.openDraft.draftId}`,
     );
     expect(screen.getByRole("link", { name: "Nomor lain" }).getAttribute("href")).toContain("?new=1");
+  });
+
+  test("an emergency stays one through every step", async () => {
+    renderPage(<StartScreen page={page({ emergency: true })} acted={null} />, {
+      path: "/lapor/report",
+      entry: "/lapor/report?darurat=1",
+      action: never,
+    });
+    const hrefs = (await screen.findAllByRole("link")).map((link) => link.getAttribute("href"));
+    expect(hrefs).toContain(`/lapor/report?profile=${profile.profileId}&darurat=1`);
+    expect(hrefs).toContain("/lapor/report?new=1&darurat=1");
   });
 
   test("after a removal the number removed is named; a failed removal says so", async () => {
@@ -222,7 +234,7 @@ describe("the home", () => {
   test("one way to report, the resume offer per open draft, and the contacts as links", async () => {
     renderPage(
       <>
-        <HomeHero />
+        <HomeHero known={false} />
         <HomeScreen
           me={{ ...SAMPLE_ME, knownReporters: [withDraft, { ...profile, profileId: "p-2", openDraft: null }] }}
         />

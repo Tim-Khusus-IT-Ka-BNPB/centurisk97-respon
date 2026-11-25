@@ -1,8 +1,9 @@
 import { data, redirect } from "react-router";
+import { EmergencyStart } from "../components/organisms/EmergencyPanel";
 import { StartScreen } from "../components/organisms/StartScreen";
 import { Page } from "../components/templates/Page";
 import { pageMeta } from "../lib/meta";
-import { actOnStart, loadStartPage } from "../lib/startPage.server";
+import { actOnStart, isEmergency, loadStartPage } from "../lib/startPage.server";
 import type { Route } from "./+types/start";
 
 export const headers = () => ({ "cache-control": "private, no-store" });
@@ -15,7 +16,7 @@ export async function loader({ request, context }: Route.LoaderArgs) {
 }
 
 export async function action({ request, context }: Route.ActionArgs) {
-  const acted = await actOnStart(await request.formData(), context.api);
+  const acted = await actOnStart(await request.formData(), context.api, isEmergency(new URL(request.url)));
   if (acted.kind === "redirect") return redirect(acted.location, { status: 303, headers: acted.headers });
   return data(acted.data, { status: acted.status });
 }
@@ -23,6 +24,7 @@ export async function action({ request, context }: Route.ActionArgs) {
 export default function StartRoute({ loaderData, actionData }: Route.ComponentProps) {
   return (
     <Page texts={loaderData.texts} publicPage={false}>
+      {loaderData.emergency ? <EmergencyStart /> : null}
       <StartScreen page={loaderData} acted={actionData ?? null} />
     </Page>
   );

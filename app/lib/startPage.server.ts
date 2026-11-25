@@ -30,8 +30,18 @@ export async function loadStartPage(url: URL, api: ApiCall): Promise<StartPageDa
     view = "confirm";
     profileId = picked;
   }
-  return { me, view, profileId, editing: view === "form" && profileId !== null, texts: pickTexts(PAGE_TEXTS.start) };
+  return {
+    me,
+    view,
+    profileId,
+    editing: view === "form" && profileId !== null,
+    emergency: isEmergency(url),
+    texts: pickTexts(PAGE_TEXTS.start),
+  };
 }
+
+// "Lapor darurat" opens the start page with this, and every step of it keeps it.
+export const isEmergency = (url: URL) => url.searchParams.has("darurat");
 
 export type StartActed =
   | { readonly kind: "redirect"; readonly location: string; readonly headers: Headers }
@@ -43,13 +53,13 @@ const text = (form: FormData, name: string) => {
 };
 
 // POST /lapor/report. A redirect carries the new device cookie on to the browser.
-export async function actOnStart(form: FormData, api: ApiCall): Promise<StartActed> {
+export async function actOnStart(form: FormData, api: ApiCall, emergency = false): Promise<StartActed> {
   const action = text(form, "action");
   const masked = text(form, "maskedNumber");
   if (action === "discardOpenDraft") return discardOpenDraft(text(form, "draftId"), form, api);
   // "Ganti" on the read-back is the way back to the form, with focus on the number.
   if (action === "changeNumber") form.set("action", "declineBack");
-  const result = await startStepAction(form, api);
+  const result = await startStepAction(form, api, emergency);
   if (result.kind === "redirect" && action === "removeProfile")
     return { kind: "render", status: 200, data: rendered("list", form, null, { removed: masked }) };
   if (result.kind === "redirect") return result;

@@ -12,6 +12,7 @@ import AboutRoute, * as about from "./about";
 import DeskRoute, * as desk from "./desk";
 import DeskReportRoute, * as deskReport from "./deskReport";
 import DraftRoute, * as draft from "./draft";
+import EmergencyRoute, * as emergency from "./emergency";
 import HelpRoute, * as help from "./help";
 import HomeRoute, * as home from "./home";
 import * as rootIndex from "./index";
@@ -90,6 +91,33 @@ describe("route modules", () => {
     expect(down.me).toBeNull();
     renderPage(routeElement(HomeRoute, { loaderData: read }), { path: "/lapor" });
     expect(await screen.findByRole("link", { name: "Lapor kejadian" })).toBeTruthy();
+    expect(screen.getByRole("link", { name: "Lapor darurat" }).getAttribute("href")).toBe("/lapor/report?darurat=1");
+    // One tap is offered only where a reporter is known.
+    expect(screen.getByRole("link", { name: "Darurat sekali ketuk" }).getAttribute("href")).toBe(
+      "/lapor/darurat?ketuk=1",
+    );
+    cleanup();
+    renderPage(routeElement(HomeRoute, { loaderData: down }), { path: "/lapor" });
+    expect(await screen.findByRole("link", { name: "Lapor darurat" })).toBeTruthy();
+    expect(screen.queryByRole("link", { name: "Darurat sekali ketuk" })).toBeNull();
+  });
+
+  test("one tap is for a reporter known here; anyone else goes to the short conversation", async () => {
+    expect(emergency.headers()).toEqual({ "cache-control": "private, no-store", "x-robots-tag": "noindex" });
+    const start = { name: "Uji Satu", maskedNumber: "0800****0001", contact: { level: "national" } };
+    const loaded = await emergency.loader({
+      context: { api: api({ "GET /emergencies/start": json(start) }) },
+    } as Args);
+    const titles = emergency
+      .meta({ data: loaded, matches: [] } as Args)
+      .map((tag) => (tag as { title?: string }).title);
+    expect(titles.find(Boolean)).toMatch(/^Darurat sekali ketuk/);
+    renderPage(routeElement(EmergencyRoute, { loaderData: loaded }), { path: "/lapor/darurat" });
+    expect(await screen.findByRole("heading", { level: 1, name: "Darurat sekali ketuk" })).toBeTruthy();
+    const stranger = await emergency.loader({
+      context: { api: api({ "GET /emergencies/start": json(SAMPLE_FIELD_ERROR, 401) }) },
+    } as Args);
+    expect((stranger as Response).headers.get("location")).toBe("/lapor/report?darurat=1");
   });
 
   test("the tracking page is never cached or indexed, and reads its report with script", async () => {
@@ -174,6 +202,18 @@ describe("route modules", () => {
     expect(drawn.data).toMatchObject({ view: "declineConfirm" });
     renderPage(routeElement(StartRoute, { loaderData: loaded, actionData: undefined }), { path: "/lapor/report" });
     expect(await screen.findByRole("heading", { name: "Pilih pelapor" })).toBeTruthy();
+    cleanup();
+    // "Lapor darurat" opens the same page, saying the way is short, with 112 at hand.
+    const alarmed = await start.loader({
+      request: new Request("http://x/lapor/report?darurat=1"),
+      context,
+    } as Args);
+    renderPage(routeElement(StartRoute, { loaderData: alarmed, actionData: undefined }), {
+      path: "/lapor/report",
+      entry: "/lapor/report?darurat=1",
+    });
+    expect(await screen.findByRole("heading", { level: 1, name: "Lapor darurat" })).toBeTruthy();
+    expect(screen.getByRole("link", { name: /112/ }).getAttribute("href")).toBe("tel:112");
   });
 
   test("the draft page loads with its status, and a turn redirects or comes back refused", async () => {
@@ -325,6 +365,7 @@ describe("desk routes", () => {
       completePercent: 50,
       photoCount: 0,
       numberUnverified: false,
+      emergency: null,
       account: { label: "Petugas Uji" },
       reporter: {
         role: "citizen",

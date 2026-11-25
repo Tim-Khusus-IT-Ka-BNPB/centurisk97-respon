@@ -18,6 +18,7 @@ export const PAGE_TEXTS = {
   home: [
     ...SHELL,
     "home.",
+    "emergency.oneTap",
     "resume.",
     "hazard.",
     "stage.",
@@ -25,8 +26,11 @@ export const PAGE_TEXTS = {
     ...[1, 2, 3, 4, 5, 6].map((n) => `about.step${n}.`),
     "about.emergency.",
   ],
+  emergency: [...SHELL, "emergency.", "limit.", "fieldError.emergency.", "error."],
   start: [
     ...SHELL,
+    "emergency.start",
+    "emergency.startLead",
     "home.report",
     "identity.",
     "consent.",

@@ -143,6 +143,23 @@ describe("the start step", () => {
     expect(acted).toMatchObject({ kind: "redirect", location: `/lapor/report/${DRAFT}` });
   });
 
+  test("consent to an emergency, and a known reporter's, start one", async () => {
+    const { api, calls } = fakeApi({
+      "POST /consent": json({ draftId: DRAFT }, 201),
+      "POST /drafts": json({ draftId: DRAFT }, 201),
+    });
+    await actOnStart(form([["action", "consent"]]), api, true);
+    await actOnStart(
+      form([
+        ["action", "useProfile"],
+        ["profileId", "p-1"],
+      ]),
+      api,
+      true,
+    );
+    expect(calls.map((call) => (call.body as { emergency: boolean }).emergency)).toEqual([true, true]);
+  });
+
   test("a read-back is drawn with the values typed", async () => {
     const { api } = fakeApi({});
     const acted = await actOnStart(

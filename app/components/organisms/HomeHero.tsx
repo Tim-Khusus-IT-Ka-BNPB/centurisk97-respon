@@ -1,10 +1,11 @@
 import { Link } from "react-router";
 import { useText } from "../../lib/text";
 import { buttonStyles } from "../atoms/Button";
+import { Icon } from "../atoms/Icon";
 import { EmergencyPanel } from "./EmergencyPanel";
 
 // The opening band: what the service is for, the one way in, and the number to call when a life is at risk.
-export function HomeHero() {
+export function HomeHero({ known }: { readonly known: boolean }) {
   const t = useText();
   return (
     <section aria-labelledby="home-heading" className="contours text-on-hero">
@@ -16,6 +17,13 @@ export function HomeHero() {
           </h1>
           <p className="max-w-[56ch] text-card text-on-hero-muted">{t("home.lead")}</p>
           <div className="flex flex-wrap gap-3 pt-2">
+            <Link
+              to="/lapor/report?darurat=1"
+              className={buttonStyles({ variant: "signal", size: "main", className: "w-full px-8 sm:w-auto" })}
+            >
+              <Icon name="triangleAlert" className="size-5" />
+              {t("home.emergency")}
+            </Link>
             <Link
               to="/lapor/report"
               className={buttonStyles({ variant: "accent", size: "main", className: "w-full px-8 sm:w-auto" })}
@@ -30,7 +38,7 @@ export function HomeHero() {
             </a>
           </div>
         </div>
-        <EmergencyPanel />
+        <EmergencyPanel known={known} />
       </div>
     </section>
   );

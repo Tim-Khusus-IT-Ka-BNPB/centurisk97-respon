@@ -1,5 +1,5 @@
 import type { ReactNode } from "react";
-import { Form, Link } from "react-router";
+import { Form, Link, useSearchParams } from "react-router";
 import type { MeResponse } from "../../../src/contract/draft";
 import { cn } from "../../lib/cn";
 import { useBusy } from "../../lib/hooks";
@@ -25,14 +25,24 @@ export function resumeLine(t: Text, draft: NonNullable<Profile["openDraft"]>): s
   return t("resume.body", { hazardType, time: clockTime(draft.lastActedAt), zone: draft.lastActedAt.zone });
 }
 
+// The start page at another step, still an emergency when it is one.
+function useStep() {
+  const emergency = useSearchParams()[0].has("darurat");
+  return (step: string) => {
+    const search = [step, ...(emergency ? ["darurat=1"] : [])].filter(Boolean).join("&");
+    return search === "" ? "/lapor/report" : `/lapor/report?${search}`;
+  };
+}
+
 function KnownRow({ profile }: { readonly profile: Profile }) {
   const t = useText();
+  const step = useStep();
   const rowId = `profile-${profile.profileId}`;
   return (
     <li className="flex flex-col gap-2 border-t border-line pt-3 first:border-t-0 first:pt-0">
       <Link
         id={rowId}
-        to={`?profile=${profile.profileId}`}
+        to={step(`profile=${profile.profileId}`)}
         aria-label={t("known.row", {
           name: profile.name,
           maskedNumber: profile.maskedNumber,
@@ -69,6 +79,7 @@ function KnownRow({ profile }: { readonly profile: Profile }) {
 
 function KnownList({ me, acted }: { readonly me: MeResponse; readonly acted: StartActionData | null }) {
   const t = useText();
+  const step = useStep();
   return (
     <Panel id="known-heading" title={t("known.title")} lead={t("known.lead")} focusHeading={acted?.removed == null}>
       {acted?.removed ? <Notice kind="info">{t("known.removed", { maskedNumber: acted.removed })}</Notice> : null}
@@ -80,7 +91,7 @@ function KnownList({ me, acted }: { readonly me: MeResponse; readonly acted: Sta
           <KnownRow key={profile.profileId} profile={profile} />
         ))}
       </ul>
-      <Link to="?new=1" className={buttonStyles({})}>
+      <Link to={step("new=1")} className={buttonStyles({})}>
         {t("known.other")}
       </Link>
     </Panel>
@@ -158,6 +169,7 @@ function ReadBack({ number, children }: { readonly number: string; readonly chil
 // The start step: who reports, then consent. Every view is a page of its own with no script.
 export function StartScreen({ page, acted }: { readonly page: StartPageData; readonly acted: StartActionData | null }) {
   const t = useText();
+  const step = useStep();
   const view = acted?.view ?? page.view;
   const profileId = acted?.profileId ?? page.profileId;
   const profile = page.me?.knownReporters.find((known) => known.profileId === profileId) ?? null;
@@ -170,7 +182,7 @@ export function StartScreen({ page, acted }: { readonly page: StartPageData; rea
     return (
       <Panel id="confirm-heading" title={t("known.confirm", { name: profile.name, role: roleKey(profile.role) })}>
         <ActionRow>
-          <Link to={`?edit=${profile.profileId}`} className={buttonStyles({})}>
+          <Link to={step(`edit=${profile.profileId}`)} className={buttonStyles({})}>
             {t("identity.readBack.change")}
           </Link>
           <UseProfile profile={profile} labelKey="identity.readBack.yes" action="useProfile" />
@@ -249,7 +261,7 @@ export function StartScreen({ page, acted }: { readonly page: StartPageData; rea
             {t("card.confirm.removeProfile.accept")}
           </Button>
         </Form>
-        <Link to="/lapor/report" className={buttonStyles({})}>
+        <Link to={step("")} className={buttonStyles({})}>
           {t("card.confirm.removeProfile.back")}
         </Link>
       </Confirm>

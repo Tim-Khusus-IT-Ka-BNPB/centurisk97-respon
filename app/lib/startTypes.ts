@@ -20,6 +20,8 @@ export type StartPageData = {
   // The profile picked from the list, or being changed with "Ganti".
   readonly profileId: string | null;
   readonly editing: boolean;
+  // The report being started is an emergency.
+  readonly emergency: boolean;
   readonly texts: Texts;
 };
 

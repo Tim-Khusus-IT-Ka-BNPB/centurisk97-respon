@@ -81,7 +81,14 @@ export function SummaryCardView({ card }: { readonly card: SummaryCard }) {
   const problem = cardProblem(envelope);
   return (
     <CardShell card={card} title={t(card.titleKey, card.params)} focusId={problem ? "send" : null} ownProblem>
-      <p className="font-semibold tabular-nums">{t("card.summary.complete", { percent: draft.completePercent })}</p>
+      {card.emergency ? (
+        <Notice kind="danger">
+          <p className="font-semibold">{t("card.emergency.summary")}</p>
+          <p>{t("card.emergency.summaryVictims", { victims: `card.emergency.victims.${card.emergency.victims}` })}</p>
+        </Notice>
+      ) : (
+        <p className="font-semibold tabular-nums">{t("card.summary.complete", { percent: draft.completePercent })}</p>
+      )}
       <p className="text-meta text-muted tabular-nums">
         {t("resume.keptUntil", { time: clockTime(kept), zone: kept.zone, date: longDate(kept) })}
       </p>
