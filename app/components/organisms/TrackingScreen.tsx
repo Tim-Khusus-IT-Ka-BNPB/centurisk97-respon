@@ -2,11 +2,12 @@ import { useEffect, useState } from "react";
 import { Link } from "react-router";
 import type { ErrorEnvelope } from "../../../src/contract/errors";
 import type { Tracking } from "../../../src/contract/tracking";
+import { cn } from "../../lib/cn";
 import { useText } from "../../lib/text";
 import { clockTime, localClockText, localDateText, longDate } from "../../lib/time";
 import { buttonStyles } from "../atoms/Button";
 import { Icon } from "../atoms/Icon";
-import { ContactItem } from "../molecules/ContactItem";
+import { CallRow } from "../molecules/CallRow";
 import { Notice } from "../molecules/Notice";
 import { ContactBlock } from "./cards/TicketCards";
 
@@ -70,7 +71,7 @@ function useTracking(): TrackingState {
 
 function Row({ label, value }: { readonly label: string; readonly value: string }) {
   return (
-    <div className="flex min-w-0 flex-col gap-0.5 @tiles:flex-row @tiles:gap-4">
+    <div className="flex min-w-0 flex-col gap-0.5 @tiles:flex-row @tiles:items-baseline @tiles:gap-4">
       <dt className="text-meta text-muted @tiles:w-40 @tiles:shrink-0">{label}</dt>
       <dd className="min-w-0 break-words">{value}</dd>
     </div>
@@ -164,17 +165,21 @@ function TrackingView({ tracking }: { readonly tracking: Tracking }) {
         <h2 id="tracking-status" className="text-card font-bold">
           {t("tracking.status")}
         </h2>
-        <ol className="flex flex-col gap-3">
+        <ol className="flex flex-col">
           {/* A report set aside waits for nothing more: its reached stages, then why. */}
           {tracking.stages
             .filter((stage) => stage.reachedAt !== null || tracking.rejected === null)
             .map((stage) => (
-              <li key={stage.status} className="flex items-start gap-3">
-                <Icon
-                  name={stage.reachedAt ? "circleCheck" : "circleDashed"}
-                  className={stage.reachedAt ? "mt-0.5 text-primary" : "mt-0.5 text-muted"}
-                />
-                <span className="flex min-w-0 flex-col">
+              <li key={stage.status} className="stage-line relative flex items-start gap-4 pb-5 last:pb-0">
+                <span
+                  className={cn(
+                    "flex size-8 shrink-0 items-center justify-center rounded-full",
+                    stage.reachedAt ? "bg-primary text-on-primary" : "border-2 border-dashed border-control",
+                  )}
+                >
+                  {stage.reachedAt ? <Icon name="check" className="size-4" /> : null}
+                </span>
+                <span className="flex min-w-0 flex-col pt-1">
                   <span className={stage.reachedAt ? "font-semibold" : "text-muted"}>
                     {t(`stage.long.${stage.status}`)}
                   </span>
@@ -185,9 +190,11 @@ function TrackingView({ tracking }: { readonly tracking: Tracking }) {
               </li>
             ))}
           {tracking.rejected === null ? null : (
-            <li className="flex items-start gap-3">
-              <Icon name="circleX" className="mt-0.5 text-danger" />
-              <span className="flex min-w-0 flex-col">
+            <li className="flex items-start gap-4">
+              <span className="flex size-8 shrink-0 items-center justify-center rounded-full bg-danger-tint text-danger">
+                <Icon name="circleX" className="size-5" />
+              </span>
+              <span className="flex min-w-0 flex-col pt-1">
                 <span className="font-semibold">{t("stage.long.invalid")}</span>
                 <span className="text-meta text-muted tabular-nums">{at(tracking.rejected.at)}</span>
                 <span className="break-words">{t("tracking.rejected", { reason: tracking.rejected.reason })}</span>
@@ -245,7 +252,7 @@ export function TrackingScreen() {
   return (
     <div className="flex flex-col gap-6">
       <header className="flex flex-col gap-1">
-        <p className="text-meta font-semibold uppercase tracking-wide text-muted">{t("tracking.eyebrow")}</p>
+        <p className="text-muted">{t("tracking.eyebrow")}</p>
         <h1 className="text-display font-bold tabular-nums break-words">{title}</h1>
         {state.kind === "notFound" ? <p>{t("tracking.notFoundHint")}</p> : null}
       </header>
@@ -261,14 +268,14 @@ export function TrackingScreen() {
         <h2 id="tracking-help" className="text-card font-bold">
           {t("tracking.help")}
         </h2>
-        <dl className="grid gap-3 sm:grid-cols-3">
-          <ContactItem label={t("tracking.call117")} value="117" href="tel:117" />
-          <ContactItem label={t("tracking.call112")} value="112" href="tel:112" />
-          <ContactItem label={t("tracking.call113")} value="113" href="tel:113" />
-        </dl>
+        <div className="grid gap-3 sm:grid-cols-3">
+          <CallRow number="112" label={t("tracking.call112")} first />
+          <CallRow number="117" label={t("tracking.call117")} />
+          <CallRow number="113" label={t("tracking.call113")} />
+        </div>
       </section>
       <p className="text-meta text-muted">{t("tracking.footer")}</p>
-      <Link to="/lapor" className={buttonStyles({ variant: "quiet", className: "self-start" })}>
+      <Link to="/lapor" className={buttonStyles({ variant: "link", className: "-ms-2 self-start" })}>
         {t("tracking.back")}
       </Link>
     </div>
