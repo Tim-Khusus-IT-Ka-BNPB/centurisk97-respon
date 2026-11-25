@@ -33,6 +33,7 @@ describe("numbers known on this device", () => {
     expect(known.knownReporters[0]?.maskedNumber).toBe(`0${last.stored.slice(3, 6)}****${last.stored.slice(-4)}`);
     expect(known.knownReporters[0]?.openDraft).toEqual({
       draftId: drafts[2]?.draftId,
+      followUpOf: null,
       hazardType: null,
       lastActedAt: { utc: new Date(clock.now()).toISOString(), zone: "WIB" },
     });
