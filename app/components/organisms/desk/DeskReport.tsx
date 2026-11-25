@@ -14,7 +14,7 @@ import { StateMark } from "../cards/SummaryCards";
 import { DeskActions } from "./DeskActions";
 import { Hazard, PhotoFigure } from "./DeskQueue";
 import { DeskShell } from "./DeskShell";
-import { Houses, StatusChip, spacedNumber, UnverifiedChip, Victims, when } from "./parts";
+import { EmergencyChip, Houses, StatusChip, spacedNumber, UnverifiedChip, Victims, when } from "./parts";
 
 const SAVED = ["status", "replies", "checks", "actions", "proofs"];
 
@@ -217,6 +217,7 @@ export function DeskReportView({
         <div className="flex flex-wrap items-center gap-3">
           <h1 className="text-ticket font-bold tabular-nums">{report.ticketNumber}</h1>
           <StatusChip status={report.status} />
+          {report.emergency === null ? null : <EmergencyChip />}
           {report.numberUnverified ? <UnverifiedChip /> : null}
         </div>
         <div className="grid gap-4 md:grid-cols-[minmax(0,1fr)_auto] md:items-end">

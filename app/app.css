@@ -359,6 +359,10 @@
   background: var(--warn-icon);
   color: var(--surface);
 }
+.desk-marker-emergency {
+  background: var(--signal);
+  color: var(--on-signal);
+}
 .desk-marker-working {
   background: var(--primary);
   color: var(--on-primary);

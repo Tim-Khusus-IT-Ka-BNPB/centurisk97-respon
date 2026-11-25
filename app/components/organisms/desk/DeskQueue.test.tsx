@@ -24,6 +24,7 @@ const POINT = {
   hazardType: "flood",
   villageName: "Sukamaju",
   precision: "villageLevel" as const,
+  emergency: false,
   lat: 5.1,
   lon: 97.123456,
 };
@@ -215,6 +216,30 @@ describe("the list", () => {
     expect(other.queryByText("Nomor belum diverifikasi")).toBeNull();
   });
 
+  test("an emergency is marked, with what was told of victims; one tap told no hazard", async () => {
+    const told = { ...ITEM, emergency: { kind: "chat" as const, victims: "yes" as const } };
+    const tapped = {
+      ...ITEM,
+      ticketNumber: "LA-241126-02",
+      hazardType: "other" as const,
+      emergency: { kind: "oneTap" as const, victims: "unknown" as const },
+    };
+    await renderDesk(
+      <DeskQueueView
+        shown={list(queue({ items: [told, tapped] }))}
+        summary={SUMMARY}
+        filters={FILTERS}
+        envelope={null}
+      />,
+      { path: "/lapor/meja" },
+    );
+    const [first, second] = table().getAllByRole("row").slice(1) as HTMLElement[];
+    expect(within(first as HTMLElement).getByText("Darurat")).toBeTruthy();
+    expect(within(first as HTMLElement).getByText("ada korban")).toBeTruthy();
+    expect(within(second as HTMLElement).getByText("Jenis belum diketahui")).toBeTruthy();
+    expect(screen.getAllByText("Darurat")).toHaveLength(4);
+  });
+
   test("a reporter's name this account must ask for is left out of both", async () => {
     const asked = { ...ITEM, reporter: { name: null, role: "citizen" as const } };
     await renderDesk(
@@ -324,7 +349,7 @@ describe("the map and the gallery", () => {
     );
     expect(screen.getByRole("heading", { level: 1, name: "Peta laporan" })).toBeTruthy();
     expect(screen.getByRole("region", { name: "Peta laporan" })).toBeTruthy();
-    expect(screen.getByRole("main").className).toContain("lg:h-dvh");
+    expect(screen.getByRole("main").parentElement?.className).toContain("lg:h-dvh");
     expect(screen.getAllByText("Masuk sebagai Petugas Uji")).toHaveLength(2);
     const tabs = within(screen.getByRole("navigation", { name: "Tampilan laporan" }));
     expect(tabs.getByRole("link", { name: "Peta" }).getAttribute("aria-current")).toBe("true");

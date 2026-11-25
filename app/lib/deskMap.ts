@@ -62,16 +62,17 @@ function iconElement(name: IconName): SVGSVGElement {
 export function markerElement(point: MapPoint, t: Text): HTMLButtonElement {
   const button = document.createElement("button");
   button.type = "button";
-  button.className = `desk-marker desk-marker-${STATUS_GROUPS[point.status]}`;
+  const alarm = point.emergency && point.status === "new";
+  button.className = `desk-marker desk-marker-${alarm ? "emergency" : STATUS_GROUPS[point.status]}`;
   button.setAttribute(
     "aria-label",
     t("desk.map.marker", {
       ticket: point.ticketNumber,
-      hazard: `hazard.${point.hazardType}.label`,
+      hazard: point.emergency ? "desk.emergency.chip" : `hazard.${point.hazardType}.label`,
       status: `stage.short.${point.status}`,
     }),
   );
-  button.appendChild(iconElement(hazardIcon(point.hazardType)));
+  button.appendChild(iconElement(alarm ? "triangleAlert" : hazardIcon(point.hazardType)));
   return button;
 }
 

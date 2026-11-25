@@ -20,6 +20,7 @@ const POINT: MapPoint = {
   hazardType: "flood",
   villageName: "Sukamaju",
   precision: "villageLevel",
+  emergency: false,
   lat: 5.1,
   lon: 97.1,
 };
@@ -58,6 +59,13 @@ describe("desk map pieces", () => {
     expect(markerElement({ ...POINT, status: "closed", hazardType: "earthquake" }, text).className).toContain(
       "desk-marker-done",
     );
+  });
+
+  test("an emergency nobody has opened stands out on the map; opened, it is marked by its status", () => {
+    const alarm = markerElement({ ...POINT, status: "new", emergency: true }, text);
+    expect(alarm.className).toBe("desk-marker desk-marker-emergency");
+    expect(alarm.getAttribute("aria-label")).toBe("LA-241126-01, Darurat, Diterima");
+    expect(markerElement({ ...POINT, emergency: true }, text).className).toBe("desk-marker desk-marker-open");
   });
 
   test("the show-all button is named and leaves with the map", () => {

@@ -177,6 +177,14 @@ describe("a report on the desk", () => {
     expect(screen.getByRole("link", { name: "Telepon +62 800-0000-0001" })).toBeTruthy();
   });
 
+  test("an emergency is marked in its header", async () => {
+    const emergency = { kind: "chat" as const, victims: "no" as const };
+    await renderDesk(<DeskReportView report={{ ...REPORT, emergency }} summary={SUMMARY} />, PATH);
+    const header = within(screen.getByRole("heading", { level: 1 }).closest("header") as HTMLElement);
+    expect(header.getByText("Darurat")).toBeTruthy();
+    expect(header.getByText("tidak ada korban")).toBeTruthy();
+  });
+
   test("the history names the regency a report was forwarded to", async () => {
     const history = [
       ...REPORT.history,

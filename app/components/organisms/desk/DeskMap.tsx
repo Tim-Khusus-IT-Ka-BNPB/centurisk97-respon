@@ -10,7 +10,7 @@ import { buttonStyles } from "../../atoms/Button";
 import { Icon } from "../../atoms/Icon";
 import { DeskMapCanvas } from "../DeskMapCanvas";
 import { ClearFilters, HasTiles, HazardChips, PeriodSegment, TicketSearch, ViewTabs } from "./DeskFilters";
-import { deskLink, Houses, type Item, StatusChip, Victims, whenShort } from "./parts";
+import { deskLink, EmergencyChip, Houses, hazardLabel, type Item, StatusChip, Victims, whenShort } from "./parts";
 
 function Legend() {
   const t = useText();
@@ -48,11 +48,14 @@ function PanelItem({ item, onPoint }: { readonly item: Item; readonly onPoint: (
         <span className="flex min-w-0 flex-1 flex-col gap-1">
           <span className="flex flex-wrap items-center justify-between gap-x-3 gap-y-1">
             <span className="font-bold tabular-nums">{item.ticketNumber}</span>
-            <StatusChip status={item.status} />
+            <span className="flex flex-wrap justify-end gap-1.5">
+              {item.emergency === null ? null : <EmergencyChip />}
+              <StatusChip status={item.status} />
+            </span>
           </span>
           <span>
             {t("desk.map.row", {
-              hazard: `hazard.${item.hazardType}.label`,
+              hazard: hazardLabel(t, item),
               village: item.place.villageName,
               regency: item.place.regencyName,
             })}
@@ -103,7 +106,7 @@ export function DeskMapView({
     (item) => inView === null || inView.has(item.ticketNumber) || !located.has(item.ticketNumber),
   );
   return (
-    <div className="flex flex-1 flex-col lg:min-h-0 xl:grid xl:grid-cols-[minmax(0,1fr)_25rem]">
+    <div className="flex flex-1 flex-col lg:min-h-0 xl:grid xl:grid-cols-[minmax(0,1fr)_25rem] xl:grid-rows-[minmax(0,1fr)]">
       <div className="relative flex flex-col lg:min-h-0 lg:flex-1">
         <div className="flex flex-wrap items-center justify-between gap-3 px-4 pt-4 lg:sr-only">
           <h1 className="text-page font-bold">{t("desk.heading.map")}</h1>
@@ -127,7 +130,7 @@ export function DeskMapView({
       </div>
       <section
         aria-label={t("desk.map.panel")}
-        className="flex flex-col border-line bg-header lg:h-[42dvh] lg:overflow-y-auto lg:border-t xl:h-dvh xl:border-s xl:border-t-0"
+        className="flex flex-col border-line bg-header lg:h-[42dvh] lg:overflow-y-auto lg:border-t xl:h-auto xl:border-s xl:border-t-0"
       >
         <div className="flex flex-col gap-3 border-b border-line p-4 xl:p-5">
           <div className="flex flex-wrap items-baseline justify-between gap-x-3">

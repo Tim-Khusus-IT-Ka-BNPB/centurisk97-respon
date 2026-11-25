@@ -23,6 +23,7 @@ const POINT = {
   hazardType: "flood" as const,
   villageName: "Sukamaju",
   precision: "villageLevel" as const,
+  emergency: false,
   lat: 5.1,
   lon: 97.123456,
 };
@@ -58,6 +59,14 @@ describe("the map view", () => {
     expect(first.queryByText(/Luka-luka/)).toBeNull();
     expect(first.getByText("2 foto")).toBeTruthy();
     expect(panel().queryByText(/di area peta ini/)).toBeNull();
+  });
+
+  test("an emergency is marked", async () => {
+    const emergency = { kind: "oneTap" as const, victims: "unknown" as const };
+    await draw({ queue: queue({ items: [{ ...ITEM, emergency }], total: 1 }) });
+    const row = within(panel().getAllByRole("listitem")[0] as HTMLElement);
+    expect(row.getByText("Darurat")).toBeTruthy();
+    expect(row.getByText("Jenis belum diketahui, Sukamaju, Aceh Utara")).toBeTruthy();
   });
 
   test("a report with no figures and no photo shows none", async () => {

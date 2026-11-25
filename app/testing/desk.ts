@@ -35,6 +35,7 @@ export const ITEM: DeskQueue["items"][number] = {
   photoCount: 2,
   reporter: { name: "Uji Satu", role: "citizen" },
   numberUnverified: true,
+  emergency: null,
   impact: { dead: 2, missing: null, injured: 0, displaced: null, houses: { count: 3, partial: true } },
 };
 
@@ -139,4 +140,5 @@ export const SUMMARY: DeskSummary = {
   byStatus: { new: 4, seen: 1, under_review: 2, forwarded: 0, in_handling: 0, closed: 2, invalid: 0 },
   byHazard: { flood: 7, landslide: 2 },
   byHas: { victims: 3, displaced: 1, houses: 5, photos: 0 },
+  emergencies: [],
 };

@@ -193,5 +193,14 @@
   "desk.saved.actions": "Tindakan tersimpan.",
   "desk.saved.proofs": "Foto penanganan tersimpan.",
   "desk.proof": "Foto penanganan",
-  "desk.reply.counted": "Balas pelapor ({count})"
+  "desk.reply.counted": "Balas pelapor ({count})",
+  "desk.emergency.title": "{count} laporan darurat belum dibuka",
+  "desk.emergency.chip": "Darurat",
+  "desk.emergency.oneTap": "Jenis belum diketahui",
+  "desk.emergency.place": "{village}, {regency}",
+  "desk.emergency.victims.yes": "ada korban",
+  "desk.emergency.victims.no": "tidak ada korban",
+  "desk.emergency.victims.unknown": "korban belum diketahui",
+  "desk.emergency.turnOn": "Nyalakan suara dan notifikasi",
+  "desk.emergency.notice": "Laporan darurat baru"
 }

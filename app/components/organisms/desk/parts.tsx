@@ -73,6 +73,21 @@ export function UnverifiedMark() {
   );
 }
 
+// Raised as an emergency; the words carry it, the colour repeats it.
+export function EmergencyChip() {
+  const t = useText();
+  return (
+    <span className="inline-flex items-center gap-1 rounded-chip bg-signal px-1.5 py-0.5 text-meta font-bold whitespace-nowrap text-on-signal">
+      <Icon name="triangleAlert" className="size-4" />
+      {t("desk.emergency.chip")}
+    </span>
+  );
+}
+
+// A report's hazard in words; one tap told none.
+export const hazardLabel = (t: Text, item: Pick<Item, "hazardType" | "emergency">) =>
+  t(item.emergency?.kind === "oneTap" ? "desk.emergency.oneTap" : `hazard.${item.hazardType}.label`);
+
 export function UnverifiedChip() {
   const t = useText();
   return (

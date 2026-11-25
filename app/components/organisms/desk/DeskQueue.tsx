@@ -12,12 +12,24 @@ import { Notice } from "../../molecules/Notice";
 import { FilterBar, ViewTabs } from "./DeskFilters";
 import { DeskMapView } from "./DeskMap";
 import { DeskShell } from "./DeskShell";
-import { deskLink, eventShort, Houses, type Item, StatusChip, UnverifiedMark, Victims, when, whenShort } from "./parts";
+import {
+  deskLink,
+  EmergencyChip,
+  eventShort,
+  Houses,
+  hazardLabel,
+  type Item,
+  StatusChip,
+  UnverifiedMark,
+  Victims,
+  when,
+  whenShort,
+} from "./parts";
 
 const placeOf = (t: ReturnType<typeof useText>, item: Item) =>
   t("desk.row.placeShort", { village: item.place.villageName, regency: item.place.regencyName });
 
-export function Hazard({ item }: { readonly item: Pick<Item, "hazardType" | "hazardSubtype"> }) {
+export function Hazard({ item }: { readonly item: Pick<Item, "hazardType" | "hazardSubtype" | "emergency"> }) {
   const t = useText();
   const subtype = valueLines(t, "hazardSubtype", {
     kind: "hazardSubtype",
@@ -28,8 +40,10 @@ export function Hazard({ item }: { readonly item: Pick<Item, "hazardType" | "haz
     <span className="flex items-start gap-2">
       <Icon name={hazardIcon(item.hazardType)} className="mt-0.5 size-5 text-muted" />
       <span className="flex min-w-0 flex-col">
-        <span className="font-semibold">{t(`hazard.${item.hazardType}.label`)}</span>
-        <span className="text-meta text-muted">{subtype}</span>
+        <span className="font-semibold">{hazardLabel(t, item)}</span>
+        <span className="text-meta text-muted">
+          {item.emergency === null ? subtype : t(`desk.emergency.victims.${item.emergency.victims}`)}
+        </span>
       </span>
     </span>
   );
@@ -79,7 +93,10 @@ function QueueTable({ items }: { readonly items: readonly Item[] }) {
                   >
                     {item.ticketNumber}
                   </Link>
-                  <StatusChip status={item.status} />
+                  <span className="flex flex-wrap gap-1.5">
+                    <StatusChip status={item.status} />
+                    {item.emergency === null ? null : <EmergencyChip />}
+                  </span>
                 </span>
               </td>
               <td className={cn(cell, "min-w-40")}>
@@ -133,7 +150,10 @@ function QueueCards({ items }: { readonly items: readonly Item[] }) {
           >
             <span className="flex items-center justify-between gap-3">
               <span className="font-bold tabular-nums">{item.ticketNumber}</span>
-              <StatusChip status={item.status} />
+              <span className="flex flex-wrap justify-end gap-1.5">
+                {item.emergency === null ? null : <EmergencyChip />}
+                <StatusChip status={item.status} />
+              </span>
             </span>
             <Hazard item={item} />
             <span className="text-meta">{placeOf(t, item)}</span>

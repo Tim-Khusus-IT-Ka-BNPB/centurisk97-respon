@@ -8,7 +8,10 @@ import { Emblem } from "../../atoms/Emblem";
 import { Icon } from "../../atoms/Icon";
 import type { IconName } from "../../atoms/icons";
 import { ThemeSwitch } from "../../molecules/ThemeSwitch";
+import { EmergencyBanner } from "./EmergencyBanner";
 import { deskLink, STATUSES, StatusDot } from "./parts";
+
+const NONE: DeskSummary["emergencies"] = [];
 
 const VIEW_ICON: Readonly<Record<DeskView, IconName>> = { list: "list", map: "map", gallery: "images" };
 
@@ -182,14 +185,17 @@ export function DeskShell({
           </div>
         </div>
       </header>
-      <main
-        className={cn(
-          "flex min-w-0 flex-col",
-          fill ? "lg:h-dvh lg:overflow-hidden" : "gap-5 px-4 py-5 md:px-6 lg:px-8 lg:py-7",
-        )}
-      >
-        {children}
-      </main>
+      <div className={cn("flex min-w-0 flex-col", fill ? "lg:h-dvh lg:overflow-hidden" : "")}>
+        <EmergencyBanner initial={place.summary?.emergencies ?? NONE} />
+        <main
+          className={cn(
+            "flex min-w-0 flex-1 flex-col",
+            fill ? "lg:min-h-0" : "gap-5 px-4 py-5 md:px-6 lg:px-8 lg:py-7",
+          )}
+        >
+          {children}
+        </main>
+      </div>
     </div>
   );
 }
