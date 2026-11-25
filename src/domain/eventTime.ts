@@ -94,21 +94,52 @@ const MONTHS = [
 ];
 const WRITTEN_DATE = /(\d{1,2}) ([a-z]{3,9}) (\d{4})/;
 const NUMERIC_DATE = /(\d{1,2})[/.-](\d{1,2})[/.-](\d{2,4})/;
+// A day and a month with no year, which is never the "4/2" of a longer number.
+const WRITTEN_DAY = /(\d{1,2}) ([a-z]{3,9})\b/g;
+const NUMERIC_DAY = /(?<![\d/])(\d{1,2})\/(\d{1,2})(?![\d/])/;
+const AGO = /\b(\d{1,2} ?|se)(menit|jam|hari) (?:yang )?lalu\b/;
+const AGO_MS = { menit: MINUTE_MS, jam: HOUR_MS, hari: DAY_MS } as const;
 const CLOCK = /(\d{1,2})[.:](\d{2})/;
 const SPOKEN_HOUR = /(?:jam|pukul|pkl)\s*(\d{1,2})(?!\d)/;
 
 const pad = (n: number) => String(n).padStart(2, "0");
 
-function relativeDay(text: string, todayMs: number, localHour: number): number | null {
+const dayOf = (localMs: number) => Math.floor(localMs / DAY_MS) * DAY_MS;
+
+function relativeDay(text: string, localNowMs: number): number | null {
+  const ago = AGO.exec(text);
+  // So long ago tells the day, not the hour.
+  if (ago) {
+    const count = ago[1] === "se" ? 1 : Number(ago[1]);
+    return dayOf(localNowMs - count * AGO_MS[ago[2] as keyof typeof AGO_MS]);
+  }
+  const todayMs = dayOf(localNowMs);
   if (text.includes("kemarin lusa")) return todayMs - 2 * DAY_MS;
   if (text.includes("kemarin")) return todayMs - DAY_MS;
   // "Tadi malam" said before 18.00 means last night.
-  if (/semalam|tadi malam/.test(text)) return localHour < 18 ? todayMs - DAY_MS : todayMs;
+  if (/semalam|tadi malam/.test(text)) return localNowMs - todayMs < 18 * HOUR_MS ? todayMs - DAY_MS : todayMs;
   if (/hari ini|tadi|barusan|sekarang|baru saja/.test(text)) return todayMs;
   return null;
 }
 
-function writtenDate(text: string): { date: string; matched: string } | null {
+// The last such day: this year's, or last year's when this year's is still to come.
+function lastSuchDay(day: string, month: number, localNowMs: number): string {
+  const today = new Date(localNowMs).toISOString();
+  const inYear = (year: number) => `${year}-${pad(month)}-${pad(Number(day))}`;
+  const year = Number(today.slice(0, 4));
+  return inYear(year) > today ? inYear(year - 1) : inYear(year);
+}
+
+function dayAndMonth(text: string, localNowMs: number): { date: string; matched: string } | null {
+  for (const [matched, day, word] of text.matchAll(WRITTEN_DAY)) {
+    const month = MONTHS.findIndex((name) => name === word || name.slice(0, 3) === word);
+    if (month >= 0) return { date: lastSuchDay(day as string, month + 1, localNowMs), matched };
+  }
+  const numeric = NUMERIC_DAY.exec(text);
+  return numeric && { date: lastSuchDay(numeric[1] as string, Number(numeric[2]), localNowMs), matched: numeric[0] };
+}
+
+function writtenDate(text: string, localNowMs: number): { date: string; matched: string } | null {
   const written = WRITTEN_DATE.exec(text);
   if (written) {
     // A month is known by its first three letters, so "Des" and a misspelt "Desmber" both read.
@@ -116,7 +147,7 @@ function writtenDate(text: string): { date: string; matched: string } | null {
     if (month >= 0) return { date: `${written[3]}-${pad(month + 1)}-${pad(Number(written[1]))}`, matched: written[0] };
   }
   const numeric = NUMERIC_DATE.exec(text);
-  if (!numeric) return null;
+  if (!numeric) return dayAndMonth(text, localNowMs);
   const year = Number(numeric[3]) < 100 ? 2000 + Number(numeric[3]) : Number(numeric[3]);
   return { date: `${year}-${pad(Number(numeric[2]))}-${pad(Number(numeric[1]))}`, matched: numeric[0] };
 }
@@ -139,10 +170,9 @@ export type ParsedEventTime = { readonly value: EventTimeValue } | { readonly er
 // Reads an event time from typed words. The date is required; the hour is optional and never guessed.
 export function parseEventTimeText(text: string, nowMs: number, zone: Zone): ParsedEventTime {
   const words = folded(text);
-  const todayLocal = Date.parse(`${localDate(nowMs, zone)}T00:00:00Z`);
-  const localHour = new Date(nowMs + zoneOffsetMs(zone)).getUTCHours();
-  const explicit = writtenDate(words);
-  const relative = explicit ? null : relativeDay(words, todayLocal, localHour);
+  const localNowMs = nowMs + zoneOffsetMs(zone);
+  const explicit = writtenDate(words, localNowMs);
+  const relative = explicit ? null : relativeDay(words, localNowMs);
   if (!explicit && relative === null) return { error: "dateRequired" };
   const date = explicit ? explicit.date : new Date(relative as number).toISOString().slice(0, 10);
   const time = readClock(explicit ? words.replace(explicit.matched, " ") : words);
