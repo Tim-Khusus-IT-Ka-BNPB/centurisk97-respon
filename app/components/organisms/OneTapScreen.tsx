@@ -11,7 +11,6 @@ import { Button, buttonStyles } from "../atoms/Button";
 import { Icon } from "../atoms/Icon";
 import { CallRow } from "../molecules/CallRow";
 import { Notice } from "../molecules/Notice";
-import { trackingPath } from "./cards/TicketCards";
 
 type Step =
   | { readonly kind: "ready" | "reading" | "sending" | "failed" }
@@ -107,7 +106,7 @@ export function OneTapScreen({ start }: { readonly start: OneTapStart }) {
         )}
         {step.kind === "sent" ? (
           <a
-            href={trackingPath(step.sent.trackingToken)}
+            href={`/lapor/reports/${step.sent.ticketNumber}`}
             className={buttonStyles({ variant: "primary", size: "main" })}
           >
             {t("emergency.track")}

@@ -180,7 +180,7 @@ function EmergencyPack({ report }: { readonly report: DeskReport }) {
         {t("desk.pack")}
       </Button>
       <p id="desk-pack" className="text-meta text-muted">
-        {t("desk.pack.hint", { count: report.photoCount })}
+        {t(report.photoCount === 0 ? "desk.pack.hint.noPhotos" : "desk.pack.hint", { count: report.photoCount })}
       </p>
     </Form>
   );

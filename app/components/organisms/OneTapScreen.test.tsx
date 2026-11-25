@@ -54,8 +54,8 @@ describe("one tap", () => {
     await act(async () => found(READ));
     expect(await screen.findByText("Terkirim ke meja BNPB dengan nomor LA-241126-01.")).toBeTruthy();
     expect(calls).toEqual([{ url: "/api/lapor/emergencies", body: { lat: 5.1, lon: 97, accuracyM: 12 } }]);
-    expect(screen.getByRole("link", { name: "Lihat perkembangan" }).getAttribute("href")).toBe(
-      `/lapor/lacak#t=${SENT.trackingToken}`,
+    expect(screen.getByRole("link", { name: "Lihat dan lengkapi laporan" }).getAttribute("href")).toBe(
+      `/lapor/reports/${SENT.ticketNumber}`,
     );
   });
 
