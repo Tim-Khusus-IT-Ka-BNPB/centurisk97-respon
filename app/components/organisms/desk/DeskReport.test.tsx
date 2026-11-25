@@ -107,4 +107,48 @@ describe("a report on the desk", () => {
     await renderDesk(<DeskReportView report={REPORT} summary={SUMMARY} refusal={envelope("desk.notAllowed")} />, PATH);
     expect(screen.getByRole("alert").textContent).toContain("belum berhak");
   });
+
+  test("a change kept says so once, with where the ticket is now", async () => {
+    const saved = (entry: string) =>
+      renderDesk(<DeskReportView report={REPORT} summary={SUMMARY} />, { ...PATH, entry: `${PATH.path}${entry}` });
+    const moved = await saved("?saved=status");
+    expect(screen.getByRole("status").textContent).toBe("Status tersimpan. Tiket sekarang: Sudah dilihat petugas.");
+    moved.unmount();
+    const replied = await saved("?saved=reply");
+    expect(screen.getByRole("status").textContent).toBe("Balasan tersimpan. Status tiket: Sudah dilihat petugas.");
+    replied.unmount();
+    await saved("?saved=nope");
+    expect(screen.queryByRole("status")).toBeNull();
+  });
+
+  test("a change another officer got in before says what the ticket became, and nothing as saved", async () => {
+    await renderDesk(
+      <DeskReportView
+        report={REPORT}
+        summary={SUMMARY}
+        refusal={envelope("ticket.changed", { params: { status: "stage.short.closed" } })}
+      />,
+      { ...PATH, entry: `${PATH.path}?saved=status` },
+    );
+    expect(screen.getByRole("alert").textContent).toContain("mengubah tiket ini menjadi Selesai");
+    expect(screen.queryByRole("status")).toBeNull();
+  });
+
+  test("a refusal on a field is told there, not above the report", async () => {
+    await renderDesk(
+      <DeskReportView
+        report={REPORT}
+        summary={SUMMARY}
+        refusal={{
+          ...envelope("request.invalidFields"),
+          fields: [{ fieldId: "note", copyKey: "fieldError.staffReason.tooShort", params: { min: 5 } }],
+        }}
+        typed={{ to: "invalid", note: "dup", reply: "" }}
+      />,
+      PATH,
+    );
+    expect(screen.queryByRole("alert")).toBeNull();
+    const actions = within(screen.getByRole("region", { name: "Tindak lanjut" }));
+    expect(actions.getByText(/Alasan terlalu pendek/)).toBeTruthy();
+  });
 });

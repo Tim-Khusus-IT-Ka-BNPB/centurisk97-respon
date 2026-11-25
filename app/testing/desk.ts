@@ -13,7 +13,15 @@ export async function renderDesk(...args: Parameters<typeof stub>) {
 }
 
 export const SENT = { utc: "2026-11-24T02:30:00.000Z", zone: "WIB" } as const;
-export const FILTERS = { view: "list" as const, status: "", hazardType: "", period: "all", ticket: "", page: 1 };
+export const FILTERS = {
+  view: "list" as const,
+  status: "",
+  hazardType: "",
+  period: "all",
+  ticket: "",
+  has: "",
+  page: 1,
+};
 
 export const ITEM: DeskQueue["items"][number] = {
   ticketNumber: "LA-241126-01",
@@ -102,6 +110,12 @@ export const REPORT: DeskReport = {
   ],
   reporterWords: [{ text: "banjir, dua orang meninggal", at: SENT }],
   photos: [],
+  nextStatuses: [
+    { status: "under_review", note: "optional" },
+    { status: "invalid", note: "reason" },
+  ],
+  revision: 1,
+  replies: [],
 };
 
 export const SUMMARY: DeskSummary = {

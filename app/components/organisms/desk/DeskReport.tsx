@@ -1,7 +1,9 @@
 import { type ReactNode, useEffect } from "react";
-import { Form, Link, useNavigation, useSubmit } from "react-router";
+import { Form, Link, useNavigation, useSearchParams, useSubmit } from "react-router";
 import type { DeskReport, DeskSummary } from "../../../../src/contract/desk";
 import type { ErrorEnvelope } from "../../../../src/contract/errors";
+import type { DeskTyped } from "../../../lib/deskTypes";
+import { cardProblem, isLimit } from "../../../lib/envelope";
 import { limitText } from "../../../lib/status";
 import { hazardOf, rowParts } from "../../../lib/summary";
 import { useText } from "../../../lib/text";
@@ -9,6 +11,7 @@ import { Button } from "../../atoms/Button";
 import { Icon } from "../../atoms/Icon";
 import { Notice } from "../../molecules/Notice";
 import { StateMark } from "../cards/SummaryCards";
+import { DeskActions } from "./DeskActions";
 import { Hazard, PhotoFigure } from "./DeskQueue";
 import { DeskShell } from "./DeskShell";
 import { Houses, StatusChip, spacedNumber, UnverifiedChip, Victims, when } from "./parts";
@@ -73,25 +76,41 @@ export function DeskReportView({
   report,
   summary,
   refusal = null,
+  typed = null,
 }: {
   readonly report: DeskReport;
   readonly summary: DeskSummary | null;
-  // A refused post on this page, such as marking it seen past the hourly limit.
+  // A refused change on this page: a move, a reply, or marking it seen past the hourly limit.
   readonly refusal?: ErrorEnvelope | null;
+  readonly typed?: DeskTyped | null;
 }) {
   const t = useText();
   const hazardType = hazardOf(report.groups);
+  const saved = useSearchParams()[0].get("saved");
+  const problem = cardProblem(refusal);
   return (
     <DeskShell place={{ filters: ALL, current: null, summary }} account={report.account.label}>
       <Link to="/lapor/meja" className="inline-flex min-h-target-min w-fit items-center gap-2 rounded-control text-ink">
         <Icon name="arrowLeft" className="size-5" />
         {t("desk.refused.back")}
       </Link>
-      {refusal === null ? null : (
-        <Notice kind={refusal.error.code.startsWith("limit.") ? "limit" : "error"}>
+      {refusal !== null && isLimit(refusal) ? (
+        <Notice kind="limit">
           <p>{limitText(t, refusal, Date.now())}</p>
         </Notice>
+      ) : null}
+      {problem === null ? null : (
+        <Notice kind="error">
+          <p>{t(problem.copyKey, problem.params)}</p>
+        </Notice>
       )}
+      {refusal === null && (saved === "status" || saved === "reply") ? (
+        <div role="status">
+          <Notice kind="info">
+            <p>{t(`desk.saved.${saved}`, { status: `stage.long.${report.status}` })}</p>
+          </Notice>
+        </div>
+      ) : null}
       <header className="flex flex-col gap-4 card-surface p-4 md:p-5">
         <div className="flex flex-wrap items-center gap-3">
           <h1 className="text-ticket font-bold tabular-nums">{report.ticketNumber}</h1>
@@ -117,8 +136,38 @@ export function DeskReportView({
         </div>
         <MarkSeen report={report} />
       </header>
-      <div className="grid gap-5 xl:grid-cols-[minmax(0,1fr)_24rem] xl:items-start">
-        <div className="flex min-w-0 flex-col gap-5">
+      {/* On a phone: the work first, then the report, then its history. */}
+      <div className="grid gap-5 xl:grid-cols-[minmax(0,1fr)_25rem] xl:grid-rows-[auto_1fr] xl:items-start">
+        <div className="flex min-w-0 flex-col gap-5 xl:col-start-2 xl:row-start-1">
+          <Section id="desk-actions" title={t("desk.actions")}>
+            <DeskActions report={report} envelope={refusal} typed={typed} />
+          </Section>
+          <Section id="desk-reporter" title={t("desk.reporter")}>
+            <div className="flex flex-col gap-1">
+              <p className="font-semibold">{report.reporter.name}</p>
+              <p className="text-muted">{t(`desk.role.${report.reporter.role}`)}</p>
+              {report.reporter.officerRegency !== null ? (
+                <p>
+                  {t("desk.reporter.officer", {
+                    regency: report.reporter.officerRegency,
+                    position: report.reporter.officerPosition as string,
+                  })}
+                </p>
+              ) : null}
+            </div>
+            <a
+              href={`tel:${report.reporter.number}`}
+              className="inline-flex min-h-target items-center gap-2 self-start rounded-control border border-control bg-surface px-4 font-semibold text-ink tabular-nums no-underline hover:bg-sunken"
+            >
+              <Icon name="phone" className="size-5" />
+              {t("desk.reporter.call", { number: spacedNumber(report.reporter.number) })}
+            </a>
+            {report.numberUnverified ? (
+              <p className="text-meta text-muted">{t("desk.reporter.unverifiedHint")}</p>
+            ) : null}
+          </Section>
+        </div>
+        <div className="flex min-w-0 flex-col gap-5 xl:col-start-1 xl:row-span-2 xl:row-start-1">
           <Section id="desk-photos" title={t("desk.photos")}>
             {report.photos.length === 0 ? (
               <p className="text-muted">{t("desk.photos.empty")}</p>
@@ -161,31 +210,7 @@ export function DeskReportView({
             ))}
           </Section>
         </div>
-        <div className="flex min-w-0 flex-col gap-5 xl:sticky xl:top-6">
-          <Section id="desk-reporter" title={t("desk.reporter")}>
-            <div className="flex flex-col gap-1">
-              <p className="font-semibold">{report.reporter.name}</p>
-              <p className="text-muted">{t(`desk.role.${report.reporter.role}`)}</p>
-              {report.reporter.officerRegency !== null ? (
-                <p>
-                  {t("desk.reporter.officer", {
-                    regency: report.reporter.officerRegency,
-                    position: report.reporter.officerPosition as string,
-                  })}
-                </p>
-              ) : null}
-            </div>
-            <a
-              href={`tel:${report.reporter.number}`}
-              className="inline-flex min-h-target items-center gap-2 self-start rounded-control border border-control bg-surface px-4 font-semibold text-ink tabular-nums no-underline hover:bg-sunken"
-            >
-              <Icon name="phone" className="size-5" />
-              {t("desk.reporter.call", { number: spacedNumber(report.reporter.number) })}
-            </a>
-            {report.numberUnverified ? (
-              <p className="text-meta text-muted">{t("desk.reporter.unverifiedHint")}</p>
-            ) : null}
-          </Section>
+        <div className="flex min-w-0 flex-col gap-5 xl:col-start-2 xl:row-start-2">
           <Section id="desk-history" title={t("desk.history")}>
             <ol className="flex flex-col">
               {report.history.map((entry, index) => (

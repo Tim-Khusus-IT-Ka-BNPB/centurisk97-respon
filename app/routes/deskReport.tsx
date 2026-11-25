@@ -16,10 +16,10 @@ export async function loader({ params, context }: Route.LoaderArgs) {
   return data(load, { status: load.kind === "refused" ? load.status : 200 });
 }
 
-export async function action({ params, context }: Route.ActionArgs) {
-  const acted = await actOnDeskReport(params.ticketNumber, context.api);
+export async function action({ params, request, context }: Route.ActionArgs) {
+  const acted = await actOnDeskReport(params.ticketNumber, await request.formData(), context.api);
   if (acted.kind === "redirect") return redirect(acted.location, { status: 303, headers: acted.headers });
-  return data(acted.envelope, { status: acted.status });
+  return data({ envelope: acted.envelope, typed: acted.typed }, { status: acted.status });
 }
 
 export default function DeskReportRoute({ loaderData, actionData }: Route.ComponentProps) {
@@ -27,7 +27,12 @@ export default function DeskReportRoute({ loaderData, actionData }: Route.Compon
   if (load.kind === "report")
     return (
       <WithTexts texts={load.texts}>
-        <DeskReportView report={load.report} summary={load.summary} refusal={actionData ?? null} />
+        <DeskReportView
+          report={load.report}
+          summary={load.summary}
+          refusal={actionData?.envelope}
+          typed={actionData?.typed}
+        />
       </WithTexts>
     );
   return (

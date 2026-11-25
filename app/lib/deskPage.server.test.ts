@@ -112,7 +112,7 @@ describe("a report on the desk", () => {
       kind: "report",
       report: { ticketNumber: "LA-241126-01" },
     });
-    expect(await actOnDeskReport("LA-241126-01", api)).toMatchObject({
+    expect(await actOnDeskReport("LA-241126-01", new FormData(), api)).toMatchObject({
       kind: "redirect",
       location: "/lapor/meja/LA-241126-01",
     });
@@ -123,6 +123,7 @@ describe("a report on the desk", () => {
     ]);
     const refused = await actOnDeskReport(
       "LA-241126-01",
+      new FormData(),
       fakeApi(() => Response.json(envelope("desk.notAllowed"), { status: 403 })).api,
     );
     expect(refused).toMatchObject({ kind: "render", status: 403 });
@@ -131,6 +132,37 @@ describe("a report on the desk", () => {
       fakeApi(() => Response.json(envelope("desk.reportNotFound"), { status: 404 })).api,
     );
     expect(missing).toMatchObject({ kind: "refused", status: 404 });
+  });
+});
+
+describe("a change to a ticket", () => {
+  test("a move and a reply are each posted to their route and named on the page after", async () => {
+    const { api, calls } = fakeApi(() => Response.json({}));
+    const moved = await actOnDeskReport(
+      "LA-241126-01",
+      form({ action: "status", to: "under_review", note: "Dicek", revision: "3" }),
+      api,
+    );
+    expect(moved).toMatchObject({ kind: "redirect", location: "/lapor/meja/LA-241126-01?saved=status" });
+    const replied = await actOnDeskReport("LA-241126-01", form({ action: "reply", reply: "Kami cek" }), api);
+    expect(replied).toMatchObject({ kind: "redirect", location: "/lapor/meja/LA-241126-01?saved=reply" });
+    expect(calls).toEqual([
+      {
+        method: "POST",
+        path: "/desk/reports/LA-241126-01/status",
+        body: { to: "under_review", note: "Dicek", revision: 3 },
+      },
+      { method: "POST", path: "/desk/reports/LA-241126-01/replies", body: { text: "Kami cek" } },
+    ]);
+  });
+
+  test("a refused one gives back what was typed", async () => {
+    const refused = await actOnDeskReport(
+      "LA-241126-01",
+      form({ action: "status", to: "invalid", note: "dup", revision: "3" }),
+      fakeApi(() => Response.json(envelope("request.invalidFields"), { status: 422 })).api,
+    );
+    expect(refused).toMatchObject({ kind: "render", status: 422, typed: { to: "invalid", note: "dup", reply: "" } });
   });
 });
 

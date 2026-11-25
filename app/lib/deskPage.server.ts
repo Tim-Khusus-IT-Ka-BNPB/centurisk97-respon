@@ -1,7 +1,7 @@
 import type { ApiCall } from "../../src/api/bridge";
 import type { DeskGallery, DeskMap, DeskQueue, DeskReport, DeskSummary } from "../../src/contract/desk";
 import type { ErrorEnvelope } from "../../src/contract/errors";
-import { DESK_VIEWS, type DeskFilters, type DeskShown, type DeskView } from "./deskTypes";
+import { DESK_VIEWS, type DeskFilters, type DeskShown, type DeskTyped, type DeskView } from "./deskTypes";
 import type { Texts } from "./text";
 import { PAGE_TEXTS, pickTexts } from "./texts.server";
 
@@ -128,7 +128,7 @@ const formText = (form: FormData, name: string) => {
 };
 
 // The route's cookie goes on with the redirect, so signing in and out reaches the browser.
-const redirectTo = (location: string, response: Response): DeskActed => {
+const redirectTo = (location: string, response: Response): Extract<DeskActed, { kind: "redirect" }> => {
   const headers = new Headers();
   for (const cookie of response.headers.getSetCookie()) headers.append("set-cookie", cookie);
   return { kind: "redirect", location, headers };
@@ -144,10 +144,28 @@ export async function actOnDesk(form: FormData, api: ApiCall): Promise<DeskActed
   return { kind: "render", status: response.status, envelope: (await response.json()) as ErrorEnvelope };
 }
 
-// POST /lapor/meja/<ticket>: the officer opened it, so it is logged and a new ticket is seen.
-export async function actOnDeskReport(ticketNumber: string, api: ApiCall): Promise<DeskActed> {
-  const path = `/lapor/meja/${encodeURIComponent(ticketNumber)}`;
-  const response = await api("POST", `/desk/reports/${encodeURIComponent(ticketNumber)}/view`);
-  if (response.ok) return redirectTo(path, response);
-  return { kind: "render", status: response.status, envelope: (await response.json()) as ErrorEnvelope };
+type DeskReportActed =
+  | Extract<DeskActed, { kind: "redirect" }>
+  | (Extract<DeskActed, { kind: "render" }> & { readonly typed: DeskTyped });
+
+// POST /lapor/meja/<ticket>: the officer moved the ticket or wrote back, named on the page after.
+// With neither it was opened, so it is logged and a new ticket is seen.
+export async function actOnDeskReport(ticketNumber: string, form: FormData, api: ApiCall): Promise<DeskReportActed> {
+  const ticket = encodeURIComponent(ticketNumber);
+  const action = formText(form, "action");
+  const typed = { to: formText(form, "to"), note: formText(form, "note"), reply: formText(form, "reply") };
+  const saved = action === "status" || action === "reply" ? `?saved=${action}` : "";
+  const response =
+    action === "status"
+      ? await api("POST", `/desk/reports/${ticket}/status`, {
+          to: typed.to,
+          note: typed.note,
+          revision: Number(formText(form, "revision")),
+        })
+      : action === "reply"
+        ? await api("POST", `/desk/reports/${ticket}/replies`, { text: typed.reply })
+        : await api("POST", `/desk/reports/${ticket}/view`);
+  if (!response.ok)
+    return { kind: "render", status: response.status, envelope: (await response.json()) as ErrorEnvelope, typed };
+  return redirectTo(`/lapor/meja/${ticket}${saved}`, response);
 }

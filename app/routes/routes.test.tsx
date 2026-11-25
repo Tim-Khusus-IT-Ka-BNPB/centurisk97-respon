@@ -337,6 +337,9 @@ describe("desk routes", () => {
       history: [],
       reporterWords: [],
       photos: [],
+      nextStatuses: [],
+      revision: 0,
+      replies: [],
       impact: { dead: null, missing: null, injured: null, displaced: null, houses: null },
     };
     const load = async (answer: () => Response) =>
@@ -366,18 +369,23 @@ describe("desk routes", () => {
     expect(await screen.findByRole("heading", { name: "Meja laporan belum bisa dibuka" })).toBeTruthy();
     cleanup();
     // A refused open shows above the report it was for.
-    renderPage(routeElement(DeskReportRoute, { loaderData: read.data, actionData: notAllowed }), {
-      path: "/lapor/meja/LA-241126-01",
-    });
+    renderPage(
+      routeElement(DeskReportRoute, { loaderData: read.data, actionData: { envelope: notAllowed, typed: null } }),
+      {
+        path: "/lapor/meja/LA-241126-01",
+      },
+    );
     expect((await screen.findByRole("alert")).textContent).toContain("belum berhak");
     const viewed = await deskReport.action({
       params: { ticketNumber: "LA-241126-01" },
+      request: post("http://x/lapor/meja/LA-241126-01", []),
       context: { api: api({ "POST /desk/reports/LA-241126-01/view": json(REPORT) }) },
     } as Args);
     expect((viewed as Response).headers.get("location")).toBe("/lapor/meja/LA-241126-01");
     const limited = unwrap(
       await deskReport.action({
         params: { ticketNumber: "LA-241126-01" },
+        request: post("http://x/lapor/meja/LA-241126-01", []),
         context: { api: api({ "POST /desk/reports/LA-241126-01/view": json(notAllowed, 403) }) },
       } as Args),
     );
