@@ -3,7 +3,7 @@ import { addNewsChoice, newsChoice } from "../adapters/d1/chatNews";
 import { DRAFT_LIFE_MS, type DraftRecord, loadDraft, openDraftOf, touchDraft } from "../adapters/d1/drafts";
 import { followUpState } from "../adapters/d1/followUp";
 import { isAllowed } from "../adapters/d1/pilot";
-import { latestConsent, makeEmergency, type ProfileRow, profileBySlot, reporterIdOf } from "../adapters/d1/reporters";
+import { makeEmergency, type ProfileRow, profileBySlot, reporterIdOf, updateProfile } from "../adapters/d1/reporters";
 import type { Card } from "../contract/card";
 import type { DraftBody } from "../contract/draft";
 import { hazardKey } from "../copy/hazardKey";
@@ -571,6 +571,13 @@ const knownLine = (profile: Pick<ProfileRow, "name" | "role">) =>
     role: t(profile.role === "citizen" ? "identity.role.citizen" : "identity.role.officer"),
   });
 
+// A known reporter under another name. Their consent stands, and what is open goes on.
+async function renamed(chat: Chat, profile: ProfileRow, identity: Identity): Promise<Reply> {
+  await run(chat.bindings.db, updateProfile(profile.id, identity, new Date(chat.nowMs)));
+  const { draft } = await currentDraft(chat);
+  return { text: message(knownLine(identity), draft === null ? menu() : await againOf(chat, draft)) };
+}
+
 async function identityReply(chat: Chat, step: IdentityStep, text: string): Promise<Reply> {
   const ask = identityText(chat, step);
   if (classifyFreeText(text).kind === "cancel")
@@ -589,6 +596,7 @@ async function identityReply(chat: Chat, step: IdentityStep, text: string): Prom
     default: {
       // Each part was checked as it was answered, and the number by the gateway's route.
       const { identity } = checkIdentity({ ...move.identity, number: chat.number }) as { identity: Identity };
+      if (chat.profile !== null) return renamed(chat, chat.profile, identity);
       const agreedAt = new Date(move.agreedAtMs);
       const given = await giveConsent(chat.bindings, chat.principal, identity, move.emergency, agreedAt);
       // A chat has no device to be full.
@@ -699,12 +707,9 @@ async function statusText(chat: Chat, ticketNumber: string | null): Promise<stri
   );
 }
 
-// Who reports, asked again; their consent stands as they gave it.
-async function changeIdentity(chat: Chat): Promise<Reply> {
-  // A chat is offered this only once it has a profile, and every profile has its consent.
-  const { id } = chat.profile as ProfileRow;
-  const { agreedAt } = (await latestConsent(chat.bindings.db, id)) as { agreedAt: Date };
-  const step: IdentityStep = { kind: "role", agreedAtMs: agreedAt.getTime(), emergency: false };
+// Who reports, asked again of a reporter who has agreed before.
+function changeIdentity(chat: Chat): Reply {
+  const step: IdentityStep = { kind: "role", agreedAtMs: chat.nowMs, emergency: false };
   return { text: identityText(chat, step), step };
 }
 
@@ -782,7 +787,7 @@ async function idle(chat: Chat, text: string): Promise<Reply> {
     if (read.kind === "picked") return wantNews(chat, step.ticketNumber, read.ids[0] === "yes");
     if (read.kind !== "words") return { text: message(notChosen(read), wantNewsText()), step };
   }
-  if (chat.profile === null) return welcome(chat, false, true);
+  if (chat.profile === null) return welcome(chat, false, tellsOfEvent(text));
   const named = newsWithTicket(text);
   if (named) return addNews(chat, named.ticketNumber, named.rest);
   if (!tellsOfEvent(text)) return { text: menu() };

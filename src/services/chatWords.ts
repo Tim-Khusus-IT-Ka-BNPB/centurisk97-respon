@@ -157,7 +157,8 @@ function choiceText(card: CardOf<"choice" | "multiChoice" | "chronologyStep">): 
 
 function photosText(card: CardOf<"photos">): string {
   const last = card.photos.at(-1);
-  const placed = last !== undefined && last.badge !== "none";
+  // Asked once: before the first photo, and after it when it came without one.
+  const locate = last === undefined || (card.photos.length === 1 && last.badge === "none");
   return message(
     last === undefined
       ? lines(bold(t(card.titleKey)), t("whatsapp.photos.ask", { max: card.max }))
@@ -166,7 +167,7 @@ function photosText(card: CardOf<"photos">): string {
           max: card.max,
           badge: t(`card.photos.badge.${last.badge}`) + (last.far ? `, ${lowerFirst(t("card.photos.badge.far"))}` : ""),
         }),
-    !placed && t("whatsapp.photos.locate"),
+    locate && t("whatsapp.photos.locate"),
     numbered(cardChoices(card)),
   );
 }

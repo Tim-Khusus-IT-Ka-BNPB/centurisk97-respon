@@ -105,6 +105,7 @@ describe("who is reporting (AC-01)", () => {
     const photo = await one.photo(cameraJpeg());
     expect([photo.status, photo.text.includes("1. Setuju")]).toEqual([409, true]);
     const other = open();
+    expect((await other.send("halo")).text).not.toContain("belum disimpan");
     for (const text of ["status", "ganti nama", "kabar", "dokumen"])
       expect((await other.send(text)).text, text).toContain("1. Setuju");
     expect((await open().send("darurat")).text).toContain("1. Setuju");
@@ -392,7 +393,10 @@ describe("photos (AC-06)", () => {
       "Lokasi dibagikan lewat WhatsApp, jauh dari lokasi kejadian.",
     );
     clock.advance(31 * 60_000);
-    expect((await one.photo(cameraJpeg())).text).toContain("Tanpa lokasi.");
+    const unplaced = (await one.photo(cameraJpeg())).text;
+    expect(unplaced).toContain("Tanpa lokasi.");
+    // The location is asked for once.
+    expect(unplaced).not.toContain("Bagikan juga lokasi");
     expect(await photos(one)).toMatchObject([
       { badge: "chatLocation", far: 0 },
       { badge: "chatLocation", far: 1 },
@@ -675,12 +679,19 @@ describe("the name", () => {
     expect(new Set(consents.map((consent) => consent.agreed_at)).size).toBe(1);
   });
 
-  test("with no report open it starts one", async () => {
+  test("with no report open it starts none, and news not sent yet stays", async () => {
     const one = open();
-    await sent(one);
+    const ticket = await sent(one);
     expect((await one.send("ganti nama")).text).toMatch(/^\*Melapor sebagai\*/);
-    await one.send("1");
-    expect((await one.send("Uji Empat")).text).toMatch(/^Melapor sebagai Uji Empat/);
+    await one.send("2");
+    await one.send("Uji Empat");
+    await one.send("Kabupaten Uji");
+    expect((await one.send("Staf")).text).toMatch(/^Melapor sebagai Uji Empat \(Petugas BPBD\)[\s\S]*Ketik salah satu/);
+    expect((await draftOf(one.number)).state).toBe("sent");
+    await one.send(`kabar ${ticket}`);
+    await one.send("lima rumah rusak berat");
+    for (const text of ["ganti nama", "1"]) await one.send(text);
+    expect((await one.send("Uji Lima")).text).toMatch(/^Melapor sebagai Uji Lima \(Warga\)[\s\S]*Yang akan dikirim/);
   });
 });
 
