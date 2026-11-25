@@ -1,6 +1,7 @@
 import { describe, expect, test, vi } from "vitest";
 import { SEEDED_SESSIONS } from "../../../db/synthetic/reporters";
 import { deskReportSchema } from "../../contract/desk";
+import type { DraftBody } from "../../contract/draft";
 import { ownReportDetailSchema } from "../../contract/ownReport";
 import { LIMITS } from "../../domain/limits";
 import { browser, freshNumber, manualClock, query, testBindings, testBucket, testDatabase } from "../../testing/api";
@@ -34,6 +35,18 @@ const province = () => signedIn(4);
 const VILLAGE = "11.08.03.2031";
 const NAME = "Cut Contoh Rahasia";
 
+// One more photo in a draft at its photo step.
+async function photographed(phone: Phone, draft: DraftBody): Promise<DraftBody> {
+  tick();
+  const form = new FormData();
+  const photo = cameraJpeg({ make: "Uji", model: "Kamera", dateTime: exifDateTime(clock.now() - 20_000, 420) });
+  form.set("photo", new File([new Uint8Array(photo)], "foto.jpg", { type: "image/jpeg" }));
+  form.set("revision", String(draft.revision));
+  form.set("turnKey", crypto.randomUUID());
+  for (const name of ["lat", "lon", "accuracy", "readAt"]) form.set(name, "");
+  return (await phone.upload(`/drafts/${draft.draftId}/photos`, form)).draft;
+}
+
 // A flood report that says three died, with this many photos.
 async function sentReport(photos = 0): Promise<{ phone: Phone; ticket: string; number: string }> {
   const phone = browser(fetchApi);
@@ -48,16 +61,7 @@ async function sentReport(photos = 0): Promise<{ phone: Phone; ticket: string; n
     tick,
     stopAt: (current) => current.card.kind === "photos",
   });
-  for (let n = 0; n < photos; n += 1) {
-    tick();
-    const form = new FormData();
-    const photo = cameraJpeg({ make: "Uji", model: "Kamera", dateTime: exifDateTime(clock.now() - 20_000, 420) });
-    form.set("photo", new File([new Uint8Array(photo)], "foto.jpg", { type: "image/jpeg" }));
-    form.set("revision", String(draft.revision));
-    form.set("turnKey", crypto.randomUUID());
-    for (const name of ["lat", "lon", "accuracy", "readAt"]) form.set(name, "");
-    draft = (await phone.upload(`/drafts/${draft.draftId}/photos`, form)).draft;
-  }
+  for (let n = 0; n < photos; n += 1) draft = await photographed(phone, draft);
   const ticket = await sendDraft(phone, draft, VILLAGE, {
     tick,
     overrides: { photos: () => ({ optionIds: [photos > 0 ? "continue" : "cannotSend"] }) },
@@ -255,6 +259,86 @@ describe("who may download", () => {
     expect((await staffCopy(officer, ticket)).status).toBe(429);
     expect(await actions(ticket)).toEqual(["document"]);
     clock.advance(3_600_000);
+  });
+});
+
+describe("an emergency's documents in one file", () => {
+  const pack = (phone: Phone, ticket: string) => phone.file(`/desk/reports/${ticket}/document-pack`, {});
+  // An emergency from this phone, with this many photos.
+  async function emergency(photos: number) {
+    const phone = browser(fetchApi);
+    const number = freshNumber();
+    const started = await phone.call("POST", "/consent", {
+      role: "citizen",
+      name: NAME,
+      number: number.typed,
+      privacyVersion: 1,
+      agree: true,
+      emergency: true,
+    });
+    let { draft } = await walkTo(phone, started.draft, VILLAGE, {
+      tick,
+      stopAt: (current) => current.card.kind === "photos",
+    });
+    for (let n = 0; n < photos; n += 1) draft = await photographed(phone, draft);
+    const ticket = await sendDraft(phone, draft, VILLAGE, {
+      tick,
+      overrides: { photos: () => ({ optionIds: [photos > 0 ? "continue" : "cannotSend"] }) },
+    });
+    return { phone, ticket, number: number.stored };
+  }
+
+  test("holds the newest version in both formats and the photos as they are, and is logged once", async () => {
+    const { ticket, number } = await emergency(2);
+    const answer = await pack(regency(), ticket);
+    expect(answer.status).toBe(200);
+    expect(answer.headers.get("content-type")).toBe("application/zip");
+    expect(answer.headers.get("content-disposition")).toBe(`attachment; filename="Paket ${ticket}.zip"`);
+    const files = await unzipped(answer.bytes);
+    expect([...files.keys()]).toEqual([
+      `Laporan ${ticket} versi 1.pdf`,
+      `Laporan ${ticket} versi 1.docx`,
+      "Foto 01.jpg",
+      "Foto 02.jpg",
+    ]);
+    expect(pdfText(files.get(`Laporan ${ticket} versi 1.pdf`) as Uint8Array)).toContain("Laporan darurat.");
+    expect(await docxText(files.get(`Laporan ${ticket} versi 1.docx`) as Uint8Array)).toContain(ticket);
+    expect(files.get("Foto 01.jpg")?.subarray(0, 2)).toEqual(Uint8Array.from([0xff, 0xd8]));
+    const all = new TextDecoder("latin1").decode(answer.bytes);
+    for (const secret of [NAME, number]) expect(all).not.toContain(secret);
+    expect(await actions(ticket)).toEqual(["documentPack"]);
+  });
+
+  test("a photo gone from the store is left out and counted in a note", async () => {
+    const { ticket } = await emergency(1);
+    const [photo] = await query<{ store_key: string }>`
+      select p.store_key from draft_photo p join report r on r.draft_id = p.draft_id where r.ticket_number = ${ticket}`;
+    await testBucket().delete([photo?.store_key as string]);
+    const files = await unzipped((await pack(desk(), ticket)).bytes);
+    expect([...files.keys()].at(-1)).toBe("BACA-DULU.txt");
+    expect(new TextDecoder().decode(files.get("BACA-DULU.txt"))).toBe("1 foto lain tidak dimuat di dokumen ini.");
+  });
+
+  test("the version with the reporter's news is the one packed", async () => {
+    const { ticket } = await emergency(0);
+    await correct(ticket, { dead: "1" });
+    expect([...(await unzipped((await pack(desk(), ticket)).bytes)).keys()][0]).toBe(`Laporan ${ticket} versi 2.pdf`);
+  });
+
+  test("only an emergency has one, only for staff whose region holds it, within the hour's limit", async () => {
+    const ordinary = await sentReport();
+    expect((await pack(desk(), ordinary.ticket)).status).toBe(404);
+    const { phone, ticket } = await emergency(0);
+    expect((await pack(province(), ticket)).status).toBe(404);
+    expect((await pack(desk(), "LA-010101-01")).status).toBe(404);
+    expect((await pack(phone, ticket)).status).toBe(401);
+    expect((await pack(browser(fetchApi), ticket)).status).toBe(401);
+    const officer = desk();
+    expect((await pack(officer, ticket)).status).toBe(200);
+    await query`update rate_counter set count = ${LIMITS["desk.write"].max} where limit_id = 'desk.write'`;
+    expect((await pack(officer, ticket)).status).toBe(429);
+    clock.advance(3_600_000);
+    expect(await actions(ticket)).toEqual(["documentPack"]);
   });
 });
 

@@ -96,5 +96,8 @@
   "document.photos.captionFar": "Foto {n}. {badge}, jauh dari lokasi kejadian, {at}",
   "document.photos.none": "Pelapor tidak mengirim foto.",
   "document.photos.left": "{count} foto lain tidak dimuat di dokumen ini.",
+  "document.pack.name": "Paket {ticketNumber}.zip",
+  "document.pack.photo": "Foto {n}.jpg",
+  "document.pack.read": "BACA-DULU.txt",
   "document.note": "Laporan ini disusun otomatis oleh {appName}. Angka berasal dari pelapor dan belum diverifikasi, kecuali dinyatakan lain. Nama dan nomor pelapor tidak dimuat."
 }
