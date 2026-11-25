@@ -9,12 +9,16 @@ import { Icon } from "../atoms/Icon";
 import type { IconName } from "../atoms/icons";
 import { ChangeList } from "./VersionList";
 
-const ICON: Readonly<Record<NewsItem["kind"], IconName>> = {
-  status: "circleCheck",
+const ICON: Readonly<Record<Exclude<NewsItem["kind"], "status">, IconName>> = {
   reply: "messageSquare",
   actions: "wrench",
   correction: "clipboardCheck",
 };
+
+function iconOf(item: NewsItem): IconName {
+  if (item.kind !== "status") return ICON[item.kind];
+  return item.status === "invalid" ? "circleX" : "circleCheck";
+}
 
 // What an item says beyond its heading.
 function Told({ item, hazardType }: { readonly item: NewsItem; readonly hazardType: string }) {
@@ -46,7 +50,7 @@ function Item({ item, hazardType }: { readonly item: NewsItem; readonly hazardTy
   return (
     <li className="flex gap-3 py-3.5 first:pt-0 last:pb-0">
       <span className="flex size-10 shrink-0 items-center justify-center rounded-control bg-sunken text-primary">
-        <Icon name={ICON[item.kind]} />
+        <Icon name={iconOf(item)} />
       </span>
       <div className="flex min-w-0 flex-1 flex-col gap-1">
         <p className="flex flex-wrap items-center gap-x-2 gap-y-1">
