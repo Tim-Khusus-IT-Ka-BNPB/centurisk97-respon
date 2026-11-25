@@ -17,6 +17,7 @@ const RIGHTS: readonly (readonly [DeskCapability, boolean, boolean])[] = [
   ["readResponse", true, false],
   ["readIdentity", true, false],
   ["revealIdentity", false, true],
+  ["downloadDocument", true, true],
 ];
 
 describe("desk capabilities", () => {
