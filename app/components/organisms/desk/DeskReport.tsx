@@ -6,16 +6,16 @@ import { cn } from "../../../lib/cn";
 import type { DeskTyped } from "../../../lib/deskTypes";
 import { cardProblem, isLimit } from "../../../lib/envelope";
 import { limitText } from "../../../lib/status";
-import { hazardOf, rowParts } from "../../../lib/summary";
-import { type Text, useText } from "../../../lib/text";
+import { useText } from "../../../lib/text";
 import { Button, buttonStyles } from "../../atoms/Button";
 import { Icon } from "../../atoms/Icon";
 import { Notice } from "../../molecules/Notice";
-import { StateMark } from "../cards/SummaryCards";
 import { DeskMapCanvas, SMALL } from "../DeskMapCanvas";
 import { DeskActions } from "./DeskActions";
+import { DeskHistory } from "./DeskHistory";
 import { Hazard, PhotoFigure } from "./DeskQueue";
 import { DeskShell } from "./DeskShell";
+import { DeskValues } from "./DeskValues";
 import {
   ALL_FILTERS,
   EmergencyChip,
@@ -28,30 +28,6 @@ import {
 } from "./parts";
 
 const SAVED = ["status", "replies", "checks", "actions", "proofs", "take"];
-
-type Row = DeskReport["groups"][number]["rows"][number];
-
-// One value: what was asked, what is known of it, and at the end of the line where it came from;
-// on a phone a long value takes its line alone.
-function ValueRow({ row, hazardType }: { readonly row: Row; readonly hazardType: Parameters<typeof rowParts>[2] }) {
-  const t = useText();
-  const parts = rowParts(t, row, hazardType);
-  const origin = row.state === "notYetKnown" ? null : row.origin;
-  return (
-    <div className="flex flex-wrap items-baseline gap-x-4 gap-y-0.5 px-4 py-2.5 sm:grid sm:grid-cols-[minmax(0,10.5rem)_minmax(0,1fr)_auto] sm:gap-x-6 md:px-5">
-      <dt className="basis-full text-meta text-muted sm:text-body">{parts.label}</dt>
-      <dd className="min-w-0 flex-auto break-words">
-        {parts.value === null ? (
-          <StateMark state={parts.state as "none" | "confirmedUnknown" | "notYetKnown"} />
-        ) : (
-          parts.value
-        )}
-        {row.quote === null ? null : <q className="block text-meta text-muted italic">{row.quote}</q>}
-      </dd>
-      {origin === null ? null : <dd className="text-meta text-muted sm:text-end">{t(`desk.origin.${origin}`)}</dd>}
-    </div>
-  );
-}
 
 // With script the open is posted once per visit; without, the officer marks it.
 function MarkSeen({ report }: { readonly report: DeskReport }) {
@@ -109,15 +85,6 @@ function TakeReport() {
       </Button>
     </Form>
   );
-}
-
-// A history row's name: the status it reached, or the work it tells of.
-function historyTitle(t: Text, entry: DeskReport["history"][number]): string {
-  if (entry.event === "actions") return t("desk.handling.actions");
-  if (entry.event === "take") return t("desk.taker", { taker: entry.detail?.taker as string });
-  if (entry.event === "fieldCheck")
-    return t("desk.history.check", { result: `desk.check.result.${entry.detail?.result}` });
-  return t(`stage.long.${entry.status}`);
 }
 
 // What was done: its actions, and the photos of it.
@@ -225,7 +192,6 @@ export function DeskReportView({
   readonly identity?: DeskIdentity | null;
 }) {
   const t = useText();
-  const hazardType = hazardOf(report.groups);
   // Kept the same between renders, so the map is drawn once.
   const { point } = report;
   const points = useMemo(() => (point === null ? [] : [point]), [point]);
@@ -330,26 +296,7 @@ export function DeskReportView({
             </Section>
           </div>
           <Handling report={report} />
-          <section aria-labelledby="desk-values" className="overflow-hidden card-surface">
-            <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-1 px-4 py-4 md:px-5">
-              <h2 id="desk-values" className="scroll-mt-24 text-card font-bold">
-                {t("desk.values")}
-              </h2>
-              <p className="text-meta text-muted">{t("desk.complete", { percent: report.completePercent })}</p>
-            </div>
-            {report.groups.map((group) => (
-              <div key={group.groupId}>
-                <h3 className="border-y border-line bg-sunken/60 px-4 py-2 text-meta font-semibold md:px-5">
-                  {t(`group.${group.groupId}.label`)}
-                </h3>
-                <dl className="divide-y divide-line">
-                  {group.rows.map((row) => (
-                    <ValueRow key={row.fieldId} row={row} hazardType={hazardType} />
-                  ))}
-                </dl>
-              </div>
-            ))}
-          </section>
+          <DeskValues report={report} />
         </div>
         <div className="flex min-w-0 flex-col gap-5 xl:col-start-2 xl:row-start-1">
           <Section id="desk-actions" title={t("desk.actions")}>
@@ -361,37 +308,7 @@ export function DeskReportView({
         </div>
         <div className="flex min-w-0 flex-col gap-5 xl:col-start-2 xl:row-start-2">
           <Section id="desk-history" title={t("desk.history")}>
-            <ol className="flex flex-col">
-              {report.history.map((entry, index) => (
-                <li key={`${entry.status}-${entry.at.utc}`} className="relative flex gap-3 pb-4 last:pb-0">
-                  <span className="flex flex-col items-center">
-                    <span className="mt-1.5 size-2.5 rounded-full bg-primary" aria-hidden="true" />
-                    {index < report.history.length - 1 ? (
-                      <span className="mt-1 w-px flex-1 bg-line" aria-hidden="true" />
-                    ) : null}
-                  </span>
-                  <span className="flex min-w-0 flex-col">
-                    <span className="font-semibold">{historyTitle(t, entry)}</span>
-                    <span className="text-meta text-muted tabular-nums">{when(t, "desk.history.at", entry.at)}</span>
-                    <span className="text-meta">{entry.actor ?? t("desk.history.system")}</span>
-                    {(entry.detail?.changes ?? []).map((change) => (
-                      <span key={change.fieldId}>
-                        {t("desk.history.change", {
-                          label: `field.${change.fieldId}.label`,
-                          from: change.from === null ? "desk.impact.unknown" : change.from,
-                          to: change.to,
-                        })}
-                      </span>
-                    ))}
-                    {entry.detail?.actions ? <span>{entry.detail.actions.join(", ")}</span> : null}
-                    {entry.forwardedTo === null ? null : (
-                      <span>{t("desk.history.forwardedTo", { regency: entry.forwardedTo })}</span>
-                    )}
-                    {entry.note === null ? null : <span>{entry.note}</span>}
-                  </span>
-                </li>
-              ))}
-            </ol>
+            <DeskHistory history={report.history} />
           </Section>
           <Section id="desk-words" title={t("desk.words")}>
             {report.reporterWords.length === 0 ? (
