@@ -74,6 +74,12 @@ exports[`limits table > rows as agreed 1`] = `
     "subject": "device",
     "window": "standing",
   },
+  "document.hour": {
+    "effect": "refuse",
+    "max": 120,
+    "subject": "numberSlot",
+    "window": "clockHour",
+  },
   "message.day": {
     "effect": "refuse",
     "max": 300,
