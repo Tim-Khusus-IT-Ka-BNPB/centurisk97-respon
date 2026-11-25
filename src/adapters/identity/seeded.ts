@@ -16,6 +16,10 @@ type SessionRow = {
   staff_label: string | null;
   scope_level: "national" | "province" | "regency" | null;
   scope_code: string | null;
+  profile_id: string | null;
+  profile_name: string | null;
+  profile_position: string | null;
+  agency: string | null;
 };
 
 function staffOf(session: SessionRow): StaffPrincipal {
@@ -28,6 +32,15 @@ function staffOf(session: SessionRow): StaffPrincipal {
       session.scope_level === "national"
         ? { level: "national" }
         : { level: session.scope_level as "province" | "regency", code: session.scope_code as string },
+    profile:
+      session.profile_id === null
+        ? null
+        : {
+            id: session.profile_id,
+            name: session.profile_name as string,
+            position: session.profile_position as string,
+            agency: session.agency as string,
+          },
   };
 }
 
@@ -50,7 +63,8 @@ export function seededIdentity(db: Database, clock: Clock): IdentityPort {
       if (token) {
         const session = await row<SessionRow>(
           db,
-          sql`select kind, reporter_id, staff_role, staff_id, staff_label, scope_level, scope_code
+          sql`select kind, reporter_id, staff_role, staff_id, staff_label, scope_level, scope_code, profile_id,
+              profile_name, profile_position, agency
             from seeded_session where token_hash = ${await sha256Hex(token)}`,
         );
         if (session?.kind === "reporter") return { kind: "session", reporterId: session.reporter_id as string };

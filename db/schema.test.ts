@@ -96,6 +96,13 @@ describe("schema", () => {
     expect(await refusal(action("view"))).toBe("ok");
     expect(await refusal(sql`update staff_action set action = 'status'`)).toBe("append-only");
     expect(await refusal(sql`delete from staff_action`)).toBe("append-only");
+    const taker = (number: string) =>
+      sql`insert into report_taker (ticket_number, profile_id, staff_id, label, at)
+        values (${number}, 'p1', 's1', 'Uji Andi, Pusdalops', ${NOW})`;
+    expect(await refusal(taker(ticket))).toBe("ok");
+    expect(await refusal(taker(ticket))).toBe("UNIQUE");
+    expect(await refusal(sql`update report_taker set label = 'Orang lain'`)).toBe("append-only");
+    expect(await refusal(sql`delete from report_taker`)).toBe("append-only");
     const reply = (text: string) =>
       sql`insert into report_reply (ticket_number, staff_id, staff_label, text, at)
         values (${ticket}, 's1', 'Uji', ${text}, ${NOW})`;

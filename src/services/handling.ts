@@ -1,5 +1,4 @@
 import { addActions, addFieldCheck, addProof, proofKey } from "../adapters/d1/handling";
-import type { DeskReport } from "../contract/desk";
 import { type CheckResult, checkFieldCheck, revised } from "../domain/fieldCheck";
 import type { FieldStates } from "../domain/fieldState";
 import { checkActions, checkProof } from "../domain/handling";
@@ -8,9 +7,7 @@ import type { DeviceFix } from "../domain/photoChecks";
 import { NEXT_STATUSES } from "../domain/ticketMoves";
 import type { StaffPrincipal } from "../ports/identity";
 import type { ServiceBindings } from "./bindings";
-import { admitted, changeTicket, type DeskChange, type DeskPhotoFile, offeredActions } from "./desk";
-
-const DONE: readonly DeskReport["status"][] = ["closed", "invalid"];
+import { admitted, changeTicket, type DeskChange, type DeskPhotoFile, ENDED, offeredActions } from "./desk";
 
 // What an officer found on site. Not valid sets the report aside with the note; a correction makes
 // a new version of its values.
@@ -27,7 +24,7 @@ export async function checkInField(
 ): Promise<DeskChange> {
   return changeTicket(bindings, staff, "checkField", ticketNumber, async (found, at) => {
     if (found.revision !== check.revision) return { kind: "changed", status: found.status };
-    if (DONE.includes(found.status)) return { kind: "transitionRefused" };
+    if (ENDED.includes(found.status)) return { kind: "transitionRefused" };
     const to = check.result === "notValid" ? "invalid" : found.status;
     if (to !== found.status && !NEXT_STATUSES[found.status].includes(to)) return { kind: "transitionRefused" };
     const states = found.states as FieldStates;

@@ -21,7 +21,13 @@ export const SEEDED_SESSIONS = [
     token: "seeded-session-desk-officer-local-only",
     kind: "staff",
     reporter: null,
-    staff: { id: "staff-desk-1", role: "deskOfficer", label: "Pusdalops BNPB, Petugas Uji", scope: null },
+    staff: {
+      id: "staff-desk-1",
+      role: "deskOfficer",
+      label: "Pusdalops BNPB, Petugas Uji",
+      scope: null,
+      profile: null,
+    },
   },
   {
     token: "seeded-session-bpbd-regency-local-only",
@@ -32,6 +38,7 @@ export const SEEDED_SESSIONS = [
       role: "regionalOfficer",
       label: "BPBD Kabupaten Uji Satu, Petugas Uji",
       scope: { level: "regency", code: "11.08" },
+      profile: { id: "profile-1108-a", name: "Uji Andi", position: "Pusdalops", agency: "BPBD Kabupaten Uji Satu" },
     },
   },
   {
@@ -43,6 +50,20 @@ export const SEEDED_SESSIONS = [
       role: "regionalOfficer",
       label: "BPBD Provinsi Uji Dua, Petugas Uji",
       scope: { level: "province", code: "12" },
+      profile: null,
+    },
+  },
+  // A second officer behind the same BPBD account, with a profile of their own.
+  {
+    token: "seeded-session-bpbd-regency-second-local-only",
+    kind: "staff",
+    reporter: null,
+    staff: {
+      id: "staff-bpbd-1108",
+      role: "regionalOfficer",
+      label: "BPBD Kabupaten Uji Satu, Petugas Uji",
+      scope: { level: "regency", code: "11.08" },
+      profile: { id: "profile-1108-b", name: "Uji Budi", position: "Kedaruratan", agency: "BPBD Kabupaten Uji Satu" },
     },
   },
 ] as const satisfies readonly {
@@ -54,5 +75,6 @@ export const SEEDED_SESSIONS = [
     role: "deskOfficer" | "regionalOfficer";
     label: string;
     scope: { level: "province" | "regency"; code: string } | null;
+    profile: { id: string; name: string; position: string; agency: string } | null;
   } | null;
 }[];

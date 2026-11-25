@@ -90,6 +90,7 @@ function queueItem(staff: StaffPrincipal, found: QueueRow): DeskQueue["items"][n
     reporter: { name: mayUse(staff.role, "readIdentity") ? found.reporterName : null, role: found.reporterRole },
     numberUnverified: found.numberUnverified,
     emergency: found.emergency,
+    taker: found.taker,
     impact: impactOf(found.states),
   };
 }
@@ -208,6 +209,7 @@ export async function deskSummary(
       byHazard: counts.byHazard as DeskSummary["byHazard"],
       byHas: counts.byHas,
       emergencies: await emergencyList(bindings, staff),
+      mayReadResponse: mayUse(staff.role, "readResponse"),
     },
   };
 }
@@ -239,6 +241,12 @@ const identityOf = (found: DeskReportRecord): DeskIdentity => ({
   officerRegency: found.officerRegency,
   officerPosition: found.officerPosition,
 });
+
+export const ENDED: readonly TicketStatus[] = ["closed", "invalid"];
+
+// An officer with a profile of their own may take a report that is still open and in no one's hand.
+const mayTake = (staff: StaffPrincipal, found: DeskReportRecord): boolean =>
+  mayUse(staff.role, "takeReport") && staff.profile !== null && found.taker === null && !ENDED.includes(found.status);
 
 // The actions offered for a hazard type. With no catalogue loaded only the officer's own words are.
 export async function offeredActions(bindings: ServiceBindings, hazardType: string): Promise<ResponseAction[]> {
@@ -282,6 +290,7 @@ async function reportBody(bindings: ServiceBindings, staff: StaffPrincipal, tick
       note: noteRule(found.status, status),
     })),
     revision: found.revision,
+    mayTake: mayTake(staff, found),
     revisable: revisableOf(states),
     offeredActions: await offeredActions(bindings, found.hazardType),
     actions: found.handling.actions.map((one) => ({ label: one.label, at: at(one.atMs, zone), actor: one.staffLabel })),
@@ -348,6 +357,8 @@ export type DeskChange =
   | DeskAnswer<DeskReport>
   | { readonly kind: "invalid"; readonly error: FieldError }
   | { readonly kind: "transitionRefused" }
+  // Another officer has it in hand.
+  | { readonly kind: "taken"; readonly label: string }
   // Another officer moved it first; nothing of this change is written.
   | { readonly kind: "changed"; readonly status: TicketStatus };
 

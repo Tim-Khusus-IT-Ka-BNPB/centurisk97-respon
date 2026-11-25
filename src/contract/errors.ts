@@ -25,6 +25,7 @@ const ERROR_CODES = [
   "desk.reportNotFound",
   "ticket.transitionRefused",
   "ticket.changed",
+  "ticket.taken",
 ] as const;
 
 export type ErrorCode = (typeof ERROR_CODES)[number] | `limit.${LimitId}`;

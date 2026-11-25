@@ -14,7 +14,15 @@ export function regionParts(scope: StaffScope): Query[] {
 export const regionCondition = (scope: StaffScope): Query =>
   regionParts(scope).reduce((joined, part) => sql`${joined} and ${part}`, empty);
 
-type LoggedAction = "view" | "identityView" | "status" | "reply" | "fieldCheck" | "handlingAction" | "handlingProof";
+type LoggedAction =
+  | "view"
+  | "identityView"
+  | "status"
+  | "reply"
+  | "fieldCheck"
+  | "handlingAction"
+  | "handlingProof"
+  | "take";
 
 export const actionRow = (staff: StaffPrincipal, ticketNumber: string, action: LoggedAction, at: Date): Query =>
   sql`insert into staff_action (ticket_number, staff_id, staff_label, staff_kind, action, at)

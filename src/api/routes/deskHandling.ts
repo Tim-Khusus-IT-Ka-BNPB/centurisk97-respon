@@ -1,7 +1,10 @@
 import { createRoute, z } from "@hono/zod-openapi";
-import { deskReportSchema } from "../../contract/desk";
+import { deskReportSchema, deskResponseSchema } from "../../contract/desk";
 import { CHECK_RESULTS } from "../../domain/fieldCheck";
+import { monthOf } from "../../domain/response";
 import { addHandling, addHandlingProof, checkInField, deskProofFile } from "../../services/handling";
+import { deskResponse, takeDeskReport } from "../../services/taker";
+import { refuse } from "../envelope";
 import { type Api, addRoute, jsonBody, jsonResponse, refusal } from "../route";
 import { answered, changeAnswered, staffOf, staffText, ticketParams } from "./desk";
 import { deviceFix, jpegFile, photoForm } from "./shared";
@@ -88,6 +91,45 @@ export function addDeskHandlingRoutes(api: Api): void {
         c,
         await addHandlingProof(c.env, staffOf(c), ticketNumber, { bytes, device: deviceFix(form) }),
       );
+    },
+  );
+
+  addRoute(
+    api,
+    "staff",
+    createRoute({
+      method: "post",
+      path: "/desk/reports/{ticketNumber}/take",
+      request: { params: ticketParams },
+      responses: {
+        200: jsonResponse("In this officer's hand", deskReportSchema),
+        409: refusal("Another officer has it, or it is closed or set aside"),
+      },
+    }),
+    async (c) => {
+      c.header("x-robots-tag", "noindex");
+      return changeAnswered(c, await takeDeskReport(c.env, staffOf(c), c.req.valid("param").ticketNumber));
+    },
+  );
+
+  // The figures the leaders' page will call (upstream's respons).
+  addRoute(
+    api,
+    "staff",
+    createRoute({
+      method: "get",
+      path: "/desk/response",
+      request: { query: z.object({ month: z.string().max(20).optional() }) },
+      responses: {
+        200: jsonResponse("How fast each agency answered the month's reports", deskResponseSchema),
+        400: refusal("The month is not written YYYY-MM"),
+      },
+    }),
+    async (c) => {
+      c.header("x-robots-tag", "noindex");
+      const month = c.req.valid("query").month ?? monthOf(c.env.clock.now());
+      const answer = await deskResponse(c.env, staffOf(c), month);
+      return answer.kind === "badMonth" ? refuse(c, 400, "request.refused") : answered(c, answer);
     },
   );
 

@@ -51,6 +51,10 @@ export const COLUMN_CLASSES: Readonly<Record<string, TableClasses>> = {
       staff_label: I,
       scope_level: I,
       scope_code: I,
+      profile_id: I,
+      profile_name: I,
+      profile_position: I,
+      agency: I,
     },
   },
   report_draft: {
@@ -157,6 +161,10 @@ export const COLUMN_CLASSES: Readonly<Record<string, TableClasses>> = {
       event: I,
       detail: I,
     },
+  },
+  report_taker: {
+    retention: "with the report; append-only",
+    columns: { ticket_number: I, profile_id: I, staff_id: I, label: P, at: I },
   },
   field_check: {
     retention: "with the report; append-only",

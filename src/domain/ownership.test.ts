@@ -17,6 +17,7 @@ describe("who owns a draft", () => {
           role: "deskOfficer",
           label: "Petugas Uji",
           scope: { level: "national" },
+          profile: null,
         },
         draft,
       ),
@@ -34,6 +35,7 @@ describe("who owns a draft", () => {
         role: "deskOfficer",
         label: "Petugas Uji",
         scope: { level: "national" },
+        profile: null,
       }),
     ).toBeNull();
     expect(ownerSlotOf({ kind: "anonymous" })).toBeNull();

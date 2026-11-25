@@ -43,6 +43,7 @@ export type QueueRow = {
   readonly reporterRole: "citizen" | "claimedOfficer";
   readonly numberUnverified: boolean;
   readonly emergency: { readonly kind: EmergencyKind; readonly victims: VictimAnswer } | null;
+  readonly taker: string | null;
 };
 
 type QueueRecord = {
@@ -59,6 +60,7 @@ type QueueRecord = {
   number_unverified: number;
   emergency: EmergencyKind | null;
   emergency_victims: VictimAnswer | null;
+  taker: string | null;
 };
 
 // The values shown are the newest version's: a field check's corrections make one.
@@ -66,6 +68,7 @@ const LATEST = sql`(select max(m.version) from report_version m where m.report_i
 
 const SELECT = sql`select r.ticket_number, t.status, r.hazard_type, r.village_code, r.sent_at, v.fields,
     v.complete_percent, v.reporter_name, v.reporter_role, r.number_unverified, r.emergency, r.emergency_victims,
+    (select k.label from report_taker k where k.ticket_number = r.ticket_number) as taker,
     (select count(*) from draft_photo p where p.draft_id = r.draft_id) as photo_count
   from report r
   join ticket t on t.report_id = r.id
@@ -118,6 +121,7 @@ const queueRow = (found: QueueRecord): QueueRow => ({
   reporterName: found.reporter_name,
   reporterRole: found.reporter_role,
   numberUnverified: found.number_unverified === 1,
+  taker: found.taker,
   emergency:
     found.emergency === null ? null : { kind: found.emergency, victims: found.emergency_victims as VictimAnswer },
 });
@@ -148,6 +152,7 @@ type HistoryDetail = {
   readonly result?: CheckResult;
   readonly changes?: readonly Change[];
   readonly actions?: readonly string[];
+  readonly taker?: string;
 };
 
 export type DeskReportRecord = QueueRow & {
@@ -159,7 +164,7 @@ export type DeskReportRecord = QueueRow & {
     readonly atMs: number;
     readonly actorLabel: string | null;
     readonly note: string | null;
-    readonly event: "fieldCheck" | "actions" | null;
+    readonly event: "fieldCheck" | "actions" | "take" | null;
     readonly detail: HistoryDetail | null;
   }[];
   readonly reporterWords: readonly { readonly text: string; readonly atMs: number }[];
@@ -187,7 +192,8 @@ export async function deskReport(
   >(
     db,
     sql`select r.ticket_number, t.status, r.hazard_type, r.village_code, r.sent_at, v.fields,
-        v.complete_percent, v.reporter_name, v.reporter_role, r.number_unverified, r.emergency, r.emergency_victims, r.draft_id, r.id as report_id, t.revision,
+        v.complete_percent, v.reporter_name, v.reporter_role, r.number_unverified, r.emergency, r.emergency_victims,
+    (select k.label from report_taker k where k.ticket_number = r.ticket_number) as taker, r.draft_id, r.id as report_id, t.revision,
         v.reporter_number, v.officer_regency, v.officer_position,
         (select count(*) from draft_photo p where p.draft_id = r.draft_id) as photo_count
       from report r
@@ -202,7 +208,7 @@ export async function deskReport(
       at: string;
       actor_label: string | null;
       note: string | null;
-      event: "fieldCheck" | "actions" | null;
+      event: "fieldCheck" | "actions" | "take" | null;
       detail: string | null;
     }>(
       db,

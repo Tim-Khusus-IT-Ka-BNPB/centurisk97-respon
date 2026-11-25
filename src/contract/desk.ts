@@ -29,6 +29,8 @@ const queueItemSchema = z.object({
   numberUnverified: z.boolean(),
   // Raised as an emergency, and what the reporter said of victims. One tap's kind is not known.
   emergency: emergencySchema.nullable(),
+  // The officer who has it in hand, as the desk names them. Never on the tracking page.
+  taker: z.string().nullable(),
   // The report's own figures: a count, 0 for an explicit none, null when not known.
   impact: z.object({
     dead: z.number().int().nonnegative().nullable(),
@@ -73,6 +75,8 @@ export const deskSummarySchema = z.object({
   byHazard: z.partialRecord(hazardTypeSchema, z.number().int().nonnegative()),
   byHas: z.record(z.enum(DESK_HAS), z.number().int().nonnegative()),
   emergencies: z.array(deskEmergencySchema),
+  // This account may read how fast each agency answers.
+  mayReadResponse: z.boolean(),
 });
 
 export type DeskSummary = z.infer<typeof deskSummarySchema>;
@@ -145,7 +149,7 @@ export const deskReportSchema = queueItemSchema.extend({
       // The regency whose desk it went to.
       forwardedTo: z.string().nullable(),
       // Work told in the history: what a check found and put right, or what was done.
-      event: z.enum(["fieldCheck", "actions"]).nullable(),
+      event: z.enum(["fieldCheck", "actions", "take"]).nullable(),
       detail: z
         .object({
           result: z.enum(CHECK_RESULTS).optional(),
@@ -154,6 +158,7 @@ export const deskReportSchema = queueItemSchema.extend({
             .readonly()
             .optional(),
           actions: z.array(z.string()).readonly().optional(),
+          taker: z.string().optional(),
         })
         .nullable(),
     }),
@@ -165,6 +170,8 @@ export const deskReportSchema = queueItemSchema.extend({
   ),
   // Sent back with a change, so a change made on an old reading is refused.
   revision: z.number().int().nonnegative(),
+  // This officer may take the report in hand.
+  mayTake: z.boolean(),
   // The figures a field check may put right, with what each holds.
   revisable: z.array(
     z.object({ fieldId: z.string(), unit: z.string(), max: z.number(), count: z.number().nullable() }),
@@ -177,3 +184,34 @@ export const deskReportSchema = queueItemSchema.extend({
 });
 
 export type DeskReport = z.infer<typeof deskReportSchema>;
+
+const spreadSchema = z.object({
+  count: z.number().int().positive(),
+  median: z.number().int().nonnegative(),
+  p90: z.number().int().nonnegative(),
+});
+
+// How fast each agency answered the month's reports, in whole minutes; figures are null under 5
+// reports. Ordered by name, never ranked.
+export const deskResponseSchema = z.object({
+  account: accountSchema,
+  month: z.string(),
+  agencies: z.array(
+    z.object({
+      regencyCode: z.string(),
+      regencyName: z.string(),
+      reports: z.number().int().positive(),
+      figures: z
+        .object({
+          seen: spreadSchema.nullable(),
+          taken: spreadSchema.nullable(),
+          notSeen: z.number().int().nonnegative(),
+          notTaken: z.number().int().nonnegative(),
+          dropped: z.number().int().nonnegative(),
+        })
+        .nullable(),
+    }),
+  ),
+});
+
+export type DeskResponse = z.infer<typeof deskResponseSchema>;

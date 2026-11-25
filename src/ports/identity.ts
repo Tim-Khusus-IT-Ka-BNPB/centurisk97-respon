@@ -14,6 +14,16 @@ export type StaffPrincipal = {
   readonly role: StaffRole;
   readonly label: string;
   readonly scope: StaffScope;
+  // The officer's own profile behind a shared BPBD account; null for an account with none.
+  readonly profile: OfficerProfile | null;
+};
+
+export type OfficerProfile = {
+  readonly id: string;
+  readonly name: string;
+  readonly position: string;
+  // The BPBD as it is named: "BPBD Kabupaten Contoh".
+  readonly agency: string;
 };
 
 export type IdentityPort = {

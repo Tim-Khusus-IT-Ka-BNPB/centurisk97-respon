@@ -54,8 +54,16 @@ describe("seeded staff", () => {
       role: "deskOfficer",
       label: "Pusdalops BNPB, Petugas Uji",
       scope: { level: "national" },
+      profile: null,
     });
     expect(await resolve(3)).toMatchObject({ role: "regionalOfficer", scope: { level: "regency", code: "11.08" } });
-    expect(await resolve(4)).toMatchObject({ role: "regionalOfficer", scope: { level: "province", code: "12" } });
+    expect(await resolve(4)).toMatchObject({
+      role: "regionalOfficer",
+      scope: { level: "province", code: "12" },
+      profile: null,
+    });
+    expect(await resolve(5)).toMatchObject({
+      profile: { id: "profile-1108-b", name: "Uji Budi", position: "Kedaruratan", agency: "BPBD Kabupaten Uji Satu" },
+    });
   });
 });

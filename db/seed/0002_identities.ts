@@ -25,11 +25,15 @@ export default async function seedIdentities(db: Database): Promise<void> {
     }
     await run(
       db,
-      sql`insert into seeded_session (token_hash, kind, reporter_id, staff_role, staff_id, staff_label, scope_level, scope_code)
+      sql`insert into seeded_session (token_hash, kind, reporter_id, staff_role, staff_id, staff_label, scope_level, scope_code,
+          profile_id, profile_name, profile_position, agency)
         values (${await sha256Hex(session.token)}, ${session.kind}, ${reporterId}, ${staff?.role ?? null}, ${staff?.id ?? null},
-          ${staff?.label ?? null}, ${staff === null ? null : (staff.scope?.level ?? "national")}, ${staff?.scope?.code ?? null})
+          ${staff?.label ?? null}, ${staff === null ? null : (staff.scope?.level ?? "national")}, ${staff?.scope?.code ?? null},
+          ${staff?.profile?.id ?? null}, ${staff?.profile?.name ?? null}, ${staff?.profile?.position ?? null},
+          ${staff?.profile?.agency ?? null})
         on conflict (token_hash) do update set staff_role = excluded.staff_role, staff_id = excluded.staff_id,
-          staff_label = excluded.staff_label, scope_level = excluded.scope_level, scope_code = excluded.scope_code`,
+          staff_label = excluded.staff_label, scope_level = excluded.scope_level, scope_code = excluded.scope_code, profile_id = excluded.profile_id,
+          profile_name = excluded.profile_name, profile_position = excluded.profile_position, agency = excluded.agency`,
     );
   }
 }

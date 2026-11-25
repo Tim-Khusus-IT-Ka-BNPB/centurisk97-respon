@@ -13,6 +13,8 @@ const RIGHTS: readonly (readonly [DeskCapability, boolean, boolean])[] = [
   ["reply", true, true],
   ["checkField", true, true],
   ["addHandling", true, true],
+  ["takeReport", false, true],
+  ["readResponse", true, false],
   ["readIdentity", true, false],
   ["revealIdentity", false, true],
 ];

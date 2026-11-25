@@ -80,6 +80,7 @@ export function changeAnswered(c: ApiContext, change: DeskChange): Response {
   if (change.kind === "transitionRefused") return refuse(c, 409, "ticket.transitionRefused");
   if (change.kind === "changed")
     return refuse(c, 409, "ticket.changed", { params: { status: `stage.short.${change.status}` } });
+  if (change.kind === "taken") return refuse(c, 409, "ticket.taken", { params: { taker: change.label } });
   return answered(c, change);
 }
 
