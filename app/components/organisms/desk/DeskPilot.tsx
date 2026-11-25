@@ -82,6 +82,10 @@ function Row({ item }: { readonly item: Item }) {
   );
 }
 
+// Side by side on a tablet, the two fields share their rows, so a hint or an error of one keeps the
+// boxes in line.
+const fieldRows = "flex min-w-0 flex-col gap-1.5 md:max-xl:row-span-4 md:max-xl:grid md:max-xl:grid-rows-subgrid";
+
 function AddNumber({ envelope, typed }: { readonly envelope: ErrorEnvelope | null; readonly typed: DeskTyped | null }) {
   const t = useText();
   const busy = useBusy("add", "action");
@@ -92,13 +96,14 @@ function AddNumber({ envelope, typed }: { readonly envelope: ErrorEnvelope | nul
       <h2 id="pilot-add" className="text-card font-bold">
         {t("desk.pilot.add.title")}
       </h2>
-      <Form method="post" preventScrollReset className="flex flex-col gap-4">
+      <Form method="post" preventScrollReset className="flex flex-col gap-4 md:max-xl:grid md:max-xl:grid-cols-2">
         <input type="hidden" name="action" value="add" />
         <Field
           id="number"
           label={t("desk.pilot.number")}
           hint={t("desk.pilot.numberHint")}
           problem={problemOf(envelope, "number")}
+          className={fieldRows}
           focus={invalid === "number"}
         >
           {(control) => (
@@ -117,11 +122,16 @@ function AddNumber({ envelope, typed }: { readonly envelope: ErrorEnvelope | nul
           label={t("desk.pilot.regency")}
           hint={t("desk.pilot.regencyHint")}
           problem={problemOf(envelope, "officerRegency")}
+          className={fieldRows}
           focus={invalid === "officerRegency"}
         >
           {(control) => <Input {...control} autoComplete="off" defaultValue={typed?.values.officerRegency} />}
         </Field>
-        <Button variant="primary" busyLabel={busy ? t("desk.pilot.add.busy") : null}>
+        <Button
+          variant="primary"
+          className="md:max-xl:justify-self-start"
+          busyLabel={busy ? t("desk.pilot.add.busy") : null}
+        >
           {t("desk.pilot.add")}
         </Button>
       </Form>

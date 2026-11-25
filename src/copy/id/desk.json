@@ -50,7 +50,7 @@
   "desk.pilot.last": "terakhir {at}",
   "desk.pilot.add.title": "Izinkan nomor",
   "desk.pilot.number": "Nomor WhatsApp",
-  "desk.pilot.numberHint": "Diawali 08, 62 atau +62. Contoh: 0800 0000 0001.",
+  "desk.pilot.numberHint": "Diawali 08, 62 atau +62. Contoh: 0800 0000 0001.",
   "desk.pilot.regency": "BPBD kabupaten atau kota",
   "desk.pilot.regencyHint": "Isi hanya untuk petugas BPBD, misalnya Kabupaten Contoh. Laporannya lalu ditandai dikonfirmasi. Kosongkan untuk warga.",
   "desk.pilot.add": "Izinkan nomor",
