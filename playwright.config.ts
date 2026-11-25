@@ -43,7 +43,8 @@ export default defineConfig({
     },
     {
       // A fresh test database each run, migrated and seeded, apart from the dev server's.
-      command: `pnpm db:e2e && pnpm preview --port ${appPort} --persist-to .wrangler/e2e --var APP_ENV:test --var APP_ORIGIN:http://localhost:${appPort}`,
+      // Tests never call the model provider, whatever .dev.vars holds.
+      command: `pnpm db:e2e && pnpm preview --port ${appPort} --persist-to .wrangler/e2e --var APP_ENV:test --var APP_ORIGIN:http://localhost:${appPort} --var MODEL_MODE:off --var MODEL_API_KEY:`,
       url: `http://localhost:${appPort}/api/lapor/health`,
       env: { APP_ENV: "test" },
       reuseExistingServer: false,

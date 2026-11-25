@@ -94,7 +94,7 @@ describe("settings read at start", () => {
     });
   });
 
-  test("local refuses a live model, a key, a remote origin and the address fallback", () => {
+  test("local refuses a remote origin and the address fallback; a live model needs the provider host", () => {
     expect(
       refusal({
         ...local,
@@ -103,7 +103,29 @@ describe("settings read at start", () => {
         APP_ORIGIN: "https://example.test",
         ADDRESS_FALLBACK: "loopback",
       }).problems.map((problem) => problem.setting),
-    ).toEqual(["APP_ORIGIN", "MODEL_MODE", "MODEL_API_KEY", "MODEL_BASE_URL", "ADDRESS_FALLBACK"]);
+    ).toEqual(["APP_ORIGIN", "MODEL_BASE_URL", "ADDRESS_FALLBACK"]);
+  });
+
+  test("a person's own machine may use the live model with its key", () => {
+    const live = { ...local, MODEL_MODE: "live", MODEL_BASE_URL: "https://api.anthropic.com", MODEL_API_KEY: "k" };
+    expect(parseSettings({ ...live, MODEL_NAME: "claude-sonnet-5-5" }, true).model).toEqual({
+      mode: "live",
+      baseUrl: "https://api.anthropic.com",
+      apiKey: "k",
+      name: "claude-sonnet-5-5",
+    });
+  });
+
+  test("tests never call the provider and hold no key", () => {
+    expect(
+      refusal({
+        ...local,
+        APP_ENV: "test",
+        MODEL_MODE: "live",
+        MODEL_BASE_URL: "https://api.anthropic.com",
+        MODEL_API_KEY: "k",
+      }).problems.map((problem) => problem.setting),
+    ).toEqual(["MODEL_MODE", "MODEL_API_KEY"]);
   });
 
   test("a recorded model must be a local stub with a name", () => {

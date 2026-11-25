@@ -76,10 +76,13 @@ function environmentProblems(values: Raw, hasDatabase: boolean): SettingProblem[
   if (development !== LOOPBACK_HOSTS.has(originHost)) refuse("APP_ORIGIN");
   if (!development && !values.APP_ORIGIN.startsWith("https://")) refuse("APP_ORIGIN");
   if ((env === "production") !== (values.IDENTITY_ADAPTER === "upstream")) refuse("IDENTITY_ADAPTER");
-  if (development ? values.MODEL_MODE === "live" : values.MODEL_MODE === "recorded") refuse("MODEL_MODE");
+  // Tests never call the provider; a person's own machine may (owner, 2026-11-25), staging and
+  // production never use the recorded stub.
+  if (env === "test" ? values.MODEL_MODE === "live" : !development && values.MODEL_MODE === "recorded")
+    refuse("MODEL_MODE");
   if (values.MODEL_MODE === "recorded" && !LOOPBACK_HOSTS.has(hostOf(values.MODEL_BASE_URL) ?? ""))
     refuse("MODEL_BASE_URL");
-  if (development && values.MODEL_API_KEY !== "") refuse("MODEL_API_KEY");
+  if (env === "test" && values.MODEL_API_KEY !== "") refuse("MODEL_API_KEY");
   if (values.MODEL_MODE === "live") {
     if (!values.MODEL_BASE_URL.startsWith(`https://${MODEL_PROVIDER_HOST}`)) refuse("MODEL_BASE_URL");
     if (values.MODEL_API_KEY === "") refuse("MODEL_API_KEY", "missing");
