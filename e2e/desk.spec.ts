@@ -270,23 +270,51 @@ test("an officer answers the reporter, moves the ticket to its end, and the trac
   await actions.getByRole("radio", { name: "Tidak dapat ditindaklanjuti" }).check();
   await actions.locator("#note").fill("dup");
   await actions.getByRole("button", { name: "Simpan status" }).click();
-  await expect(actions.getByText(/Alasan terlalu pendek/)).toBeVisible();
+  await expect(actions.getByText(/Alasan untuk pelapor terlalu pendek/)).toBeVisible();
   await expect(actions.locator("#note")).toBeFocused();
   await expect(actions.locator("#note")).toHaveValue("dup");
   await noSidewaysScroll(page);
 
   // A reply puts it under review.
-  await actions.getByLabel("Balas pelapor").fill("Terima kasih, kami cek");
+  await actions.locator("summary", { hasText: "Balas pelapor" }).click();
+  await actions.getByLabel("Balasan").fill("Terima kasih, kami cek");
   await actions.getByRole("button", { name: "Simpan balasan" }).click();
   await expect(page.getByRole("status")).toContainText("Balasan tersimpan. Status tiket: Sedang ditelaah.");
-  await expect(actions.getByText("Terima kasih, kami cek", { exact: true })).toBeVisible();
+  await expect(actions.locator("summary", { hasText: "Balas pelapor (1)" })).toBeVisible();
   await expect(header.getByText("Ditelaah", { exact: true })).toBeVisible();
+
+  // A check on site puts a figure right; the reporter's own stays.
+  await actions.locator("summary", { hasText: "Pengecekan lapangan" }).click();
+  await actions.getByRole("radio", { name: /^Sebagian benar/ }).check();
+  await actions.getByLabel(/^Meninggal/).fill("2");
+  await actions.getByLabel("Catatan pengecekan").fill("Dicek ke kepala desa");
+  await actions.getByRole("button", { name: "Simpan pengecekan" }).click();
+  await expect(page.getByRole("status")).toContainText("Pengecekan tersimpan.");
+  await expect(page.getByRole("region", { name: "Riwayat tiket" }).getByText("Meninggal: 0 menjadi 2")).toBeVisible();
 
   for (const [label, note, short] of [
     ["Ditindaklanjuti", "Tim berangkat", "Ditindaklanjuti"],
     ["Selesai ditangani", "Air sudah surut", "Selesai"],
   ] as const) {
     await actions.getByRole("radio", { name: label, exact: true }).check();
+    if (label === "Ditindaklanjuti") {
+      // Starting the work names what is being done.
+      await actions.getByRole("button", { name: "Simpan status" }).click();
+      await expect(actions.getByText(/Pilih paling sedikit satu tindakan/)).toBeVisible();
+      await actions.getByLabel("Evakuasi warga").check();
+    } else {
+      await actions.locator("#proof").setInputFiles({
+        name: "foto.jpg",
+        mimeType: "image/jpeg",
+        buffer: Buffer.from(
+          withExif(BASE, { make: "Uji", model: "Kamera", dateTime: exifDateTime(Date.now() - 60_000, 420) }),
+        ),
+      });
+      if (!script) await actions.getByRole("button", { name: "Kirim foto" }).click();
+      await expect(page.getByRole("status")).toContainText("Foto penanganan tersimpan.");
+      await expect(page.getByRole("img", { name: "Foto penanganan 1" })).toBeVisible();
+      await actions.getByRole("radio", { name: label, exact: true }).check();
+    }
     await actions.locator("#note").fill(note);
     await actions.getByRole("button", { name: "Simpan status" }).click();
     await expect(page.getByRole("status")).toContainText(`Status tersimpan. Tiket sekarang: ${label}.`);
@@ -302,6 +330,8 @@ test("an officer answers the reporter, moves the ticket to its end, and the trac
     await reporterPage.goto(`/lapor/lacak#t=${token}`);
     const status = reporterPage.getByRole("region", { name: "Status laporan" });
     await expect(status.getByRole("listitem").filter({ hasText: /pukul \d{2}\.\d{2} WIB/ })).toHaveCount(5);
+    await expect(status.getByText("Evakuasi warga")).toBeVisible();
+    await expect(status.getByRole("img", { name: "Foto penanganan 1" })).toBeVisible();
     for (const text of ["Petugas Uji", "Tim berangkat", "kami cek"])
       await expect(reporterPage.getByText(text)).toHaveCount(0);
   }
