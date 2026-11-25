@@ -582,7 +582,13 @@ async function identityReply(chat: Chat, step: IdentityStep, text: string): Prom
   const ask = identityText(chat, step);
   if (classifyFreeText(text).kind === "cancel")
     return { text: t(chat.profile === null ? "whatsapp.identity.cancelled" : "whatsapp.identity.kept") };
-  if (readCommand(text)?.kind === "help") return { text: message(t("whatsapp.help"), ask), step };
+  const command = readCommand(text)?.kind;
+  if (command === "help") return { text: message(t("whatsapp.help"), ask), step };
+  if (command === "emergency")
+    return {
+      text: message(t("whatsapp.emergency.now"), t("notice.lifeLine"), ask),
+      step: { ...step, emergency: true },
+    };
   const move = identityMove(step, text, identityChoices(step), chat.nowMs);
   switch (move.kind) {
     case "ask":
@@ -799,8 +805,10 @@ async function idle(chat: Chat, text: string): Promise<Reply> {
 
 async function respond(chat: Chat, text: string): Promise<Reply> {
   const { step } = chat.session;
-  if (step && isIdentityStep(step)) return identityReply(chat, step, text);
   const command = readCommand(text);
+  // An emergency of a known reporter waits for no new name.
+  const urgent = command?.kind === "emergency" && chat.profile !== null;
+  if (step && isIdentityStep(step) && !urgent) return identityReply(chat, step, text);
   const { draft, expired } = await currentDraft(chat);
   if (draft !== null) return command ? commandInDraft(chat, draft, command) : answerCard(chat, draft, text);
   // A number nobody agreed for has no reports: any command of it but an emergency starts there.

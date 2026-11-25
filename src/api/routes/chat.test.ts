@@ -662,6 +662,21 @@ describe("an emergency", () => {
     await one.share(VILLAGE.lat, VILLAGE.lon);
     expect((await one.send("1")).text).toMatch(/^\*Kejadian apa yang sedang terjadi/);
   });
+
+  test("said while the reporter is being asked who they are, it is no name of theirs", async () => {
+    const one = open();
+    for (const text of ["lapor", "1", "1"]) await one.send(text);
+    expect((await one.send("darurat")).text).toMatch(
+      /^Laporan ini sekarang laporan darurat[\s\S]*hubungi 112[\s\S]*nama/i,
+    );
+    expect((await one.send("Uji Satu")).text).toMatch(/^Melapor sebagai Uji Satu \(Warga\)/);
+    expect((await draftOf(one.number)).fields).toMatchObject({ emergency: { victims: null } });
+    await one.send("batal");
+    await one.send("1");
+    // Known by now, they are not held up by a new name.
+    await one.send("ganti nama");
+    expect((await one.send("darurat")).text).toMatch(/^Melapor sebagai Uji Satu[\s\S]*\*Lokasi kejadian\*/);
+  });
 });
 
 describe("the name", () => {
