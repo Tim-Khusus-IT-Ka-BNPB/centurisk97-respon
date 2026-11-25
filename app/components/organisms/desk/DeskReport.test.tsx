@@ -264,6 +264,9 @@ describe("a report on the desk", () => {
     expect(screen.queryByRole("button", { name: "Unduh paket darurat" })).toBeNull();
     view.unmount();
     const emergency = { ...REPORT, photoCount: 3, emergency: { kind: "chat" as const, victims: "yes" as const } };
+    const bare = await renderDesk(<DeskReportView report={{ ...emergency, photoCount: 0 }} summary={SUMMARY} />, PATH);
+    expect(screen.getByText(/^PDF dan Word dalam satu berkas/)).toBeTruthy();
+    bare.unmount();
     await renderDesk(<DeskReportView report={emergency} summary={SUMMARY} />, PATH);
     const pack = screen.getByRole("button", { name: "Unduh paket darurat" }) as HTMLButtonElement;
     expect([pack.name, pack.value]).toEqual(["format", "pack"]);

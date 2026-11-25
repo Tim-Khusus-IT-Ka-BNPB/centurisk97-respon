@@ -297,6 +297,14 @@ describe("the home", () => {
     expect(row.getAttribute("href")).toBe("/lapor/reports/LA-231126-01");
   });
 
+  test("a report with no unread news carries no mark", async () => {
+    const read = SAMPLE_ME.reports.map((report) => ({ ...report, unread: 0 }));
+    renderPage(<HomeScreen me={{ ...SAMPLE_ME, reports: read }} />, { path: "/lapor" });
+    const list = await screen.findByRole("region", { name: "Laporan saya" });
+    expect(within(list).getByText("LA-231126-01")).toBeTruthy();
+    expect(within(list).queryByText(/kabar baru/)).toBeNull();
+  });
+
   test("with nothing sent, Laporan saya says so and there is no Cek status laporan", async () => {
     renderPage(<HomeScreen me={{ ...SAMPLE_ME, reports: [] }} />, { path: "/lapor" });
     expect(await screen.findByText("Belum ada laporan terkirim dari perangkat ini.")).toBeTruthy();

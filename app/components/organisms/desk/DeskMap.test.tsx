@@ -68,6 +68,12 @@ describe("the map view", () => {
     expect(row.getByText("Jenis belum diketahui, Sukamaju, Aceh Utara")).toBeTruthy();
   });
 
+  test("news no officer has acted on is marked", async () => {
+    await draw({ queue: queue({ items: [{ ...ITEM, news: true }], total: 1 }) });
+    const row = within(panel().getAllByRole("listitem")[0] as HTMLElement);
+    expect(row.getByText("Kabar baru")).toBeTruthy();
+  });
+
   test("a report with no figures and no photo shows none", async () => {
     const impact = { dead: 0, missing: null, injured: 0, displaced: 0, houses: null };
     await draw({ queue: queue({ items: [{ ...ITEM, photoCount: 0, impact }], total: 1 }) });

@@ -145,6 +145,11 @@ describe("what a document says", () => {
     expect(texts(from)).toContain("Waktu versi ini|25 November 2026, pukul 09.15 WIB");
   });
 
+  test("none and not known with no count are told apart in one line", () => {
+    const said = impact(source({ dead: NONE, missing: { state: "notYetKnown" } }));
+    expect(said).toContain("Korban jiwa: meninggal tidak ada; hilang dan luka-luka belum diketahui.");
+  });
+
   test("an officer's note under a value is for staff; the reporter reads that it was corrected", () => {
     const states: FieldStates = { dead: { state: "value", value: 2, origin: "officer", quote: "Dicek" } };
     expect(texts(source(states))).toContain("Meninggal|2 orang|Koreksi lapangan");
