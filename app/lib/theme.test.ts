@@ -1,5 +1,5 @@
-import { describe, expect, test } from "vitest";
-import { nextTheme, safeReturn, themeFromCookie } from "./theme";
+import { describe, expect, test, vi } from "vitest";
+import { drawnTheme, nextTheme, safeReturn, themeFromCookie } from "./theme";
 
 describe("theme", () => {
   test("is read from its cookie; anything else is light", () => {
@@ -9,6 +9,16 @@ describe("theme", () => {
     expect(themeFromCookie("theme=darker")).toBe("light");
     expect(themeFromCookie("xtheme=dark")).toBe("light");
     expect(themeFromCookie(null)).toBe("light");
+  });
+
+  test("stays as drawn when nothing else is known; on the server that is light", () => {
+    expect(drawnTheme()).toBe("light");
+    document.documentElement.dataset.theme = "dark";
+    expect(drawnTheme()).toBe("dark");
+    vi.stubGlobal("document", undefined);
+    expect(drawnTheme()).toBe("light");
+    vi.unstubAllGlobals();
+    delete document.documentElement.dataset.theme;
   });
 
   test("one button flips light and dark", () => {

@@ -5,6 +5,10 @@ export type Theme = "light" | "dark";
 export const themeFromCookie = (header: string | null): Theme =>
   /(?:^|;\s*)theme=dark(?:;|$)/.test(header ?? "") ? "dark" : "light";
 
+// The theme the page is drawn in, for when what the server said of it was lost with a refresh.
+export const drawnTheme = (): Theme =>
+  globalThis.document?.documentElement.dataset.theme === "dark" ? "dark" : "light";
+
 // One button flips between the two.
 export const nextTheme = (current: Theme): Theme => (current === "light" ? "dark" : "light");
 

@@ -1,7 +1,7 @@
 import { useFetcher, useLocation, useRouteLoaderData } from "react-router";
 import { cn } from "../../lib/cn";
 import { useText } from "../../lib/text";
-import { nextTheme, type Theme } from "../../lib/theme";
+import { drawnTheme, nextTheme, type Theme } from "../../lib/theme";
 import { Icon } from "../atoms/Icon";
 import type { IconName } from "../atoms/icons";
 
@@ -20,7 +20,7 @@ export function ThemeSwitch({
   const fetcher = useFetcher();
   const { pathname, search } = useLocation();
   const loaded = useRouteLoaderData("root") as { readonly theme?: Theme } | undefined;
-  const current = (fetcher.formData?.get("theme") as Theme | undefined) ?? loaded?.theme ?? "light";
+  const current = (fetcher.formData?.get("theme") as Theme | undefined) ?? loaded?.theme ?? drawnTheme();
   const next = nextTheme(current);
   const name = t(`theme.${next}`);
   return (

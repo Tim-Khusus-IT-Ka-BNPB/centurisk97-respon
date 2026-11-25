@@ -14,7 +14,7 @@ import type { Route } from "./+types/root";
 import { NavProgress } from "./components/atoms/NavProgress";
 import { FailedScreen } from "./components/organisms/FailedScreen";
 import { FAILED_TEXTS } from "./lib/failedTexts";
-import { type Theme, themeFromCookie } from "./lib/theme";
+import { drawnTheme, type Theme, themeFromCookie } from "./lib/theme";
 import "./app.css";
 
 export const links: Route.LinksFunction = () => [
@@ -47,7 +47,7 @@ function useTheme(): Theme {
   const pending = useFetchers()
     .find((fetcher) => fetcher.formAction === "/lapor/theme")
     ?.formData?.get("theme");
-  return (pending as Theme | undefined) ?? loaded?.theme ?? "light";
+  return (pending as Theme | undefined) ?? loaded?.theme ?? drawnTheme();
 }
 
 export function Layout({ children }: { children: ReactNode }) {
