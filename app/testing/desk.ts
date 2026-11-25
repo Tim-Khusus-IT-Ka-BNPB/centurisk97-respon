@@ -65,11 +65,13 @@ export const REPORT: DeskReport = {
   status: "seen",
   account: { label: "Pusdalops BNPB, Petugas Uji" },
   reporter: {
-    name: "Uji Satu",
     role: "claimedOfficer",
-    number: "+6280000000001",
-    officerRegency: "Kabupaten Uji",
-    officerPosition: "Staf",
+    identity: {
+      name: "Uji Satu",
+      number: "+6280000000001",
+      officerRegency: "Kabupaten Uji",
+      officerPosition: "Staf",
+    },
   },
   groups: [
     {
@@ -100,12 +102,13 @@ export const REPORT: DeskReport = {
     },
   ],
   history: [
-    { status: "new", at: SENT, actor: null, note: null },
+    { status: "new", at: SENT, actor: null, note: null, forwardedTo: null },
     {
       status: "seen",
       at: { ...SENT, utc: "2026-11-24T02:40:00.000Z" },
       actor: "Pusdalops BNPB, Petugas Uji",
       note: "Dicek",
+      forwardedTo: null,
     },
   ],
   reporterWords: [{ text: "banjir, dua orang meninggal", at: SENT }],

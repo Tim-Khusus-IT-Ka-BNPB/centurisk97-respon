@@ -104,7 +104,7 @@ function QueueTable({ items }: { readonly items: readonly Item[] }) {
               </td>
               <td className={cell}>
                 <span className="flex flex-col items-start gap-1">
-                  <span>{item.reporter.name}</span>
+                  {item.reporter.name === null ? null : <span>{item.reporter.name}</span>}
                   <span className="text-meta text-muted">{t(`desk.role.${item.reporter.role}`)}</span>
                   {item.numberUnverified ? <UnverifiedMark /> : null}
                 </span>
@@ -143,7 +143,7 @@ function QueueCards({ items }: { readonly items: readonly Item[] }) {
             </span>
             <span className="flex flex-wrap items-center justify-between gap-2 mt-auto border-t border-line pt-2.5 text-meta">
               <span className="flex flex-wrap items-center gap-2">
-                <span>{item.reporter.name}</span>
+                <span>{item.reporter.name ?? t(`desk.role.${item.reporter.role}`)}</span>
                 {item.numberUnverified ? <UnverifiedMark /> : null}
               </span>
               <span className="text-muted tabular-nums">{whenShort(t, item.sentAt)}</span>

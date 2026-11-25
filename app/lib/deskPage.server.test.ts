@@ -156,6 +156,16 @@ describe("a change to a ticket", () => {
     ]);
   });
 
+  test("asking who reported answers on the page, with nothing in the address", async () => {
+    const who = { name: "Uji Satu", number: "+6280000000001", officerRegency: null, officerPosition: null };
+    const { api, calls } = fakeApi(() => Response.json(who));
+    expect(await actOnDeskReport("LA-241126-01", form({ action: "identity" }), api)).toEqual({
+      kind: "identity",
+      identity: who,
+    });
+    expect(calls[0]).toMatchObject({ method: "POST", path: "/desk/reports/LA-241126-01/identity" });
+  });
+
   test("a refused one gives back what was typed", async () => {
     const refused = await actOnDeskReport(
       "LA-241126-01",

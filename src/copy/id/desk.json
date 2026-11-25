@@ -151,5 +151,10 @@
   "desk.reply.by": "{actor}, {at}",
   "desk.replies": "Balasan tersimpan ({count})",
   "desk.saved.status": "Status tersimpan. Tiket sekarang: {status}.",
-  "desk.saved.reply": "Balasan tersimpan. Status tiket: {status}."
+  "desk.saved.reply": "Balasan tersimpan. Status tiket: {status}.",
+  "desk.move.forward": "Teruskan ke meja BPBD {regency}",
+  "desk.history.forwardedTo": "Diteruskan ke meja BPBD {regency}",
+  "desk.identity.show": "Tampilkan identitas pelapor",
+  "desk.identity.busy": "Membuka...",
+  "desk.identity.hint": "Nama dan nomor pelapor disembunyikan. Setiap kali ditampilkan, akun Anda dan waktunya dicatat."
 }

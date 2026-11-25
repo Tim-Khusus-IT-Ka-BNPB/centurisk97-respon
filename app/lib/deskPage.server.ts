@@ -1,5 +1,5 @@
 import type { ApiCall } from "../../src/api/bridge";
-import type { DeskGallery, DeskMap, DeskQueue, DeskReport, DeskSummary } from "../../src/contract/desk";
+import type { DeskGallery, DeskIdentity, DeskMap, DeskQueue, DeskReport, DeskSummary } from "../../src/contract/desk";
 import type { ErrorEnvelope } from "../../src/contract/errors";
 import { DESK_VIEWS, type DeskFilters, type DeskShown, type DeskTyped, type DeskView } from "./deskTypes";
 import type { Texts } from "./text";
@@ -146,10 +146,13 @@ export async function actOnDesk(form: FormData, api: ApiCall): Promise<DeskActed
 
 type DeskReportActed =
   | Extract<DeskActed, { kind: "redirect" }>
+  // Who reported, drawn on the page that asked and kept nowhere.
+  | { readonly kind: "identity"; readonly identity: DeskIdentity }
   | (Extract<DeskActed, { kind: "render" }> & { readonly typed: DeskTyped });
 
 // POST /lapor/meja/<ticket>: the officer moved the ticket or wrote back, named on the page after.
-// With neither it was opened, so it is logged and a new ticket is seen.
+// Asking who reported is answered on the page. With none of these it was opened, so it is logged
+// and a new ticket is seen.
 export async function actOnDeskReport(ticketNumber: string, form: FormData, api: ApiCall): Promise<DeskReportActed> {
   const ticket = encodeURIComponent(ticketNumber);
   const action = formText(form, "action");
@@ -164,8 +167,9 @@ export async function actOnDeskReport(ticketNumber: string, form: FormData, api:
         })
       : action === "reply"
         ? await api("POST", `/desk/reports/${ticket}/replies`, { text: typed.reply })
-        : await api("POST", `/desk/reports/${ticket}/view`);
+        : await api("POST", `/desk/reports/${ticket}/${action === "identity" ? "identity" : "view"}`);
   if (!response.ok)
     return { kind: "render", status: response.status, envelope: (await response.json()) as ErrorEnvelope, typed };
+  if (action === "identity") return { kind: "identity", identity: (await response.json()) as DeskIdentity };
   return redirectTo(`/lapor/meja/${ticket}${saved}`, response);
 }

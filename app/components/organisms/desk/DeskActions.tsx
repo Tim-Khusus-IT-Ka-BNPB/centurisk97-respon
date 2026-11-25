@@ -5,11 +5,11 @@ import type { ErrorEnvelope } from "../../../../src/contract/errors";
 import type { DeskTyped } from "../../../lib/deskTypes";
 import { firstInvalid, problemOf } from "../../../lib/envelope";
 import { useFocusOnChange } from "../../../lib/hooks";
-import { useText } from "../../../lib/text";
+import { type Text, useText } from "../../../lib/text";
 import { Button } from "../../atoms/Button";
 import { Textarea } from "../../atoms/controls";
 import { Field } from "../../molecules/Field";
-import { StatusDot, when } from "./parts";
+import { type Status, StatusDot, when } from "./parts";
 
 type FormProps = {
   readonly report: DeskReport;
@@ -23,6 +23,12 @@ const useBusy = (action: string) => {
   return useNavigation().formData?.get("action") === action ? t("desk.busy") : null;
 };
 
+// Where a move goes, in words: back to its review, or to the desk of the report's own place.
+function moveLabel(t: Text, report: DeskReport, to: Status): string {
+  if (report.status === "closed" || report.status === "invalid") return t("desk.move.reopen");
+  return to === "forwarded" ? t("desk.move.forward", { regency: report.place.regencyName }) : t(`stage.long.${to}`);
+}
+
 // Only the statuses the ticket may go to from here; what the note must hold follows the one picked.
 function StatusForm({ report, envelope, typed }: FormProps) {
   const t = useText();
@@ -30,7 +36,6 @@ function StatusForm({ report, envelope, typed }: FormProps) {
   const [picked, setPicked] = useState<string | undefined>(typed?.to || only);
   const rule = report.nextStatuses.find((next) => next.status === picked)?.note ?? "any";
   const busyLabel = useBusy("status");
-  const reopening = report.status === "closed" || report.status === "invalid";
   return (
     <Form method="post" preventScrollReset className="flex flex-col gap-4">
       <input type="hidden" name="action" value="status" />
@@ -52,7 +57,7 @@ function StatusForm({ report, envelope, typed }: FormProps) {
               className="size-5 shrink-0"
             />
             <StatusDot status={status} />
-            {reopening ? t("desk.move.reopen") : t(`stage.long.${status}`)}
+            {moveLabel(t, report, status)}
           </label>
         ))}
       </fieldset>

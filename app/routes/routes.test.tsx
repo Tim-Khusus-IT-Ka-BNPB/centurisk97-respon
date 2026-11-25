@@ -327,11 +327,8 @@ describe("desk routes", () => {
       numberUnverified: false,
       account: { label: "Petugas Uji" },
       reporter: {
-        name: "Uji Satu",
         role: "citizen",
-        number: "+6280000000001",
-        officerRegency: null,
-        officerPosition: null,
+        identity: { name: "Uji Satu", number: "+6280000000001", officerRegency: null, officerPosition: null },
       },
       groups: [],
       history: [],
@@ -370,7 +367,10 @@ describe("desk routes", () => {
     cleanup();
     // A refused open shows above the report it was for.
     renderPage(
-      routeElement(DeskReportRoute, { loaderData: read.data, actionData: { envelope: notAllowed, typed: null } }),
+      routeElement(DeskReportRoute, {
+        loaderData: read.data,
+        actionData: { envelope: notAllowed, typed: null, identity: null },
+      }),
       {
         path: "/lapor/meja/LA-241126-01",
       },
@@ -382,6 +382,15 @@ describe("desk routes", () => {
       context: { api: api({ "POST /desk/reports/LA-241126-01/view": json(REPORT) }) },
     } as Args);
     expect((viewed as Response).headers.get("location")).toBe("/lapor/meja/LA-241126-01");
+    const who = { name: "Uji Satu", number: "+6280000000001", officerRegency: null, officerPosition: null };
+    const asked = unwrap(
+      await deskReport.action({
+        params: { ticketNumber: "LA-241126-01" },
+        request: post("http://x/lapor/meja/LA-241126-01", [["action", "identity"]]),
+        context: { api: api({ "POST /desk/reports/LA-241126-01/identity": json(who) }) },
+      } as Args),
+    );
+    expect(asked.data).toEqual({ envelope: null, typed: null, identity: who });
     const limited = unwrap(
       await deskReport.action({
         params: { ticketNumber: "LA-241126-01" },

@@ -46,6 +46,13 @@ describe("moving a ticket", () => {
     expect(screen.getByRole("radio", { name: "Buka lagi, kembali ke Sedang ditelaah" })).toBeTruthy();
   });
 
+  test("forwarding names the desk of the report's own regency", async () => {
+    await draw({
+      report: { ...REPORT, status: "under_review", nextStatuses: [{ status: "forwarded", note: "optional" }] },
+    });
+    expect(screen.getByRole("radio", { name: "Teruskan ke meja BPBD Aceh Utara" })).toBeTruthy();
+  });
+
   test("a new report has nowhere to go until it is seen, but can be answered", async () => {
     await draw({ report: { ...REPORT, status: "new", nextStatuses: [] } });
     expect(screen.queryByRole("radio")).toBeNull();

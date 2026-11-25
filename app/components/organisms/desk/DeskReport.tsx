@@ -1,6 +1,6 @@
 import { type ReactNode, useEffect } from "react";
 import { Form, Link, useNavigation, useSearchParams, useSubmit } from "react-router";
-import type { DeskReport, DeskSummary } from "../../../../src/contract/desk";
+import type { DeskIdentity, DeskReport, DeskSummary } from "../../../../src/contract/desk";
 import type { ErrorEnvelope } from "../../../../src/contract/errors";
 import type { DeskTyped } from "../../../lib/deskTypes";
 import { cardProblem, isLimit } from "../../../lib/envelope";
@@ -72,17 +72,62 @@ function Section({
   );
 }
 
+// Who reported. An account that must ask for it is told each ask is logged; the answer is on this
+// page only.
+function Reporter({ report, identity }: { readonly report: DeskReport; readonly identity: DeskIdentity | null }) {
+  const t = useText();
+  const asking = useNavigation().formData?.get("action") === "identity";
+  if (identity === null)
+    return (
+      <Form method="post" replace preventScrollReset className="flex flex-col gap-3">
+        <input type="hidden" name="action" value="identity" />
+        <p className="text-muted">{t(`desk.role.${report.reporter.role}`)}</p>
+        <p className="text-meta text-muted">{t("desk.identity.hint")}</p>
+        <Button variant="secondary" className="self-start" busyLabel={asking ? t("desk.identity.busy") : null}>
+          {t("desk.identity.show")}
+        </Button>
+      </Form>
+    );
+  return (
+    <>
+      <div className="flex flex-col gap-1">
+        <p className="font-semibold">{identity.name}</p>
+        <p className="text-muted">{t(`desk.role.${report.reporter.role}`)}</p>
+        {identity.officerRegency !== null ? (
+          <p>
+            {t("desk.reporter.officer", {
+              regency: identity.officerRegency,
+              position: identity.officerPosition as string,
+            })}
+          </p>
+        ) : null}
+      </div>
+      <a
+        href={`tel:${identity.number}`}
+        className="inline-flex min-h-target items-center gap-2 self-start rounded-control border border-control bg-surface px-4 font-semibold text-ink tabular-nums no-underline hover:bg-sunken"
+      >
+        <Icon name="phone" className="size-5" />
+        {t("desk.reporter.call", { number: spacedNumber(identity.number) })}
+      </a>
+      {report.numberUnverified ? <p className="text-meta text-muted">{t("desk.reporter.unverifiedHint")}</p> : null}
+    </>
+  );
+}
+
 export function DeskReportView({
   report,
   summary,
   refusal = null,
   typed = null,
+  identity = null,
 }: {
   readonly report: DeskReport;
   readonly summary: DeskSummary | null;
   // A refused change on this page: a move, a reply, or marking it seen past the hourly limit.
   readonly refusal?: ErrorEnvelope | null;
   readonly typed?: DeskTyped | null;
+  // Asked for on this page just now.
+  readonly identity?: DeskIdentity | null;
 }) {
   const t = useText();
   const hazardType = hazardOf(report.groups);
@@ -143,28 +188,7 @@ export function DeskReportView({
             <DeskActions report={report} envelope={refusal} typed={typed} />
           </Section>
           <Section id="desk-reporter" title={t("desk.reporter")}>
-            <div className="flex flex-col gap-1">
-              <p className="font-semibold">{report.reporter.name}</p>
-              <p className="text-muted">{t(`desk.role.${report.reporter.role}`)}</p>
-              {report.reporter.officerRegency !== null ? (
-                <p>
-                  {t("desk.reporter.officer", {
-                    regency: report.reporter.officerRegency,
-                    position: report.reporter.officerPosition as string,
-                  })}
-                </p>
-              ) : null}
-            </div>
-            <a
-              href={`tel:${report.reporter.number}`}
-              className="inline-flex min-h-target items-center gap-2 self-start rounded-control border border-control bg-surface px-4 font-semibold text-ink tabular-nums no-underline hover:bg-sunken"
-            >
-              <Icon name="phone" className="size-5" />
-              {t("desk.reporter.call", { number: spacedNumber(report.reporter.number) })}
-            </a>
-            {report.numberUnverified ? (
-              <p className="text-meta text-muted">{t("desk.reporter.unverifiedHint")}</p>
-            ) : null}
+            <Reporter report={report} identity={report.reporter.identity ?? identity} />
           </Section>
         </div>
         <div className="flex min-w-0 flex-col gap-5 xl:col-start-1 xl:row-span-2 xl:row-start-1">
@@ -225,6 +249,9 @@ export function DeskReportView({
                     <span className="font-semibold">{t(`stage.long.${entry.status}`)}</span>
                     <span className="text-meta text-muted tabular-nums">{when(t, "desk.history.at", entry.at)}</span>
                     <span className="text-meta">{entry.actor ?? t("desk.history.system")}</span>
+                    {entry.forwardedTo === null ? null : (
+                      <span>{t("desk.history.forwardedTo", { regency: entry.forwardedTo })}</span>
+                    )}
                     {entry.note === null ? null : <span>{entry.note}</span>}
                   </span>
                 </li>

@@ -215,6 +215,21 @@ describe("the list", () => {
     expect(other.queryByText("Nomor belum diverifikasi")).toBeNull();
   });
 
+  test("a reporter's name this account must ask for is left out of both", async () => {
+    const asked = { ...ITEM, reporter: { name: null, role: "citizen" as const } };
+    await renderDesk(
+      <DeskQueueView
+        shown={list(queue({ items: [asked], total: 1 }))}
+        summary={SUMMARY}
+        filters={FILTERS}
+        envelope={null}
+      />,
+      { path: "/lapor/meja" },
+    );
+    expect(screen.queryByText("Uji Satu")).toBeNull();
+    expect(screen.getAllByText("Warga")).toHaveLength(2);
+  });
+
   test("a known hour of the event shows with its zone; a phone gets the same reports as cards", async () => {
     const timed = {
       ...ITEM,

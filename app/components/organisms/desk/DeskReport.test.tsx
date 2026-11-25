@@ -1,6 +1,7 @@
 import { screen, waitFor, within } from "@testing-library/react";
 import { describe, expect, test, vi } from "vitest";
 import { envelope } from "../../../../src/api/envelope";
+import type { DeskIdentity } from "../../../../src/contract/desk";
 import { REPORT, renderDesk, SENT, SUMMARY } from "../../../testing/desk";
 import { never } from "../../../testing/render";
 import { DeskReportView } from "./DeskReport";
@@ -65,7 +66,10 @@ describe("a report on the desk", () => {
           numberUnverified: false,
           reporterWords: [],
           photos: [photo],
-          reporter: { ...REPORT.reporter, role: "citizen", officerRegency: null, officerPosition: null },
+          reporter: {
+            role: "citizen",
+            identity: { ...(REPORT.reporter.identity as DeskIdentity), officerRegency: null, officerPosition: null },
+          },
         }}
         summary={null}
       />,
@@ -150,5 +154,31 @@ describe("a report on the desk", () => {
     expect(screen.queryByRole("alert")).toBeNull();
     const actions = within(screen.getByRole("region", { name: "Tindak lanjut" }));
     expect(actions.getByText(/Alasan terlalu pendek/)).toBeTruthy();
+  });
+
+  test("an account that must ask for identity sees none, is told it is logged, and asks with a button", async () => {
+    const hidden = { ...REPORT, reporter: { role: "citizen" as const, identity: null } };
+    const posted = vi.fn(never);
+    const view = await renderDesk(<DeskReportView report={hidden} summary={SUMMARY} />, { ...PATH, action: posted });
+    const reporter = within(screen.getByRole("region", { name: "Pelapor" }));
+    expect(reporter.queryByRole("link")).toBeNull();
+    expect(reporter.getByText("Warga")).toBeTruthy();
+    expect(reporter.getByText(/akun Anda dan waktunya dicatat/)).toBeTruthy();
+    reporter.getByRole("button", { name: "Tampilkan identitas pelapor" }).click();
+    expect(await reporter.findByRole("button", { name: "Membuka..." })).toBeTruthy();
+    view.unmount();
+    await renderDesk(<DeskReportView report={hidden} summary={SUMMARY} identity={REPORT.reporter.identity} />, PATH);
+    expect(screen.getByRole("link", { name: "Telepon +62 800-0000-0001" })).toBeTruthy();
+  });
+
+  test("the history names the regency a report was forwarded to", async () => {
+    const history = [
+      ...REPORT.history,
+      { status: "forwarded" as const, at: SENT, actor: "Petugas Uji", note: null, forwardedTo: "Aceh Utara" },
+    ];
+    await renderDesk(<DeskReportView report={{ ...REPORT, history }} summary={SUMMARY} />, PATH);
+    expect(
+      within(screen.getByRole("region", { name: "Riwayat tiket" })).getByText("Diteruskan ke meja BPBD Aceh Utara"),
+    ).toBeTruthy();
   });
 });
