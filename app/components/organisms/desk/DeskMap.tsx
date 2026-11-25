@@ -55,7 +55,7 @@ function PanelItem({ item, onPoint }: { readonly item: Item; readonly onPoint: (
           </span>
           <span>
             {t("desk.map.row", {
-              hazard: hazardLabel(t, item),
+              hazard: hazardLabel(t, item.hazardType),
               village: item.place.villageName,
               regency: item.place.regencyName,
             })}

@@ -16,7 +16,7 @@ import { Icon } from "../../atoms/Icon";
 import type { IconName } from "../../atoms/icons";
 import { FieldError } from "../../molecules/Field";
 import { counted } from "./DeskShell";
-import { clearedLink, deskLink, isFiltered } from "./parts";
+import { clearedLink, deskLink, hazardLabel, isFiltered } from "./parts";
 
 const chip =
   "inline-flex min-h-target-min shrink-0 items-center gap-2 rounded-control border border-line bg-surface px-3 text-ink no-underline hover:bg-sunken aria-[current=true]:border-primary aria-[current=true]:bg-selected aria-[current=true]:font-semibold";
@@ -60,11 +60,11 @@ export function HazardChips({ filters, summary, className }: Counted & { readonl
           key={id}
           to={deskLink(filters, { hazardType: filters.hazardType === id ? "" : id, page: 1 })}
           aria-current={filters.hazardType === id ? "true" : undefined}
-          aria-label={counted(t, t(`hazard.${id}.label`), countOf(id))}
+          aria-label={counted(t, hazardLabel(t, id), countOf(id))}
           className={chip}
         >
           <Icon name={hazardIcon(id)} className="size-4" />
-          {t(`hazard.${id}.label`)}
+          {hazardLabel(t, id)}
           <Tally n={countOf(id)} />
         </Link>
       ))}

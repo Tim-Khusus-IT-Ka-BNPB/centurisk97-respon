@@ -145,13 +145,15 @@ describe("the filter bar", () => {
     await renderDesk(
       <DeskQueueView
         shown={list(queue())}
-        summary={{ ...SUMMARY, byHazard: {} }}
+        summary={{ ...SUMMARY, byHazard: { other: 1 } }}
         filters={{ ...FILTERS, hazardType: "drought" }}
         envelope={null}
       />,
       { path: "/lapor/meja" },
     );
     expect(screen.getByRole("link", { name: "Kekeringan, 0 laporan" })).toBeTruthy();
+    // One tap tells no hazard.
+    expect(screen.getByRole("link", { name: "Jenis belum diketahui, 1 laporan" })).toBeTruthy();
   });
 
   test("a refused search keeps its text, names the fix and draws no list", async () => {

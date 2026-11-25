@@ -41,7 +41,7 @@ export function Hazard({ item }: { readonly item: Pick<Item, "hazardType" | "haz
     <span className="flex items-start gap-2">
       <Icon name={hazardIcon(item.hazardType)} className="mt-0.5 size-5 text-muted" />
       <span className="flex min-w-0 flex-col">
-        <span className="font-semibold">{hazardLabel(t, item)}</span>
+        <span className="font-semibold">{hazardLabel(t, item.hazardType)}</span>
         <span className="text-meta text-muted">
           {item.emergency === null ? subtype : t(`desk.emergency.victims.${item.emergency.victims}`)}
         </span>

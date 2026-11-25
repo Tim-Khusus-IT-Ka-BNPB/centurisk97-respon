@@ -63,7 +63,7 @@ describe("the map view", () => {
 
   test("an emergency is marked", async () => {
     const emergency = { kind: "oneTap" as const, victims: "unknown" as const };
-    await draw({ queue: queue({ items: [{ ...ITEM, emergency }], total: 1 }) });
+    await draw({ queue: queue({ items: [{ ...ITEM, hazardType: "other", emergency }], total: 1 }) });
     const row = within(panel().getAllByRole("listitem")[0] as HTMLElement);
     expect(row.getByText("Darurat")).toBeTruthy();
     expect(row.getByText("Jenis belum diketahui, Sukamaju, Aceh Utara")).toBeTruthy();

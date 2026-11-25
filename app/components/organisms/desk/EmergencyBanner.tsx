@@ -5,7 +5,7 @@ import { alarmReady, alarmSound, askForAlarm, notify } from "../../../lib/alarm"
 import { useHydrated } from "../../../lib/hooks";
 import { useText } from "../../../lib/text";
 import { Icon } from "../../atoms/Icon";
-import { whenShort } from "./parts";
+import { hazardLabel, whenShort } from "./parts";
 
 const REFRESH_MS = 20_000;
 
@@ -75,7 +75,7 @@ export function EmergencyBanner({ initial }: { readonly initial: readonly DeskEm
               className="flex min-h-target min-w-56 flex-col justify-center rounded-control bg-surface px-3 py-2 text-ink no-underline hover:bg-sunken"
             >
               <span className="font-bold">
-                {t(one.kind === "oneTap" ? "desk.emergency.oneTap" : `hazard.${one.hazardType}.label`)}
+                {hazardLabel(t, one.hazardType)}
                 {", "}
                 {t("desk.emergency.place", { village: one.villageName, regency: one.regencyName })}
               </span>

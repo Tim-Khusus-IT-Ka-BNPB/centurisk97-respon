@@ -106,9 +106,10 @@ export function EmergencyChip() {
   );
 }
 
-// A report's hazard in words; one tap told none.
-export const hazardLabel = (t: Text, item: Pick<Item, "hazardType" | "emergency">) =>
-  t(item.emergency?.kind === "oneTap" ? "desk.emergency.oneTap" : `hazard.${item.hazardType}.label`);
+// A hazard in words. "other" is never offered to a reporter: it is what one tap stores, which
+// tells no hazard.
+export const hazardLabel = (t: Text, id: Item["hazardType"]) =>
+  t(id === "other" ? "desk.emergency.oneTap" : `hazard.${id}.label`);
 
 export function UnverifiedChip() {
   const t = useText();
