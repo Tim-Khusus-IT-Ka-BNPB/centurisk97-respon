@@ -61,7 +61,6 @@ function draw({ chats }) {
       return item;
     }),
   );
-  list.querySelector('[aria-current="true"]')?.scrollIntoView({ block: "nearest", inline: "nearest" });
   const entries = chats[number] ?? [];
   const messages = byId("messages");
   messages.replaceChildren(
@@ -70,7 +69,7 @@ function draw({ chats }) {
       : [
           Object.assign(document.createElement("li"), {
             className: "empty",
-            textContent: number ? "No messages yet. Write one, for example lapor." : "Pick a number on the left.",
+            textContent: number ? "No messages yet. Write one, for example lapor." : "Pick a number.",
           }),
         ]),
   );
@@ -78,6 +77,7 @@ function draw({ chats }) {
 }
 
 function toEnd() {
+  byId("chats").querySelector('[aria-current="true"]')?.scrollIntoView({ block: "nearest", inline: "nearest" });
   byId("messages").scrollTop = byId("messages").scrollHeight;
 }
 
