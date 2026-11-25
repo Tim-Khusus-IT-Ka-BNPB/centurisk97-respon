@@ -116,7 +116,8 @@ async function signIn(page: Page): Promise<void> {
 async function searchTicket(page: Page, ticketNumber: string): Promise<void> {
   await page.getByLabel("Nomor tiket").fill(ticketNumber);
   await page.getByRole("button", { name: "Cari", exact: true }).click();
-  await expect(page.getByLabel("Nomor tiket")).toHaveValue(ticketNumber);
+  // The box already holds the number; the address holds it once the search is done.
+  await expect(page).toHaveURL(new RegExp(`ticket=${ticketNumber}`));
 }
 
 // A view of the desk, from the side menu on a wide screen or the tabs on a phone.
