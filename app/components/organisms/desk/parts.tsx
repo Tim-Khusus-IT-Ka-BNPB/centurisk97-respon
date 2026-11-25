@@ -84,7 +84,7 @@ export function StatusDot({ status }: { readonly status: Status }) {
 export function StatusChip({ status }: { readonly status: Status }) {
   const t = useText();
   return (
-    <span className="inline-flex items-center gap-1.5 rounded-chip border border-line bg-surface px-2 py-0.5 text-meta font-semibold sm:whitespace-nowrap">
+    <span className="inline-flex items-center gap-1.5 rounded-chip border border-line bg-surface px-2 py-0.5 text-meta font-semibold">
       <StatusDot status={status} />
       {t(`stage.short.${status}`)}
     </span>

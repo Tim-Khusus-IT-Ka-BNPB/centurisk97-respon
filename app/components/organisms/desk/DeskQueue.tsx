@@ -78,13 +78,14 @@ const cell = "border-t border-line px-4 py-3.5 align-top";
 const head = "px-4 py-3 text-meta font-semibold text-muted";
 
 // The event takes what the others leave.
-const WIDTH = { ticket: "w-40", event: "", impact: "w-60", sent: "w-48", reporter: "w-44" } as const;
+const WIDTH = { ticket: "w-44", event: "", impact: "w-60", sent: "w-48", reporter: "w-40" } as const;
 
-// A wide screen reads the queue as a table; the ticket is the row's link.
+// A screen wide enough to leave the event its room reads the queue as a table; the ticket is the
+// row's link.
 function QueueTable({ items }: { readonly items: readonly Item[] }) {
   const t = useText();
   return (
-    <div className="hidden overflow-x-auto card-surface xl:block">
+    <div className="hidden overflow-x-auto card-surface min-[88rem]:block">
       <table className="w-full table-fixed border-separate border-spacing-0 text-left">
         <thead>
           <tr className="bg-sunken/60">
@@ -153,7 +154,7 @@ function QueueTable({ items }: { readonly items: readonly Item[] }) {
 function QueueCards({ items }: { readonly items: readonly Item[] }) {
   const t = useText();
   return (
-    <ul className="grid grid-cols-[minmax(0,1fr)] gap-3 lg:grid-cols-2 xl:hidden">
+    <ul className="grid grid-cols-[minmax(0,1fr)] gap-3 lg:grid-cols-2 min-[88rem]:hidden">
       {items.map((item) => (
         <li key={item.ticketNumber}>
           <Link

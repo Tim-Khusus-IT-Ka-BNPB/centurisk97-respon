@@ -321,7 +321,9 @@ describe("the list", () => {
       { path: "/lapor/meja" },
     );
     expect(table().getByText("Kejadian: 24 Nov 2026, 08.15 WIB")).toBeTruthy();
-    const cards = screen.getAllByRole("listitem").filter((item) => item.closest("ul")?.className.includes("xl:hidden"));
+    const cards = screen
+      .getAllByRole("listitem")
+      .filter((item) => item.closest("ul")?.className.includes("min-[88rem]:hidden"));
     expect(cards).toHaveLength(1);
     const card = within(cards[0] as HTMLElement);
     expect(card.getByRole("link").getAttribute("href")).toBe("/lapor/meja/LA-241126-01");
