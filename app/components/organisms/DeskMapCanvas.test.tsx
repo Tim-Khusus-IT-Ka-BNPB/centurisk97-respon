@@ -27,8 +27,10 @@ class FakeMap {
   load: (() => void) | null = null;
   resized = 0;
   style: string | null = null;
-  setStyle(style: string) {
+  painted: unknown = null;
+  setStyle(style: string, options: { transformStyle(previous: undefined, next: unknown): unknown }) {
     this.style = style;
+    this.painted = options.transformStyle(undefined, { layers: [{ id: "land", type: "background" }] });
   }
   once(event: "idle" | "load", listener: () => void) {
     this[event] = listener;
@@ -133,8 +135,9 @@ describe("the desk map canvas", () => {
     await waitFor(() => expect(made.maps).toHaveLength(1));
     const map = made.maps[0] as FakeMap;
     expect(made.workerUrl).toBe("/assets/worker.mjs");
+    expect(map.style).toBe("https://tiles.openfreemap.org/styles/positron");
+    expect(map.painted).toMatchObject({ layers: [{ paint: { "background-color": "#f4f6f9" } }] });
     expect(map.options).toMatchObject({
-      style: "https://tiles.openfreemap.org/styles/positron",
       center: [118, -2.5],
       attributionControl: { compact: true },
     });

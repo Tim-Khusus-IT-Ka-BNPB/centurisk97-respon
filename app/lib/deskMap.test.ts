@@ -8,6 +8,7 @@ import {
   clusterList,
   fitControl,
   itemsIn,
+  localStyle,
   type MapPoint,
   markerElement,
   popupElement,
@@ -32,6 +33,31 @@ describe("desk map pieces", () => {
       [131.5, 5.1],
     ]);
     expect(boundsOf([])).toBeNull();
+  });
+
+  test("the base map takes this site's colours and Indonesian names; road shields keep their number", () => {
+    const style = {
+      version: 8,
+      layers: [
+        { id: "ground", type: "background", paint: { "background-opacity": 1 } },
+        { id: "sea", type: "fill", "source-layer": "water", paint: {} },
+        { id: "park", type: "fill", "source-layer": "park", paint: { "fill-color": "green" } },
+        { id: "town", type: "symbol", layout: { "text-field": ["get", "name_en"], "text-size": 12 } },
+        { id: "road", type: "symbol", layout: { "text-field": "{ref}" } },
+      ],
+    };
+    const [ground, sea, park, town, road] = localStyle(style).layers;
+    expect(ground?.paint).toEqual({ "background-opacity": 1, "background-color": "#f4f6f9" });
+    expect(sea?.paint).toEqual({ "fill-color": "#cfe0f2" });
+    expect([park, road]).toEqual([style.layers[2], style.layers[4]]);
+    expect(town?.layout).toEqual({
+      "text-field": ["coalesce", ["get", "name:id"], ["get", "name:latin"], ["get", "name"]],
+      "text-size": 12,
+    });
+    expect(localStyle(style)).toMatchObject({ version: 8 });
+    document.documentElement.dataset.theme = "dark";
+    expect(localStyle(style).layers[1]?.paint).toEqual({ "fill-color": "#0d182a" });
+    delete document.documentElement.dataset.theme;
   });
 
   test("every status belongs to one of three groups", () => {

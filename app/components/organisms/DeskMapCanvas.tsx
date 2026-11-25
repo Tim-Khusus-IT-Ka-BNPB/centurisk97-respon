@@ -11,6 +11,7 @@ import {
   fitControl,
   INDONESIA,
   itemsIn,
+  localStyle,
   type MapPoint,
   markerElement,
   popupElement,
@@ -19,22 +20,28 @@ import {
 import { useText } from "../../lib/text";
 
 // Room for the filters floating over the top of a wide map and the buttons at its right.
-const PADDING = { top: 96, bottom: 56, left: 48, right: 96 } as const;
+const WIDE = { padding: { top: 96, bottom: 56, left: 48, right: 96 }, maxZoom: 13 } as const;
+// A small map on a page of its own: the point in its middle, and the towns around it.
+export const SMALL = { padding: 48, maxZoom: 11 } as const;
+const NOBODY = () => {};
 
 // The map itself, drawn in the browser only: MapLibre loads after the page, so the page and its
 // lists work with no script.
 export function DeskMapCanvas({
   points,
   label,
-  pointed,
-  onView,
+  pointed = null,
+  onView = NOBODY,
+  framing = WIDE,
 }: {
   readonly points: readonly MapPoint[];
   readonly label: string;
   // The ticket pointed at beside the map: its marker, or the cluster holding it, stands out.
-  readonly pointed: string | null;
+  readonly pointed?: string | null;
   // The tickets in view, after every zoom or pan.
-  readonly onView: (tickets: ReadonlySet<string>) => void;
+  readonly onView?: (tickets: ReadonlySet<string>) => void;
+  // How close the points are framed; one of the two above.
+  readonly framing?: typeof WIDE | typeof SMALL;
 }) {
   const t = useText();
   const container = useRef<HTMLElement>(null);
@@ -53,13 +60,14 @@ export function DeskMapCanvas({
       maplibre.setWorkerUrl(workerUrl);
       const map = new maplibre.Map({
         container: element,
-        style: tileStyle(),
         ...INDONESIA,
         attributionControl: { compact: true },
       });
+      const paint = () => map.setStyle(tileStyle(), { transformStyle: (_previous, next) => localStyle(next) });
+      paint();
       const frame = (duration: number) => {
         const bounds = boundsOf(latest.current.points);
-        if (bounds !== null) map.fitBounds(bounds, { padding: PADDING, maxZoom: 13, duration });
+        if (bounds !== null) map.fitBounds(bounds, { ...framing, duration });
       };
       map.addControl(new maplibre.NavigationControl({ showCompass: false }), "bottom-right");
       map.addControl(
@@ -71,7 +79,7 @@ export function DeskMapCanvas({
         element.dataset.ready = "true";
       });
       // The base map follows the page's theme.
-      const theme = new MutationObserver(() => map.setStyle(tileStyle()));
+      const theme = new MutationObserver(paint);
       theme.observe(document.documentElement, { attributeFilter: ["data-theme"] });
       // Markers are drawn for the clusters and points in view, again after every zoom or pan.
       let index = clusterIndex([]);
@@ -127,7 +135,7 @@ export function DeskMapCanvas({
       show.current = null;
       remove();
     };
-  }, [onView]);
+  }, [onView, framing]);
   // biome-ignore lint/correctness/useExhaustiveDependencies: new points are read through the ref.
   useEffect(() => show.current?.(), [points]);
   useEffect(() => {

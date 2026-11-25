@@ -8,8 +8,36 @@ export type MapPoint = DeskMap["points"][number];
 
 // The base map: OpenFreeMap's light style, as upstream's desk uses, and its dark one in the dark
 // theme. No report data goes to it.
-export const tileStyle = () =>
-  `https://tiles.openfreemap.org/styles/${document.documentElement.dataset.theme === "dark" ? "fiord" : "positron"}`;
+const dark = () => document.documentElement.dataset.theme === "dark";
+export const tileStyle = () => `https://tiles.openfreemap.org/styles/${dark() ? "fiord" : "positron"}`;
+
+type TileLayer = {
+  readonly id: string;
+  readonly type: string;
+  readonly "source-layer"?: string;
+  readonly layout?: Readonly<Record<string, unknown>>;
+  readonly paint?: Readonly<Record<string, unknown>>;
+};
+
+const NAME = ["coalesce", ["get", "name:id"], ["get", "name:latin"], ["get", "name"]];
+const GROUND = { light: { land: "#f4f6f9", water: "#cfe0f2" }, dark: { land: "#1b2a40", water: "#0d182a" } } as const;
+
+// The base map in this site's colours, its places named in Indonesian or at least in Latin letters.
+export function localStyle<S extends { readonly layers: readonly TileLayer[] }>(style: S): S {
+  const ground = GROUND[dark() ? "dark" : "light"];
+  const layers = style.layers.map((layer) => {
+    if (layer.type === "background") return { ...layer, paint: { ...layer.paint, "background-color": ground.land } };
+    if (layer.type === "fill" && layer["source-layer"] === "water")
+      return { ...layer, paint: { ...layer.paint, "fill-color": ground.water } };
+    const text = layer.layout?.["text-field"];
+    // Road shields keep their number.
+    return text === undefined || JSON.stringify(text).includes("ref")
+      ? layer
+      : { ...layer, layout: { ...layer.layout, "text-field": NAME } };
+  });
+  return { ...style, layers };
+}
+
 export const INDONESIA = { center: [118, -2.5] as [number, number], zoom: 3.6 };
 
 // Seven statuses read as three groups on a map, each by colour and by its ring, with a legend in words.
