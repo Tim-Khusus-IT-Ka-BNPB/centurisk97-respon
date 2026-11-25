@@ -2,6 +2,7 @@ import type { DraftBody } from "../../../src/contract/draft";
 import { cn } from "../../lib/cn";
 import { breakAfterSlash } from "../../lib/slash";
 import { type Text, useText } from "../../lib/text";
+import { Icon } from "../atoms/Icon";
 
 type Entry = DraftBody["transcript"][number];
 
@@ -22,6 +23,34 @@ function questionText(t: Text, entry: Extract<Entry, { speaker: "assistant" }>) 
   return t(entry.promptKey ?? entry.copyKey, entry.params);
 }
 
+function Lines({ entries, keys }: { readonly entries: readonly Entry[]; readonly keys: readonly string[] }) {
+  const t = useText();
+  return (
+    <ol className="flex flex-col gap-2">
+      {entries.map((entry, index) => {
+        const own = entry.speaker === "reporter";
+        return (
+          <li
+            key={keys[index]}
+            className={cn(
+              "max-w-[85%] rounded-[1.125rem] px-4 py-2.5 text-body",
+              own
+                ? "self-end rounded-ee-chip bg-primary text-on-primary [overflow-wrap:anywhere]"
+                : "self-start rounded-es-chip border border-line bg-surface break-words",
+            )}
+          >
+            {own ? entry.textMasked : breakAfterSlash(questionText(t, entry))}
+          </li>
+        );
+      })}
+    </ol>
+  );
+}
+
+// The last question and its answer stay in view; what came before them opens on demand, so the
+// live card is always near the top of the screen.
+const RECENT = 2;
+
 // The conversation so far, without the live card's own line: the card itself follows. It is a
 // log by role so tools can find it, but it does not speak: the polite status speaks for new
 // questions, and a resumed history stays silent.
@@ -31,24 +60,21 @@ export function ChatLog({ transcript }: { readonly transcript: readonly Entry[] 
   const shown = last?.speaker === "assistant" && last.cardKind !== null ? transcript.slice(0, -1) : transcript;
   if (shown.length === 0) return null;
   const keys = lineKeys(shown);
+  const split = Math.max(0, shown.length - RECENT);
   return (
-    <div role="log" aria-live="off" aria-label={t("chat.log.label")}>
-      <ol className="flex flex-col gap-2">
-        {shown.map((entry, index) => {
-          const own = entry.speaker === "reporter";
-          return (
-            <li
-              key={keys[index]}
-              className={cn(
-                "max-w-[85%] rounded-card px-3 py-2 text-body",
-                own ? "self-end bg-selected [overflow-wrap:anywhere]" : "self-start bg-sunken break-words",
-              )}
-            >
-              {own ? entry.textMasked : breakAfterSlash(questionText(t, entry))}
-            </li>
-          );
-        })}
-      </ol>
+    <div role="log" aria-live="off" aria-label={t("chat.log.label")} className="flex flex-col gap-3">
+      {split > 0 ? (
+        <details className="group flex flex-col">
+          <summary className="mx-auto flex min-h-target-min w-fit list-none items-center gap-1.5 rounded-control px-3 text-meta font-semibold text-muted hover:bg-sunken [&::-webkit-details-marker]:hidden">
+            <Icon name="chevronRight" className="size-4 rotate-90 group-open:-rotate-90" />
+            {t("chat.log.earlier", { count: split })}
+          </summary>
+          <div className="pt-2">
+            <Lines entries={shown.slice(0, split)} keys={keys.slice(0, split)} />
+          </div>
+        </details>
+      ) : null}
+      <Lines entries={shown.slice(split)} keys={keys.slice(split)} />
     </div>
   );
 }

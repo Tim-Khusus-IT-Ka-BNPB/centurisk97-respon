@@ -24,15 +24,15 @@ export function StateMark({ state }: { readonly state: "none" | "confirmedUnknow
   const t = useText();
   if (state === "none")
     return (
-      <span className="inline-flex items-center gap-1">
-        <Icon name="minus" className="size-4" />
+      <span>
+        <Icon name="minus" className="me-1 inline size-4 align-[-0.15em]" />
         {t("state.none")}
       </span>
     );
   const chip = CHIPS[state];
   return (
-    <span className={`inline-flex items-center gap-1 rounded-chip border border-control px-1.5 text-meta ${chip.look}`}>
-      <Icon name={chip.icon} className="size-4" />
+    <span className={`rounded-chip border border-control px-1.5 py-0.5 text-meta whitespace-nowrap ${chip.look}`}>
+      <Icon name={chip.icon} className="me-1 inline size-4 align-[-0.2em]" />
       {t(`state.${state}`)}
     </span>
   );
@@ -108,7 +108,7 @@ export function SummaryCardView({ card }: { readonly card: SummaryCard }) {
               </h3>
               <TurnForm kind="editGroup" className="flex">
                 <input type="hidden" name="groupId" value={group.groupId} />
-                <Button aria-label={t("card.summary.editLabel", { groupLabel: label })}>
+                <Button size="min" variant="link" aria-label={t("card.summary.editLabel", { groupLabel: label })}>
                   {t("card.summary.edit")}
                 </Button>
               </TurnForm>
@@ -131,8 +131,8 @@ export function SummaryCardView({ card }: { readonly card: SummaryCard }) {
       </section>
       {problem ? <Notice kind="error">{t(problem.copyKey, problem.params)}</Notice> : null}
       <SendAction />
-      <TurnForm kind="cancel" className="mt-4 flex flex-col">
-        <Button variant="danger">{t("card.summary.cancel")}</Button>
+      <TurnForm kind="cancel" className="flex flex-col">
+        <Button variant="quietDanger">{t("card.summary.cancel")}</Button>
       </TurnForm>
     </CardShell>
   );
@@ -181,7 +181,9 @@ export function EndCard({ icon, headingId, title, level = 2, children, action, c
       data-card-id={card?.cardId}
       className="flex animate-settle flex-col gap-4 card-surface p-4 md:p-5"
     >
-      <Icon name={icon} className="size-8" />
+      <span className="flex size-14 items-center justify-center rounded-full bg-selected text-primary">
+        <Icon name={icon} className="size-7" />
+      </span>
       <Heading id={headingId} ref={heading} tabIndex={-1} autoFocus className="text-card font-bold text-balance">
         {title}
       </Heading>

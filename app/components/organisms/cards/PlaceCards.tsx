@@ -313,7 +313,7 @@ export function PlaceCard({ card }: { readonly card: SearchCard }) {
             />
           )}
         </Field>
-        <Button variant="primary" className="@actions:self-start">
+        <Button variant={area ? "primary" : "secondary"} className="@actions:self-start">
           {t(area ? "card.regencyVillages.submit" : "card.placeSearch.submit")}
         </Button>
       </Form>

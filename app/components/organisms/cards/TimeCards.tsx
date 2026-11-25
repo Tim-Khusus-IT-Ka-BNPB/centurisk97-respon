@@ -149,7 +149,7 @@ export function ChronologyReviewCard({ card }: { readonly card: Extract<Card, { 
           </div>
         </details>
         <ActionRow>
-          <OptionAction id="done" labelKey="card.chronologyReview.done" />
+          <OptionAction id="done" labelKey="card.chronologyReview.done" variant="primary" />
         </ActionRow>
       </TurnForm>
     </CardShell>

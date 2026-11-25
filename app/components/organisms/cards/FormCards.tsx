@@ -16,11 +16,19 @@ type BoxCard = Extract<Card, { kind: "neighbourhood" | "numberForm" | "textQuest
 type Box = BoxCard["fields"][number];
 
 // A button that answers the whole card at once ("Tidak ada semua", "Tidak tahu").
-export function OptionAction({ id, labelKey }: { readonly id: string; readonly labelKey: string }) {
+export function OptionAction({
+  id,
+  labelKey,
+  variant = "secondary",
+}: {
+  readonly id: string;
+  readonly labelKey: string;
+  readonly variant?: "primary" | "secondary";
+}) {
   const t = useText();
   const busy = useBusy(id, "optionIds");
   return (
-    <Button name="optionIds" value={id} busyLabel={busy ? t("common.saving") : null}>
+    <Button name="optionIds" value={id} variant={variant} busyLabel={busy ? t("common.saving") : null}>
       {t(labelKey)}
     </Button>
   );
@@ -58,6 +66,7 @@ function NumberBox({ box, focus }: { readonly box: Box; readonly focus: boolean 
       definition={box.definitionKey ? t(box.definitionKey) : null}
       problem={problemOf(envelope, box.id)}
       focus={focus}
+      className="number-row"
     >
       {(control) => (
         <Input
@@ -65,7 +74,7 @@ function NumberBox({ box, focus }: { readonly box: Box; readonly focus: boolean 
           inputMode="numeric"
           autoComplete="off"
           defaultValue={value}
-          className="w-[max(8ch,6rem)] tabular-nums"
+          className="w-[max(8ch,6rem)] text-end text-card font-semibold tabular-nums"
         />
       )}
     </Field>
@@ -86,7 +95,7 @@ export function NumberFormCard({ card }: { readonly card: Extract<Card, { kind: 
       {again ? <Notice kind="info">{t("card.numberForm.stillEmpty")}</Notice> : null}
       <p className="text-meta text-muted">{t("card.numberForm.prompt")}</p>
       <TurnForm>
-        <div className="flex flex-col gap-6">
+        <div className="flex flex-col divide-y divide-line">
           {card.fields.map((box) => (
             <NumberBox key={box.id} box={box} focus={focus === box.id} />
           ))}

@@ -1,11 +1,13 @@
 {
   "chat.greeting": "Halo, saya asisten AI BNPB untuk pelaporan kejadian bencana.",
   "chat.log.label": "Percakapan laporan",
+  "chat.log.earlier": "Lihat {count} pesan sebelumnya",
   "chat.box.label": "Pesan",
   "chat.box.placeholder": "Tulis jawaban Anda",
   "chat.box.send": "Kirim pesan",
   "chat.box.sending": "Sedang mencatat...",
   "chat.box.useCard": "Pilih jawaban di kartu di atas, atau ketik \"kembali\" untuk mengubah jawaban sebelumnya.",
   "chat.aside.progress": "Kelengkapan laporan",
+  "chat.aside.percent": "{percent}% lengkap",
   "chat.aside.help": "Lihat bantuan melapor"
 }

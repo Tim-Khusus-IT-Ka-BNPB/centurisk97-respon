@@ -6,6 +6,7 @@ import { isLimit } from "../../lib/envelope";
 import { limitText, statusText } from "../../lib/status";
 import { useText } from "../../lib/text";
 import { clockTime, longDate } from "../../lib/time";
+import { ProgressBar } from "../atoms/ProgressBar";
 import { LifeLine, Notice } from "../molecules/Notice";
 import { StatusRegion } from "../molecules/StatusRegion";
 import { Page } from "../templates/Page";
@@ -28,6 +29,14 @@ function DraftBodyView({ view, quiet }: { readonly view: DraftView; readonly qui
   return (
     <>
       <h1 className="sr-only lg:not-sr-only lg:text-section lg:font-bold lg:tracking-[-0.015em]">{t("home.report")}</h1>
+      {isFinalCard(card) ? null : (
+        <div className="flex items-center gap-3 lg:hidden">
+          <ProgressBar percent={draft.completePercent} />
+          <p className="shrink-0 text-meta font-semibold text-muted tabular-nums">
+            {t("chat.aside.percent", { percent: draft.completePercent })}
+          </p>
+        </div>
+      )}
       <ChatLog transcript={draft.transcript} />
       {resumed ? (
         <Notice kind="info">

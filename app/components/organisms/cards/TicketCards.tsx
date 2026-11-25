@@ -50,7 +50,10 @@ export function ContactBlock({ contact }: { readonly contact: Tracking["contact"
   const t = useText();
   const phone = contact.level === "national" ? "117" : contact.phone;
   return (
-    <section aria-labelledby="bpbd-contact" className="flex flex-col gap-2 rounded-control border border-line p-3">
+    <section
+      aria-labelledby="bpbd-contact"
+      className="@container flex flex-col items-start gap-2 rounded-control bg-sunken p-4"
+    >
       <h3 id="bpbd-contact" className="font-bold">
         {t("card.sent.contact.title")}
       </h3>
@@ -62,7 +65,7 @@ export function ContactBlock({ contact }: { readonly contact: Tracking["contact"
       {contact.level === "national" ? <p className="text-meta text-muted">{t("card.sent.contact.missing")}</p> : null}
       <a
         href={`tel:${phone.replace(/[^\d+]/g, "")}`}
-        className={buttonStyles({ variant: "signal", size: "main", className: "self-start" })}
+        className={buttonStyles({ variant: "signal", size: "main", className: "w-full @tiles:w-auto" })}
       >
         <Icon name="phone" />
         {t("card.sent.contact.call", { phone })}
@@ -102,7 +105,7 @@ function CopyNumber({ ticketNumber }: { readonly ticketNumber: string }) {
         setCopied(true);
       }}
     >
-      <Icon name={copied ? "check" : "square"} />
+      <Icon name={copied ? "check" : "copy"} className="size-5" />
       {copied ? t("card.sent.copied") : t("card.sent.copy")}
     </button>
   );
@@ -123,7 +126,7 @@ function ThankYou({ card }: { readonly card: SentCardData }) {
       role="alertdialog"
       aria-modal="true"
       aria-labelledby="thanks-title"
-      className="fixed inset-0 z-50 flex items-center justify-center overflow-y-auto bg-primary p-4 text-on-primary"
+      className="fixed inset-0 z-50 flex items-center justify-center overflow-y-auto contours p-4 text-on-hero"
     >
       {rating ? (
         <Form
@@ -156,13 +159,18 @@ function ThankYou({ card }: { readonly card: SentCardData }) {
           preventScrollReset
           className="flex min-h-full w-full max-w-md flex-col items-center justify-center gap-4 text-center no-underline"
         >
-          <span className="text-meta uppercase tracking-wide">{t("card.sent.thanks.label")}</span>
+          <span className="flex size-20 items-center justify-center rounded-full bg-accent text-on-accent">
+            <Icon name="check" className="size-10" />
+          </span>
+          <span className="pt-2 text-on-hero-muted">{t("card.sent.thanks.label")}</span>
           <h2 id="thanks-title" ref={heading} tabIndex={-1} className="text-display font-bold text-balance">
             {t("card.sent.thanks.title", { firstName: card.firstName })}
           </h2>
-          <span>{t("card.sent.thanks.ticket")}</span>
-          <span className="text-ticket font-bold tabular-nums">{card.ticketNumber}</span>
-          <span className="text-balance">{t("card.sent.contactPromise")}</span>
+          <span className="my-2 flex w-full max-w-xs flex-col gap-1 rounded-card border border-on-hero-muted/30 bg-[oklch(100%_0_0/0.06)] px-6 py-4">
+            <span className="text-on-hero-muted">{t("card.sent.thanks.ticket")}</span>
+            <span className="text-ticket font-bold tabular-nums">{card.ticketNumber}</span>
+          </span>
+          <span className="max-w-[34ch] text-balance text-on-hero-muted">{t("card.sent.contactPromise")}</span>
           <span className={buttonStyles({ variant: "onHero", className: "mt-4" })}>{t("card.sent.thanks.next")}</span>
         </Link>
       )}
@@ -181,7 +189,7 @@ function RateButton({ n }: { readonly n: number }) {
       aria-label={t("card.sent.rate.choice", { n })}
       aria-disabled={busy ? true : undefined}
       onClick={(event) => busy && event.preventDefault()}
-      className="flex min-h-target-main min-w-0 items-center justify-center rounded-control border-2 border-on-primary/60 text-card font-bold tabular-nums hover:bg-[oklch(100%_0_0/0.12)]"
+      className="flex min-h-target-main min-w-0 items-center justify-center rounded-control border-2 border-on-hero-muted/60 text-card font-bold tabular-nums hover:bg-[oklch(100%_0_0/0.12)]"
     >
       {n}
     </button>
@@ -205,7 +213,9 @@ export function TicketCard({ card }: { readonly card: SentCardData }) {
         data-card-id={card.cardId}
         className="@container flex animate-settle flex-col gap-4 card-surface p-4 md:p-5"
       >
-        <Icon name="circleCheck" className="size-8" />
+        <span className="flex size-14 items-center justify-center rounded-full bg-selected text-primary">
+          <Icon name="check" className="size-7" />
+        </span>
         <h2 id={headingIdOf(card)} ref={heading} tabIndex={-1} className="text-card font-bold text-balance">
           {t("card.sent.heading")}
         </h2>

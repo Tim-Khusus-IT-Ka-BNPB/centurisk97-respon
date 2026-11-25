@@ -11,6 +11,8 @@ import { useDraftView } from "./cards/CardShell";
 import { useCharCount } from "./cards/FormCards";
 
 const MESSAGE_MAX = 2000;
+// The count shows once it is worth watching.
+const COUNT_FROM = 1600;
 
 // Free text, docked under the live card. After a refusal the typed text stays; after a limit,
 // sending waits for the retry time while typing goes on.
@@ -64,9 +66,11 @@ export function MessageBox() {
             </div>
           )}
         </Field>
-        <p className="text-meta text-muted tabular-nums">
-          {t("common.charCount", { length: count.length, max: MESSAGE_MAX })}
-        </p>
+        {count.length < COUNT_FROM ? null : (
+          <p className="text-meta text-muted tabular-nums">
+            {t("common.charCount", { length: count.length, max: MESSAGE_MAX })}
+          </p>
+        )}
       </Form>
     </div>
   );
