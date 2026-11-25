@@ -2,6 +2,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { Link, useSearchParams } from "react-router";
 import type { OneTapSent, OneTapStart } from "../../../src/contract/emergency";
 import type { ErrorEnvelope } from "../../../src/contract/errors";
+import { postJson } from "../../lib/clientApi";
 import { readPosition } from "../../lib/device";
 import { useHydrated } from "../../lib/hooks";
 import { limitText } from "../../lib/status";
@@ -26,19 +27,9 @@ async function sendPoint(onSending: () => void): Promise<Step> {
   if (read.kind !== "read") return { kind: "noPosition", reason: read.kind };
   onSending();
   const { lat, lon, accuracy } = read.position;
-  try {
-    const response = await fetch("/api/lapor/emergencies", {
-      method: "POST",
-      headers: { "content-type": "application/json", "x-lapor-client": "1" },
-      body: JSON.stringify({ lat, lon, accuracyM: accuracy }),
-    });
-    const body = await response.json();
-    return response.ok
-      ? { kind: "sent", sent: body as OneTapSent }
-      : { kind: "refused", envelope: body as ErrorEnvelope };
-  } catch {
-    return { kind: "failed" };
-  }
+  const answer = await postJson<OneTapSent>("/emergencies", { lat, lon, accuracyM: accuracy });
+  if (answer.kind === "ok") return { kind: "sent", sent: answer.body };
+  return answer.kind === "refused" ? { kind: "refused", envelope: answer.envelope } : { kind: "failed" };
 }
 
 // "Darurat sekali ketuk": who to call at once, and the phone's point on its way to the desk.

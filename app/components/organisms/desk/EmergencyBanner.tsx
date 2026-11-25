@@ -18,14 +18,9 @@ function useEmergencies(initial: readonly DeskEmergency[]): readonly DeskEmergen
   useEffect(() => {
     let live = true;
     const timer = setInterval(async () => {
-      try {
-        const response = await fetch("/api/lapor/desk/emergencies");
-        if (!response.ok) return;
-        const { emergencies } = (await response.json()) as DeskEmergencies;
-        if (live) setRead(emergencies);
-      } catch {
-        // No connection: the next read is 20 seconds away.
-      }
+      const answer = await getJson<DeskEmergencies>("/desk/emergencies");
+      // Refused or unreachable: the next read is 20 seconds away.
+      if (live && answer.kind === "ok") setRead(answer.body.emergencies);
     }, REFRESH_MS);
     return () => {
       live = false;

@@ -25,28 +25,15 @@ const REFRESH_MS = 30_000;
 const tokenOf = (hash: string): string => new URLSearchParams(hash.replace(/^#/, "")).get("t") ?? "";
 
 // One read of the report. The token goes in the body of a POST.
-async function readTracking(token: string, fetcher: typeof fetch = fetch): Promise<TrackingState> {
-  try {
-    const response = await fetcher("/api/lapor/tracking", {
-      method: "POST",
-      headers: { "content-type": "application/json", "x-lapor-client": "1" },
-      body: JSON.stringify({ token }),
-    });
-    if (response.ok) return { kind: "ok", tracking: (await response.json()) as Tracking };
-    if (response.status === 404) return { kind: "notFound" };
-    if (response.status === 429) {
-      const envelope = (await response.json()) as ErrorEnvelope;
-      const retryMs = envelope.retryAt ? Date.parse(envelope.retryAt.utc) - Date.now() : 0;
-      return {
-        kind: "limit",
-        limit: Number(envelope.error.params.limit),
-        minutes: Math.max(1, Math.ceil(retryMs / 60_000)),
-      };
-    }
-    return { kind: "unavailable" };
-  } catch {
-    return { kind: "unavailable" };
-  }
+async function readTracking(token: string): Promise<TrackingState> {
+  const answer = await postJson<Tracking>("/tracking", { token });
+  if (answer.kind === "ok") return { kind: "ok", tracking: answer.body };
+  if (answer.kind === "unreachable") return { kind: "unavailable" };
+  if (answer.status === 404) return { kind: "notFound" };
+  if (answer.status !== 429) return { kind: "unavailable" };
+  const { error, retryAt } = answer.envelope;
+  const retryMs = retryAt ? Date.parse(retryAt.utc) - Date.now() : 0;
+  return { kind: "limit", limit: Number(error.params.limit), minutes: Math.max(1, Math.ceil(retryMs / 60_000)) };
 }
 
 // Reads the report on arrival and every 30 seconds while the tab is in view.
@@ -87,21 +74,15 @@ function Proof({ proofId, alt }: { readonly proofId: string; readonly alt: strin
   useEffect(() => {
     let url: string | null = null;
     let live = true;
-    fetch("/api/lapor/tracking/photos", {
-      method: "POST",
-      headers: { "content-type": "application/json", "x-lapor-client": "1" },
-      body: JSON.stringify({ token: tokenOf(window.location.hash), proofId }),
-    })
-      .then(async (response) => {
-        if (!response.ok) throw new Error("photo");
-        const blob = await response.blob();
-        if (!live) return;
-        url = URL.createObjectURL(blob);
-        setSrc(url);
-      })
-      .catch(() => {
-        if (live) setFailed(true);
-      });
+    postForFile("/tracking/photos", { token: tokenOf(window.location.hash), proofId }).then((answer) => {
+      if (!live) return;
+      if (answer.kind !== "ok") {
+        setFailed(true);
+        return;
+      }
+      url = URL.createObjectURL(answer.body);
+      setSrc(url);
+    });
     return () => {
       live = false;
       if (url !== null) URL.revokeObjectURL(url);

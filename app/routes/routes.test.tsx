@@ -2,6 +2,7 @@ import { cleanup, screen } from "@testing-library/react";
 import { createElement, type FC } from "react";
 import { describe, expect, test, vi } from "vitest";
 import type { ApiCall } from "../../src/api/bridge";
+import { envelope as apiEnvelope } from "../../src/api/envelope";
 import { SAMPLE_DRAFTS, SAMPLE_FIELD_ERROR, SAMPLE_ME } from "../../src/testing/samples";
 import { LOST } from "../lib/network";
 import { PAGE_TEXTS, pickTexts } from "../lib/texts.server";
@@ -129,7 +130,7 @@ describe("route modules", () => {
     });
     vi.stubGlobal(
       "fetch",
-      vi.fn(async () => new Response(null, { status: 404 })),
+      vi.fn(async () => Response.json(apiEnvelope("tracking.notFound"), { status: 404 })),
     );
     renderPage(routeElement(TrackingRoute, { loaderData: loaded }), { path: "/lapor/lacak" });
     expect(await screen.findByRole("heading", { level: 1, name: "Laporan tidak ditemukan." })).toBeTruthy();
