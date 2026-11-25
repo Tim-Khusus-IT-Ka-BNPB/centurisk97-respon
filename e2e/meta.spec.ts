@@ -48,14 +48,17 @@ test("every public page has its own title, description, canonical address and sh
   expect(titles.size).toBe(PUBLIC.length);
 });
 
-test("icons answer and the browser bar follows the colour scheme", async ({ request }) => {
+test("icons answer and the browser bar follows the theme, light until dark is picked", async ({ request }) => {
   const html = await (await request.get("/lapor")).text();
   for (const href of ["/favicon-32.png", "/apple-touch-icon.png", "/lambang-bnpb.png"]) {
     expect(html).toMatch(new RegExp(`(href|src)="${href}"`));
     expect((await request.get(href)).status()).toBe(200);
   }
-  expect(html).toContain('name="theme-color" content="#e9eff7" media="(prefers-color-scheme: light)"');
-  expect(html).toContain('name="theme-color" content="#142235" media="(prefers-color-scheme: dark)"');
+  expect(html).toContain('name="theme-color" content="#e9eff7"');
+  expect(html).toContain('data-theme="light"');
+  const dark = await (await request.get("/lapor", { headers: { cookie: "theme=dark" } })).text();
+  expect(dark).toContain('name="theme-color" content="#142235"');
+  expect(dark).toContain('data-theme="dark"');
 });
 
 test("a draft page is not indexed and its share card names nothing of the draft", async ({ request }) => {

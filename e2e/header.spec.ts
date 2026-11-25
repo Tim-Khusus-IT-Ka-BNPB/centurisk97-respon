@@ -18,7 +18,7 @@ test("the header stays one row, with its links in a menu on a phone", async ({ p
   await menu.click();
   await expect(header.getByRole("link", { name: "Tentang" })).toBeVisible();
   // The theme switch rides in the menu on a phone.
-  await expect(header.getByRole("button", { name: /^Tema tampilan/ })).toBeVisible();
+  await expect(header.getByRole("button", { name: "Pakai tema gelap" })).toBeVisible();
   await header.getByRole("link", { name: "Bantuan" }).click();
   await expect(page).toHaveURL(/\/lapor\/help$/);
   await expect(page.locator("header details")).not.toHaveAttribute("open");

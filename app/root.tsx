@@ -24,26 +24,19 @@ function useTheme(): Theme {
   const pending = useFetchers()
     .find((fetcher) => fetcher.formAction === "/lapor/theme")
     ?.formData?.get("theme");
-  return (pending as Theme | undefined) ?? loaded?.theme ?? "device";
+  return (pending as Theme | undefined) ?? loaded?.theme ?? "light";
 }
 
 export function Layout({ children }: { children: ReactNode }) {
   const theme = useTheme();
   return (
-    <html lang="id" data-theme={theme === "device" ? undefined : theme}>
+    <html lang="id" data-theme={theme}>
       <head>
         <meta charSet="utf-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1, interactive-widget=resizes-content" />
-        <meta name="color-scheme" content={theme === "device" ? "light dark" : theme} />
+        <meta name="color-scheme" content={theme} />
         {/* The browser bar takes the header band's colour. */}
-        {theme === "device" ? (
-          <>
-            <meta name="theme-color" content={BAR.light} media="(prefers-color-scheme: light)" />
-            <meta name="theme-color" content={BAR.dark} media="(prefers-color-scheme: dark)" />
-          </>
-        ) : (
-          <meta name="theme-color" content={BAR[theme]} />
-        )}
+        <meta name="theme-color" content={BAR[theme]} />
         <Meta />
         <Links />
       </head>

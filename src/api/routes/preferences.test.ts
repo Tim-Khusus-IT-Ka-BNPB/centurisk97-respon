@@ -6,13 +6,13 @@ const { bindings } = testBindings();
 const fetchApi = (request: Request) => api.app.fetch(request, { ...bindings, db: testDatabase() });
 
 describe("theme preference", () => {
-  test("light and dark are kept for a year; device forgets the choice; anything else is refused", async () => {
+  test("light and dark are kept for a year; anything else is refused", async () => {
     const phone = browser(fetchApi);
     expect((await phone.call("POST", "/preferences/theme", { theme: "dark" })).status).toBe(204);
     expect(phone.cookies.get("theme")).toBe("dark");
-    expect((await phone.call("POST", "/preferences/theme", { theme: "device" })).status).toBe(204);
-    expect(phone.cookies.get("theme")).toBe("");
-    expect((await phone.call("POST", "/preferences/theme", { theme: "blue" })).status).toBe(400);
+    expect((await phone.call("POST", "/preferences/theme", { theme: "light" })).status).toBe(204);
+    expect(phone.cookies.get("theme")).toBe("light");
+    expect((await phone.call("POST", "/preferences/theme", { theme: "device" })).status).toBe(400);
   });
 
   test("the cookie is HttpOnly and SameSite Lax, Secure over https", async () => {

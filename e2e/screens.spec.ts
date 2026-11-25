@@ -30,14 +30,17 @@ async function shoot(page: Page, label: string): Promise<void> {
   for (const scheme of ["light", "dark"] as const)
     for (const size of SIZES) {
       await page.setViewportSize({ width: size.width, height: size.height });
-      await page.emulateMedia({ colorScheme: scheme, reducedMotion: "reduce" });
+      await page.emulateMedia({ reducedMotion: "reduce" });
+      await page.evaluate((theme) => document.documentElement.setAttribute("data-theme", theme), scheme);
       await noSidewaysScroll(page);
       await page.screenshot({ path: `${dir}/${label}-${size.name}-${scheme}.png`, fullPage: true });
     }
   // Text at 200%: the root size doubled, as a phone's text size setting does for rem sizes.
   await page.setViewportSize({ width: 320, height: 640 });
-  await page.emulateMedia({ colorScheme: "light", reducedMotion: "reduce" });
-  await page.evaluate(() => document.documentElement.style.setProperty("font-size", "200%"));
+  await page.evaluate(() => {
+    document.documentElement.setAttribute("data-theme", "light");
+    document.documentElement.style.setProperty("font-size", "200%");
+  });
   await page.screenshot({ path: `${dir}/${label}-320font200-light.png`, fullPage: true });
   await page.evaluate(() => document.documentElement.style.removeProperty("font-size"));
   await page.setViewportSize({ width: 390, height: 844 });

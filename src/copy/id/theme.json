@@ -1,7 +1,4 @@
 {
-  "theme.label": "Tema tampilan",
-  "theme.device": "Ikut perangkat",
-  "theme.light": "Terang",
-  "theme.dark": "Gelap",
-  "theme.switch": "Tema tampilan: {current}. Ketuk untuk ganti ke {next}."
+  "theme.light": "Pakai tema terang",
+  "theme.dark": "Pakai tema gelap"
 }
