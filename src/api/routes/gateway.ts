@@ -1,16 +1,20 @@
-import { createRoute } from "@hono/zod-openapi";
+import { createRoute, z } from "@hono/zod-openapi";
 import {
   chatMessageSchema,
   chatPhotoSchema,
   chatRefusalSchema,
   chatReplySchema,
   languagesSchema,
+  okSchema,
+  waitingNewsSchema,
 } from "../../contract/gateway";
 import { copy } from "../../copy";
 import { normaliseNumber } from "../../domain/phoneNumber";
 import { type ChatAnswer, chatMessage, chatPhoto } from "../../services/chat";
+import { newsDocument, newsSent, waitingNews } from "../../services/chatNews";
 import type { ApiContext } from "../context";
 import { type Api, addRoute, jsonBody, jsonResponse } from "../route";
+import { documentFile, documentSent } from "./shared";
 
 const refusedWith = (description: string) => jsonResponse(description, chatRefusalSchema);
 
@@ -30,6 +34,10 @@ function answered(c: ApiContext, answer: ChatAnswer): Response {
     }
   }
 }
+
+const unknownNews = (c: ApiContext): Response => c.json({ galat: copy.text("whatsapp.refused.news") }, 404);
+
+const newsId = z.object({ id: z.coerce.number().int().positive() });
 
 const DATA_PREFIX = /^data:image\/jpeg;base64,/;
 
@@ -88,6 +96,53 @@ export function addGatewayRoutes(api: Api): void {
       const bytes = photoBytes(body.data);
       if (bytes === null) return malformed(c, "photo");
       return answered(c, await chatPhoto(c.env, number, bytes, body.waktu ?? c.env.clock.now()));
+    },
+  );
+
+  addRoute(
+    api,
+    "gateway",
+    createRoute({
+      method: "get",
+      path: "/kabar",
+      responses: { 200: jsonResponse("News and documents that wait to be sent", waitingNewsSchema) },
+    }),
+    async (c) => c.json(await waitingNews(c.env), 200),
+  );
+
+  addRoute(
+    api,
+    "gateway",
+    createRoute({
+      method: "get",
+      path: "/kabar/{id}/berkas",
+      request: { params: newsId },
+      responses: {
+        200: documentFile("The document of news that waits"),
+        404: refusedWith("No such news, or none that waits"),
+      },
+    }),
+    async (c) => {
+      const file = await newsDocument(c.env, c.req.valid("param").id);
+      return file.kind === "file" ? documentSent(c, file) : unknownNews(c);
+    },
+  );
+
+  addRoute(
+    api,
+    "gateway",
+    createRoute({
+      method: "post",
+      path: "/kabar/{id}/terkirim",
+      request: { params: newsId },
+      responses: {
+        200: jsonResponse("Marked as sent", okSchema),
+        404: refusedWith("No such news, or marked before"),
+      },
+    }),
+    async (c) => {
+      const marked = await newsSent(c.env, c.var.gatewayId, c.req.valid("param").id);
+      return marked ? c.json({ ok: true as const }, 200) : unknownNews(c);
     },
   );
 

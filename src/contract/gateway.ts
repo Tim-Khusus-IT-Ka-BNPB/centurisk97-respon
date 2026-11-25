@@ -36,4 +36,24 @@ export const chatRefusalSchema = z.object({
   sisaDetik: z.number().int().nonnegative().optional(),
 });
 
+// News and documents that wait, in the order they are to be sent.
+export const waitingNewsSchema = z.object({
+  kabar: z.array(
+    z.object({
+      id: z.string(),
+      wa: z.string(),
+      jenis: z.enum(["status", "balasan", "pdf"]),
+      // The message, or a document's caption.
+      teks: z.string(),
+      // Where a gateway reads the document, signed as any call of its own.
+      url: z.string().nullable(),
+      nomor: z.string(),
+    }),
+  ),
+});
+
+export type WaitingNews = z.infer<typeof waitingNewsSchema>;
+
+export const okSchema = z.object({ ok: z.literal(true) });
+
 export const languagesSchema = z.object({ bahasa: z.array(z.object({ kode: z.string(), nama: z.string() })) });

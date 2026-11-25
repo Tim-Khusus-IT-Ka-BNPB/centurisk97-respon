@@ -1,4 +1,5 @@
 import { type ChatSession, chatSession, forgetChat, saveChatSession } from "../adapters/d1/chat";
+import { addNewsChoice, newsChoice } from "../adapters/d1/chatNews";
 import { DRAFT_LIFE_MS, type DraftRecord, loadDraft, openDraftOf, touchDraft } from "../adapters/d1/drafts";
 import { followUpState } from "../adapters/d1/followUp";
 import { latestConsent, makeEmergency, type ProfileRow, profileBySlot, reporterIdOf } from "../adapters/d1/reporters";
@@ -41,6 +42,7 @@ import { run } from "../platform/database";
 import { hmacKey } from "../platform/keys";
 import type { Principal } from "../ports/identity";
 import type { ServiceBindings } from "./bindings";
+import { latestNews, queueDocument } from "./chatNews";
 import {
   askedAgain,
   cardChoices,
@@ -60,7 +62,7 @@ import { addPhoto, placePhotos } from "./photos";
 import { areaVillages, searchPlaces } from "./places";
 import { giveConsent, startDraft } from "./reporters";
 import { sendDraft } from "./send";
-import { myReports } from "./tracking";
+import { myReports, ownedReport } from "./tracking";
 import { type Answer, ownedDraft, type TurnRequest, takeTurn, viewOf } from "./turn";
 
 // A report in a WhatsApp chat: each message of a number is one turn of the same conversation the web
@@ -428,16 +430,64 @@ function contactText(contact: Extract<Card, { kind: "sent" }>["tracking"]["conta
 const trackingLink = (chat: Chat, token: string) =>
   t("whatsapp.sent.track", { link: `${chat.bindings.settings.appOrigin}/lapor/lacak#t=${token}` });
 
-async function sentText(chat: Chat, draftId: string): Promise<string> {
+const newsChoices = (): Choice[] => [
+  { id: "yes", label: t("whatsapp.wantNews.yes"), means: "yes" },
+  { id: "no", label: t("whatsapp.wantNews.no"), means: "no" },
+];
+
+const wantNewsText = () => message(t("whatsapp.wantNews"), numbered(newsChoices()), t("whatsapp.hint.one"));
+
+// A version just sent: its document comes to a number that wants news, and a number never asked is
+// asked, once (D32). Not answered is no.
+async function afterSending(chat: Chat, ticketNumber: string, version: number): Promise<Reply> {
+  const { bindings, numberKey } = chat;
+  const choice = await newsChoice(bindings.db, numberKey);
+  if (choice === "yes") {
+    await queueDocument(bindings, ticketNumber, version);
+    return { text: t("whatsapp.document.coming", { ticketNumber, version }) };
+  }
+  if (choice !== null) return { text: "" };
+  await addNewsChoice(bindings.db, numberKey, "asked", new Date(chat.nowMs));
+  return { text: wantNewsText(), step: { kind: "wantNews", ticketNumber } };
+}
+
+async function sentReply(chat: Chat, draftId: string): Promise<Reply> {
   const card = (await viewed(chat, await fresh(chat, draftId))).card as Extract<Card, { kind: "sent" }>;
   const { firstName, ticketNumber } = card;
-  return message(
+  const after = await afterSending(chat, ticketNumber, 1);
+  const text = message(
     t("whatsapp.sent", { firstName, ticketNumber }),
     t("card.sent.contactPromise"),
     contactText(card.tracking.contact),
     trackingLink(chat, card.trackingToken),
     t("whatsapp.sent.more"),
+    after.text,
   );
+  return { ...after, text };
+}
+
+// Whether news comes to this chat from now on. A yes said again keeps what waits; every no drops it.
+async function setNews(chat: Chat, wanted: boolean): Promise<string> {
+  const { db } = chat.bindings;
+  if (!wanted || (await newsChoice(db, chat.numberKey)) !== "yes")
+    await addNewsChoice(db, chat.numberKey, wanted ? "yes" : "no", new Date(chat.nowMs));
+  return t(wanted ? "whatsapp.newsOn" : "whatsapp.newsOff");
+}
+
+// The newest document of a report, asked for in so many words.
+async function askDocument(chat: Chat, ticketNumber: string | null): Promise<string> {
+  const { bindings, principal } = chat;
+  const [newest] = await myReports(bindings, principal);
+  const asked = ticketNumber ?? newest?.ticketNumber;
+  if (asked === undefined) return t("whatsapp.document.none");
+  if ((await ownedReport(bindings, principal, asked)) === null)
+    return t("whatsapp.status.notFound", { ticketNumber: asked });
+  const subject = { kind: "numberSlot", numberKey: chat.numberKey, ownerSlot: SESSION_SLOT } as const;
+  const refusal = await checkLimits(bindings, [["document.hour", subject]]);
+  if (refusal) return t("whatsapp.document.limit", { retryTime: retryWords(chat, refusal.retryAtMs as number) });
+  const { versions } = await followUpState(bindings.db, asked);
+  await queueDocument(bindings, asked, versions);
+  return t("whatsapp.document.coming", { ticketNumber: asked, version: versions });
 }
 
 async function send(chat: Chat, draft: DraftRecord): Promise<Reply> {
@@ -446,9 +496,11 @@ async function send(chat: Chat, draft: DraftRecord): Promise<Reply> {
   const answer = await sendDraft(bindings, chat.principal, draft.id, draft.revision, key, key);
   switch (answer.kind) {
     case "ok": {
-      if (draft.followUpOf === null) return { text: await sentText(chat, draft.id) };
-      const { versions } = await followUpState(bindings.db, draft.followUpOf);
-      return { text: t("whatsapp.news.sent", { ticketNumber: draft.followUpOf, version: versions }) };
+      const ticketNumber = draft.followUpOf;
+      if (ticketNumber === null) return sentReply(chat, draft.id);
+      const { versions: version } = await followUpState(bindings.db, ticketNumber);
+      const after = await afterSending(chat, ticketNumber, version);
+      return { ...after, text: message(t("whatsapp.news.sent", { ticketNumber, version }), after.text) };
     }
     case "failed":
       return { text: message(t("whatsapp.failed"), cardText(answer.draft.card)) };
@@ -628,8 +680,9 @@ async function statusText(chat: Chat, ticketNumber: string | null): Promise<stri
     });
   if (ticketNumber !== null) {
     const one = reports.find((report) => report.ticketNumber === ticketNumber);
-    if (one === undefined) return t("whatsapp.status.notFound", { ticketNumber });
-    return message(row(one), trackingLink(chat, one.trackingToken));
+    const own = await ownedReport(chat.bindings, chat.principal, ticketNumber);
+    if (one === undefined || own === null) return t("whatsapp.status.notFound", { ticketNumber });
+    return message(row(one), await latestNews(chat.bindings, own), trackingLink(chat, one.trackingToken));
   }
   const [newest] = reports;
   if (newest === undefined) return t("whatsapp.status.none");
@@ -660,6 +713,11 @@ async function commandInDraft(chat: Chat, draft: DraftRecord, command: Command):
       return { text: message(t("whatsapp.resume"), await again()) };
     case "status":
       return { text: message(await statusText(chat, command.ticketNumber), await again()) };
+    case "document":
+      return { text: message(await askDocument(chat, command.ticketNumber), await again()) };
+    case "newsStop":
+    case "newsStart":
+      return { text: message(await setNews(chat, command.kind === "newsStart"), await again()) };
     case "identity":
       return changeIdentity(chat);
     case "addNews":
@@ -686,6 +744,11 @@ async function commandIdle(chat: Chat, command: Command): Promise<Reply> {
       return startReport(chat, true, "");
     case "status":
       return { text: await statusText(chat, command.ticketNumber) };
+    case "document":
+      return { text: await askDocument(chat, command.ticketNumber) };
+    case "newsStop":
+    case "newsStart":
+      return { text: await setNews(chat, command.kind === "newsStart") };
     case "identity":
       return changeIdentity(chat);
     case "addNews":
@@ -693,6 +756,12 @@ async function commandIdle(chat: Chat, command: Command): Promise<Reply> {
     default:
       return { text: menu() };
   }
+}
+
+// The answer to whether news may come; a yes brings the document of the report it was asked after.
+async function wantNews(chat: Chat, ticketNumber: string, wanted: boolean): Promise<Reply> {
+  const said = await setNews(chat, wanted);
+  return { text: wanted ? message(said, await askDocument(chat, ticketNumber)) : said };
 }
 
 async function idle(chat: Chat, text: string): Promise<Reply> {
@@ -703,6 +772,11 @@ async function idle(chat: Chat, text: string): Promise<Reply> {
     if (read.kind === "picked")
       return read.ids[0] === "new" ? startReport(chat, false, step.text) : news(chat, read.ids[0] as string, step.text);
     if (read.kind !== "words") return { text: message(notChosen(read), aboutText(choices)), step };
+  }
+  if (step?.kind === "wantNews") {
+    const read = readChoice(text, newsChoices());
+    if (read.kind === "picked") return wantNews(chat, step.ticketNumber, read.ids[0] === "yes");
+    if (read.kind !== "words") return { text: message(notChosen(read), wantNewsText()), step };
   }
   if (chat.profile === null) return welcome(chat, false, true);
   const named = newsWithTicket(text);

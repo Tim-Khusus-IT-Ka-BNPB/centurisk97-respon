@@ -113,6 +113,10 @@ export async function ownDocument(
   return written(await documentFor(bindings, ticketNumber, version, false), format);
 }
 
+// The reporter's own copy for their chat, which its caller knows the report is of.
+export const chatDocument = async (bindings: ServiceBindings, ticketNumber: string, version: number) =>
+  written(await documentFor(bindings, ticketNumber, version, false), "pdf");
+
 // Staff's copy, for an account whose region holds the report; logged, as it leaves the desk.
 export async function deskDocument(
   bindings: ServiceBindings,

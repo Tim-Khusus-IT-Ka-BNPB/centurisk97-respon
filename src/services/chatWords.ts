@@ -2,7 +2,9 @@ import type { Card } from "../contract/card";
 import type { DraftBody } from "../contract/draft";
 import { copy } from "../copy";
 import { textFrom } from "../copy/text";
+import { clockTime, type Instant, longDate } from "../copy/time";
 import { hazardOf, precisionText, rowParts, rowView, valueLines } from "../copy/values";
+import { firstLines, type NewsMessage } from "../domain/chat/news";
 import type { Choice } from "../domain/chat/reply";
 import type { ListedArea, ListedPlace } from "../domain/chat/step";
 import type { AreaResults, PlaceResults } from "./places";
@@ -183,10 +185,7 @@ function groupLines(group: CardOf<"summary">["groups"][number], hazardType: stri
 }
 
 // A value before and after, each in the summary's words.
-function changeLine(
-  change: { readonly fieldId: string; readonly from: SummaryRow | null; readonly to: SummaryRow | null },
-  hazardType: string | null,
-): string {
+function changeLine(change: ValueChange, hazardType: string | null): string {
   const word = (row: SummaryRow | null) => {
     const parts = row && rowParts(t, row, hazardType);
     if (!parts) return t("state.notYetKnown");
@@ -197,6 +196,7 @@ function changeLine(
 }
 
 type SummaryRow = CardOf<"summary">["groups"][number]["rows"][number];
+type ValueChange = NonNullable<CardOf<"summary">["followUp"]>["changes"][number];
 
 function followUpText(card: CardOf<"summary">, followUp: NonNullable<CardOf<"summary">["followUp"]>): string {
   const told = followUp.changes.map((change) => changeLine(change, followUp.hazardType));
@@ -291,6 +291,47 @@ export function askedAgain(card: Card): string {
 // What a turn raised, above its question: the 112 line, a warning, a refusal.
 export const noticesText = (notices: DraftBody["notices"]): string =>
   message(...notices.map((notice) => t(notice.copyKey, notice.params)));
+
+// What staff did, as one message of the report's chat.
+export type ChatNews = Pick<NewsMessage, "ticketNumber" | "status" | "actions" | "reply" | "corrected"> & {
+  readonly at: Instant;
+  // What a check put right, each value before and after.
+  readonly changes: readonly ValueChange[];
+  readonly hazardType: string;
+};
+
+const cutItems = (texts: readonly string[]): string => {
+  const { shown, left } = firstLines(texts);
+  return items(left === 0 ? shown : [...shown, t("whatsapp.kabar.more", { count: left })]);
+};
+
+// Its parts, without the title and the foot: what the status of a report tells too.
+export function newsParts(news: Omit<ChatNews, "ticketNumber" | "at">): string {
+  const { status, actions, reply, corrected, changes, hazardType } = news;
+  return message(
+    status &&
+      lines(
+        t("whatsapp.kabar.status", { status: t(`stage.long.${status.status}`) }),
+        status.reason === null ? "" : t("whatsapp.kabar.reason", { reason: status.reason }),
+      ),
+    actions.length > 0 && lines(bold(t("whatsapp.kabar.actions")), cutItems(actions)),
+    reply !== null && lines(bold(t("whatsapp.kabar.reply")), reply),
+    corrected !== null &&
+      lines(bold(t("whatsapp.kabar.correction")), cutItems(changes.map((change) => changeLine(change, hazardType)))),
+  );
+}
+
+const ENDED: readonly string[] = ["closed", "invalid"];
+
+export function newsText(news: ChatNews, link: string): string {
+  const { ticketNumber, at, status } = news;
+  return message(
+    t("whatsapp.kabar.title", { ticketNumber, date: longDate(at), time: clockTime(at), zone: at.zone }),
+    newsParts(news),
+    status !== null && ENDED.includes(status.status) && t("whatsapp.sent.track", { link }),
+    t("whatsapp.kabar.stop"),
+  );
+}
 
 // The places a name matched, as a numbered list, and which one each number is.
 export function placesText(
