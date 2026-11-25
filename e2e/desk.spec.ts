@@ -247,3 +247,60 @@ test("the map and the gallery show the filtered reports, and a page with no scri
   await noSidewaysScroll(page);
   await page.screenshot({ path: info.outputPath("gallery.png"), fullPage: true });
 });
+
+test("an officer answers the reporter, moves the ticket to its end, and the tracking page follows", async ({
+  page,
+  browser,
+  baseURL,
+}, info) => {
+  test.setTimeout(240_000);
+  const script = !info.project.name.includes("no-script");
+  const { ticketNumber, token } = await sendReport(browser, baseURL as string);
+  await signIn(page);
+  await page.goto(`/lapor/meja/${ticketNumber}`, { waitUntil: "networkidle" });
+  const heading = page.getByRole("heading", { level: 1, name: ticketNumber });
+  const header = page.locator("header").filter({ has: heading });
+  if (!script) await page.getByRole("button", { name: "Tandai sudah dilihat" }).click();
+  await expect(header.getByText("Dilihat", { exact: true })).toBeVisible();
+  const actions = page.getByRole("region", { name: "Tindak lanjut" });
+
+  // A reason too short is refused on its field, and what was typed stays.
+  await actions.getByRole("radio", { name: "Tidak dapat ditindaklanjuti" }).check();
+  await actions.locator("#note").fill("dup");
+  await actions.getByRole("button", { name: "Simpan status" }).click();
+  await expect(actions.getByText(/Alasan terlalu pendek/)).toBeVisible();
+  await expect(actions.locator("#note")).toBeFocused();
+  await expect(actions.locator("#note")).toHaveValue("dup");
+  await noSidewaysScroll(page);
+
+  // A reply puts it under review.
+  await actions.getByLabel("Balas pelapor").fill("Terima kasih, kami cek");
+  await actions.getByRole("button", { name: "Simpan balasan" }).click();
+  await expect(page.getByRole("status")).toContainText("Balasan tersimpan. Status tiket: Sedang ditelaah.");
+  await expect(actions.getByText("Terima kasih, kami cek", { exact: true })).toBeVisible();
+  await expect(header.getByText("Ditelaah", { exact: true })).toBeVisible();
+
+  for (const [label, note, short] of [
+    ["Ditindaklanjuti", "Tim berangkat", "Ditindaklanjuti"],
+    ["Selesai ditangani", "Air sudah surut", "Selesai"],
+  ] as const) {
+    await actions.getByRole("radio", { name: label, exact: true }).check();
+    await actions.locator("#note").fill(note);
+    await actions.getByRole("button", { name: "Simpan status" }).click();
+    await expect(page.getByRole("status")).toContainText(`Status tersimpan. Tiket sekarang: ${label}.`);
+    await expect(header.getByText(short, { exact: true })).toBeVisible();
+    await expect(page.getByRole("region", { name: "Riwayat tiket" }).getByText(note)).toBeVisible();
+  }
+  await expect(actions.getByRole("radio")).toHaveCount(1);
+  await page.screenshot({ path: info.outputPath("actions.png"), fullPage: true });
+
+  // The reporter sees every stage done, and none of what staff wrote for themselves.
+  if (script) {
+    const reporterPage = await (await browser.newContext()).newPage();
+    await reporterPage.goto(`/lapor/lacak#t=${token}`);
+    const status = reporterPage.getByRole("region", { name: "Status laporan" });
+    await expect(status.getByRole("listitem").filter({ hasText: /pukul \d{2}\.\d{2} WIB/ })).toHaveCount(5);
+    for (const text of ["Petugas Uji", "Tim berangkat", "kami cek"])
+      await expect(reporterPage.getByText(text)).toHaveCount(0);
+  }
+});
