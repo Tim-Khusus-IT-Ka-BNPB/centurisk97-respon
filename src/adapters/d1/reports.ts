@@ -17,7 +17,7 @@ export type ReportRecord = {
   readonly reporterName: string;
   readonly rating: number | null;
   readonly photoCount: number;
-  readonly history: readonly { readonly toStatus: TicketStatus; readonly atMs: number }[];
+  readonly history: readonly { readonly toStatus: TicketStatus; readonly atMs: number; readonly note: string | null }[];
 };
 
 type ReportRow = {
@@ -47,9 +47,9 @@ const SELECT = sql`select r.id, r.ticket_number, r.draft_id, r.reporter_id, r.nu
 
 async function withHistory(db: Database, found: ReportRow | null): Promise<ReportRecord | null> {
   if (found === null) return null;
-  const history = await rows<{ to_status: TicketStatus; at: string }>(
+  const history = await rows<{ to_status: TicketStatus; at: string; note: string | null }>(
     db,
-    sql`select to_status, at from ticket_history where ticket_number = ${found.ticket_number} order by at, id`,
+    sql`select to_status, at, note from ticket_history where ticket_number = ${found.ticket_number} order by at, id`,
   );
   return {
     id: found.id,
@@ -66,7 +66,7 @@ async function withHistory(db: Database, found: ReportRow | null): Promise<Repor
     reporterName: found.reporter_name,
     rating: found.rating,
     photoCount: found.photo_count,
-    history: history.map((one) => ({ toStatus: one.to_status, atMs: Date.parse(one.at) })),
+    history: history.map((one) => ({ toStatus: one.to_status, atMs: Date.parse(one.at), note: one.note })),
   };
 }
 

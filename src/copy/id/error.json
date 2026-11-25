@@ -22,5 +22,7 @@
   "error.report.notFound": "Laporan tidak ditemukan, atau tidak bisa dinilai dari perangkat ini. Buka laporan dari perangkat yang Anda pakai untuk melapor.",
   "error.auth.staffSignInFirst": "Masuk dulu dengan akun petugas untuk membuka meja laporan.",
   "error.desk.notAllowed": "Akun ini belum berhak memakai meja laporan untuk tindakan ini. Hubungi admin BNPB bila akun Anda memerlukannya.",
-  "error.desk.reportNotFound": "Laporan tidak ditemukan di meja akun ini. Periksa nomor tiketnya, lalu cari lagi dari daftar laporan."
+  "error.desk.reportNotFound": "Laporan tidak ditemukan di meja akun ini. Periksa nomor tiketnya, lalu cari lagi dari daftar laporan.",
+  "error.ticket.transitionRefused": "Status tiket tidak bisa dipindah ke sana dari status sekarang. Pilih salah satu status yang ditawarkan.",
+  "error.ticket.changed": "Petugas lain baru saja mengubah tiket ini menjadi {status}. Perubahan Anda belum disimpan. Periksa status terbaru, lalu pilih lagi."
 }

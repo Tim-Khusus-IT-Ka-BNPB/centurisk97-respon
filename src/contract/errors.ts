@@ -23,6 +23,8 @@ const ERROR_CODES = [
   "auth.staffSignInFirst",
   "desk.notAllowed",
   "desk.reportNotFound",
+  "ticket.transitionRefused",
+  "ticket.changed",
 ] as const;
 
 export type ErrorCode = (typeof ERROR_CODES)[number] | `limit.${LimitId}`;

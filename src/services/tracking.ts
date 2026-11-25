@@ -11,7 +11,7 @@ import { checkContactFile, pickContact } from "../domain/contacts";
 import type { EventTimeValue, PlaceValue } from "../domain/fieldState";
 import type { FieldError } from "../domain/identityForm";
 import { ownsDraft } from "../domain/ownership";
-import { stagesOf } from "../domain/stages";
+import { rejectionOf, stagesOf } from "../domain/stages";
 import { run, sqlState } from "../platform/database";
 import { hmacKey, sha256Hex } from "../platform/keys";
 import type { Principal } from "../ports/identity";
@@ -54,9 +54,11 @@ const fieldValue = <T>(report: ReportRecord, field: string): T | null => {
 export async function trackingOf(bindings: ServiceBindings, report: ReportRecord): Promise<Tracking> {
   const zone = draftZone(report.villageCode);
   const place = fieldValue<PlaceValue>(report, "place") as PlaceValue;
+  const rejection = rejectionOf(report.history);
   return {
     ticketNumber: report.ticketNumber,
     sentAt: at(report.sentAt, zone),
+    rejected: rejection === null ? null : { at: at(rejection.atMs, zone), reason: rejection.note as string },
     stages: stagesOf(report.history).map((stage) => ({
       status: stage.status,
       reachedAt: stage.reachedAtMs === null ? null : at(stage.reachedAtMs, zone),

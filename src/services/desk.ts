@@ -1,10 +1,12 @@
 import {
+  addReply,
   type DeskPhoto,
   deskReport,
   facetCounts,
   galleryPhotos,
   mapPoints,
   markViewed,
+  moveTicket,
   type QueueFilters,
   type QueueRow,
   queuePage,
@@ -22,8 +24,10 @@ import {
 } from "../domain/deskQueue";
 import { type DeskCapability, mayUse } from "../domain/deskRights";
 import type { EventTimeValue, FieldStates, PlaceValue } from "../domain/fieldState";
+import type { FieldError } from "../domain/identityForm";
 import { impactOf } from "../domain/impact";
 import type { TicketStatus } from "../domain/stages";
+import { checkMove, checkReply, NEXT_STATUSES, noteRule } from "../domain/ticketMoves";
 import type { StaffPrincipal } from "../ports/identity";
 import type { ServiceBindings } from "./bindings";
 import { at, draftZone } from "./draftView";
@@ -235,6 +239,9 @@ async function reportBody(bindings: ServiceBindings, staff: StaffPrincipal, tick
     })),
     reporterWords: found.reporterWords.map((one) => ({ text: one.text, at: at(one.atMs, zone) })),
     photos: (await reportPhotos(bindings.db, ticketNumber)).map(photoView),
+    nextStatuses: NEXT_STATUSES[found.status].map((status) => ({ status, note: noteRule(found.status, status) })),
+    revision: found.revision,
+    replies: found.replies.map((one) => ({ text: one.text, at: at(one.atMs, zone), actor: one.staffLabel })),
   };
   return body;
 }
@@ -262,4 +269,52 @@ export async function viewDeskReport(
   if ((await deskReport(bindings.db, ticketNumber)) === null) return { kind: "notFound" };
   await markViewed(bindings.db, staff, ticketNumber, new Date(bindings.clock.now()));
   return { kind: "ok", body: (await reportBody(bindings, staff, ticketNumber)) as DeskReport };
+}
+
+export type DeskChange =
+  | DeskAnswer<DeskReport>
+  | { readonly kind: "invalid"; readonly error: FieldError }
+  | { readonly kind: "transitionRefused" }
+  // Another officer moved it first; nothing of this change is written.
+  | { readonly kind: "changed"; readonly status: TicketStatus };
+
+const after = async (bindings: ServiceBindings, staff: StaffPrincipal, ticketNumber: string): Promise<DeskChange> => ({
+  kind: "ok",
+  body: (await reportBody(bindings, staff, ticketNumber)) as DeskReport,
+});
+
+export async function moveDeskTicket(
+  bindings: ServiceBindings,
+  staff: StaffPrincipal,
+  ticketNumber: string,
+  change: { readonly to: TicketStatus; readonly note: string; readonly revision: number },
+): Promise<DeskChange> {
+  const refused = await admitted(bindings, staff, "moveTicket", "desk.write");
+  if (refused) return refused;
+  const found = await deskReport(bindings.db, ticketNumber);
+  if (found === null) return { kind: "notFound" };
+  if (found.revision !== change.revision) return { kind: "changed", status: found.status };
+  const check = checkMove(found.status, change.to, change.note);
+  if (check.kind === "refused") return { kind: "transitionRefused" };
+  if (check.kind === "invalid") return check;
+  const move = { from: found.status, to: change.to, note: check.note, revision: change.revision };
+  if (await moveTicket(bindings.db, staff, ticketNumber, move, new Date(bindings.clock.now())))
+    return after(bindings, staff, ticketNumber);
+  const now = (await deskReport(bindings.db, ticketNumber)) as { readonly status: TicketStatus };
+  return { kind: "changed", status: now.status };
+}
+
+export async function replyToReporter(
+  bindings: ServiceBindings,
+  staff: StaffPrincipal,
+  ticketNumber: string,
+  typed: string,
+): Promise<DeskChange> {
+  const refused = await admitted(bindings, staff, "reply", "desk.write");
+  if (refused) return refused;
+  if ((await deskReport(bindings.db, ticketNumber)) === null) return { kind: "notFound" };
+  const check = checkReply(typed);
+  if (check.kind === "invalid") return check;
+  await addReply(bindings.db, staff, ticketNumber, check.text, new Date(bindings.clock.now()));
+  return after(bindings, staff, ticketNumber);
 }

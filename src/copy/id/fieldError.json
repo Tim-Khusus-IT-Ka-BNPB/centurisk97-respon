@@ -31,5 +31,6 @@
   "fieldError.photo.unreadable": "Foto tidak terbaca atau terlalu besar untuk diperkecil. Ambil ulang dengan kamera.",
   "fieldError.rating.range": "Nilai harus angka bulat 1 sampai 5. Pilih salah satu dari lima pilihan di atas.",
   "fieldError.ticketNumber.format": "Nomor tiket ditulis seperti LA-241126-01. Periksa lagi nomornya, lalu cari.",
-  "fieldError.staffCode.unknown": "Kode masuk tidak dikenal. Periksa kode dari admin, lalu masuk lagi."
+  "fieldError.staffCode.unknown": "Kode masuk tidak dikenal. Periksa kode dari admin, lalu masuk lagi.",
+  "fieldError.staffReason.tooShort": "Alasan terlalu pendek. Tulis paling sedikit {min} huruf, karena alasan ini dibaca pelapor."
 }

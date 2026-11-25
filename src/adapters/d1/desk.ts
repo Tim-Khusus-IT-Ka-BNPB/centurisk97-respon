@@ -1,6 +1,16 @@
 import { DESK_HAS, type DeskHas } from "../../domain/deskQueue";
 import type { TicketStatus } from "../../domain/stages";
-import { atomically, type Database, empty, parsed, type Query, row, rows, sql } from "../../platform/database";
+import {
+  atomically,
+  changedOne,
+  type Database,
+  empty,
+  parsed,
+  type Query,
+  row,
+  rows,
+  sql,
+} from "../../platform/database";
 import type { StaffPrincipal } from "../../ports/identity";
 
 export type QueueFilters = {
@@ -125,6 +135,9 @@ export type DeskReportRecord = QueueRow & {
     readonly note: string | null;
   }[];
   readonly reporterWords: readonly { readonly text: string; readonly atMs: number }[];
+  readonly replies: readonly { readonly text: string; readonly atMs: number; readonly staffLabel: string }[];
+  // Grows with every status change; a change names the one it read.
+  readonly revision: number;
 };
 
 export async function deskReport(db: Database, ticketNumber: string): Promise<DeskReportRecord | null> {
@@ -134,11 +147,12 @@ export async function deskReport(db: Database, ticketNumber: string): Promise<De
       reporter_number: string;
       officer_regency: string | null;
       officer_position: string | null;
+      revision: number;
     }
   >(
     db,
     sql`select r.ticket_number, t.status, r.hazard_type, r.village_code, r.sent_at, v.fields,
-        v.complete_percent, v.reporter_name, v.reporter_role, r.number_unverified, r.draft_id,
+        v.complete_percent, v.reporter_name, v.reporter_role, r.number_unverified, r.draft_id, t.revision,
         v.reporter_number, v.officer_regency, v.officer_position,
         (select count(*) from draft_photo p where p.draft_id = r.draft_id) as photo_count
       from report r
@@ -147,7 +161,7 @@ export async function deskReport(db: Database, ticketNumber: string): Promise<De
       where r.ticket_number = ${ticketNumber}`,
   );
   if (found === null) return null;
-  const [history, words] = await Promise.all([
+  const [history, words, replies] = await Promise.all([
     rows<{ to_status: TicketStatus; at: string; actor_label: string | null; note: string | null }>(
       db,
       sql`select to_status, at, actor_label, note from ticket_history where ticket_number = ${ticketNumber} order by at, id`,
@@ -156,6 +170,10 @@ export async function deskReport(db: Database, ticketNumber: string): Promise<De
       db,
       sql`select text_masked, created_at from draft_message
         where draft_id = ${found.draft_id} and speaker = 'reporter' order by seq`,
+    ),
+    rows<{ text: string; staff_label: string; at: string }>(
+      db,
+      sql`select text, staff_label, at from report_reply where ticket_number = ${ticketNumber} order by at, id`,
     ),
   ]);
   return {
@@ -170,21 +188,77 @@ export async function deskReport(db: Database, ticketNumber: string): Promise<De
       note: one.note,
     })),
     reporterWords: words.map((one) => ({ text: one.text_masked, atMs: Date.parse(one.created_at) })),
+    replies: replies.map((one) => ({ text: one.text, atMs: Date.parse(one.at), staffLabel: one.staff_label })),
+    revision: found.revision,
   };
 }
 
-const actionRow = (staff: StaffPrincipal, ticketNumber: string, action: "view", at: Date): Query =>
+type LoggedAction = "view" | "status" | "reply";
+
+const actionRow = (staff: StaffPrincipal, ticketNumber: string, action: LoggedAction, at: Date): Query =>
   sql`insert into staff_action (ticket_number, staff_id, staff_label, staff_kind, action, at)
     values (${ticketNumber}, ${staff.staffId}, ${staff.label}, ${staff.role}, ${action}, ${at})`;
+
+type Move = { readonly from: TicketStatus; readonly to: TicketStatus; readonly note: string | null };
+
+// The ticket moved from the status it is at.
+const moveRow = (ticketNumber: string, { from, to }: Move, at: Date): Query =>
+  sql`update ticket set status = ${to}, revision = revision + 1, updated_at = ${at}
+    where ticket_number = ${ticketNumber} and status = ${from}`;
+
+// Its history row, written only when the move before it changed the ticket.
+const historyRow = (staff: StaffPrincipal, ticketNumber: string, { from, to, note }: Move, at: Date): Query =>
+  sql`insert into ticket_history (ticket_number, from_status, to_status, actor, actor_id, actor_label, note, at)
+    select ${ticketNumber}, ${from}, ${to}, 'staff', ${staff.staffId}, ${staff.label}, ${note}, ${at} where changes() = 1`;
+
+const SEEN: Move = { from: "new", to: "seen", note: null };
+const REVIEWED: Move = { from: "seen", to: "under_review", note: null };
 
 // Opening a report: a ticket at "new" becomes "seen" with one history row by this officer, and
 // the open is logged either way. When two officers open it at once only one moves it.
 export async function markViewed(db: Database, staff: StaffPrincipal, ticketNumber: string, at: Date): Promise<void> {
   await atomically(db, [
-    sql`update ticket set status = 'seen', updated_at = ${at} where ticket_number = ${ticketNumber} and status = 'new'`,
-    sql`insert into ticket_history (ticket_number, from_status, to_status, actor, actor_id, actor_label, at)
-      select ${ticketNumber}, 'new', 'seen', 'staff', ${staff.staffId}, ${staff.label}, ${at} where changes() = 1`,
+    moveRow(ticketNumber, SEEN, at),
+    historyRow(staff, ticketNumber, SEEN, at),
     actionRow(staff, ticketNumber, "view", at),
+  ]);
+}
+
+// The ticket, its history row and the log together, or nothing: false when another officer
+// changed the ticket after this one read it.
+export async function moveTicket(
+  db: Database,
+  staff: StaffPrincipal,
+  ticketNumber: string,
+  move: Move & { readonly revision: number },
+  at: Date,
+): Promise<boolean> {
+  const done = await atomically(db, [
+    sql`${moveRow(ticketNumber, move, at)} and revision = ${move.revision}`,
+    historyRow(staff, ticketNumber, move, at),
+    changedOne,
+    actionRow(staff, ticketNumber, "status", at),
+  ]);
+  return done !== null;
+}
+
+// A reply, kept as written. Writing one means the report was seen and is being looked at, so a
+// ticket not yet under review moves there.
+export async function addReply(
+  db: Database,
+  staff: StaffPrincipal,
+  ticketNumber: string,
+  text: string,
+  at: Date,
+): Promise<void> {
+  await atomically(db, [
+    moveRow(ticketNumber, SEEN, at),
+    historyRow(staff, ticketNumber, SEEN, at),
+    moveRow(ticketNumber, REVIEWED, at),
+    historyRow(staff, ticketNumber, REVIEWED, at),
+    sql`insert into report_reply (ticket_number, staff_id, staff_label, text, at)
+      values (${ticketNumber}, ${staff.staffId}, ${staff.label}, ${text}, ${at})`,
+    actionRow(staff, ticketNumber, "reply", at),
   ]);
 }
 

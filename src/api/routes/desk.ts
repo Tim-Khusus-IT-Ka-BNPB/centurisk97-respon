@@ -15,12 +15,15 @@ import { isTicketNumber } from "../../domain/ticketNumber";
 import type { StaffPrincipal } from "../../ports/identity";
 import {
   type DeskAnswer,
+  type DeskChange,
   deskGallery,
   deskMap,
   deskPhotoFile,
   deskQueue,
   deskSummary,
+  moveDeskTicket,
   readDeskReport,
+  replyToReporter,
   viewDeskReport,
 } from "../../services/desk";
 import { checkLimits } from "../../services/limits";
@@ -38,6 +41,9 @@ const queueQuery = z.object({
   has: z.enum(DESK_HAS).optional(),
   page: z.coerce.number().int().min(1).max(10_000).default(1),
 });
+
+// Any length a person could type, so a text too long is answered on its field.
+const staffText = z.string().max(20_000);
 
 const ticketParams = z.object({ ticketNumber: z.string().max(20) });
 
@@ -61,6 +67,16 @@ function answered<T>(c: ApiContext, answer: DeskAnswer<T>): Response {
   if (answer.kind === "notAllowed") return refuse(c, 403, "desk.notAllowed");
   if (answer.kind === "notFound") return refuse(c, 404, "desk.reportNotFound");
   return limitRefused(c, answer.refusal, null);
+}
+
+// A change to a ticket: refused on a field, as a move not offered, or because another was first.
+function changeAnswered(c: ApiContext, change: DeskChange): Response {
+  if (change.kind === "invalid")
+    return refuse(c, 422, "request.invalidFields", { fields: fieldErrors([change.error]) });
+  if (change.kind === "transitionRefused") return refuse(c, 409, "ticket.transitionRefused");
+  if (change.kind === "changed")
+    return refuse(c, 409, "ticket.changed", { params: { status: `stage.short.${change.status}` } });
+  return answered(c, change);
 }
 
 const staffOf = (c: ApiContext) => c.var.principal as StaffPrincipal;
@@ -122,6 +138,50 @@ export function addDeskRoutes(api: Api): void {
     async (c) => {
       c.header("x-robots-tag", "noindex");
       return answered(c, await viewDeskReport(c.env, staffOf(c), c.req.valid("param").ticketNumber));
+    },
+  );
+
+  addRoute(
+    api,
+    "staff",
+    createRoute({
+      method: "post",
+      path: "/desk/reports/{ticketNumber}/status",
+      request: {
+        params: ticketParams,
+        body: jsonBody(
+          z.object({ to: ticketStatusSchema, note: staffText.default(""), revision: z.number().int().nonnegative() }),
+        ),
+      },
+      responses: {
+        200: jsonResponse("Moved, with its history row", deskReportSchema),
+        409: refusal("Not a move from here, or another officer changed the ticket first"),
+        422: refusal("The note is missing, too short or too long, on field note"),
+      },
+    }),
+    async (c) => {
+      c.header("x-robots-tag", "noindex");
+      const { ticketNumber } = c.req.valid("param");
+      return changeAnswered(c, await moveDeskTicket(c.env, staffOf(c), ticketNumber, c.req.valid("json")));
+    },
+  );
+
+  addRoute(
+    api,
+    "staff",
+    createRoute({
+      method: "post",
+      path: "/desk/reports/{ticketNumber}/replies",
+      request: { params: ticketParams, body: jsonBody(z.object({ text: staffText })) },
+      responses: {
+        200: jsonResponse("Kept; a ticket not yet under review now is", deskReportSchema),
+        422: refusal("The reply is empty or too long, on field reply"),
+      },
+    }),
+    async (c) => {
+      c.header("x-robots-tag", "noindex");
+      const { ticketNumber } = c.req.valid("param");
+      return changeAnswered(c, await replyToReporter(c.env, staffOf(c), ticketNumber, c.req.valid("json").text));
     },
   );
 

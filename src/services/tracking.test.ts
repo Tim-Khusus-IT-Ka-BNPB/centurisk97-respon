@@ -30,7 +30,7 @@ const report: ReportRecord = {
   reporterName: "Uji Satu",
   rating: null,
   photoCount: 0,
-  history: [{ toStatus: "new", atMs: Date.parse("2026-11-23T02:00:00.000Z") }],
+  history: [{ toStatus: "new", atMs: Date.parse("2026-11-23T02:00:00.000Z"), note: null }],
 };
 
 describe("tracking view", () => {

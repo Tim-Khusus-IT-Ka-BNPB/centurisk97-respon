@@ -96,6 +96,14 @@ describe("schema", () => {
     expect(await refusal(action("view"))).toBe("ok");
     expect(await refusal(sql`update staff_action set action = 'status'`)).toBe("append-only");
     expect(await refusal(sql`delete from staff_action`)).toBe("append-only");
+    const reply = (text: string) =>
+      sql`insert into report_reply (ticket_number, staff_id, staff_label, text, at)
+        values (${ticket}, 's1', 'Uji', ${text}, ${NOW})`;
+    expect(await refusal(reply(""))).toBe("CHECK");
+    expect(await refusal(reply("a".repeat(1001)))).toBe("CHECK");
+    expect(await refusal(reply("Kami cek"))).toBe("ok");
+    expect(await refusal(sql`update report_reply set text = 'x'`)).toBe("append-only");
+    expect(await refusal(sql`delete from report_reply`)).toBe("append-only");
   });
 
   test("one open draft per number and slot, enforced by the database", async () => {

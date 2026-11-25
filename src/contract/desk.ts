@@ -111,6 +111,11 @@ export const deskReportSchema = queueItemSchema.extend({
     z.object({ status: ticketStatusSchema, at: timeSchema, actor: z.string().nullable(), note: z.string().nullable() }),
   ),
   reporterWords: z.array(z.object({ text: z.string(), at: timeSchema })),
+  // Where the ticket may go from here, and what the note must hold for each.
+  nextStatuses: z.array(z.object({ status: ticketStatusSchema, note: z.enum(["optional", "required", "reason"]) })),
+  // Sent back with a change, so a change made on an old reading is refused.
+  revision: z.number().int().nonnegative(),
+  replies: z.array(z.object({ text: z.string(), at: timeSchema, actor: z.string() })),
   photos: z.array(deskPhotoSchema),
 });
 

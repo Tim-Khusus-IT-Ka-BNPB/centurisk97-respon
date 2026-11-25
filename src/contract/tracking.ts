@@ -31,6 +31,8 @@ export const trackingSchema = z.object({
   ticketNumber: z.string(),
   sentAt: timeSchema,
   stages: z.array(z.object({ status: ticketStatusSchema, reachedAt: timeSchema.nullable() })),
+  // Set aside, with the reason an officer wrote for the reporter. Nothing else staff write is here.
+  rejected: z.object({ at: timeSchema, reason: z.string() }).nullable(),
   hazardType: hazardTypeSchema,
   hazardSubtype: z.string().nullable(),
   place: z.object({ villageName: z.string(), districtName: z.string(), regencyName: z.string() }),
