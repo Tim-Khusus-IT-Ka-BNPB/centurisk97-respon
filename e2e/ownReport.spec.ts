@@ -1,10 +1,11 @@
 import { readFileSync } from "node:fs";
 import { type Browser, type Download, expect, type Page, test } from "@playwright/test";
-import { liveCard, noSidewaysScroll, ownAddress, paced, syntheticNumber } from "./support.ts";
+import { closeOthers, liveCard, noSidewaysScroll, ownAddress, paced, syntheticNumber } from "./support.ts";
 
 const DESK_CODE = "seeded-session-desk-officer-local-only";
 
 test.beforeEach(async ({ context }) => ownAddress(context));
+test.afterEach(async ({ browser, context }) => closeOthers(browser, context));
 
 type Draft = { draftId: string; revision: number; card: { kind: string; cardId: string; options?: { id: string }[] } };
 
@@ -156,6 +157,4 @@ test("a sent report is downloaded, added to, and answered by staff, each on its 
   const other = await stranger.newPage();
   const answer = await other.goto(`/lapor/reports/${ticket}`);
   expect(answer?.status()).toBe(401);
-  await stranger.close();
-  await desk.context().close();
 });

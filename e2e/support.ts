@@ -1,4 +1,4 @@
-import { type BrowserContext, expect, type Locator, type Page } from "@playwright/test";
+import { type Browser, type BrowserContext, expect, type Locator, type Page } from "@playwright/test";
 
 // Every test reports from its own address, so the per-address limits of one run never meet
 // another's. Locally the dev server passes the header through unchanged. Only our own host gets
@@ -10,6 +10,12 @@ export async function ownAddress(context: BrowserContext): Promise<void> {
     (url) => url.hostname === "localhost",
     (route) => route.continue({ headers: { ...route.request().headers(), "cf-connecting-ip": address } }),
   );
+}
+
+// What a test opened beside its own page. Left open, a desk's live map and its alarm go on in the
+// same browser and slow every test after it.
+export async function closeOthers(browser: Browser, own: BrowserContext): Promise<void> {
+  await Promise.all(browser.contexts().map((context) => (context === own ? undefined : context.close())));
 }
 
 // A synthetic number in the 0800 range, new for each run.

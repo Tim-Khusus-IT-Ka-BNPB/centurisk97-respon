@@ -1,7 +1,7 @@
 import { readFileSync } from "node:fs";
 import { type APIRequestContext, type Browser, expect, type Page, test } from "@playwright/test";
 import { exifDateTime, withExif } from "../src/testing/jpegs.ts";
-import { noSidewaysScroll, ownAddress, syntheticNumber } from "./support.ts";
+import { closeOthers, noSidewaysScroll, ownAddress, syntheticNumber } from "./support.ts";
 
 const DESK_CODE = "seeded-session-desk-officer-local-only";
 const REGENCY_CODE = "seeded-session-bpbd-regency-local-only";
@@ -12,6 +12,7 @@ const HERE = { lat: 5.14705, lon: 97.0482 };
 const BASE = new Uint8Array(readFileSync("db/synthetic/photo-base.jpg"));
 
 test.beforeEach(async ({ context }) => ownAddress(context));
+test.afterEach(async ({ browser, context }) => closeOthers(browser, context));
 
 type Card = { kind: string; cardId: string; groupId?: string; options?: { id: string }[] };
 type Draft = { draftId: string; revision: number; card: Card };

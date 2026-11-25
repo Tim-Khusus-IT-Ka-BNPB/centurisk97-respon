@@ -1,5 +1,14 @@
 import { type Browser, expect, type Page, test } from "@playwright/test";
-import { answerCard, liveCard, nextCard, noSidewaysScroll, ownAddress, paced, syntheticNumber } from "./support.ts";
+import {
+  answerCard,
+  closeOthers,
+  liveCard,
+  nextCard,
+  noSidewaysScroll,
+  ownAddress,
+  paced,
+  syntheticNumber,
+} from "./support.ts";
 
 const DESK_CODE = "seeded-session-desk-officer-local-only";
 const REGENCY_CODE = "seeded-session-bpbd-regency-local-only";
@@ -8,6 +17,7 @@ const PROVINCE_CODE = "seeded-session-bpbd-province-local-only";
 const HERE = { latitude: 5.14705, longitude: 97.0482, accuracy: 15 };
 
 test.beforeEach(async ({ context }) => ownAddress(context));
+test.afterEach(async ({ browser, context }) => closeOthers(browser, context));
 
 async function deskPage(browser: Browser, code: string, baseURL: string): Promise<Page> {
   const context = await browser.newContext({ baseURL });
