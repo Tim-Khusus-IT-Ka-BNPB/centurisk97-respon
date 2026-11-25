@@ -147,7 +147,7 @@ test("a desk officer finds a new report, reads where each value came from, and o
   await expect(row.getByText("Diterima")).toBeVisible();
   await expect(row.getByText("Nomor belum diverifikasi")).toBeVisible();
   await expect(row.getByText("Uji Satu")).toBeVisible();
-  await expect(row.getByText("Meninggal: tidak ada")).toBeAttached();
+  await expect(row.getByText("Tidak ada dampak")).toBeVisible();
   await noSidewaysScroll(page);
   await page.screenshot({ path: info.outputPath("queue.png"), fullPage: true });
 
