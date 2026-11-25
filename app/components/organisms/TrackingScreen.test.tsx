@@ -60,6 +60,20 @@ describe("tracking page", () => {
     expect(document.body.textContent).not.toMatch(/Uji|0800\d|RT|RW/);
   });
 
+  test("a report set aside shows the stages it reached and why, and waits for nothing", async () => {
+    answer(200, {
+      ...tracking,
+      rejected: { at: { utc: "2026-11-23T04:00:00.000Z", zone: "WIB" }, reason: "Laporan ganda" },
+    });
+    draw();
+    await screen.findByRole("heading", { level: 1, name: "LA-231126-01" });
+    const status = within(screen.getByRole("region", { name: "Status laporan" }));
+    expect(status.getAllByRole("listitem").map((item) => item.textContent)).toEqual([
+      "Laporan diterima23 November 2026, pukul 09.00 WIB",
+      "Tidak dapat ditindaklanjuti23 November 2026, pukul 11.00 WIBAlasan petugas: Laporan ganda",
+    ]);
+  });
+
   test("a time with its hour, an old event, no subtype and no event time each read as given", async () => {
     answer(200, {
       ...tracking,

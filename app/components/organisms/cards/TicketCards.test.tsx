@@ -85,6 +85,13 @@ describe("ticket card", () => {
     await screen.findByText("Tersalin");
   });
 
+  test("a report set aside shows why in place of its stages", async () => {
+    const rejected = { at: { utc: "2026-11-23T04:00:00.000Z", zone: "WIB" as const }, reason: "Laporan ganda" };
+    draw(withCard({ tracking: { ...sent.tracking, rejected } }));
+    expect(await screen.findByText("Alasan petugas: Laporan ganda")).toBeTruthy();
+    expect(screen.queryByText("Ditelaah")).toBeNull();
+  });
+
   test("unrated: thanks by name with the number, a tap anywhere asks for the rating", async () => {
     draw(SAMPLE_DRAFTS.sent);
     const dialog = await screen.findByRole("alertdialog", { name: "Terima kasih, Uji!" });

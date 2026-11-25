@@ -99,22 +99,35 @@ function TrackingView({ tracking }: { readonly tracking: Tracking }) {
           {t("tracking.status")}
         </h2>
         <ol className="flex flex-col gap-3">
-          {tracking.stages.map((stage) => (
-            <li key={stage.status} className="flex items-start gap-3">
-              <Icon
-                name={stage.reachedAt ? "circleCheck" : "circleDashed"}
-                className={stage.reachedAt ? "mt-0.5 text-primary" : "mt-0.5 text-muted"}
-              />
+          {/* A report set aside waits for nothing more: its reached stages, then why. */}
+          {tracking.stages
+            .filter((stage) => stage.reachedAt !== null || tracking.rejected === null)
+            .map((stage) => (
+              <li key={stage.status} className="flex items-start gap-3">
+                <Icon
+                  name={stage.reachedAt ? "circleCheck" : "circleDashed"}
+                  className={stage.reachedAt ? "mt-0.5 text-primary" : "mt-0.5 text-muted"}
+                />
+                <span className="flex min-w-0 flex-col">
+                  <span className={stage.reachedAt ? "font-semibold" : "text-muted"}>
+                    {t(`stage.long.${stage.status}`)}
+                  </span>
+                  <span className="text-meta text-muted tabular-nums">
+                    {stage.reachedAt ? at(stage.reachedAt) : t("stage.waiting")}
+                  </span>
+                </span>
+              </li>
+            ))}
+          {tracking.rejected === null ? null : (
+            <li className="flex items-start gap-3">
+              <Icon name="circleX" className="mt-0.5 text-danger" />
               <span className="flex min-w-0 flex-col">
-                <span className={stage.reachedAt ? "font-semibold" : "text-muted"}>
-                  {t(`stage.long.${stage.status}`)}
-                </span>
-                <span className="text-meta text-muted tabular-nums">
-                  {stage.reachedAt ? at(stage.reachedAt) : t("stage.waiting")}
-                </span>
+                <span className="font-semibold">{t("stage.long.invalid")}</span>
+                <span className="text-meta text-muted tabular-nums">{at(tracking.rejected.at)}</span>
+                <span className="break-words">{t("tracking.rejected", { reason: tracking.rejected.reason })}</span>
               </span>
             </li>
-          ))}
+          )}
         </ol>
         <p>{t("tracking.contactPromise")}</p>
         <p className="text-meta text-muted">{t("tracking.updated")}</p>

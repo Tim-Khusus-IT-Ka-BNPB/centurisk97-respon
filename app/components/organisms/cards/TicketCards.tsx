@@ -227,7 +227,17 @@ export function TicketCard({ card }: { readonly card: SentCardData }) {
           </figure>
         </div>
         <section aria-label={t("card.sent.stages")}>
-          <StageStrip stages={card.tracking.stages} />
+          {card.tracking.rejected === null ? (
+            <StageStrip stages={card.tracking.stages} />
+          ) : (
+            <p className="flex items-start gap-2">
+              <Icon name="circleX" className="mt-0.5 text-danger" />
+              <span className="flex min-w-0 flex-col">
+                <span className="font-semibold">{t("stage.long.invalid")}</span>
+                <span className="break-words">{t("tracking.rejected", { reason: card.tracking.rejected.reason })}</span>
+              </span>
+            </p>
+          )}
         </section>
         <a href={link} className={buttonStyles({ variant: "primary", size: "main" })}>
           {t("card.sent.track")}
