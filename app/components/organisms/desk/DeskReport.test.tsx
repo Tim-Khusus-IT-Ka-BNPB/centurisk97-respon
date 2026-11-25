@@ -298,21 +298,6 @@ describe("a report on the desk", () => {
     ).toBeTruthy();
   });
 
-  test("an emergency's documents come in one tap; another report has no such button", async () => {
-    const view = await renderDesk(<DeskReportView report={REPORT} summary={SUMMARY} />, PATH);
-    expect(screen.queryByRole("button", { name: "Unduh paket darurat" })).toBeNull();
-    view.unmount();
-    const emergency = { ...REPORT, photoCount: 3, emergency: { kind: "chat" as const, victims: "yes" as const } };
-    const bare = await renderDesk(<DeskReportView report={{ ...emergency, photoCount: 0 }} summary={SUMMARY} />, PATH);
-    expect(screen.getByText(/^PDF dan Word dalam satu berkas/)).toBeTruthy();
-    bare.unmount();
-    await renderDesk(<DeskReportView report={emergency} summary={SUMMARY} />, PATH);
-    const pack = screen.getByRole("button", { name: "Unduh paket darurat" }) as HTMLButtonElement;
-    expect([pack.name, pack.value]).toEqual(["format", "pack"]);
-    expect(pack.form?.getAttribute("action")).toBe("/lapor/meja/LA-241126-01/documents");
-    expect(screen.getByText(/PDF, Word, dan 3 foto dalam satu berkas/)).toBeTruthy();
-  });
-
   test("the reporter's news stands out until acted on, and its history row tells what it changed", async () => {
     const change = {
       fieldId: "displacedPeople",

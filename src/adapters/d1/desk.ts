@@ -81,7 +81,7 @@ const LATEST = sql`(select max(m.version) from report_version m where m.report_i
 // it, is not acting on it.
 const NEWS = sql`exists (select 1 from ticket_history n where n.ticket_number = r.ticket_number and n.event = 'followUp'
     and not exists (select 1 from staff_action a where a.ticket_number = n.ticket_number and a.at > n.at
-      and a.action not in ('view', 'identityView', 'document', 'documentPack')))`;
+      and a.action not in ('view', 'identityView', 'document')))`;
 
 // A number typed by somebody is never confirmed by the list (D101).
 const CONFIRMED = sql`(v.reporter_role = 'claimedOfficer' and r.number_unverified = 0 and exists (
@@ -319,14 +319,8 @@ export async function logIdentityView(
 }
 
 // A document of a report left the desk: who took it, when and which report.
-export async function logDocument(
-  db: Database,
-  staff: StaffPrincipal,
-  ticketNumber: string,
-  action: "document" | "documentPack",
-  at: Date,
-): Promise<void> {
-  await run(db, actionRow(staff, ticketNumber, action, at));
+export async function logDocument(db: Database, staff: StaffPrincipal, ticketNumber: string, at: Date): Promise<void> {
+  await run(db, actionRow(staff, ticketNumber, "document", at));
 }
 
 // The ticket, its history row and the log together, or nothing: false when another officer

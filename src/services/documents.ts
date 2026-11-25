@@ -3,9 +3,6 @@ import { draftPhotos } from "../adapters/d1/photos";
 import { versionDetail } from "../adapters/d1/versions";
 import { renderDocx } from "../adapters/document/docx";
 import { renderPdf } from "../adapters/document/pdf";
-import { utf8, zip } from "../adapters/document/zip";
-import type { ReportVersion } from "../contract/ownReport";
-import { copy } from "../copy";
 import type { DocumentFormat, ReportDocument } from "../domain/document";
 import type { Zone } from "../domain/eventTime";
 import type { Principal, StaffPrincipal } from "../ports/identity";
@@ -15,7 +12,6 @@ import { type DocumentPhoto, documentOf, pictureOf } from "./documentContent";
 import { at, draftZone } from "./draftView";
 import { checkLimits, type LimitRefusal } from "./limits";
 import { ownedReport } from "./tracking";
-import { versionsOf } from "./versions";
 
 // Photos of one document stay under this many bytes together, so a Worker can hold the file while
 // it is made. The document says how many it left out.
@@ -39,21 +35,19 @@ async function photosOf(bindings: ServiceBindings, draftId: string, version: num
   return { photos, left: kept.length - photos.length, added };
 }
 
-type Made = { readonly document: ReportDocument; readonly photos: Photos };
-
 // One version of a report as a document, or null when there is no such version.
 async function documentFor(
   bindings: ServiceBindings,
   ticketNumber: string,
   version: number,
   forStaff: boolean,
-): Promise<Made | null> {
+): Promise<ReportDocument | null> {
   const found = await versionDetail(bindings.db, ticketNumber, version);
   if (found === null) return null;
   const before = version === 1 ? null : await versionDetail(bindings.db, ticketNumber, version - 1);
   const zone = draftZone(found.villageCode);
   const photos = await photosOf(bindings, found.draftId, version, zone);
-  const document = documentOf({
+  return documentOf({
     ticketNumber,
     version,
     sentAt: at(found.sentAt, zone),
@@ -72,7 +66,6 @@ async function documentFor(
     photosLeft: photos.left,
     forStaff,
   });
-  return { document, photos };
 }
 
 const WRITERS = {
@@ -89,10 +82,10 @@ export type DocumentAnswer =
   | { readonly kind: "notAllowed" }
   | { readonly kind: "limit"; readonly refusal: LimitRefusal };
 
-async function written(made: Made | null, format: DocumentFormat): Promise<DocumentAnswer> {
-  if (made === null) return { kind: "notFound" };
+async function written(document: ReportDocument | null, format: DocumentFormat): Promise<DocumentAnswer> {
+  if (document === null) return { kind: "notFound" };
   const { render, mime } = WRITERS[format];
-  return { kind: "file", bytes: await render(made.document), mime, name: `${made.document.title}.${format}` };
+  return { kind: "file", bytes: await render(document), mime, name: `${document.title}.${format}` };
 }
 
 // The reporter's own copy, on the phone or session that sent the report. Anyone else is told there
@@ -129,50 +122,6 @@ export async function deskDocument(
   if (refused) return refused;
   if ((await deskReport(bindings.db, staff.scope, ticketNumber)) === null) return { kind: "notFound" };
   const answer = await written(await documentFor(bindings, ticketNumber, version, true), format);
-  if (answer.kind === "file")
-    await logDocument(bindings.db, staff, ticketNumber, "document", new Date(bindings.clock.now()));
+  if (answer.kind === "file") await logDocument(bindings.db, staff, ticketNumber, new Date(bindings.clock.now()));
   return answer;
-}
-
-// An emergency's newest version in one file, to hand on at once: the document in both formats and
-// the photos as they are. Logged once, as one download.
-export async function deskDocumentPack(
-  bindings: ServiceBindings,
-  staff: StaffPrincipal,
-  ticketNumber: string,
-): Promise<DocumentAnswer> {
-  const refused = await admitted(bindings, staff, "downloadDocument", "desk.write");
-  if (refused) return refused;
-  const found = await deskReport(bindings.db, staff.scope, ticketNumber);
-  if (found === null || found.emergency === null) return { kind: "notFound" };
-  const [newest] = await versionsOf(bindings, ticketNumber, found.villageCode);
-  const { document, photos } = (await documentFor(
-    bindings,
-    ticketNumber,
-    (newest as ReportVersion).version,
-    true,
-  )) as Made;
-  const bytes = await zip([
-    { name: `${document.title}.pdf`, bytes: renderPdf(document) },
-    { name: `${document.title}.docx`, bytes: await renderDocx(document) },
-    ...photos.photos.map((photo, index) => ({
-      name: copy.format("document.pack.photo", { n: String(index + 1).padStart(2, "0") }),
-      bytes: photo.picture.bytes,
-    })),
-    ...(photos.left === 0
-      ? []
-      : [
-          {
-            name: copy.text("document.pack.read"),
-            bytes: utf8(copy.format("document.photos.left", { count: photos.left })),
-          },
-        ]),
-  ]);
-  await logDocument(bindings.db, staff, ticketNumber, "documentPack", new Date(bindings.clock.now()));
-  return {
-    kind: "file",
-    bytes,
-    mime: "application/zip",
-    name: copy.format("document.pack.name", { ticketNumber }),
-  };
 }

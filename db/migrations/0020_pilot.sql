@@ -37,7 +37,7 @@ CREATE TABLE staff_action_next (
   action text NOT NULL CHECK (
     action IN (
       'view', 'identityView', 'status', 'reply', 'fieldCheck', 'handlingAction', 'handlingProof', 'take',
-      'document', 'documentPack', 'pilotAllow', 'pilotRemove'
+      'document', 'pilotAllow', 'pilotRemove'
     )
   ),
   at text NOT NULL,

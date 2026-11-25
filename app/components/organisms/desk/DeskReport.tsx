@@ -172,29 +172,6 @@ function Documents({ report }: { readonly report: DeskReport }) {
   );
 }
 
-// An emergency's documents and photos in one file, one tap.
-function EmergencyPack({ report }: { readonly report: DeskReport }) {
-  const t = useText();
-  const target = useFileTarget();
-  return (
-    <Form
-      reloadDocument
-      method="post"
-      action={`/lapor/meja/${report.ticketNumber}/documents`}
-      target={target}
-      className="flex flex-col gap-2"
-    >
-      <Button name="format" value="pack" variant="signal" aria-describedby="desk-pack">
-        <Icon name="archive" className="size-5" />
-        {t("desk.pack")}
-      </Button>
-      <p id="desk-pack" className="text-meta text-muted">
-        {t(report.photoCount === 0 ? "desk.pack.hint.noPhotos" : "desk.pack.hint", { count: report.photoCount })}
-      </p>
-    </Form>
-  );
-}
-
 // What the reporter added last, until an officer acts on the report.
 function News({ report }: { readonly report: DeskReport }) {
   const t = useText();
@@ -336,7 +313,6 @@ export function DeskReportView({
             {report.taker === null ? null : <Taker taker={report.taker} />}
           </div>
           <div className="flex flex-col gap-3 sm:max-w-xs">
-            {report.emergency === null ? null : <EmergencyPack report={report} />}
             {report.mayTake ? <TakeReport /> : null}
             <MarkSeen report={report} opening={opened.busy} />
             <a href="#desk-actions" className={buttonStyles({ variant: "secondary", className: "xl:hidden" })}>

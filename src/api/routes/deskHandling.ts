@@ -3,7 +3,7 @@ import { deskReportSchema, deskResponseSchema } from "../../contract/desk";
 import { DOCUMENT_FORMATS } from "../../domain/document";
 import { CHECK_RESULTS } from "../../domain/fieldCheck";
 import { monthOf } from "../../domain/response";
-import { deskDocument, deskDocumentPack } from "../../services/documents";
+import { deskDocument } from "../../services/documents";
 import { addHandling, addHandlingProof, checkInField, deskProofFile } from "../../services/handling";
 import { deskResponse, takeDeskReport } from "../../services/taker";
 import { refuse } from "../envelope";
@@ -131,21 +131,6 @@ export function addDeskHandlingRoutes(api: Api): void {
       const { version, format } = c.req.valid("json");
       const { ticketNumber } = c.req.valid("param");
       const answer = await deskDocument(c.env, staffOf(c), ticketNumber, version, format);
-      return answer.kind === "file" ? documentSent(c, answer) : answered(c, answer);
-    },
-  );
-
-  addRoute(
-    api,
-    "staff",
-    createRoute({
-      method: "post",
-      path: "/desk/reports/{ticketNumber}/document-pack",
-      request: { params: ticketParams },
-      responses: { 200: documentFile("An emergency's documents and photos, as one zip") },
-    }),
-    async (c) => {
-      const answer = await deskDocumentPack(c.env, staffOf(c), c.req.valid("param").ticketNumber);
       return answer.kind === "file" ? documentSent(c, answer) : answered(c, answer);
     },
   );

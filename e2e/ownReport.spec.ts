@@ -69,7 +69,7 @@ async function saved(page: Page, press: () => Promise<void>): Promise<{ name: st
   return { name: download.suggestedFilename(), start: bytes.subarray(0, 4).toString("latin1") };
 }
 
-test("a sent report is downloaded, added to, answered by staff and packed, each on its own page", async ({
+test("a sent report is downloaded, added to, and answered by staff, each on its own page", async ({
   page,
   browser,
   baseURL,
@@ -111,15 +111,11 @@ test("a sent report is downloaded, added to, answered by staff and packed, each 
   await expect(documents.getByText("Meninggal: belum didata menjadi 2 orang")).toBeVisible();
   await noSidewaysScroll(page);
 
-  // The desk: the news stands out, the pack is one tap, and a reply is written.
+  // The desk: the news stands out, a version is downloaded, and a reply is written.
   const desk = await deskPage(browser, baseURL as string, script);
   await desk.goto(`/lapor/meja/${ticket}`);
   if (!script) await desk.getByRole("button", { name: "Tandai sudah dilihat" }).click();
   await expect(desk.getByRole("region", { name: "Kabar baru dari pelapor, versi 2" })).toContainText("2 orang");
-  expect(await saved(desk, () => desk.getByRole("button", { name: "Unduh paket darurat" }).click())).toEqual({
-    name: `Paket ${ticket}.zip`,
-    start: "PK\u0003\u0004",
-  });
   expect((await saved(desk, () => desk.getByRole("button", { name: "Unduh PDF versi 2" }).click())).name).toBe(
     `Laporan ${ticket} versi 2.pdf`,
   );

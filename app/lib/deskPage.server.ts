@@ -280,14 +280,10 @@ export async function actOnDeskPilot(form: FormData, api: ApiCall): Promise<Desk
   return { kind: "render", status: response.status, envelope, typed: typedIn(form) };
 }
 
-// POST /lapor/meja/<ticket>/documents: a version as a file, or an emergency's pack.
+// POST /lapor/meja/<ticket>/documents: a version as a file.
 export async function downloadDeskDocument(ticketNumber: string, form: FormData, api: ApiCall): Promise<Response> {
   const ticket = encodeURIComponent(ticketNumber);
-  const path = `/desk/reports/${ticket}`;
-  const format = formText(form, "format");
-  const response =
-    format === "pack"
-      ? await api("POST", `${path}/document-pack`)
-      : await api("POST", `${path}/documents`, { version: formText(form, "version"), format });
+  const body = { version: formText(form, "version"), format: formText(form, "format") };
+  const response = await api("POST", `/desk/reports/${ticket}/documents`, body);
   return documentOrBack(response, `/lapor/meja/${ticket}`);
 }

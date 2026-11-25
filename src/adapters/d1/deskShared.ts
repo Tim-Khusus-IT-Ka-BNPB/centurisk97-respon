@@ -23,8 +23,7 @@ type LoggedAction =
   | "handlingAction"
   | "handlingProof"
   | "take"
-  | "document"
-  | "documentPack";
+  | "document";
 
 // A change of what no report is about.
 export const staffRow = (staff: StaffPrincipal, action: "pilotAllow" | "pilotRemove", at: Date): Query =>
