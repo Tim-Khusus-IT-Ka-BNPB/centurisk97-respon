@@ -202,9 +202,26 @@ function numbered(canvas: Canvas, block: Extract<DocumentBlock, { kind: "numbere
   });
 }
 
-function section(canvas: Canvas, text: string): void {
-  // A heading never stands alone at the foot of a page.
-  canvas.room(58);
+type PhotosBlock = Extract<DocumentBlock, { kind: "photos" }>;
+
+const PHOTO_GAP = 13;
+const PHOTO_WIDTH = (WIDTH - PHOTO_GAP) / 2;
+const PHOTO_HEIGHT = PHOTO_WIDTH * 0.75;
+
+// The two photos side by side from there on, with the lines of their captions.
+function photoRow(block: PhotosBlock, at: number) {
+  const row = block.photos.slice(at, at + 2).map((photo) => ({
+    ...photo,
+    lines: wrapped(winAnsi(photo.caption), "regular", 8, PHOTO_WIDTH),
+  }));
+  return { row, caption: Math.max(...row.map((photo) => photo.lines.length)) * 8 * 1.35 };
+}
+
+const HEADING_HEIGHT = 10 + 11.5 * 1.35 + 5;
+
+function section(canvas: Canvas, text: string, next: DocumentBlock | undefined): void {
+  // A heading never stands alone at the foot of a page, and photos are tall.
+  canvas.room(next?.kind === "photos" ? HEADING_HEIGHT + PHOTO_HEIGHT + photoRow(next, 0).caption + 14 : 58);
   canvas.y += 10;
   canvas.y = canvas.lines(PAGE.left, canvas.y, [winAnsi(text)], { font: "bold", size: 11.5, colour: NAVY });
   canvas.rule(canvas.y + 1, 1, NAVY);
@@ -265,20 +282,15 @@ function table(canvas: Canvas, block: Extract<DocumentBlock, { kind: "table" }>)
   canvas.y += 2;
 }
 
-function photos(canvas: Canvas, block: Extract<DocumentBlock, { kind: "photos" }>): void {
-  const gap = 13;
-  const width = (WIDTH - gap) / 2;
-  const height = width * 0.75;
+function photos(canvas: Canvas, block: PhotosBlock): void {
+  const width = PHOTO_WIDTH;
+  const height = PHOTO_HEIGHT;
   for (let at = 0; at < block.photos.length; at += 2) {
-    const row = block.photos.slice(at, at + 2).map((photo) => ({
-      ...photo,
-      lines: wrapped(winAnsi(photo.caption), "regular", 8, width),
-    }));
-    const caption = Math.max(...row.map((photo) => photo.lines.length)) * 8 * 1.35;
+    const { row, caption } = photoRow(block, at);
     canvas.room(height + caption + 14);
     canvas.y += 4;
     row.forEach(({ picture, lines }, index) => {
-      const x = PAGE.left + index * (width + gap);
+      const x = PAGE.left + index * (width + PHOTO_GAP);
       // Whole, in the middle of its frame, never cropped.
       const scale = Math.min(width / picture.width, height / picture.height);
       const drawn = { width: picture.width * scale, height: picture.height * scale };
@@ -297,7 +309,11 @@ function photos(canvas: Canvas, block: Extract<DocumentBlock, { kind: "photos" }
 }
 
 const DRAW: {
-  readonly [K in DocumentBlock["kind"]]: (canvas: Canvas, block: Extract<DocumentBlock, { kind: K }>) => void;
+  readonly [K in DocumentBlock["kind"]]: (
+    canvas: Canvas,
+    block: Extract<DocumentBlock, { kind: K }>,
+    next: DocumentBlock | undefined,
+  ) => void;
 } = {
   band,
   figures,
@@ -307,7 +323,7 @@ const DRAW: {
     canvas.y += 4;
   },
   numbered,
-  section: (canvas, block) => section(canvas, block.text),
+  section: (canvas, block, next) => section(canvas, block.text, next),
   paragraph: (canvas, block) => {
     canvas.y += 3;
     paragraph(canvas, block.text, block.small ? SMALL : BODY);
@@ -350,8 +366,10 @@ const pdfDate = (date: Date) => `D:${date.toISOString().replace(/\D/g, "").slice
 export function renderPdf(document: ReportDocument): Uint8Array {
   const canvas = new Canvas();
   head(canvas, document);
-  for (const block of document.blocks)
-    (DRAW[block.kind] as (canvas: Canvas, block: DocumentBlock) => void)(canvas, block);
+  document.blocks.forEach((block, index) => {
+    const draw = DRAW[block.kind] as (canvas: Canvas, block: DocumentBlock, next: DocumentBlock | undefined) => void;
+    draw(canvas, block, document.blocks[index + 1]);
+  });
   canvas.pages.forEach((page, index) => {
     const style: Style = { size: 8, colour: MUTED };
     const last = canvas.pages.length;

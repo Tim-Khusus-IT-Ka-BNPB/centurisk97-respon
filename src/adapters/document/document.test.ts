@@ -149,6 +149,23 @@ describe("PDF", () => {
     for (let n = 0; n < 70; n += 1) expect(lines).toContain(n % 9 === 0 ? `Kelompok ${n}` : `Isian ${n}`);
   });
 
+  test("the heading of the photos is on the page of the first of them, wherever the text before it ends", () => {
+    for (let lines = 1; lines <= 60; lines += 1) {
+      const bytes = renderPdf(
+        documentWith(
+          ...Array.from({ length: lines }, () => ({ kind: "paragraph", text: "Baris", small: false }) as const),
+          { kind: "section", text: "Foto kejadian" },
+          { kind: "photos", photos: [{ picture: { ...PHOTO }, caption: "Foto 1, dengan keterangan ".repeat(6) }] },
+          { kind: "section", text: "Akhir" },
+        ),
+      );
+      const page = latin1(bytes)
+        .split("endstream")
+        .find((part) => part.includes("(Foto kejadian) Tj"));
+      expect(page, String(lines)).toContain("/P2 Do");
+    }
+  });
+
   test("long text, many points and many photos each turn the page", () => {
     const long = documentWith(
       { kind: "paragraph", text: "kata ".repeat(2400), small: false },
