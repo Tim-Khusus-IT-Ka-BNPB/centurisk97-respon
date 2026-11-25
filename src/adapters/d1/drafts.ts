@@ -116,19 +116,25 @@ export async function loadDraft(db: Database, draftId: string): Promise<DraftRec
   return found ? record(found) : null;
 }
 
-export type OpenDraft = { readonly id: string; readonly lastActedAt: Date };
+export type OpenDraft = {
+  readonly id: string;
+  readonly lastActedAt: Date;
+  // It adds news to a sent report.
+  readonly followUp: boolean;
+};
 
 // The open draft of a number in a slot, live or past its 24 hours.
 export async function openDraftOf(db: Database, reporterId: string, ownerSlot: string): Promise<OpenDraft | null> {
-  const found = await row<{ id: string; last_acted_at: string }>(
+  const found = await row<{ id: string; last_acted_at: string; follow_up: number }>(
     db,
-    sql`select id, last_acted_at from report_draft
+    sql`select id, last_acted_at, follow_up_of is not null as follow_up from report_draft
       where reporter_id = ${reporterId} and owner_slot = ${ownerSlot} and ${OPEN}`,
   );
-  return found ? { id: found.id, lastActedAt: new Date(found.last_acted_at) } : null;
+  return found ? { id: found.id, lastActedAt: new Date(found.last_acted_at), followUp: found.follow_up === 1 } : null;
 }
 
-export const isLive = (draft: OpenDraft, at: Date) => at.getTime() <= draft.lastActedAt.getTime() + DRAFT_LIFE_MS;
+export const isLive = (draft: Pick<OpenDraft, "lastActedAt">, at: Date) =>
+  at.getTime() <= draft.lastActedAt.getTime() + DRAFT_LIFE_MS;
 
 export type TranscriptRow = {
   speaker: "reporter" | "assistant";
@@ -277,7 +283,7 @@ export function endDraft(draftId: string, reason: EndReason, at: Date, when: Que
 }
 
 // Expires a draft past its 24 hours, only if the reporter has not acted since it was read: a tap that lands first wins.
-export async function expireDraft(db: Database, draft: OpenDraft, at: Date): Promise<void> {
+export async function expireDraft(db: Database, draft: Pick<OpenDraft, "id" | "lastActedAt">, at: Date): Promise<void> {
   await atomically(db, endDraft(draft.id, "expired", at, sql`last_acted_at = ${draft.lastActedAt}`));
 }
 

@@ -43,8 +43,7 @@ export async function startFollowUp(
     const profile = await profileBySlot(db, reporterId, ownerSlot);
     if (profile === null) return { kind: "closed", reason: "noProfile" };
     const open = await openDraftOf(db, reporterId, ownerSlot);
-    const live = open !== null && isLive(open, at);
-    if (open !== null && live) {
+    if (open !== null && isLive(open, at)) {
       const draft = await loadDraft(db, open.id);
       return draft?.followUpOf === ticketNumber
         ? { kind: "draft", draftId: open.id }

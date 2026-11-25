@@ -137,7 +137,8 @@ export async function giveConsent(
     if (deviceId !== null) writes.push(holds(sql`${profileCount(deviceId)} <= ${max}`));
     writes.push(addConsent(crypto.randomUUID(), profileIdOf, PRIVACY.version, at));
     const open = reporterId === null ? null : await openDraftOf(db, reporterId, slot);
-    if (open && isLive(open, at)) {
+    const live = open !== null && isLive(open, at);
+    if (open && live && !open.followUp) {
       const kept = await atomically(db, [
         ...writes,
         STILL_OPEN(open.id),
@@ -145,8 +146,10 @@ export async function giveConsent(
       ]);
       return kept === null ? null : { kind: "draft", draftId: open.id, deviceKey };
     }
-    const created = newDraft(key, profileIdOf, slot, open, at, emergency);
-    const done = await atomically(db, [...writes, ...created.writes]);
+    // News not sent yet never stands in for the report being started, least of all an emergency.
+    const dropped = open !== null && live ? endDraft(open.id, "cancelled", at) : [];
+    const created = newDraft(key, profileIdOf, slot, live ? null : open, at, emergency);
+    const done = await atomically(db, [...dropped, ...writes, ...created.writes]);
     return done === null ? null : { kind: "draft", draftId: created.draftId, deviceKey };
   });
 }

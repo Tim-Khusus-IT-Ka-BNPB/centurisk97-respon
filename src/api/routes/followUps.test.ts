@@ -355,8 +355,11 @@ describe("when news is taken", () => {
       draftId: draft.draftId,
       followUpOf: ticket,
     });
-    // A new report over open news asks first, and the news is what goes.
-    expect((await startDraft(phone, number)).draftId).toBe(draft.draftId);
+    // A new report over open news asks first.
+    const { profileId } = (me.json as { knownReporters: { profileId: string }[] }).knownReporters[0] as {
+      profileId: string;
+    };
+    expect((await phone.call("POST", "/drafts", { profileId })).error.error.code).toBe("draft.openExists");
   });
 
   test("news that expired leads back to its report, which is as it was", async () => {
@@ -366,6 +369,23 @@ describe("when news is taken", () => {
     const after = await phone.call("GET", `/drafts/${draft.draftId}`);
     expect(after.draft.card).toMatchObject({ kind: "followUpEnded", outcome: "cancelled", ticketNumber: ticket });
     expect((await send(phone, draft)).status).toBe(409);
+    expect(await versions(ticket)).toHaveLength(1);
+  });
+
+  test("an emergency started over open news is an emergency; the news is dropped", async () => {
+    const { phone, ticket, number } = await sentReport();
+    const news = await say(phone, await opened(phone, ticket), "dua orang meninggal");
+    const answer = await phone.call("POST", "/consent", {
+      role: "citizen",
+      name: "Uji Satu",
+      number,
+      privacyVersion: 1,
+      agree: true,
+      emergency: true,
+    });
+    expect(answer.status).toBe(201);
+    expect(answer.draft).toMatchObject({ state: "place", followUpOf: null });
+    expect((await phone.call("GET", `/drafts/${news.draftId}`)).draft.card).toMatchObject({ outcome: "cancelled" });
     expect(await versions(ticket)).toHaveLength(1);
   });
 
