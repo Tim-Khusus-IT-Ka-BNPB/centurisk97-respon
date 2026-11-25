@@ -109,8 +109,19 @@ async function signIn(page: Page): Promise<void> {
   await page.getByLabel("Kode masuk").fill(DESK_CODE);
   await expect(page.getByLabel("Kode masuk")).toHaveValue(DESK_CODE);
   await page.getByRole("button", { name: "Masuk", exact: true }).click();
-  await expect(page.getByRole("heading", { level: 1, name: "Meja laporan" })).toBeVisible();
+  await expect(page.getByRole("heading", { level: 1, name: "Daftar laporan" })).toBeVisible();
 }
+
+// Search one ticket from the filter bar.
+async function searchTicket(page: Page, ticketNumber: string): Promise<void> {
+  await page.getByLabel("Nomor tiket").fill(ticketNumber);
+  await page.getByRole("button", { name: "Cari", exact: true }).click();
+  await expect(page.getByLabel("Nomor tiket")).toHaveValue(ticketNumber);
+}
+
+// A view of the desk, from the side menu on a wide screen or the tabs on a phone.
+const viewLink = (page: Page, name: "Peta" | "Galeri") =>
+  page.getByRole("link", { name: new RegExp(`^${name}( laporan| foto)?$`) });
 
 test("a desk officer finds a new report, reads where each value came from, and opening it shows the reporter it was seen", async ({
   page,
@@ -122,30 +133,36 @@ test("a desk officer finds a new report, reads where each value came from, and o
   const { ticketNumber, token } = await sendReport(browser, baseURL as string);
 
   await signIn(page);
-  await page.getByLabel("Nomor tiket").fill(ticketNumber);
-  await page.getByRole("button", { name: "Terapkan" }).click();
-  const row = page.getByRole("link", { name: new RegExp(ticketNumber) });
-  await expect(row).toBeVisible();
-  await expect(page.getByText("1 laporan")).toBeVisible();
+  await searchTicket(page, ticketNumber);
+  // A table row on a wide screen, a card on a phone.
+  const row = page.locator("tr:visible, li:visible").filter({ hasText: ticketNumber });
+  await expect(row).toHaveCount(1);
+  await expect(page.getByText("1 laporan", { exact: true })).toBeVisible();
   await expect(row.getByText("Diterima")).toBeVisible();
   await expect(row.getByText("Nomor belum diverifikasi")).toBeVisible();
-  await expect(row.getByText("Uji Satu, Warga")).toBeVisible();
+  await expect(row.getByText("Uji Satu")).toBeVisible();
+  await expect(row.getByText("Meninggal: tidak ada")).toBeAttached();
   await noSidewaysScroll(page);
   await page.screenshot({ path: info.outputPath("queue.png"), fullPage: true });
 
-  await row.click();
-  await expect(page.getByRole("heading", { level: 2, name: ticketNumber })).toBeVisible();
-  const status = page.getByText("Status tiket").locator("..");
-  if (script) await expect(status.getByText("Dilihat")).toBeVisible();
+  await row.getByRole("link").first().click();
+  const heading = page.getByRole("heading", { level: 1, name: ticketNumber });
+  await expect(heading).toBeVisible();
+  const header = page.locator("header").filter({ has: heading });
+  if (script) await expect(header.getByText("Dilihat")).toBeVisible();
   else {
-    await expect(status.getByText("Diterima")).toBeVisible();
+    await expect(header.getByText("Diterima")).toBeVisible();
     await page.getByRole("button", { name: "Tandai sudah dilihat" }).click();
-    await expect(status.getByText("Dilihat")).toBeVisible();
+    await expect(header.getByText("Dilihat")).toBeVisible();
   }
-  const values = page.getByRole("region", { name: /Isian laporan/ });
-  await expect(values.getByText("Jenis bencana: Banjir")).toBeVisible();
+  const values = page.getByRole("region", { name: "Isian laporan" });
+  await expect(
+    values.locator("dt", { hasText: "Jenis bencana" }).locator("xpath=following-sibling::dd[1]"),
+  ).toContainText("Banjir");
   await expect(values.getByText("Dipilih pelapor").first()).toBeVisible();
-  await expect(values.getByText(/^Meninggal:/)).toContainText("tidak ada");
+  await expect(
+    values.locator("dt", { hasText: /^Meninggal$/ }).locator("xpath=following-sibling::dd[1]"),
+  ).toContainText("tidak ada");
   const reporter = page.getByRole("region", { name: "Pelapor" });
   await expect(reporter.getByRole("link", { name: /^Telepon \+62 800-/ })).toHaveAttribute("href", /^tel:\+62800\d+$/);
   await expect(
@@ -180,7 +197,10 @@ test("the desk asks for a staff code, and a wrong code is named on its field", a
 
 test("signing out ends the desk session", async ({ page }) => {
   await signIn(page);
-  await page.getByRole("button", { name: "Keluar" }).click();
+  // On a phone the way out sits in the menu.
+  const out = page.getByRole("button", { name: "Keluar" });
+  if (!(await out.isVisible())) await page.getByText("Menu", { exact: true }).click();
+  await out.click();
   await expect(page.getByRole("heading", { name: "Masuk meja laporan" })).toBeVisible();
 });
 
@@ -193,10 +213,10 @@ test("the map and the gallery show the filtered reports, and a page with no scri
   const script = !info.project.name.includes("no-script");
   const { ticketNumber } = await sendReport(browser, baseURL as string, true);
   await signIn(page);
-  await page.getByLabel("Nomor tiket").fill(ticketNumber);
-  await page.getByRole("button", { name: "Terapkan" }).click();
-  await page.getByRole("navigation", { name: "Tampilan laporan" }).getByRole("link", { name: "Peta" }).click();
-  await expect(page.getByRole("heading", { name: /Peta laporan/ })).toContainText("1 titik");
+  await searchTicket(page, ticketNumber);
+  await viewLink(page, "Peta").click();
+  await expect(page.getByRole("heading", { level: 1, name: "Peta laporan" })).toBeVisible();
+  await expect(page.getByText("1 titik", { exact: true })).toBeVisible();
   if (script) {
     await expect(page.locator("button.desk-marker")).toHaveCount(1, { timeout: 20_000 });
     await expect(page.getByRole("region", { name: "Peta laporan", exact: true })).toHaveAttribute(
@@ -213,8 +233,9 @@ test("the map and the gallery show the filtered reports, and a page with no scri
   await noSidewaysScroll(page);
   await page.screenshot({ path: info.outputPath("map.png"), fullPage: true });
 
-  await page.getByRole("navigation", { name: "Tampilan laporan" }).getByRole("link", { name: "Galeri" }).click();
-  await expect(page.getByRole("heading", { name: /Galeri foto/ })).toContainText("1 foto");
+  await viewLink(page, "Galeri").click();
+  await expect(page.getByRole("heading", { level: 1, name: "Galeri foto" })).toBeVisible();
+  await expect(page.getByText("1 foto", { exact: true })).toBeVisible();
   const image = page.getByRole("img", { name: `Foto laporan ${ticketNumber}` });
   await expect(image).toBeVisible();
   await expect.poll(() => image.evaluate((element) => (element as HTMLImageElement).naturalWidth)).toBeGreaterThan(0);
