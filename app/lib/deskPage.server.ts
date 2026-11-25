@@ -173,6 +173,8 @@ export async function actOnDesk(form: FormData, api: ApiCall): Promise<DeskActed
 
 type DeskReportActed =
   | Extract<DeskActed, { kind: "redirect" }>
+  // Nothing to show but the page as it is now.
+  | { readonly kind: "done" }
   // Who reported, drawn on the page that asked and kept nowhere.
   | { readonly kind: "identity"; readonly identity: DeskIdentity }
   | (Extract<DeskActed, { kind: "render" }> & { readonly typed: DeskTyped });
@@ -239,6 +241,7 @@ export async function actOnDeskReport(ticketNumber: string, form: FormData, api:
     return { kind: "render", status: response.status, envelope, typed: typedIn(form) };
   }
   if (path === "identity") return { kind: "identity", identity: (await response.json()) as DeskIdentity };
+  if (form.get("action") === "opened") return { kind: "done" };
   return redirectTo(`/lapor/meja/${ticket}${path === "view" ? "" : `?saved=${path}`}`, response);
 }
 

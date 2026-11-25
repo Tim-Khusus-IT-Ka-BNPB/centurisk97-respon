@@ -1,4 +1,4 @@
-import { screen, waitFor, within } from "@testing-library/react";
+import { act, screen, waitFor, within } from "@testing-library/react";
 import { describe, expect, test, vi } from "vitest";
 import { envelope } from "../../../../src/api/envelope";
 import type { DeskIdentity } from "../../../../src/contract/desk";
@@ -163,8 +163,16 @@ describe("a report on the desk", () => {
     const view = await renderDesk(<DeskReportView report={REPORT} summary={SUMMARY} refusal={limited} />, PATH);
     expect(screen.getByText(/paling banyak 120 tindakan per jam/)).toBeTruthy();
     view.unmount();
-    await renderDesk(<DeskReportView report={REPORT} summary={SUMMARY} refusal={envelope("desk.notAllowed")} />, PATH);
+    const barred = await renderDesk(
+      <DeskReportView report={REPORT} summary={SUMMARY} refusal={envelope("desk.notAllowed")} />,
+      PATH,
+    );
     expect(screen.getByRole("alert").textContent).toContain("belum berhak");
+    barred.unmount();
+    // Posted beside the page, it is told the same.
+    const action = () => ({ envelope: limited });
+    await renderDesk(<DeskReportView report={REPORT} summary={SUMMARY} />, { ...PATH, action });
+    expect(await screen.findByText(/paling banyak 120 tindakan per jam/)).toBeTruthy();
   });
 
   test("a change kept says so once, with where the ticket is now", async () => {
@@ -173,6 +181,17 @@ describe("a report on the desk", () => {
     const moved = await saved("?saved=status");
     expect(screen.getByRole("status").textContent).toBe("Status tersimpan. Tiket sekarang: Sudah dilihat petugas.");
     moved.unmount();
+    // Opening the report is posted beside the page: once answered, what was just done is still told.
+    const opened = vi.fn(() => null);
+    const kept = await renderDesk(<DeskReportView report={REPORT} summary={SUMMARY} />, {
+      ...PATH,
+      entry: `${PATH.path}?saved=status`,
+      action: opened,
+    });
+    await waitFor(() => expect(opened).toHaveBeenCalledTimes(1));
+    await act(async () => undefined);
+    expect(screen.getByRole("status").textContent).toContain("Status tersimpan.");
+    kept.unmount();
     const replied = await saved("?saved=replies");
     expect(screen.getByRole("status").textContent).toBe("Balasan terkirim. Status tiket: Sudah dilihat petugas.");
     replied.unmount();
@@ -404,8 +423,6 @@ describe("a report on the desk", () => {
     await renderDesk(<DeskReportView report={{ ...REPORT, taker, history }} summary={SUMMARY} />, {
       ...PATH,
       entry: `${PATH.path}?saved=take`,
-      // Opening the report is posted on arrival; its answer would leave the query behind.
-      action: never,
     });
     expect(screen.getAllByText(`Ditangani: ${taker}`)).toHaveLength(2);
     expect(screen.getByRole("status").textContent).toBe("Laporan ini sekarang Anda tangani.");

@@ -565,6 +565,12 @@ describe("desk routes", () => {
       context: { api: api({ "POST /desk/reports/LA-241126-01/view": json(REPORT) }) },
     } as Args);
     expect((viewed as Response).headers.get("location")).toBe("/lapor/meja/LA-241126-01");
+    const opened = await deskReport.action({
+      params: { ticketNumber: "LA-241126-01" },
+      request: post("http://x/lapor/meja/LA-241126-01", [["action", "opened"]]),
+      context: { api: api({ "POST /desk/reports/LA-241126-01/view": json(REPORT) }) },
+    } as Args);
+    expect(opened).toBeNull();
     const who = { name: "Uji Satu", number: "+6280000000001", officerRegency: null, officerPosition: null };
     const asked = unwrap(
       await deskReport.action({

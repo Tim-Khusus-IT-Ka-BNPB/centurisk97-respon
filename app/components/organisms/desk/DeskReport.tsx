@@ -1,5 +1,5 @@
 import { type ReactNode, useEffect, useMemo } from "react";
-import { Form, Link, useNavigation, useSearchParams, useSubmit } from "react-router";
+import { Form, Link, useFetcher, useNavigation, useSearchParams } from "react-router";
 import type { DeskIdentity, DeskReport, DeskSummary } from "../../../../src/contract/desk";
 import type { ErrorEnvelope } from "../../../../src/contract/errors";
 import { cn } from "../../../lib/cn";
@@ -32,19 +32,21 @@ import {
 
 const SAVED = ["status", "replies", "checks", "actions", "proofs", "take"];
 
-// With script the open is posted once per visit; without, the officer marks it.
-function MarkSeen({ report }: { readonly report: DeskReport }) {
-  const t = useText();
-  const submit = useSubmit();
-  const busy = useNavigation().state === "submitting";
+// With script the open is posted once per visit, beside the page: a navigation would take what the
+// address says was just done off it.
+function useOpened(ticketNumber: string): { readonly busy: boolean; readonly refused: ErrorEnvelope | null } {
+  const { submit, state, data } = useFetcher<{ readonly envelope: ErrorEnvelope } | null>();
   useEffect(() => {
-    submit(null, {
-      method: "post",
-      action: `/lapor/meja/${report.ticketNumber}`,
-      replace: true,
-      preventScrollReset: true,
-    });
-  }, [report.ticketNumber, submit]);
+    submit({ action: "opened" }, { method: "post", action: `/lapor/meja/${ticketNumber}` });
+  }, [ticketNumber, submit]);
+  return { busy: state === "submitting", refused: data?.envelope ?? null };
+}
+
+// Without script the officer marks a new report as seen.
+function MarkSeen({ report, opening }: { readonly report: DeskReport; readonly opening: boolean }) {
+  const t = useText();
+  const navigation = useNavigation();
+  const busy = opening || navigation.state === "submitting";
   if (report.status !== "new") return null;
   return (
     <Form method="post" replace preventScrollReset className="flex flex-col gap-2">
@@ -275,16 +277,18 @@ export function DeskReportView({
   const points = useMemo(() => (point === null ? [] : [point]), [point]);
   const [search] = useSearchParams();
   const saved = search.get("saved");
-  const problem = cardProblem(refusal);
+  const opened = useOpened(report.ticketNumber);
+  const told = refusal ?? opened.refused;
+  const problem = cardProblem(told);
   return (
     <DeskShell place={{ filters: ALL_FILTERS, current: null, summary }} account={report.account.label}>
       <Link to="/lapor/meja" className="inline-flex min-h-target-min w-fit items-center gap-2 rounded-control text-ink">
         <Icon name="arrowLeft" className="size-5" />
         {t("desk.refused.back")}
       </Link>
-      {refusal !== null && isLimit(refusal) ? (
+      {told !== null && isLimit(told) ? (
         <Notice kind="limit">
-          <p>{limitText(t, refusal, Date.now())}</p>
+          <p>{limitText(t, told, Date.now())}</p>
         </Notice>
       ) : null}
       {problem === null ? null : (
@@ -330,7 +334,7 @@ export function DeskReportView({
           <div className="flex flex-col gap-3 sm:max-w-xs">
             {report.emergency === null ? null : <EmergencyPack report={report} />}
             {report.mayTake ? <TakeReport /> : null}
-            <MarkSeen report={report} />
+            <MarkSeen report={report} opening={opened.busy} />
             <a href="#desk-actions" className={buttonStyles({ variant: "secondary", className: "xl:hidden" })}>
               <Icon name="wrench" className="size-5" />
               {t("desk.actions")}
