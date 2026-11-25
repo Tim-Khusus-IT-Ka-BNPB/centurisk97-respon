@@ -334,7 +334,7 @@ describe("a report on the desk", () => {
     const key = await hmacKey(bindings.settings.keyHmacSecret, "subject", "staff:staff-desk-1");
     const window = new Date(windowStart("clockHour", clock.now())).toISOString();
     for (const [limitId, count] of [
-      ["desk.read", 600],
+      ["desk.read", 1200],
       ["desk.write", 120],
     ] as const)
       await query`insert into rate_counter (limit_id, subject_key, window_start, count) values (${limitId}, ${key}, ${window}, ${count})
@@ -342,7 +342,7 @@ describe("a report on the desk", () => {
     const read = await deskOfficer().call("GET", "/desk/reports");
     expect(read.status).toBe(429);
     expect(read.error).toMatchObject({
-      error: { code: "limit.desk.read", params: { limit: 600 } },
+      error: { code: "limit.desk.read", params: { limit: 1200 } },
       retryAt: { zone: "WIB" },
     });
     const write = await deskOfficer().call("POST", `/desk/reports/${ticket}/view`);

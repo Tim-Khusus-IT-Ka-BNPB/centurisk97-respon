@@ -40,7 +40,7 @@ exports[`limits table > rows as agreed 1`] = `
   },
   "desk.read": {
     "effect": "refuse",
-    "max": 600,
+    "max": 1200,
     "subject": "staff",
     "window": "clockHour",
   },
