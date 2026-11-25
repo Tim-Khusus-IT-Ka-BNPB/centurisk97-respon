@@ -123,12 +123,18 @@ test("photos taken at the scene show their badges and time, and the summary coun
   await noSidewaysScroll(page);
   await liveCard(page).screenshot({ path: test.info().outputPath("photos.png") });
 
-  await paced(() => photos.getByRole("button", { name: "Lanjut" }).click());
+  // One sent by mistake is taken back.
+  await paced(() => photos.getByRole("button", { name: "Hapus foto 2" }).click());
+  cardId = await nextCard(page, cardId);
+  await expect(liveCard(page).getByText("2 dari 10 foto")).toBeVisible();
+  await expect(liveCard(page).getByRole("img")).toHaveCount(2);
+
+  await paced(() => liveCard(page).getByRole("button", { name: "Lanjut" }).click());
   await nextCard(page, cardId);
   const summary = liveCard(page);
   await expect(summary).toHaveAttribute("data-card-kind", "summary");
-  await expect(summary.getByText("3 foto, 3 dengan lokasi terekam")).toBeVisible();
-  await summary.getByText("3 foto, 3 dengan lokasi terekam").scrollIntoViewIfNeeded();
+  await expect(summary.getByText("2 foto, 2 dengan lokasi terekam")).toBeVisible();
+  await summary.getByText("2 foto, 2 dengan lokasi terekam").scrollIntoViewIfNeeded();
   await page.screenshot({ path: test.info().outputPath("summary-photos.png") });
 });
 

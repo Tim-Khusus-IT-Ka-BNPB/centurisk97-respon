@@ -19,6 +19,7 @@ describe("route list", () => {
     expect(routes).toEqual([
       { key: "DELETE /api/lapor/desk/pilot/:key", policy: "staff" },
       { key: "DELETE /api/lapor/desk/session", policy: "public" },
+      { key: "DELETE /api/lapor/drafts/:draftId/photos/:photoId", policy: "reporter" },
       { key: "DELETE /api/lapor/me/profiles/:profileId", policy: "reporter" },
       { key: "GET /api/lapor/bahasa", policy: "gateway" },
       { key: "GET /api/lapor/desk/emergencies", policy: "staff" },
