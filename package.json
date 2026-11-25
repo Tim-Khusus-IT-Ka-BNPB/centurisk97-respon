@@ -10,7 +10,7 @@
     "prepare": "git config core.hooksPath .githooks",
     "dev": "react-router dev --port 5173 --strictPort",
     "build": "react-router build",
-    "preview": "react-router build && wrangler dev --config build/server/wrangler.json --test-scheduled --port 8787",
+    "preview": "react-router build && wrangler dev --config build/server/wrangler.json --test-scheduled",
     "deploy:staging": "CLOUDFLARE_ENV=staging react-router build && wrangler deploy --config build/server/wrangler.json",
     "typegen": "wrangler types > /dev/null && react-router typegen",
     "model-stub": "tsx --env-file-if-exists=.env tools/model-stub/server.ts",

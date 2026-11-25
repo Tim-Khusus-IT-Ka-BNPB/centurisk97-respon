@@ -4,7 +4,7 @@ import { gzipSync } from "node:zlib";
 // Fails when the gzipped HTML, CSS and script the report page transfers before the map exceed
 // the budget. It builds and starts the app itself, measures, and always stops what it started.
 const BUDGET_BYTES = 300 * 1024;
-const PORT = 8787;
+const PORT = Number(process.env.E2E_PORT ?? "8787");
 const ORIGIN = `http://localhost:${PORT}`;
 const PAGES = ["/lapor"];
 const MAP_ASSET = /maplibre/i;

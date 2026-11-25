@@ -1,6 +1,7 @@
 import { defineConfig, devices } from "@playwright/test";
 
-const appPort = 8787;
+// Another checkout on the same machine may hold the default port.
+const appPort = Number(process.env.E2E_PORT ?? "8787");
 const stubPort = Number(process.env.MODEL_STUB_PORT ?? "8790");
 const ci = Boolean(process.env.CI);
 const phone = { ...devices["Pixel 7"], viewport: { width: 390, height: 844 } };
@@ -42,7 +43,7 @@ export default defineConfig({
     },
     {
       // A fresh test database each run, migrated and seeded, apart from the dev server's.
-      command: `pnpm db:e2e && pnpm preview --persist-to .wrangler/e2e --var APP_ENV:test --var APP_ORIGIN:http://localhost:${appPort}`,
+      command: `pnpm db:e2e && pnpm preview --port ${appPort} --persist-to .wrangler/e2e --var APP_ENV:test --var APP_ORIGIN:http://localhost:${appPort}`,
       url: `http://localhost:${appPort}/api/lapor/health`,
       env: { APP_ENV: "test" },
       reuseExistingServer: false,
