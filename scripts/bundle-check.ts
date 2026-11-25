@@ -50,7 +50,7 @@ function stop(child: ChildProcess): Promise<void> {
   });
 }
 
-const server = spawn("pnpm", ["-s", "preview"], { stdio: "ignore", detached: true });
+const server = spawn("pnpm", ["-s", "preview", "--port", String(PORT)], { stdio: "ignore", detached: true });
 let failed = false;
 try {
   await waitForHealth(120_000);
