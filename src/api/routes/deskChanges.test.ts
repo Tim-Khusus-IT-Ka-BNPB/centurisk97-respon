@@ -189,6 +189,7 @@ describe("a reply to the reporter", () => {
         text: "Terima kasih, kami cek",
         actor: "Pusdalops BNPB, Petugas Uji",
         at: { utc: new Date(clock.now()).toISOString(), zone: "WIB" },
+        chat: null,
       },
     ]);
     expect(await actions(ticket)).toEqual(["view", "reply"]);
