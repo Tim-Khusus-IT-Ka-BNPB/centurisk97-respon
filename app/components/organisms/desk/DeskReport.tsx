@@ -31,15 +31,16 @@ const SAVED = ["status", "replies", "checks", "actions", "proofs", "take"];
 
 type Row = DeskReport["groups"][number]["rows"][number];
 
-// One value: what was asked, what is known of it, and at the end of the line where it came from.
+// One value: what was asked, what is known of it, and at the end of the line where it came from;
+// on a phone a long value takes its line alone.
 function ValueRow({ row, hazardType }: { readonly row: Row; readonly hazardType: Parameters<typeof rowParts>[2] }) {
   const t = useText();
   const parts = rowParts(t, row, hazardType);
   const origin = row.state === "notYetKnown" ? null : row.origin;
   return (
-    <div className="grid grid-cols-[minmax(0,1fr)_auto] gap-x-4 gap-y-0.5 px-4 py-2.5 sm:grid-cols-[minmax(0,10.5rem)_minmax(0,1fr)_auto] sm:gap-x-6 md:px-5">
-      <dt className="col-span-2 text-meta text-muted sm:col-span-1 sm:text-body">{parts.label}</dt>
-      <dd className="min-w-0 break-words">
+    <div className="flex flex-wrap items-baseline gap-x-4 gap-y-0.5 px-4 py-2.5 sm:grid sm:grid-cols-[minmax(0,10.5rem)_minmax(0,1fr)_auto] sm:gap-x-6 md:px-5">
+      <dt className="basis-full text-meta text-muted sm:text-body">{parts.label}</dt>
+      <dd className="min-w-0 flex-auto break-words">
         {parts.value === null ? (
           <StateMark state={parts.state as "none" | "confirmedUnknown" | "notYetKnown"} />
         ) : (
@@ -47,7 +48,7 @@ function ValueRow({ row, hazardType }: { readonly row: Row; readonly hazardType:
         )}
         {row.quote === null ? null : <q className="block text-meta text-muted italic">{row.quote}</q>}
       </dd>
-      {origin === null ? null : <dd className="pt-0.5 text-end text-meta text-muted">{t(`desk.origin.${origin}`)}</dd>}
+      {origin === null ? null : <dd className="text-meta text-muted sm:text-end">{t(`desk.origin.${origin}`)}</dd>}
     </div>
   );
 }
