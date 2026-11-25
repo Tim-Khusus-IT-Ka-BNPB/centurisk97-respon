@@ -215,7 +215,7 @@ export async function deskReport(
   >(
     db,
     sql`select r.ticket_number, t.status, r.hazard_type, r.village_code, r.sent_at, v.fields,
-        v.complete_percent, v.reporter_name, v.reporter_role, r.number_unverified, r.emergency, r.emergency_victims,
+        v.complete_percent, v.reporter_name, v.reporter_role, r.number_unverified, r.door, r.emergency, r.emergency_victims,
     (select k.label from report_taker k where k.ticket_number = r.ticket_number) as taker, ${NEWS} as news, r.draft_id, r.id as report_id, t.revision,
         v.reporter_number, v.officer_regency, v.officer_position,
         (select count(*) from draft_photo p where p.draft_id = r.draft_id) as photo_count
