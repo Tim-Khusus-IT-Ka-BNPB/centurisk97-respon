@@ -111,7 +111,8 @@ describe("the desk map", () => {
     const window = new Date(windowStart("clockHour", clock.now())).toISOString();
     await query`insert into rate_counter (limit_id, subject_key, window_start, count) values ('desk.read', ${key}, ${window}, 1200)
       on conflict do update set count = excluded.count`;
-    for (const path of ["/desk/map", "/desk/photos", `/desk/photos/${crypto.randomUUID()}`])
+    const id = crypto.randomUUID();
+    for (const path of ["/desk/map", "/desk/photos", `/desk/photos/${id}`, `/desk/proofs/${id}`])
       expect((await deskOfficer().call("GET", path)).status).toBe(429);
     await query`delete from rate_counter where subject_key = ${key}`;
   });

@@ -153,6 +153,8 @@ describe("ticket and tracking", () => {
     const refused = await track(phone, card.trackingToken);
     expect(refused.status).toBe(429);
     expect(refused.error.error.code).toBe("limit.address.tracking");
+    const photo = { token: card.trackingToken, proofId: crypto.randomUUID() };
+    expect((await phone.call("POST", "/tracking/photos", photo)).status).toBe(429);
     expect(refused.error.retryAt).toEqual({ utc: "2026-11-23T04:00:00.000Z", zone: "WIB" });
   });
 });

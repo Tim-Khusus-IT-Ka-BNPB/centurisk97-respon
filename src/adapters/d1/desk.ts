@@ -138,7 +138,7 @@ export async function queuePage(
 }
 
 // What a check found and put right, or what was done.
-export type HistoryDetail = {
+type HistoryDetail = {
   readonly result?: CheckResult;
   readonly changes?: readonly Change[];
   readonly actions?: readonly string[];
