@@ -1,5 +1,5 @@
-import { type DraftRecord, loadDraft, photoAdded, storedReply, storeReply } from "../adapters/d1/drafts";
-import { draftPhotos, insertPhoto, photoOf, placeChatPhotos } from "../adapters/d1/photos";
+import { type DraftRecord, loadDraft, photosChanged, storedReply, storeReply } from "../adapters/d1/drafts";
+import { deletePhoto, draftPhotos, insertPhoto, photoOf, placeChatPhotos } from "../adapters/d1/photos";
 import { villageCentre } from "../adapters/d1/places";
 import { zoneOffsetMs } from "../domain/eventTime";
 import type { PlaceValue } from "../domain/fieldState";
@@ -101,19 +101,63 @@ export async function addPhoto(
   ];
   const body = await viewOf(bindings, after, [], upload.turnKey, photos);
   const done = await atomically(bindings.db, [
-    photoAdded(draft.id, draft.revision, at),
+    photosChanged(draft.id, draft.revision, at),
     changedOne,
     insertPhoto(draft.id, { ...checked, id, storeKey, bytes: clean.length }, at),
     storeReply(draft.id, upload.turnKey, { requestHash, status: 200, body }, at),
   ]);
   if (done === null) {
     await bindings.photos.delete([storeKey]);
-    const again = await storedReply(bindings.db, draft.id, upload.turnKey);
-    if (again) return replayOf(again, requestHash);
-    const fresh = (await loadDraft(bindings.db, draft.id)) as DraftRecord;
-    return { kind: "changed", draft: await viewOf(bindings, fresh, [], upload.turnKey) };
+    return overtaken(bindings, draft, upload.turnKey, requestHash);
   }
   return { kind: "ok", status: 200, body };
+}
+
+// A change that did not land: the same one landed before it, or the draft moved on.
+async function overtaken(
+  bindings: ServiceBindings,
+  draft: DraftRecord,
+  turnKey: string,
+  requestHash: string,
+): Promise<Answer> {
+  const again = await storedReply(bindings.db, draft.id, turnKey);
+  if (again) return replayOf(again, requestHash);
+  const fresh = (await loadDraft(bindings.db, draft.id)) as DraftRecord;
+  return { kind: "changed", draft: await viewOf(bindings, fresh, [], turnKey) };
+}
+
+// A photo taken back in the photo step, before the report is sent.
+export async function removePhoto(
+  bindings: ServiceBindings,
+  principal: Principal,
+  // Null for a message of the chat, whose door has counted it.
+  address: string | null,
+  draftId: string,
+  photoId: string,
+  { revision, turnKey }: { readonly revision: number; readonly turnKey: string },
+  requestHash: string,
+): Promise<Answer> {
+  const owned = await ownedDraft(bindings, principal, draftId);
+  if (owned.kind !== "owned") return owned;
+  const { draft } = owned;
+  const stored = await storedReply(bindings.db, draft.id, turnKey);
+  if (stored) return replayOf(stored, requestHash);
+  const refusal = address === null ? null : await checkMessageLimits(bindings, principal, address, draft);
+  if (refusal) return { kind: "limit", refusal, draft: await viewOf(bindings, draft, [], turnKey) };
+  if (draft.state !== "photos") return refused(bindings, draft, "notNow", turnKey);
+  if (revision !== draft.revision) return { kind: "changed", draft: await viewOf(bindings, draft, [], turnKey) };
+  const kept = await draftPhotos(bindings.db, draft.id);
+  const left = kept.filter((photo) => photo.id !== photoId);
+  if (left.length === kept.length) return { kind: "notFound" };
+  const at = new Date(bindings.clock.now());
+  const body = await viewOf(bindings, { ...draft, revision: revision + 1, lastActedAt: at }, [], turnKey, left);
+  const done = await atomically(bindings.db, [
+    photosChanged(draft.id, revision, at),
+    changedOne,
+    deletePhoto(draft.id, photoId),
+    storeReply(draft.id, turnKey, { requestHash, status: 200, body }, at),
+  ]);
+  return done === null ? overtaken(bindings, draft, turnKey, requestHash) : { kind: "ok", status: 200, body };
 }
 
 // A location shared after photos of the chat places those still without one that came shortly

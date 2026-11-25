@@ -67,6 +67,10 @@ export const insertPhoto = (
       ${photo.point?.lon ?? null}, ${photo.accuracyM}, ${photo.badge}, ${photo.far ? 1 : 0},
       ${new Date(photo.takenAtMs)}, ${photo.timeSource}, ${at})`;
 
+// Its file is queued to go with its row.
+export const deletePhoto = (draftId: string, photoId: string): Query =>
+  sql`delete from draft_photo where draft_id = ${draftId} and id = ${photoId}`;
+
 // Photos of the chat kept without a place since then, placed now.
 export const placeChatPhotos = (
   db: Database,

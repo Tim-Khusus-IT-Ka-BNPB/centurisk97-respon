@@ -221,6 +221,12 @@ describe("photo form with no script", () => {
     const refused = rendered(await browser.form(draftId, form));
     expect(refused.status).toBe(422);
     expect(refused.envelope?.fields).toEqual([{ fieldId: "photo", copyKey: "fieldError.photo.notNow", params: {} }]);
+    const taken = new FormData();
+    taken.set("action", "removePhoto");
+    taken.set("photoId", crypto.randomUUID());
+    taken.set("revision", "0");
+    taken.set("turnKey", crypto.randomUUID());
+    expect(rendered(await browser.form(draftId, taken)).envelope?.fields[0]?.copyKey).toBe("fieldError.photo.notNow");
     form.delete("photo");
     expect(rendered(await browser.form(draftId, form)).status).toBe(400);
     const rate = new FormData();

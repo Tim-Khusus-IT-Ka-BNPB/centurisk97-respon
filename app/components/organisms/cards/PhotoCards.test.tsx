@@ -13,6 +13,7 @@ const router = vi.hoisted(() => ({
   submitted: [] as Record<string, FormDataEntryValue>[],
   options: [] as unknown[],
   sending: false,
+  removing: "",
 }));
 vi.mock("react-router", async (importOriginal) => {
   const real = await importOriginal<typeof import("react-router")>();
@@ -24,9 +25,10 @@ vi.mock("react-router", async (importOriginal) => {
     },
     useNavigation: () => {
       const navigation = real.useNavigation();
-      if (!router.sending) return navigation;
+      if (!router.sending && router.removing === "") return navigation;
       const formData = new FormData();
-      formData.set("action", "photo");
+      if (router.sending) formData.set("action", "photo");
+      else formData.set("photoId", router.removing);
       return { ...navigation, state: "submitting", formData };
     },
   };
@@ -63,6 +65,7 @@ beforeEach(() => {
   router.submitted.length = 0;
   router.options.length = 0;
   router.sending = false;
+  router.removing = "";
 });
 afterEach(() => vi.unstubAllGlobals());
 
@@ -84,6 +87,28 @@ describe("photo card", () => {
     expect(screen.getByText("2 dari 10 foto")).toBeTruthy();
     expect(screen.getByRole("button", { name: "Lanjut" })).toBeTruthy();
     expect(screen.queryByRole("button", { name: "Kirim foto" })).toBeNull();
+  });
+
+  test("each photo can be taken back, by its own name", async () => {
+    stubGeolocation();
+    const { container } = draw();
+    const button = await screen.findByRole("button", { name: "Hapus foto 2" });
+    expect(button.textContent).toBe("Hapus");
+    const form = button.closest("form") as HTMLFormElement;
+    expect(Object.fromEntries(new FormData(form))).toMatchObject({
+      action: "removePhoto",
+      photoId: card.photos[1]?.photoId,
+      revision: String(SAMPLE_DRAFTS.photos.revision),
+    });
+    expect(container.querySelectorAll('input[value="removePhoto"]')).toHaveLength(card.photos.length);
+  });
+
+  test("a photo on its way out says so", async () => {
+    stubGeolocation();
+    router.removing = card.photos[0]?.photoId as string;
+    draw();
+    await screen.findByText("Menghapus...");
+    expect(screen.getByText("Hapus")).toBeTruthy();
   });
 
   test("a photo just taken goes at once, shrunk, with the phone's reading and zone", async () => {

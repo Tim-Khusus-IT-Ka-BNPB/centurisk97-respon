@@ -250,7 +250,7 @@ export const updateDraft = (draftId: string, revision: number, write: DraftWrite
     where id = ${draftId} and revision = ${revision} and ${OPEN}`;
 
 // A photo kept in the photo step: the draft moves on a revision, still in that step.
-export const photoAdded = (draftId: string, revision: number, at: Date): Query =>
+export const photosChanged = (draftId: string, revision: number, at: Date): Query =>
   sql`update report_draft set last_acted_at = ${at}, revision = revision + 1, pending_notices = null
     where id = ${draftId} and revision = ${revision} and state = 'photos'`;
 

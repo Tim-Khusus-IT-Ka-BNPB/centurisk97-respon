@@ -19,6 +19,30 @@ const API_BASE = "/api/lapor";
 // A reading older than this is read again before a photo goes, so the server still takes it.
 const FIX_FRESH_MS = 9 * 60_000;
 
+// A photo sent by mistake is taken back here; the one who took it still has it.
+function RemovePhoto({ photo, n }: { readonly photo: Photo; readonly n: number }) {
+  const t = useText();
+  const { draft, turnKey } = useDraftView();
+  const busy = useBusy(photo.photoId, "photoId");
+  return (
+    <Form method="post" replace preventScrollReset className="mt-auto flex">
+      <input type="hidden" name="action" value="removePhoto" />
+      <input type="hidden" name="photoId" value={photo.photoId} />
+      <input type="hidden" name="revision" value={draft.revision} />
+      <input type="hidden" name="turnKey" value={turnKey} />
+      <Button
+        variant="quietDanger"
+        size="min"
+        className="px-2 py-1"
+        aria-label={t("card.photos.removeOf", { n })}
+        busyLabel={busy ? t("card.photos.removing") : null}
+      >
+        {t("card.photos.remove")}
+      </Button>
+    </Form>
+  );
+}
+
 function PhotoItem({ photo, n, draftId }: { readonly photo: Photo; readonly n: number; readonly draftId: string }) {
   const t = useText();
   const badge = photo.badge === "none" ? "circleDashed" : "mapPin";
@@ -56,6 +80,7 @@ function PhotoItem({ photo, n, draftId }: { readonly photo: Photo; readonly n: n
           {t("card.photos.point", { lat: photo.point.lat.toFixed(5), lon: photo.point.lon.toFixed(5) })}
         </p>
       ) : null}
+      <RemovePhoto photo={photo} n={n} />
     </li>
   );
 }

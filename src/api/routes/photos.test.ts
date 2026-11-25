@@ -217,6 +217,64 @@ describe("photos", () => {
     expect(await query`select 1 from draft_photo where draft_id = ${draft.draftId}`).toHaveLength(1);
   });
 
+  const takeBack = (
+    phone: Awaited<ReturnType<typeof atPhotos>>["phone"],
+    draft: DraftBody,
+    photoId: string,
+    turnKey = crypto.randomUUID(),
+  ) => phone.call("DELETE", `/drafts/${draft.draftId}/photos/${photoId}`, { revision: draft.revision, turnKey });
+
+  test("a photo sent by mistake is taken back with its file, and only by the one who sent it", async () => {
+    const { phone, draft } = await atPhotos();
+    const first = (await send(phone, draft, camera)).draft;
+    const kept = (await send(phone, first, camera, fix())).draft;
+    const [wrong, right] = photosOf(kept).map((photo) => photo.photoId) as [string, string];
+    const stranger = browser(fetchApi);
+    await stranger.call("POST", "/consent", {
+      role: "citizen",
+      name: "Uji Dua",
+      number: freshNumber().typed,
+      privacyVersion: 1,
+      agree: true,
+    });
+    expect((await takeBack(stranger, kept, wrong)).status).toBe(404);
+    expect((await takeBack(phone, kept, crypto.randomUUID())).status).toBe(404);
+    expect((await takeBack(phone, first, wrong)).status).toBe(409);
+    const key = crypto.randomUUID();
+    const gone = await takeBack(phone, kept, wrong, key);
+    expect(gone.status).toBe(200);
+    expect(photosOf(gone.draft).map((photo) => photo.photoId)).toEqual([right]);
+    expect(gone.draft.card).toMatchObject({ params: { count: 1, max: 10 } });
+    // A retry replays; the key for another photo is refused.
+    expect((await takeBack(phone, kept, wrong, key)).json).toEqual(gone.json);
+    expect((await takeBack(phone, kept, right, key)).status).toBe(422);
+    expect((await phone.file(`/drafts/${draft.draftId}/photos/${wrong}`)).status).toBe(404);
+    await runSweep(bindings.db, bindings.photos, clock, bindings.log);
+    expect(await testBucket().get(`photos/${draft.draftId}/${wrong}.jpg`)).toBeNull();
+    expect(await testBucket().get(`photos/${draft.draftId}/${right}.jpg`)).not.toBeNull();
+    const on = await phone.call(
+      "POST",
+      `/drafts/${draft.draftId}/turns`,
+      turn(gone.draft, { kind: "answer", optionIds: ["continue"] }),
+    );
+    const late = await takeBack(phone, on.draft, right);
+    expect([late.status, late.error.fields[0]?.copyKey]).toEqual([422, "fieldError.photo.notNow"]);
+  });
+
+  test("a photo is taken back once, and not past a limit", async () => {
+    const { phone, draft } = await atPhotos();
+    const kept = (await send(phone, draft, camera)).draft;
+    const [only] = photosOf(kept).map((photo) => photo.photoId) as [string];
+    db = losesOnce("delete from draft_photo");
+    expect((await takeBack(phone, kept, only)).status).toBe(409);
+    const key = crypto.randomUUID();
+    db = losesOnce("delete from draft_photo", async (write) => void (await write()));
+    const replayed = await takeBack(phone, kept, only, key);
+    expect([replayed.status, photosOf(replayed.draft)]).toEqual([200, []]);
+    await query`update rate_counter set count = 20 where limit_id = 'message.minute'`;
+    expect((await takeBack(phone, replayed.draft, only)).status).toBe(429);
+  });
+
   test("a cancelled draft takes its photos along, and the sweep deletes their files", async () => {
     const { phone, draft } = await atPhotos();
     const kept = await send(phone, draft, camera);

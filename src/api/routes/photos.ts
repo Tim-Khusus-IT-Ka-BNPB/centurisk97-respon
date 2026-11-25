@@ -1,11 +1,15 @@
 import { createRoute, z } from "@hono/zod-openapi";
 import { draftBodySchema } from "../../contract/draft";
-import { addPhoto, readPhoto } from "../../services/photos";
+import { addPhoto, readPhoto, removePhoto } from "../../services/photos";
 import { refuse } from "../envelope";
-import { type Api, addRoute, jsonResponse, refusal } from "../route";
+import { type Api, addRoute, jsonBody, jsonResponse, refusal } from "../route";
 import { answered, deviceFix, isSet, jpegFile, jpegSent, optionalBox, photoForm, requestHash } from "./shared";
 
 const params = z.object({ draftId: z.string().max(64) });
+
+const photoParams = params.extend({ photoId: z.uuid() });
+
+const removeBody = z.object({ revision: z.number().int().nonnegative(), turnKey: z.uuid() });
 
 const uploadBody = photoForm.extend({
   revision: z.coerce.number().int().nonnegative(),
@@ -56,6 +60,30 @@ export function addPhotoRoutes(api: Api): void {
     },
   );
 
+  addRoute(
+    api,
+    "reporter",
+    createRoute({
+      method: "delete",
+      path: "/drafts/{draftId}/photos/{photoId}",
+      request: { params: photoParams, body: jsonBody(removeBody) },
+      responses: {
+        200: jsonResponse("The photo is gone; the draft without it", draftBodySchema),
+        404: refusal("No such photo for this reporter"),
+        409: refusal("The draft changed; the envelope holds the current draft"),
+        410: refusal("Expired, to its owner"),
+        422: refusal("Not in the photo step, or the turn key was used for something else"),
+        429: refusal("A limit is reached"),
+      },
+    }),
+    async (c) => {
+      const { draftId, photoId } = c.req.valid("param");
+      const body = c.req.valid("json");
+      const hash = await requestHash({ ...body, removed: photoId });
+      return answered(c, await removePhoto(c.env, c.var.principal, c.var.address, draftId, photoId, body, hash));
+    },
+  );
+
   // Public, so a file that is not the caller's answers 404 whoever asks, signed out included (AC-09);
   // the service checks the owner.
   addRoute(
@@ -64,7 +92,7 @@ export function addPhotoRoutes(api: Api): void {
     createRoute({
       method: "get",
       path: "/drafts/{draftId}/photos/{photoId}",
-      request: { params: params.extend({ photoId: z.uuid() }) },
+      request: { params: photoParams },
       responses: {
         200: jpegFile("The photo, metadata stripped"),
         404: refusal("No such photo for this reporter"),
