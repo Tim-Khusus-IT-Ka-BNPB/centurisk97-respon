@@ -363,6 +363,6 @@ test("a BPBD account works only its region, and asks for the reporter's identity
   await ownAddress(other.context());
   await signIn(other, PROVINCE_CODE);
   await other.goto(`/lapor/meja/${ticketNumber}`);
-  await expect(other.getByRole("heading", { name: "Meja laporan belum bisa dibuka" })).toBeVisible();
+  await expect(other.getByRole("heading", { name: "Laporan tidak ditemukan" })).toBeVisible();
   await expect(other.getByText("Uji Satu")).toHaveCount(0);
 });
