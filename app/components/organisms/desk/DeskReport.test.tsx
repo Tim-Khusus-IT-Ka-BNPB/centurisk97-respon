@@ -4,11 +4,29 @@ import { envelope } from "../../../../src/api/envelope";
 import type { DeskIdentity } from "../../../../src/contract/desk";
 import { REPORT, renderDesk, SENT, SUMMARY } from "../../../testing/desk";
 import { never } from "../../../testing/render";
+
+const drawn = vi.hoisted(() => ({ points: [] as readonly unknown[] }));
+vi.mock("../DeskMapCanvas", () => ({
+  SMALL: {},
+  DeskMapCanvas: (props: { label: string; points: readonly unknown[] }) => {
+    drawn.points = props.points;
+    return <section aria-label={props.label} />;
+  },
+}));
+
 import { DeskReportView } from "./DeskReport";
 
 const PATH = { path: "/lapor/meja/LA-241126-01" };
 
 describe("a report on the desk", () => {
+  test("its point on a small map, or none where its village has no outline", async () => {
+    const view = await renderDesk(<DeskReportView report={REPORT} summary={SUMMARY} />, PATH);
+    expect(drawn.points).toEqual([REPORT.point]);
+    view.unmount();
+    await renderDesk(<DeskReportView report={{ ...REPORT, point: null }} summary={SUMMARY} />, PATH);
+    expect(screen.queryByRole("region", { name: /Titik laporan/ })).toBeNull();
+  });
+
   test("its header, every value with where it came from, the reporter, the history and the reporter's answers", async () => {
     await renderDesk(<DeskReportView report={REPORT} summary={SUMMARY} />, PATH);
     const heading = screen.getByRole("heading", { level: 1, name: "LA-241126-01" });
@@ -16,7 +34,17 @@ describe("a report on the desk", () => {
     expect(header.getByText("Dilihat")).toBeTruthy();
     expect(header.getByText("Nomor belum diverifikasi")).toBeTruthy();
     expect(screen.getByText("Desa/Kel. Sukamaju, Kec. Contoh, Aceh Utara")).toBeTruthy();
-    expect(screen.getAllByText("Meninggal: 2 orang").length).toBeGreaterThan(0);
+    // Every figure, known or not; the houses' is at least that many.
+    const figures = [...(heading.closest("header") as HTMLElement).querySelectorAll("dl > div")];
+    expect(figures.map((one) => [one.querySelector("dt")?.textContent, one.querySelector("dd")?.textContent])).toEqual([
+      ["Meninggal", "2"],
+      ["Hilang", "belum didata"],
+      ["Luka-luka", "tidak ada"],
+      ["Mengungsi", "belum didata"],
+      ["Rumah rusak", "3+, Sebagian jenis kerusakan belum didata"],
+    ]);
+    expect(screen.getByRole("region", { name: "Titik laporan LA-241126-01" })).toBeTruthy();
+    expect(screen.getByText("titik GPS")).toBeTruthy();
     const values = within(screen.getByRole("region", { name: "Isian laporan" }));
     expect(values.getByText("Lengkap 62 persen")).toBeTruthy();
     expect(values.getByText("Jenis bencana")).toBeTruthy();
@@ -291,6 +319,8 @@ describe("a report on the desk", () => {
     await renderDesk(<DeskReportView report={{ ...REPORT, taker, history }} summary={SUMMARY} />, {
       ...PATH,
       entry: `${PATH.path}?saved=take`,
+      // Opening the report is posted on arrival; its answer would leave the query behind.
+      action: never,
     });
     expect(screen.getAllByText(`Ditangani: ${taker}`)).toHaveLength(2);
     expect(screen.getByRole("status").textContent).toBe("Laporan ini sekarang Anda tangani.");

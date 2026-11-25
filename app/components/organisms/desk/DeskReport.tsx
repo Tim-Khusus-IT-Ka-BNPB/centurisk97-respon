@@ -1,4 +1,4 @@
-import { type ReactNode, useEffect } from "react";
+import { type ReactNode, useEffect, useMemo } from "react";
 import { Form, Link, useNavigation, useSearchParams, useSubmit } from "react-router";
 import type { DeskIdentity, DeskReport, DeskSummary } from "../../../../src/contract/desk";
 import type { ErrorEnvelope } from "../../../../src/contract/errors";
@@ -11,31 +11,43 @@ import { Button, buttonStyles } from "../../atoms/Button";
 import { Icon } from "../../atoms/Icon";
 import { Notice } from "../../molecules/Notice";
 import { StateMark } from "../cards/SummaryCards";
+import { DeskMapCanvas, SMALL } from "../DeskMapCanvas";
 import { DeskActions } from "./DeskActions";
 import { Hazard, PhotoFigure } from "./DeskQueue";
 import { DeskShell } from "./DeskShell";
 import {
   ALL_FILTERS,
   EmergencyChip,
-  Houses,
+  ImpactStrip,
   StatusChip,
   spacedNumber,
   Taker,
   UnverifiedChip,
-  Victims,
   when,
 } from "./parts";
 
 const SAVED = ["status", "replies", "checks", "actions", "proofs", "take"];
 
-function Origin({ origin, quote }: { readonly origin: string | null; readonly quote: string | null }) {
+type Row = DeskReport["groups"][number]["rows"][number];
+
+// One value: what was asked, what is known of it, and at the end of the line where it came from.
+function ValueRow({ row, hazardType }: { readonly row: Row; readonly hazardType: Parameters<typeof rowParts>[2] }) {
   const t = useText();
-  if (origin === null) return null;
+  const parts = rowParts(t, row, hazardType);
+  const origin = row.state === "notYetKnown" ? null : row.origin;
   return (
-    <p className="text-meta text-muted">
-      {t(`desk.origin.${origin}`)}
-      {quote === null ? null : <q className="ms-1 text-ink">{quote}</q>}
-    </p>
+    <div className="grid grid-cols-[minmax(0,1fr)_auto] gap-x-4 gap-y-0.5 px-4 py-2.5 sm:grid-cols-[minmax(0,10.5rem)_minmax(0,1fr)_auto] sm:gap-x-6 md:px-5">
+      <dt className="col-span-2 text-meta text-muted sm:col-span-1 sm:text-body">{parts.label}</dt>
+      <dd className="min-w-0 break-words">
+        {parts.value === null ? (
+          <StateMark state={parts.state as "none" | "confirmedUnknown" | "notYetKnown"} />
+        ) : (
+          parts.value
+        )}
+        {row.quote === null ? null : <q className="block text-meta text-muted italic">{row.quote}</q>}
+      </dd>
+      {origin === null ? null : <dd className="pt-0.5 text-end text-meta text-muted">{t(`desk.origin.${origin}`)}</dd>}
+    </div>
   );
 }
 
@@ -74,7 +86,7 @@ function Section({
 }) {
   return (
     <section aria-labelledby={id} className="flex flex-col gap-3 card-surface p-4 md:p-5">
-      <h2 id={id} className="scroll-mt-20 text-card font-bold">
+      <h2 id={id} className="scroll-mt-24 text-card font-bold">
         {title}
       </h2>
       {children}
@@ -212,6 +224,9 @@ export function DeskReportView({
 }) {
   const t = useText();
   const hazardType = hazardOf(report.groups);
+  // Kept the same between renders, so the map is drawn once.
+  const { point } = report;
+  const points = useMemo(() => (point === null ? [] : [point]), [point]);
   const saved = useSearchParams()[0].get("saved");
   const problem = cardProblem(refusal);
   return (
@@ -237,83 +252,102 @@ export function DeskReportView({
           </Notice>
         </div>
       ) : null}
-      <header className="flex flex-col gap-4 card-surface p-4 md:p-5">
-        <div className="flex flex-wrap items-center gap-3">
-          <h1 className="text-ticket font-bold tabular-nums">{report.ticketNumber}</h1>
-          <StatusChip status={report.status} />
-          {report.emergency === null ? null : <EmergencyChip />}
-          {report.numberUnverified ? <UnverifiedChip /> : null}
-        </div>
-        <div className="grid gap-4 md:grid-cols-[minmax(0,1fr)_auto] md:items-end">
-          <div className="flex min-w-0 flex-col gap-1">
+      <header className="flex flex-col gap-4">
+        <div className="flex flex-wrap items-start justify-between gap-x-6 gap-y-3">
+          <div className="flex min-w-0 flex-col gap-2.5">
+            <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
+              <h1 className="text-ticket font-bold tabular-nums">{report.ticketNumber}</h1>
+              <StatusChip status={report.status} />
+              {report.emergency === null ? null : <EmergencyChip />}
+              {report.numberUnverified ? <UnverifiedChip /> : null}
+            </div>
             <Hazard item={report} />
-            <p>
-              {t("desk.row.place", {
-                village: report.place.villageName,
-                district: report.place.districtName,
-                regency: report.place.regencyName,
-              })}
-            </p>
-            <p className="text-meta text-muted tabular-nums">{when(t, "desk.row.sentAt", report.sentAt)}</p>
+            <div className="flex flex-col gap-0.5">
+              <p className="flex items-start gap-2">
+                <Icon name="mapPin" className="mt-0.5 size-5 text-muted" />
+                {t("desk.row.place", {
+                  village: report.place.villageName,
+                  district: report.place.districtName,
+                  regency: report.place.regencyName,
+                })}
+              </p>
+              <p className="flex items-start gap-2 text-muted tabular-nums">
+                <Icon name="clock" className="mt-0.5 size-5" />
+                {when(t, "desk.row.sentAt", report.sentAt)}
+              </p>
+            </div>
+            {report.taker === null ? null : <Taker taker={report.taker} />}
           </div>
-          <div className="flex flex-wrap items-center gap-x-4 gap-y-1">
-            <Victims impact={report.impact} />
-            <Houses impact={report.impact} />
+          <div className="flex flex-col gap-3 sm:max-w-xs">
+            {report.mayTake ? <TakeReport /> : null}
+            <MarkSeen report={report} />
+            <a href="#desk-actions" className={buttonStyles({ variant: "secondary", className: "xl:hidden" })}>
+              <Icon name="wrench" className="size-5" />
+              {t("desk.actions")}
+            </a>
           </div>
         </div>
-        {report.taker === null ? null : <Taker taker={report.taker} />}
-        {report.mayTake ? <TakeReport /> : null}
-        <MarkSeen report={report} />
-        <a href="#desk-actions" className={buttonStyles({ variant: "secondary", className: "self-start xl:hidden" })}>
-          <Icon name="wrench" className="size-5" />
-          {t("desk.actions")}
-        </a>
+        <ImpactStrip impact={report.impact} />
       </header>
       {/* On a phone the report is read first; the link in its header leads to the work under it. */}
-      <div className="grid gap-5 xl:grid-cols-[minmax(0,1fr)_25rem] xl:grid-rows-[auto_1fr] xl:items-start">
+      <div className="grid gap-5 xl:grid-cols-[minmax(0,1fr)_24rem] xl:grid-rows-[auto_1fr] xl:items-start">
         <div className="flex min-w-0 flex-col gap-5 xl:col-start-1 xl:row-span-2 xl:row-start-1">
-          <Section id="desk-photos" title={t("desk.photos")}>
-            {report.photos.length === 0 ? (
-              <p className="text-muted">{t("desk.photos.empty")}</p>
-            ) : (
-              <ul className="grid grid-cols-2 gap-3 sm:grid-cols-3">
-                {report.photos.map((photo) => (
-                  <li key={photo.photoId}>
-                    <PhotoFigure photo={photo} />
-                  </li>
-                ))}
-              </ul>
+          <div className="grid gap-5 lg:grid-cols-2">
+            {point === null ? null : (
+              <section aria-labelledby="desk-point" className="flex flex-col overflow-hidden card-surface">
+                <div className="flex flex-wrap items-baseline justify-between gap-x-4 p-4 pb-3 md:px-5 md:pt-5">
+                  <h2 id="desk-point" className="text-card font-bold">
+                    {t("desk.point")}
+                  </h2>
+                  <p className="text-meta text-muted">{t(`desk.map.precision.${point.precision}`)}</p>
+                </div>
+                <div className="relative min-h-72 flex-1">
+                  <DeskMapCanvas
+                    points={points}
+                    label={t("desk.point.map", { ticket: report.ticketNumber })}
+                    framing={SMALL}
+                  />
+                </div>
+              </section>
             )}
-          </Section>
+            <Section id="desk-photos" title={t("desk.photos")}>
+              {report.photos.length === 0 ? (
+                <p className="flex flex-1 flex-col items-center justify-center gap-2 rounded-control bg-sunken p-6 text-center text-muted">
+                  <Icon name="camera" className="size-7" />
+                  {t("desk.photos.empty")}
+                </p>
+              ) : (
+                <ul className="grid grid-cols-2 gap-3">
+                  {report.photos.map((photo) => (
+                    <li key={photo.photoId}>
+                      <PhotoFigure photo={photo} />
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </Section>
+          </div>
           <Handling report={report} />
-          <Section id="desk-values" title={t("desk.values")}>
-            <p className="-mt-2 text-meta text-muted">{t("desk.complete", { percent: report.completePercent })}</p>
+          <section aria-labelledby="desk-values" className="overflow-hidden card-surface">
+            <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-1 px-4 py-4 md:px-5">
+              <h2 id="desk-values" className="scroll-mt-24 text-card font-bold">
+                {t("desk.values")}
+              </h2>
+              <p className="text-meta text-muted">{t("desk.complete", { percent: report.completePercent })}</p>
+            </div>
             {report.groups.map((group) => (
-              <div key={group.groupId} className="flex flex-col gap-3 border-t border-line pt-4">
-                <h3 className="font-bold">{t(`group.${group.groupId}.label`)}</h3>
-                <dl className="grid gap-x-6 gap-y-3 sm:grid-cols-[minmax(0,13rem)_minmax(0,1fr)]">
-                  {group.rows.map((row) => {
-                    const parts = rowParts(t, row, hazardType);
-                    return (
-                      <div key={row.fieldId} className="contents">
-                        <dt className="text-muted">{parts.label}</dt>
-                        <dd className="flex min-w-0 flex-col gap-0.5">
-                          {parts.value === null ? (
-                            <span>
-                              <StateMark state={parts.state as "none" | "confirmedUnknown" | "notYetKnown"} />
-                            </span>
-                          ) : (
-                            <span className="break-words">{parts.value}</span>
-                          )}
-                          <Origin origin={row.state === "notYetKnown" ? null : row.origin} quote={row.quote} />
-                        </dd>
-                      </div>
-                    );
-                  })}
+              <div key={group.groupId}>
+                <h3 className="border-y border-line bg-sunken/60 px-4 py-2 text-meta font-semibold md:px-5">
+                  {t(`group.${group.groupId}.label`)}
+                </h3>
+                <dl className="divide-y divide-line">
+                  {group.rows.map((row) => (
+                    <ValueRow key={row.fieldId} row={row} hazardType={hazardType} />
+                  ))}
                 </dl>
               </div>
             ))}
-          </Section>
+          </section>
         </div>
         <div className="flex min-w-0 flex-col gap-5 xl:col-start-2 xl:row-start-1">
           <Section id="desk-actions" title={t("desk.actions")}>
@@ -361,8 +395,9 @@ export function DeskReportView({
             {report.reporterWords.length === 0 ? (
               <p className="text-muted">{t("desk.words.empty")}</p>
             ) : (
-              <details>
-                <summary className="min-h-target cursor-pointer py-2 font-semibold">
+              <details className="group">
+                <summary className="flex min-h-target list-none items-center gap-1.5 font-semibold text-primary [&::-webkit-details-marker]:hidden">
+                  <Icon name="chevronRight" className="size-4 group-open:rotate-90" />
                   {t("desk.words.show", { count: report.reporterWords.length })}
                 </summary>
                 <ol className="flex flex-col gap-3">

@@ -120,7 +120,7 @@ function StatusForm({ report, envelope, typed }: FormProps) {
     <Form method="post" preventScrollReset className="flex flex-col gap-4">
       <input type="hidden" name="action" value="status" />
       <input type="hidden" name="revision" value={report.revision} />
-      <fieldset className="flex flex-col gap-2">
+      <fieldset className="flex min-w-0 flex-col gap-2">
         <legend className="sr-only">{t("desk.move")}</legend>
         {report.nextStatuses.map(({ status }) => (
           <label key={status} className={pick}>
@@ -249,7 +249,10 @@ function CheckForm({ report, envelope, typed }: FormProps) {
     <Form method="post" preventScrollReset className="flex flex-col gap-4">
       <input type="hidden" name="action" value="check" />
       <input type="hidden" name="revision" value={report.revision} />
-      <fieldset aria-describedby={resultProblem ? errorIdOf("result") : undefined} className="flex flex-col gap-2">
+      <fieldset
+        aria-describedby={resultProblem ? errorIdOf("result") : undefined}
+        className="flex min-w-0 flex-col gap-2"
+      >
         <legend className="sr-only">{t("desk.check.result")}</legend>
         {CHECK_RESULTS.map((result, index) => (
           <label key={result} className={pick}>
