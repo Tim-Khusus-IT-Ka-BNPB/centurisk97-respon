@@ -50,7 +50,6 @@ function Documents({ report }: { readonly report: OwnReportDetail }) {
                 href={`/lapor/reports/${ticketNumber}/v${version}.${format}`}
                 aria-label={look.label}
                 className={look.className}
-                download
               >
                 {children}
               </a>
