@@ -37,6 +37,9 @@ test("a page cut off from the service says so, keeps the numbers to call and its
   await expect(heading(page)).toHaveText("Halaman belum bisa dibuka");
   await expect(page).toHaveTitle("Halaman belum bisa dibuka, Pantau Bencana BNPB");
   await drawn(page, "dark");
+  // Nothing it needs is asked for now: it is drawn in full.
+  await expect(page.getByRole("main")).not.toHaveCSS("background-color", "rgba(0, 0, 0, 0)");
+  expect(await page.locator("header img").evaluate((image: HTMLImageElement) => image.naturalWidth)).toBeGreaterThan(0);
   for (const number of ["112", "117"])
     await expect(page.getByRole("link", { name: new RegExp(number) })).toHaveAttribute("href", `tel:${number}`);
   await noSidewaysScroll(page);

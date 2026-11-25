@@ -11,11 +11,11 @@ import {
 } from "react-router";
 import { makeText } from "../src/copy/text";
 import type { Route } from "./+types/root";
+import styles from "./app.css?url";
 import { NavProgress } from "./components/atoms/NavProgress";
 import { FailedScreen } from "./components/organisms/FailedScreen";
 import { FAILED_TEXTS } from "./lib/failedTexts";
 import { drawnTheme, type Theme, themeFromCookie } from "./lib/theme";
-import "./app.css";
 
 export const links: Route.LinksFunction = () => [
   { rel: "icon", href: "/favicon-32.png", type: "image/png", sizes: "32x32" },
@@ -61,6 +61,9 @@ export function Layout({ children }: { children: ReactNode }) {
         {/* The browser bar takes the header band's colour. */}
         <meta name="theme-color" content={BAR[theme]} />
         <Meta />
+        {/* Its precedence keeps the sheet where a page that cannot be shown draws the head again: asked
+            for anew with no signal, it would not come, and that page would be bare. */}
+        <link rel="stylesheet" href={styles} precedence="app" />
         <Links />
       </head>
       <body className="font-sans text-body">
