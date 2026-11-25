@@ -61,25 +61,13 @@ export function EmergencyBanner({ initial }: { readonly initial: readonly DeskEm
   return (
     <section
       aria-labelledby="desk-emergency"
-      className="sticky top-14 z-20 flex flex-col gap-2 bg-signal px-4 py-3 text-on-signal md:px-6 lg:top-0"
+      className="sticky top-14 z-20 flex flex-col gap-2 bg-signal px-4 py-3 text-on-signal md:px-6 lg:top-0 lg:flex-row lg:items-center lg:gap-4"
     >
-      <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-1">
-        <h2 id="desk-emergency" className="inline-flex items-center gap-2 font-bold" role="alert">
-          <Icon name="triangleAlert" className="size-5" />
-          {t("desk.emergency.title", { count: emergencies.length })}
-        </h2>
-        {hydrated && !ready ? (
-          <button
-            type="button"
-            className="inline-flex min-h-target-min items-center gap-2 rounded-control border border-on-signal px-3 text-meta font-semibold hover:bg-[color-mix(in_oklch,var(--signal),var(--on-signal)_14%)]"
-            onClick={async () => setReady(await askForAlarm())}
-          >
-            <Icon name="bell" className="size-4" />
-            {t("desk.emergency.turnOn")}
-          </button>
-        ) : null}
-      </div>
-      <ul className="flex gap-2 overflow-x-auto pb-1">
+      <h2 id="desk-emergency" className="inline-flex shrink-0 items-center gap-2 font-bold lg:max-w-44" role="alert">
+        <Icon name="triangleAlert" className="size-5" />
+        {t("desk.emergency.title", { count: emergencies.length })}
+      </h2>
+      <ul className="flex min-w-0 gap-2 overflow-x-auto lg:flex-1">
         {emergencies.map((one) => (
           <li key={one.ticketNumber} className="shrink-0">
             <Link
@@ -98,6 +86,16 @@ export function EmergencyBanner({ initial }: { readonly initial: readonly DeskEm
           </li>
         ))}
       </ul>
+      {hydrated && !ready ? (
+        <button
+          type="button"
+          className="inline-flex min-h-target-min shrink-0 items-center gap-2 self-start rounded-control border border-on-signal px-3 text-meta font-semibold hover:bg-[color-mix(in_oklch,var(--signal),var(--on-signal)_14%)] lg:self-auto"
+          onClick={async () => setReady(await askForAlarm())}
+        >
+          <Icon name="bell" className="size-4" />
+          {t("desk.emergency.turnOn")}
+        </button>
+      ) : null}
     </section>
   );
 }

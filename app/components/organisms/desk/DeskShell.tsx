@@ -12,6 +12,7 @@ import { EmergencyBanner } from "./EmergencyBanner";
 import { deskLink, STATUSES, StatusDot } from "./parts";
 
 const NONE: DeskSummary["emergencies"] = [];
+const RESPONSE = "/lapor/meja/respons";
 
 const VIEW_ICON: Readonly<Record<DeskView, IconName>> = { list: "list", map: "map", gallery: "images" };
 
@@ -56,6 +57,7 @@ export type DeskPlace = {
 
 function DeskNav({ place, account }: { readonly place: DeskPlace; readonly account: string }) {
   const t = useText();
+  const { pathname } = useLocation();
   const { filters, current, summary } = place;
   const all = summary === null ? undefined : STATUSES.reduce((sum, status) => sum + summary.byStatus[status], 0);
   return (
@@ -120,7 +122,7 @@ function DeskNav({ place, account }: { readonly place: DeskPlace; readonly accou
       <Group label={t("desk.nav.doors")}>
         {summary?.mayReadResponse ? (
           <li>
-            <Link to="/lapor/meja/respons" className={item}>
+            <Link to={RESPONSE} aria-current={pathname === RESPONSE ? "page" : undefined} className={item}>
               <Icon name="clock" />
               {t("desk.response.title")}
             </Link>

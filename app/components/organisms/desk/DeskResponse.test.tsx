@@ -66,7 +66,8 @@ describe("how fast each agency answers", () => {
     );
     expect(screen.getByText("Belum ada laporan di bulan ini.")).toBeTruthy();
     expect(screen.queryByRole("table")).toBeNull();
-    expect(screen.getAllByRole("link", { name: "Respons BPBD" })[0]?.getAttribute("href")).toBe("/lapor/meja/respons");
+    const door = screen.getAllByRole("link", { name: "Respons BPBD" })[0];
+    expect([door?.getAttribute("href"), door?.getAttribute("aria-current")]).toEqual(["/lapor/meja/respons", "page"]);
   });
 
   test("months step over the year's end", () => {
