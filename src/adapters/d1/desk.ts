@@ -19,6 +19,7 @@ import {
 import type { StaffPrincipal } from "../../ports/identity";
 import { actionRow, regionParts } from "./deskShared";
 import { actionRows, type Handling, handlingOf, historyEvent } from "./handling";
+import { historyNotice, IF_WRITTEN, newsState, replyNotice } from "./news";
 
 // Every read names the region it may read: a report outside it is as if it were not there (D95).
 export type QueueFilters = {
@@ -188,6 +189,8 @@ export type DeskReportRecord = QueueRow & {
   readonly revision: number;
   readonly reportId: string;
   readonly handling: Handling;
+  // The reporter asked to be told no more of this report.
+  readonly newsStopped: boolean;
 };
 
 export async function deskReport(
@@ -217,7 +220,7 @@ export async function deskReport(
       ${whereAll([sql`r.ticket_number = ${ticketNumber}`, ...regionParts(scope)])}`,
   );
   if (found === null) return null;
-  const [history, words, replies, handling] = await Promise.all([
+  const [history, words, replies, handling, news] = await Promise.all([
     rows<{
       to_status: TicketStatus;
       at: string;
@@ -242,6 +245,7 @@ export async function deskReport(
       sql`select text, staff_label, at from report_reply where ticket_number = ${ticketNumber} order by at, id`,
     ),
     handlingOf(db, ticketNumber),
+    newsState(db, ticketNumber),
   ]);
   return {
     ...queueRow(found),
@@ -261,6 +265,7 @@ export async function deskReport(
     revision: found.revision,
     reportId: found.report_id,
     handling,
+    newsStopped: news.stopped,
   };
 }
 
@@ -285,6 +290,7 @@ export async function markViewed(db: Database, staff: StaffPrincipal, ticketNumb
   await atomically(db, [
     moveRow(ticketNumber, SEEN, at),
     historyRow(staff, ticketNumber, SEEN, at),
+    historyNotice(ticketNumber, "status", at, IF_WRITTEN),
     actionRow(staff, ticketNumber, "view", at),
   ]);
 }
@@ -324,11 +330,16 @@ export async function moveTicket(
     sql`${moveRow(ticketNumber, move, at)} and revision = ${move.revision}`,
     historyRow(staff, ticketNumber, move, at),
     changedOne,
+    historyNotice(ticketNumber, "status", at),
     actionRow(staff, ticketNumber, "status", at),
     // What is being done, told with the move that starts it.
     ...(actions.length === 0
       ? []
-      : [historyEvent(staff, ticketNumber, move.to, actions, at), ...actionRows(staff, ticketNumber, actions, at)]),
+      : [
+          historyEvent(staff, ticketNumber, move.to, actions, at),
+          historyNotice(ticketNumber, "actions", at),
+          ...actionRows(staff, ticketNumber, actions, at),
+        ]),
   ]);
   return done !== null;
 }
@@ -345,10 +356,13 @@ export async function addReply(
   await atomically(db, [
     moveRow(ticketNumber, SEEN, at),
     historyRow(staff, ticketNumber, SEEN, at),
+    historyNotice(ticketNumber, "status", at, IF_WRITTEN),
     moveRow(ticketNumber, REVIEWED, at),
     historyRow(staff, ticketNumber, REVIEWED, at),
+    historyNotice(ticketNumber, "status", at, IF_WRITTEN),
     sql`insert into report_reply (ticket_number, staff_id, staff_label, text, at)
       values (${ticketNumber}, ${staff.staffId}, ${staff.label}, ${text}, ${at})`,
+    replyNotice(ticketNumber, at),
     actionRow(staff, ticketNumber, "reply", at),
   ]);
 }

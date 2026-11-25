@@ -54,4 +54,6 @@ export const ownReportSchema = z.object({
   sentAt: timeSchema,
   status: ticketStatusSchema,
   trackingToken: z.string(),
+  // What staff did that this reporter has not read.
+  unread: z.number().int().nonnegative(),
 });

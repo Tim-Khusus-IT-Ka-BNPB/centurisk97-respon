@@ -188,6 +188,8 @@ export const deskReportSchema = queueItemSchema.extend({
   proofs: z.array(z.object({ proofId: z.string(), hasPoint: z.boolean(), at: timeSchema, actor: z.string() })),
   replies: z.array(z.object({ text: z.string(), at: timeSchema, actor: z.string() })),
   photos: z.array(deskPhotoSchema),
+  // The reporter stopped the news: a reply stays readable on their page but is not marked new.
+  newsStopped: z.boolean(),
   // Newest first, each with its document.
   versions: z.array(reportVersionSchema),
 });

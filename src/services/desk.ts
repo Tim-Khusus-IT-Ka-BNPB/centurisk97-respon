@@ -293,6 +293,7 @@ async function reportBody(bindings: ServiceBindings, staff: StaffPrincipal, tick
     })),
     reporterWords: found.reporterWords.map((one) => ({ text: one.text, at: at(one.atMs, zone) })),
     photos: (await reportPhotos(bindings.db, ticketNumber)).map(photoView),
+    newsStopped: found.newsStopped,
     versions: await versionsOf(bindings, ticketNumber, found.villageCode),
     nextStatuses: offeredStatuses(staff.role, found.status).map((status) => ({
       status,

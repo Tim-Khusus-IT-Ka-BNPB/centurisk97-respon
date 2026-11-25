@@ -174,6 +174,7 @@ export async function myReports(bindings: ServiceBindings, principal: Principal)
       hazardType: report.hazardType as Tracking["hazardType"],
       sentAt: at(report.sentAt, draftZone(report.villageCode)),
       status: report.status,
+      unread: report.unread,
       trackingToken: await trackingToken(bindings.settings.keyHmacSecret, report.id),
     })),
   );

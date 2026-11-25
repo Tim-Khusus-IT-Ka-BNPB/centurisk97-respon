@@ -393,6 +393,7 @@ export const SAMPLE_ME: MeResponse = {
       sentAt: at("2026-11-23T02:00:00.000Z"),
       status: "new",
       trackingToken: "0123456789abcdef0123456789abcdef",
+      unread: 2,
     },
   ],
   knownReporters: [

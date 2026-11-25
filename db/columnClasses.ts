@@ -285,6 +285,14 @@ export const COLUMN_CLASSES: Readonly<Record<string, TableClasses>> = {
       version: I,
     },
   },
+  notice: {
+    retention: "with its report",
+    columns: { id: I, ticket_number: I, kind: I, history_id: I, reply_id: I, at: I },
+  },
+  report_news: {
+    retention: "with its report",
+    columns: { report_id: I, read_at: I, stopped: I, changed_at: I },
+  },
   report_rating: {
     retention: "with its report",
     columns: { report_id: I, rating: I, rated_at: I },

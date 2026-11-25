@@ -7,6 +7,7 @@ import type { TicketStatus } from "../../domain/stages";
 import { atomically, changedOne, type Database, holds, type Query, row, rows, sql } from "../../platform/database";
 import type { StaffPrincipal } from "../../ports/identity";
 import { actionRow, regionCondition } from "./deskShared";
+import { historyNotice } from "./news";
 
 export type Handling = {
   readonly actions: readonly { readonly label: string; readonly atMs: number; readonly staffLabel: string }[];
@@ -73,6 +74,8 @@ export async function addFieldCheck(
     sql`insert into ticket_history (ticket_number, from_status, to_status, actor, actor_id, actor_label, note, at, event, detail)
       values (${ticketNumber}, ${check.from}, ${check.to}, 'staff', ${staff.staffId}, ${staff.label}, ${check.note}, ${at},
         'fieldCheck', ${{ result: check.result, changes: check.changes }})`,
+    ...(check.to === check.from ? [] : [historyNotice(ticketNumber, "status", at)]),
+    ...(next === null ? [] : [historyNotice(ticketNumber, "correction", at)]),
     ...(next === null
       ? []
       : [
@@ -129,6 +132,7 @@ export async function addActions(
   const done = await atomically(db, [
     holds(sql`exists (select 1 from ticket where ticket_number = ${ticketNumber} and status = 'in_handling')`),
     historyEvent(staff, ticketNumber, "in_handling", actions, at),
+    historyNotice(ticketNumber, "actions", at),
     ...actionRows(staff, ticketNumber, actions, at),
   ]);
   return done !== null;

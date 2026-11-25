@@ -3,10 +3,10 @@ import { followUpSchema, ownReportDetailSchema } from "../../contract/ownReport"
 import { DOCUMENT_FORMATS } from "../../domain/document";
 import { ownDocument } from "../../services/documents";
 import { startFollowUp } from "../../services/followUp";
-import { readOwnReport } from "../../services/ownReport";
+import { actOnNews, readOwnReport } from "../../services/ownReport";
 import { ownProof } from "../../services/tracking";
 import { refuse } from "../envelope";
-import { type Api, addRoute, jsonResponse, refusal } from "../route";
+import { type Api, addRoute, jsonBody, jsonResponse, refusal } from "../route";
 import { documentFile, documentSent, jpegFile, jpegSent, limitRefused } from "./shared";
 
 const params = z.object({ ticketNumber: z.string().max(20) });
@@ -60,6 +60,26 @@ export function addOwnReportRoutes(api: Api): void {
         default:
           return refuse(c, 409, "followUp.closed", { params: { reason: `followUp.closed.${answer.reason}` } });
       }
+    },
+  );
+
+  addRoute(
+    api,
+    "reporter",
+    createRoute({
+      method: "post",
+      path: "/reports/{ticketNumber}/news",
+      request: { params, body: jsonBody(z.object({ act: z.enum(["read", "stop", "start"]) })) },
+      responses: {
+        204: { description: "The news is read up to now, stopped, or wanted again" },
+        429: refusal("Too many from this number"),
+      },
+    }),
+    async (c) => {
+      const { ticketNumber } = c.req.valid("param");
+      const answer = await actOnNews(c.env, c.var.principal, ticketNumber, c.req.valid("json").act);
+      if (answer.kind === "limit") return limitRefused(c, answer.refusal, null);
+      return answer.kind === "notFound" ? refuse(c, 404, "report.notFound") : c.body(null, 204);
     },
   );
 
