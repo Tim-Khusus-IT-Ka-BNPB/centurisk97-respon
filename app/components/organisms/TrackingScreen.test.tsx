@@ -74,6 +74,71 @@ describe("tracking page", () => {
     ]);
   });
 
+  test("what was done is listed, and a closed report shows the photos of it, read with the link's secret", async () => {
+    const proofs = [
+      { proofId: "p1", at: { utc: "2026-11-23T05:00:00.000Z", zone: "WIB" } },
+      { proofId: "p2", at: { utc: "2026-11-23T05:00:00.000Z", zone: "WIB" } },
+    ];
+    const sent: { url: string; body: string }[] = [];
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async (url: string, init: RequestInit) => {
+        sent.push({ url, body: String(init.body) });
+        if (url.endsWith("/tracking")) return Response.json({ ...tracking, actions: ["Evakuasi warga"], proofs });
+        return String(init.body).includes("p1")
+          ? new Response(new Blob(["x"], { type: "image/jpeg" }))
+          : new Response(null, { status: 404 });
+      }),
+    );
+    const made = vi.spyOn(URL, "createObjectURL").mockReturnValue("blob:p1");
+    const revoked = vi.spyOn(URL, "revokeObjectURL").mockReturnValue(undefined);
+    const { unmount } = draw();
+    const status = within(await screen.findByRole("region", { name: "Status laporan" }));
+    expect(status.getByText("Evakuasi warga")).toBeTruthy();
+    expect((await screen.findByRole("img", { name: "Foto penanganan 1" })).getAttribute("src")).toBe("blob:p1");
+    expect(await screen.findByText("Foto belum bisa dimuat.")).toBeTruthy();
+    expect(sent.filter((one) => one.url === "/api/lapor/tracking/photos").map((one) => JSON.parse(one.body))).toEqual([
+      { token: TOKEN, proofId: "p1" },
+      { token: TOKEN, proofId: "p2" },
+    ]);
+    unmount();
+    expect(revoked).toHaveBeenCalledWith("blob:p1");
+    made.mockRestore();
+    revoked.mockRestore();
+  });
+
+  test("actions with no photo yet are listed alone", async () => {
+    answer(200, { ...tracking, actions: ["Evakuasi warga"] });
+    draw();
+    expect(await screen.findByText("Evakuasi warga")).toBeTruthy();
+    expect(screen.queryByRole("img", { name: /Foto penanganan/ })).toBeNull();
+  });
+
+  test("a photo that arrives, or fails, after the page closed draws nothing", async () => {
+    const proofs = [
+      { proofId: "p1", at: { utc: "2026-11-23T05:00:00.000Z", zone: "WIB" } },
+      { proofId: "p2", at: { utc: "2026-11-23T05:00:00.000Z", zone: "WIB" } },
+    ];
+    const finish: ((response: Response) => void)[] = [];
+    vi.stubGlobal(
+      "fetch",
+      vi.fn((url: string) =>
+        url.endsWith("/tracking")
+          ? Promise.resolve(Response.json({ ...tracking, proofs }))
+          : new Promise<Response>((resolve) => finish.push(resolve)),
+      ),
+    );
+    const made = vi.spyOn(URL, "createObjectURL").mockReturnValue("blob:late");
+    const { unmount } = draw();
+    await waitFor(() => expect(finish).toHaveLength(2));
+    unmount();
+    finish[0]?.(new Response(new Blob(["x"])));
+    finish[1]?.(new Response(null, { status: 404 }));
+    await new Promise((resolve) => setTimeout(resolve, 20));
+    expect(made).not.toHaveBeenCalled();
+    made.mockRestore();
+  });
+
   test("a time with its hour, an old event, no subtype and no event time each read as given", async () => {
     answer(200, {
       ...tracking,

@@ -77,6 +77,72 @@ function Row({ label, value }: { readonly label: string; readonly value: string 
   );
 }
 
+// A photo of the work. The link's secret goes in the body, so the photo has no address to share.
+function Proof({ proofId, alt }: { readonly proofId: string; readonly alt: string }) {
+  const t = useText();
+  const [src, setSrc] = useState<string | null>(null);
+  const [failed, setFailed] = useState(false);
+  useEffect(() => {
+    let url: string | null = null;
+    let live = true;
+    fetch("/api/lapor/tracking/photos", {
+      method: "POST",
+      headers: { "content-type": "application/json", "x-lapor-client": "1" },
+      body: JSON.stringify({ token: tokenOf(window.location.hash), proofId }),
+    })
+      .then(async (response) => {
+        if (!response.ok) throw new Error("photo");
+        const blob = await response.blob();
+        if (!live) return;
+        url = URL.createObjectURL(blob);
+        setSrc(url);
+      })
+      .catch(() => {
+        if (live) setFailed(true);
+      });
+    return () => {
+      live = false;
+      if (url !== null) URL.revokeObjectURL(url);
+    };
+  }, [proofId]);
+  if (failed) return <p className="text-meta text-muted">{t("tracking.proof.unavailable")}</p>;
+  return src === null ? (
+    <span aria-hidden="true" className="block aspect-[4/3] w-full rounded-control bg-sunken" />
+  ) : (
+    <img src={src} alt={alt} className="aspect-[4/3] w-full rounded-control bg-sunken object-cover" />
+  );
+}
+
+// What was done about the report, and once it is closed the photos of it.
+function Handling({ tracking }: { readonly tracking: Tracking }) {
+  const t = useText();
+  if (tracking.actions.length === 0 && tracking.proofs.length === 0) return null;
+  return (
+    <div className="flex flex-col gap-3 border-t border-line pt-3">
+      <h3 className="font-bold">{t("tracking.handling")}</h3>
+      {tracking.actions.length === 0 ? null : (
+        <ul className="flex flex-col gap-1">
+          {tracking.actions.map((action) => (
+            <li key={action} className="flex items-start gap-2">
+              <Icon name="check" className="mt-0.5 size-5 text-primary" />
+              <span className="min-w-0 break-words">{action}</span>
+            </li>
+          ))}
+        </ul>
+      )}
+      {tracking.proofs.length === 0 ? null : (
+        <ul className="grid grid-cols-2 gap-3">
+          {tracking.proofs.map((proof, index) => (
+            <li key={proof.proofId}>
+              <Proof proofId={proof.proofId} alt={t("tracking.proof.alt", { n: index + 1 })} />
+            </li>
+          ))}
+        </ul>
+      )}
+    </div>
+  );
+}
+
 function TrackingView({ tracking }: { readonly tracking: Tracking }) {
   const t = useText();
   const event = tracking.eventTime;
@@ -129,6 +195,7 @@ function TrackingView({ tracking }: { readonly tracking: Tracking }) {
             </li>
           )}
         </ol>
+        <Handling tracking={tracking} />
         <p>{t("tracking.contactPromise")}</p>
         <p className="text-meta text-muted">{t("tracking.updated")}</p>
       </section>
