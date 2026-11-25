@@ -51,7 +51,9 @@ function draw({ chats }) {
       button.setAttribute("aria-current", String(digits === number));
       button.append(
         Object.assign(document.createElement("strong"), { textContent: shown(digits) }),
-        Object.assign(document.createElement("span"), { textContent: last?.text.split("\n")[0] ?? "" }),
+        Object.assign(document.createElement("span"), {
+          textContent: last?.text.split("\n")[0].replaceAll("*", "") ?? "",
+        }),
       );
       button.addEventListener("click", () => open(digits));
       const item = document.createElement("li");
@@ -59,6 +61,7 @@ function draw({ chats }) {
       return item;
     }),
   );
+  list.querySelector('[aria-current="true"]')?.scrollIntoView({ block: "nearest", inline: "nearest" });
   const entries = chats[number] ?? [];
   const messages = byId("messages");
   messages.replaceChildren(
@@ -71,7 +74,11 @@ function draw({ chats }) {
           }),
         ]),
   );
-  messages.scrollTop = messages.scrollHeight;
+  toEnd();
+}
+
+function toEnd() {
+  byId("messages").scrollTop = byId("messages").scrollHeight;
 }
 
 async function refresh() {
@@ -150,6 +157,8 @@ byId("photo").addEventListener("change", async () => {
   byId("photo").value = "";
   void post({ photo: btoa(binary) });
 });
+
+addEventListener("resize", toEnd);
 
 if (number) open(number);
 void refresh();
