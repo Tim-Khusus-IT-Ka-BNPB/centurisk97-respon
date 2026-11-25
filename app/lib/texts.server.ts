@@ -47,6 +47,8 @@ export const PAGE_TEXTS = {
   draft: [
     ...SHELL,
     "home.report",
+    "followUp.",
+    "version.change",
     "chat.",
     "card.",
     "error.",
@@ -84,6 +86,9 @@ export const PAGE_TEXTS = {
   ownReport: [
     ...SHELL,
     "ownReport.",
+    "followUp.",
+    "error.",
+    "limit.",
     "version.",
     "tracking.",
     "stage.",

@@ -130,6 +130,8 @@ export type KnownRow = ProfileRow & {
   draft_hazard_type: string | null;
   draft_village_code: string | null;
   draft_last_acted_at: Date | null;
+  // The ticket its open draft adds news to.
+  draft_follow_up_of: string | null;
 };
 
 // The numbers this device or session knows, latest first, each with its open draft if one is still live.
@@ -148,7 +150,8 @@ export async function knownProfiles(
     db,
     sql`
     select ${PROFILE_COLUMNS}, d.id as draft_id, d.hazard_type as draft_hazard_type,
-      d.village_code as draft_village_code, d.last_acted_at as draft_last_acted_at
+      d.village_code as draft_village_code, d.last_acted_at as draft_last_acted_at,
+      (select f.ticket_number from report f where f.id = d.follow_up_of) as draft_follow_up_of
     from reporter_profile p
     join reporter r on r.id = p.reporter_id
     left join report_draft d on d.reporter_id = p.reporter_id and d.owner_slot = p.owner_slot
@@ -161,6 +164,7 @@ export async function knownProfiles(
     draft_id: known.draft_id,
     draft_hazard_type: known.draft_hazard_type,
     draft_village_code: known.draft_village_code,
+    draft_follow_up_of: known.draft_follow_up_of,
     draft_last_acted_at: known.draft_last_acted_at === null ? null : new Date(known.draft_last_acted_at),
   }));
 }

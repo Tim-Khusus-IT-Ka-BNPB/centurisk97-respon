@@ -1,14 +1,15 @@
-import { screen, within } from "@testing-library/react";
+import { fireEvent, screen, within } from "@testing-library/react";
 import { describe, expect, test } from "vitest";
+import { envelope } from "../../../src/api/envelope";
 import { OWN_REPORT } from "../../testing/ownReport";
-import { renderPage } from "../../testing/render";
+import { never, renderPage } from "../../testing/render";
 import { OwnReportScreen } from "./OwnReportScreen";
 
 type Version = (typeof OWN_REPORT.versions)[number];
 
 const PATH = "/lapor/reports/LA-231126-01";
 const draw = (report = OWN_REPORT, entry = PATH) =>
-  renderPage(<OwnReportScreen report={report} />, { path: PATH, entry });
+  renderPage(<OwnReportScreen report={report} />, { path: PATH, entry, action: never });
 
 describe("the reporter's own report", () => {
   test("names the report, where it stands and how to reach it", async () => {
@@ -64,5 +65,54 @@ describe("the reporter's own report", () => {
     draw({ ...OWN_REPORT, tracking: { ...OWN_REPORT.tracking, actions: ["Evakuasi warga"], proofs } });
     const photo = await screen.findByRole("img", { name: "Foto penanganan 1" });
     expect(photo.getAttribute("src")).toBe("/api/lapor/reports/LA-231126-01/proofs/p1");
+  });
+
+  test("news may be added until its time, by one button that says it is on the way", async () => {
+    draw();
+    const news = within(await screen.findByRole("region", { name: "Tambah kabar" }));
+    expect(news.getByText(/sampai 26 November 2026, pukul 09.00 WIB/)).toBeTruthy();
+    const button = news.getByRole("button", { name: "Tambah kabar" }) as HTMLButtonElement;
+    expect([button.name, button.value]).toEqual(["action", "followUp"]);
+    fireEvent.click(button);
+    expect(await news.findByRole("button", { name: "Membuka..." })).toBeTruthy();
+  });
+
+  test.each([
+    ["tooLate", "72 jam"],
+    ["ended", "sudah ditutup petugas"],
+    ["tooMany", "10 versi"],
+  ] as const)("once closed it says why: %s", async (reason, words) => {
+    draw({ ...OWN_REPORT, followUp: { state: "closed", reason } });
+    const news = within(await screen.findByRole("region", { name: "Kabar tidak bisa ditambah lagi" }));
+    expect(news.getByText(new RegExp(words))).toBeTruthy();
+    expect(news.queryByRole("button")).toBeNull();
+    expect(news.getByRole("link", { name: "Buat laporan baru" }).getAttribute("href")).toBe("/lapor/report");
+  });
+
+  test("a refused start says why, and leads to the report that must be finished first", async () => {
+    const refused = (code: "followUp.finishFirst" | "followUp.closed", params: Record<string, string>) =>
+      renderPage(<OwnReportScreen report={OWN_REPORT} envelope={envelope(code, { params })} />, {
+        path: PATH,
+        entry: `${PATH}?saved=sent`,
+      });
+    const view = refused("followUp.finishFirst", { draftId: "d-1" });
+    expect((await screen.findByRole("alert")).textContent).toContain("Ada laporan yang belum selesai");
+    expect(screen.getByRole("link", { name: "Buka laporan yang belum selesai" }).getAttribute("href")).toBe(
+      "/lapor/report/d-1",
+    );
+    // What was saved before is not told again beside a refusal.
+    expect(screen.queryByText(/Kabar terkirim/)).toBeNull();
+    view.unmount();
+    refused("followUp.closed", { reason: "followUp.closed.noProfile" });
+    expect((await screen.findByRole("alert")).textContent).toContain("sudah dihapus dari perangkat ini");
+    expect(screen.queryByRole("link", { name: "Buka laporan yang belum selesai" })).toBeNull();
+  });
+
+  test("news sent or dropped is told once, with the version it made", async () => {
+    const view = draw(OWN_REPORT, `${PATH}?saved=sent`);
+    expect((await screen.findByRole("status")).textContent).toBe("Kabar terkirim. Laporan ini sekarang versi 2.");
+    view.unmount();
+    draw(OWN_REPORT, `${PATH}?saved=cancelled`);
+    expect((await screen.findByRole("status")).textContent).toBe("Kabar dibatalkan. Laporan ini tidak berubah.");
   });
 });

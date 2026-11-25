@@ -1,4 +1,7 @@
 {
+  "resume.followUp.title": "Kabar belum dikirim",
+  "resume.followUp.body": "Kabar untuk {ticketNumber}, terakhir diisi pukul {time} {zone}.",
+  "resume.followUp.continue": "Lanjutkan kabar",
   "resume.title": "Ada laporan yang belum selesai",
   "resume.body": "{hazardType}, terakhir diubah pukul {time} {zone}.",
   "resume.noHazardType": "Jenis belum dipilih",

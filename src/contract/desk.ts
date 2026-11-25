@@ -32,6 +32,8 @@ const queueItemSchema = z.object({
   emergency: emergencySchema.nullable(),
   // The officer who has it in hand, as the desk names them. Never on the tracking page.
   taker: z.string().nullable(),
+  // The reporter added news that no officer has acted on yet.
+  news: z.boolean(),
   // The report's own figures: a count, 0 for an explicit none, null when not known.
   impact: z.object({
     dead: z.number().int().nonnegative().nullable(),
@@ -147,12 +149,13 @@ export const deskReportSchema = queueItemSchema.extend({
     z.object({
       status: ticketStatusSchema,
       at: timeSchema,
+      // The officer who did it; null for the system, and for the reporter's own news.
       actor: z.string().nullable(),
       note: z.string().nullable(),
       // The regency whose desk it went to.
       forwardedTo: z.string().nullable(),
       // Work told in the history: what a check found and put right, or what was done.
-      event: z.enum(["fieldCheck", "actions", "take"]).nullable(),
+      event: z.enum(["fieldCheck", "actions", "take", "followUp"]).nullable(),
       detail: z
         .object({
           result: z.enum(CHECK_RESULTS).optional(),
@@ -162,6 +165,7 @@ export const deskReportSchema = queueItemSchema.extend({
             .optional(),
           actions: z.array(z.string()).readonly().optional(),
           taker: z.string().optional(),
+          version: z.number().int().optional(),
         })
         .nullable(),
     }),

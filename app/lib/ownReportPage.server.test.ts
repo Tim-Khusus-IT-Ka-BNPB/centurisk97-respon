@@ -3,7 +3,7 @@ import type { ApiCall } from "../../src/api/bridge";
 import { envelope } from "../../src/api/envelope";
 import { OWN_REPORT } from "../testing/ownReport";
 import { downloadDeskDocument } from "./deskPage.server";
-import { loadOwnDocument, loadOwnReport } from "./ownReportPage.server";
+import { actOnOwnReport, loadOwnDocument, loadOwnReport } from "./ownReportPage.server";
 
 type Call = { method: string; path: string; body: unknown };
 
@@ -33,6 +33,22 @@ describe("the reporter's own report page", () => {
     );
     expect(refused).toMatchObject({ kind: "refused", status: 404 });
     expect(refused.texts["error.draft.notFound.title"]).toBe("Laporan tidak ditemukan");
+  });
+
+  test("news opens its draft; a refusal is drawn on the page", async () => {
+    const draftId = "0a1b2c3d-4e5f-4a6b-8c7d-8e9f0a1b2c3d";
+    const started = fakeApi(() => Response.json({ draftId }, { status: 201 }));
+    expect(await actOnOwnReport("LA-1", started.api)).toEqual({
+      kind: "redirect",
+      location: `/lapor/report/${draftId}`,
+    });
+    expect(started.calls).toEqual([{ method: "POST", path: "/reports/LA-1/follow-ups", body: undefined }]);
+    const closed = envelope("followUp.closed");
+    expect(await actOnOwnReport("LA-1", fakeApi(() => Response.json(closed, { status: 409 })).api)).toEqual({
+      kind: "render",
+      status: 409,
+      envelope: closed,
+    });
   });
 
   test("a file is passed on as it came; a refused one leads back to the page with the reason", async () => {

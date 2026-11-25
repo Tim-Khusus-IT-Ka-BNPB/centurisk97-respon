@@ -11,6 +11,7 @@ import { Icon } from "../../atoms/Icon";
 import type { IconName } from "../../atoms/icons";
 import { LifeLine, Notice } from "../../molecules/Notice";
 import { CardShell, headingIdOf, TurnForm, useDraftView } from "./CardShell";
+import { FollowUpCardView } from "./FollowUpCards";
 
 type SummaryCard = Extract<Card, { kind: "summary" }>;
 
@@ -73,6 +74,10 @@ function SendAction() {
 }
 
 export function SummaryCardView({ card }: { readonly card: SummaryCard }) {
+  return card.followUp ? <FollowUpCardView card={card} followUp={card.followUp} /> : <ReportSummary card={card} />;
+}
+
+function ReportSummary({ card }: { readonly card: SummaryCard }) {
   const t = useText();
   const { draft, envelope } = useDraftView();
   const hazardType = hazardOf(card.groups);

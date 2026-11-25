@@ -1,8 +1,11 @@
-import { Link, useSearchParams } from "react-router";
+import { Form, Link, useSearchParams } from "react-router";
+import type { ErrorEnvelope } from "../../../src/contract/errors";
 import type { OwnReportDetail } from "../../../src/contract/ownReport";
 import { hazardKey } from "../../../src/copy/hazardKey";
+import { clockTime, longDate } from "../../../src/copy/time";
+import { useBusy } from "../../lib/hooks";
 import { useText } from "../../lib/text";
-import { buttonStyles } from "../atoms/Button";
+import { Button, buttonStyles } from "../atoms/Button";
 import { Icon } from "../atoms/Icon";
 import { Notice } from "../molecules/Notice";
 import { ContactBlock, trackingPath } from "./cards/TicketCards";
@@ -45,12 +48,73 @@ function Documents({ report }: { readonly report: OwnReportDetail }) {
   );
 }
 
+// News for the report while it is taken, and why not once it is not.
+function FollowUp({ report, envelope }: { readonly report: OwnReportDetail; readonly envelope: ErrorEnvelope | null }) {
+  const t = useText();
+  const busy = useBusy("followUp", "action");
+  const { followUp } = report;
+  const open = followUp.state === "open";
+  const unfinished = envelope?.error.code === "followUp.finishFirst" ? envelope.error.params.draftId : null;
+  return (
+    <section aria-labelledby="own-follow-up" className="flex flex-col items-start gap-3 card-surface p-4 md:p-5">
+      <h2 id="own-follow-up" className="text-card font-bold">
+        {t(open ? "followUp.title" : "followUp.closed.title")}
+      </h2>
+      <p className={open ? "tabular-nums" : "text-muted"}>
+        {open
+          ? t("followUp.lead", {
+              date: longDate(followUp.until),
+              time: clockTime(followUp.until),
+              zone: followUp.until.zone,
+            })
+          : t(`followUp.closed.${followUp.reason}`)}
+      </p>
+      {envelope === null ? null : (
+        <Notice kind="error">
+          <p>{t(envelope.error.copyKey, envelope.error.params)}</p>
+          {unfinished ? (
+            <Link to={`/lapor/report/${unfinished}`} className="w-fit font-semibold underline">
+              {t("followUp.finish")}
+            </Link>
+          ) : null}
+        </Notice>
+      )}
+      {open ? (
+        <Form method="post" className="flex w-full flex-col sm:w-auto">
+          <Button
+            name="action"
+            value="followUp"
+            variant="primary"
+            size="main"
+            busyLabel={busy ? t("followUp.busy") : null}
+          >
+            <Icon name="plus" className="size-5" />
+            {t("followUp.start")}
+          </Button>
+        </Form>
+      ) : (
+        <Link to="/lapor/report" className={buttonStyles({ variant: "secondary" })}>
+          {t("followUp.newReport")}
+        </Link>
+      )}
+    </section>
+  );
+}
+
 // A report on the phone that sent it (`/lapor/reports/<ticket>`): where it stands, and what only
 // its reporter is given.
-export function OwnReportScreen({ report }: { readonly report: OwnReportDetail }) {
+export function OwnReportScreen({
+  report,
+  envelope = null,
+}: {
+  readonly report: OwnReportDetail;
+  // A refused act on this page.
+  readonly envelope?: ErrorEnvelope | null;
+}) {
   const t = useText();
   const { tracking } = report;
   const [search] = useSearchParams();
+  const saved = search.get("saved");
   return (
     <div className="flex flex-col gap-6">
       <header className="flex flex-col gap-2">
@@ -66,6 +130,11 @@ export function OwnReportScreen({ report }: { readonly report: OwnReportDetail }
           {t("ownReport.lead", { hazard: hazardKey(tracking.hazardType), village: tracking.place.villageName })}
         </p>
       </header>
+      {envelope === null && (saved === "sent" || saved === "cancelled") ? (
+        <div role="status">
+          <Notice kind="info">{t(`followUp.saved.${saved}`, { version: report.versions.length })}</Notice>
+        </div>
+      ) : null}
       {search.get("refused") === "document" ? <Notice kind="error">{t("version.refused")}</Notice> : null}
       <div className="grid gap-6 lg:grid-cols-[minmax(0,1.1fr)_minmax(0,1fr)] lg:items-start">
         <div className="flex min-w-0 flex-col gap-6">
@@ -84,6 +153,7 @@ export function OwnReportScreen({ report }: { readonly report: OwnReportDetail }
           </ReportStatus>
         </div>
         <div className="flex min-w-0 flex-col gap-6">
+          <FollowUp report={report} envelope={envelope} />
           <Documents report={report} />
           <ReportEvent tracking={tracking} />
           <ContactBlock contact={tracking.contact} />

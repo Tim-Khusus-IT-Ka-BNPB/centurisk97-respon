@@ -14,15 +14,30 @@ export function DraftAside({ draft }: { readonly draft: DraftBody }) {
   return (
     <div className="flex flex-col gap-4">
       <section aria-labelledby="aside-progress" className="card-surface flex flex-col gap-3 p-5">
-        <h2 id="aside-progress" className={heading}>
-          {t("chat.aside.progress")}
-        </h2>
-        <p className="text-card font-bold tabular-nums">
-          {t("card.summary.complete", { percent: draft.completePercent })}
-        </p>
-        <ProgressBar percent={draft.completePercent} />
+        {draft.followUpOf === null ? (
+          <>
+            <h2 id="aside-progress" className={heading}>
+              {t("chat.aside.progress")}
+            </h2>
+            <p className="text-card font-bold tabular-nums">
+              {t("card.summary.complete", { percent: draft.completePercent })}
+            </p>
+            <ProgressBar percent={draft.completePercent} />
+          </>
+        ) : (
+          <>
+            <h2 id="aside-progress" className="text-card font-bold tabular-nums">
+              {t("followUp.aside", { ticketNumber: draft.followUpOf })}
+            </h2>
+            <p className="text-meta">{t("followUp.asideLead")}</p>
+          </>
+        )}
         <p className="text-meta text-muted tabular-nums">
-          {t("resume.keptUntil", { time: clockTime(kept), zone: kept.zone, date: longDate(kept) })}
+          {t(draft.followUpOf === null ? "resume.keptUntil" : "card.followUp.keptUntil", {
+            time: clockTime(kept),
+            zone: kept.zone,
+            date: longDate(kept),
+          })}
         </p>
       </section>
       <section aria-labelledby="aside-words" className="card-surface flex flex-col gap-2 p-5">

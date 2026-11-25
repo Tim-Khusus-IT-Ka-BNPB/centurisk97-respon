@@ -1,5 +1,6 @@
 import type { Card } from "../../../src/contract/card";
 import { ChoiceCard } from "./cards/ChoiceCards";
+import { FollowUpEndedCard } from "./cards/FollowUpCards";
 import { NeighbourhoodCard, NumberFormCard, TextQuestionCard } from "./cards/FormCards";
 import { PhotosCardView } from "./cards/PhotoCards";
 import { PlaceCard, PlaceConfirmCard } from "./cards/PlaceCards";
@@ -37,6 +38,8 @@ export function CardView({ card }: { readonly card: Card }) {
       return <ConfirmCard card={card} />;
     case "sent":
       return <TicketCard card={card} />;
+    case "followUpEnded":
+      return <FollowUpEndedCard card={card} />;
     default:
       return <CancelledCard card={card} />;
   }

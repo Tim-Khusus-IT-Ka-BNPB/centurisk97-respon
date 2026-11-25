@@ -17,7 +17,7 @@ function told(t: Text, row: Change["from"], hazardType: string | null): string {
 }
 
 // The values that changed, each with what it said before and says now.
-function ChangeList({
+export function ChangeList({
   changes,
   hazardType,
 }: {
@@ -56,7 +56,7 @@ export function FileButtons({
     button(
       format,
       {
-        className: buttonStyles({ variant: "secondary", size: "min", className: "flex-1 sm:flex-none" }),
+        className: buttonStyles({ variant: "secondary", size: "min", className: "flex-1 @actions:flex-none" }),
         label: t(`version.download.${format}Label`, { version }),
       },
       <>
@@ -65,7 +65,7 @@ export function FileButtons({
       </>,
     );
   return (
-    <div className="flex gap-3">
+    <div className="flex shrink-0 gap-2">
       {one("pdf")}
       {one("docx")}
     </div>
@@ -91,29 +91,31 @@ export function VersionList({
       {versions.map((one, index) => {
         const maker = one.madeBy === "officer" ? "officer" : one.version === 1 ? "first" : "reporter";
         return (
-          <li key={one.version} className="flex flex-col gap-3 py-4 first:pt-0 last:pb-0">
-            <div className="flex min-w-0 items-start gap-3">
-              <span className="flex size-10 shrink-0 items-center justify-center rounded-control bg-selected text-primary">
-                <Icon name="fileText" />
-              </span>
-              <div className="flex min-w-0 flex-col gap-0.5">
-                <p className="flex flex-wrap items-center gap-x-2 gap-y-1">
-                  <span className="font-semibold">{t("version.name", { version: one.version })}</span>
-                  {index === 0 && versions.length > 1 ? (
-                    <span className="rounded-chip bg-selected px-2 py-0.5 text-meta font-semibold text-primary">
-                      {t("version.newest")}
-                    </span>
-                  ) : null}
-                </p>
-                <p className="text-meta text-muted tabular-nums">
-                  {t(`version.maker.${voice}.${maker}`)}
-                  {", "}
-                  {t("stage.reachedAt", { date: longDate(one.at), time: clockTime(one.at), zone: one.at.zone })}
-                </p>
+          <li key={one.version} className="@container flex flex-col gap-3 py-4 first:pt-0 last:pb-0">
+            <div className="flex flex-col gap-3 @actions:flex-row @actions:items-start @actions:justify-between">
+              <div className="flex min-w-0 items-start gap-3">
+                <span className="flex size-10 shrink-0 items-center justify-center rounded-control bg-selected text-primary">
+                  <Icon name="fileText" />
+                </span>
+                <div className="flex min-w-0 flex-col gap-0.5">
+                  <p className="flex flex-wrap items-center gap-x-2 gap-y-1">
+                    <span className="font-semibold">{t("version.name", { version: one.version })}</span>
+                    {index === 0 && versions.length > 1 ? (
+                      <span className="rounded-chip bg-selected px-2 py-0.5 text-meta font-semibold text-primary">
+                        {t("version.newest")}
+                      </span>
+                    ) : null}
+                  </p>
+                  <p className="text-meta text-muted tabular-nums">
+                    {t(`version.maker.${voice}.${maker}`)}
+                    {", "}
+                    {t("stage.reachedAt", { date: longDate(one.at), time: clockTime(one.at), zone: one.at.zone })}
+                  </p>
+                </div>
               </div>
+              {files(one.version)}
             </div>
             {one.changes.length === 0 ? null : <ChangeList changes={one.changes} hazardType={hazardType} />}
-            {files(one.version)}
           </li>
         );
       })}

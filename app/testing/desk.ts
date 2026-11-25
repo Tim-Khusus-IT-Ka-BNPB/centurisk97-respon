@@ -37,6 +37,7 @@ export const ITEM: DeskQueue["items"][number] = {
   numberUnverified: true,
   emergency: null,
   taker: null,
+  news: false,
   impact: { dead: 2, missing: null, injured: 0, displaced: null, houses: { count: 3, partial: true } },
 };
 
@@ -166,7 +167,7 @@ export const SUMMARY: DeskSummary = {
   total: 9,
   byStatus: { new: 4, seen: 1, under_review: 2, forwarded: 0, in_handling: 0, closed: 2, invalid: 0 },
   byHazard: { flood: 7, landslide: 2 },
-  byHas: { victims: 3, displaced: 1, houses: 5, photos: 0 },
+  byHas: { news: 2, victims: 3, displaced: 1, houses: 5, photos: 0 },
   emergencies: [],
   mayReadResponse: true,
 };

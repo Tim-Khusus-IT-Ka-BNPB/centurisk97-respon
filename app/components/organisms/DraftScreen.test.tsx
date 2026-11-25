@@ -41,6 +41,19 @@ describe("the draft page", () => {
     expect(screen.queryByText("Laporan dilanjutkan dari jawaban terakhir Anda.")).toBeNull();
   });
 
+  test("news for a sent report has its own heading and no progress, and says it is news when resumed", async () => {
+    const news = {
+      ...SAMPLE_DRAFTS.numberForm,
+      followUpOf: "LA-231126-01",
+      notices: [{ kind: "resumed" as const, copyKey: "notice.resumed", params: {}, retryAt: null }],
+    };
+    renderPage(<DraftScreen page={page(news)} acted={null} />);
+    expect(await screen.findByText("Kabar dilanjutkan dari jawaban terakhir Anda.")).toBeTruthy();
+    expect(screen.getByRole("heading", { level: 1 }).textContent).toBe("Tambah kabar");
+    expect(screen.queryByText(/persen/)).toBeNull();
+    expect(screen.queryByText(/Laporan ini disimpan/)).toBeNull();
+  });
+
   test("a resumed draft shows its history, the resumed notice with kept-until and the 112 line, and announces nothing", async () => {
     const resumed = {
       ...SAMPLE_DRAFTS.numberForm,

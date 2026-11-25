@@ -20,6 +20,9 @@ export const meta = (args: Route.MetaArgs) =>
 
 export async function loader({ params, request, context }: Route.LoaderArgs) {
   const page = await loadDraftPage(params.draftId, new URL(request.url), context.api, () => crypto.randomUUID());
+  const card = page.data.kind === "draft" ? page.data.draft.card : null;
+  // News that is sent or dropped is told on its report's own page.
+  if (card?.kind === "followUpEnded") throw redirect(`/lapor/reports/${card.ticketNumber}?saved=${card.outcome}`, 303);
   return data(page.data, { status: page.status });
 }
 

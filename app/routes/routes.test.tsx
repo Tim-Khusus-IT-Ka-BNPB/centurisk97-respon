@@ -132,6 +132,39 @@ describe("route modules", () => {
     expect(await screen.findByRole("heading", { level: 1, name: "Laporan tidak ditemukan" })).toBeTruthy();
   });
 
+  test("news is started by a post that leads to its draft, or drawn with its refusal", async () => {
+    const params = { ticketNumber: "LA-231126-01" };
+    const path = "POST /reports/LA-231126-01/follow-ups";
+    const act = (answer: () => Response) =>
+      ownReport.action({ params, context: { api: api({ [path]: answer }) } } as Args);
+    const started = (await act(json({ draftId: "d-9" }, 201))) as Response;
+    expect([started.status, started.headers.get("location")]).toEqual([303, "/lapor/report/d-9"]);
+    const closed = apiEnvelope("followUp.closed", { params: { reason: "followUp.closed.tooLate" } });
+    const refused = unwrap(await act(json(closed, 409)));
+    expect(refused.init?.status).toBe(409);
+    const loaded = unwrap(
+      await ownReport.loader({
+        params,
+        context: { api: api({ "GET /reports/LA-231126-01": json(OWN_REPORT) }) },
+      } as Args),
+    );
+    renderPage(routeElement(OwnReportRoute, { loaderData: loaded.data, actionData: refused.data }), {
+      path: "/lapor/reports/LA-231126-01",
+    });
+    expect((await screen.findByRole("alert")).textContent).toContain("72 jam");
+  });
+
+  test("a draft of news that is over leads back to its report", async () => {
+    const ended = SAMPLE_DRAFTS.followUpEnded;
+    const answer = draft.loader({
+      params: { draftId: ended.draftId },
+      request: new Request(`http://localhost/lapor/report/${ended.draftId}`),
+      context: { api: api({ [`GET /drafts/${ended.draftId}`]: json(ended) }) },
+    } as Args);
+    const thrown = (await answer.catch((response: unknown) => response)) as Response;
+    expect([thrown.status, thrown.headers.get("location")]).toEqual([303, "/lapor/reports/LA-231126-01?saved=sent"]);
+  });
+
   test("documents are files, read by the reporter and posted for by staff", async () => {
     const file = () => new Response("isi");
     const own = await ownDocument.loader({

@@ -20,8 +20,9 @@ import { sha256Hex } from "../platform/keys";
 import type { Principal } from "../ports/identity";
 import type { ServiceBindings } from "./bindings";
 import { draftZone, LIFE_LINE } from "./draftView";
+import { type FollowUpSent, sendFollowUp } from "./followUp";
 import { trackingToken } from "./tracking";
-import { type Answer, ownedDraft, viewOf } from "./turn";
+import { ownedDraft, viewOf } from "./turn";
 
 // The fault switch of local and test: the send fails after its inserts, before commit.
 class SendFault extends Error {}
@@ -136,9 +137,10 @@ export async function sendDraft(
   revision: number,
   turnKey: string,
   requestHash: string,
-): Promise<Answer | { kind: "failed"; draft: Awaited<ReturnType<typeof viewOf>> }> {
+): Promise<FollowUpSent | { kind: "failed"; draft: Awaited<ReturnType<typeof viewOf>> }> {
   const owned = await ownedDraft(bindings, principal, draftId);
   if (owned.kind !== "owned") return owned;
+  if (owned.draft.followUpOf !== null) return sendFollowUp(bindings, owned.draft, revision, turnKey, requestHash);
   let sent: Sent;
   try {
     sent = await decide(() => sendOnce(bindings, principal, draftId, revision, turnKey, requestHash));

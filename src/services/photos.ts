@@ -7,7 +7,7 @@ import type { Point } from "../domain/geo";
 import { readExif, stripJpeg } from "../domain/jpeg";
 import { checkPhoto, type DeviceFix } from "../domain/photoChecks";
 import { MINUTE_MS } from "../domain/time";
-import type { DraftContent } from "../domain/turn/content";
+import { type DraftContent, photoMax } from "../domain/turn/content";
 import { atomically, changedOne } from "../platform/database";
 import type { Principal } from "../ports/identity";
 import type { ServiceBindings } from "./bindings";
@@ -64,16 +64,19 @@ export async function addPhoto(
     return { kind: "changed", draft: await viewOf(bindings, draft, [], upload.turnKey) };
   const nowMs = bindings.clock.now();
   const zone = draftZone(draft.villageCode);
+  const kept = await draftPhotos(bindings.db, draft.id);
   const checked = checkPhoto({
     bytes: upload.bytes,
     exif: readExif(upload.bytes),
     nowMs,
     device: upload.device,
     placePoint: await placePoint(bindings, draft),
-    count: (await draftPhotos(bindings.db, draft.id)).length,
+    count: kept.length,
     fallbackOffsetMinutes: upload.offsetMinutes ?? zoneOffsetMs(zone) / MINUTE_MS,
   });
   if (checked.kind === "refused") return refused(bindings, draft, checked.rule, upload.turnKey);
+  if (kept.length >= photoMax(draft.content as DraftContent))
+    return refused(bindings, draft, "tooMany", upload.turnKey);
   const clean = stripJpeg(upload.bytes);
   if (clean === null) return refused(bindings, draft, "broken", upload.turnKey);
   const id = crypto.randomUUID();
@@ -81,7 +84,10 @@ export async function addPhoto(
   await bindings.photos.put(storeKey, clean);
   const at = new Date(nowMs);
   const after = { ...draft, revision: draft.revision + 1, lastActedAt: at };
-  const photos = [...(await draftPhotos(bindings.db, draft.id)), { ...checked, id, storeKey, receivedAt: at }];
+  const photos = [
+    ...(await draftPhotos(bindings.db, draft.id)),
+    { ...checked, id, storeKey, receivedAt: at, version: 1 },
+  ];
   const body = await viewOf(bindings, after, [], upload.turnKey, photos);
   const done = await atomically(bindings.db, [
     photoAdded(draft.id, draft.revision, at),

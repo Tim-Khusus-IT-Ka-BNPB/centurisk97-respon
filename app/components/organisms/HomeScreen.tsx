@@ -16,13 +16,14 @@ function Resume({ profile }: { readonly profile: MeResponse["knownReporters"][nu
   const t = useText();
   const draft = profile.openDraft;
   if (draft === null) return null;
+  const words = draft.followUpOf === null ? "resume" : "resume.followUp";
   return (
     <section
       aria-labelledby={`resume-${draft.draftId}`}
       className="@container flex flex-col gap-3 card-surface p-4 md:p-5"
     >
       <h2 id={`resume-${draft.draftId}`} className="text-card font-bold">
-        {t("resume.title")}
+        {t(`${words}.title`)}
       </h2>
       <p className="tabular-nums">{resumeLine(t, draft)}</p>
       <ActionRow>
@@ -30,7 +31,7 @@ function Resume({ profile }: { readonly profile: MeResponse["knownReporters"][nu
           {t("resume.new")}
         </Link>
         <Link to={`/lapor/report/${draft.draftId}`} className={buttonStyles({ variant: "primary" })}>
-          {t("resume.continue")}
+          {t(`${words}.continue`)}
         </Link>
       </ActionRow>
     </section>

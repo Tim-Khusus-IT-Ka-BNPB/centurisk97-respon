@@ -11,8 +11,9 @@ import type {
   PlaceValue,
 } from "../domain/fieldState";
 import { applicableFields, chosenHazardType } from "../domain/fields/applicable";
-import type { FieldDefinition, FieldId } from "../domain/fields/catalogue";
+import { type FieldDefinition, type FieldId, fieldById, GROUP_IDS } from "../domain/fields/catalogue";
 import type { HazardTypeId } from "../domain/hazards";
+import { versionChanges } from "../domain/versions";
 
 type SummaryGroup = Extract<Card, { kind: "summary" }>["groups"][number];
 type RowValue = NonNullable<SummaryGroup["rows"][number]["value"]>;
@@ -95,6 +96,23 @@ export function summaryRow(states: FieldStates, field: FieldDefinition): Summary
     value: state.state === "value" ? rowValue(field, state, chosenHazardType(states)) : null,
     origin: "origin" in state ? state.origin : null,
   };
+}
+
+// The values that say something else in the later states, each as the summary tells it.
+export const changeRows = (before: FieldStates, after: FieldStates) =>
+  versionChanges(before, after).map(({ fieldId }) => ({
+    fieldId,
+    from: summaryRow(before, fieldById(fieldId)),
+    to: summaryRow(after, fieldById(fieldId)),
+  }));
+
+// Every group with a field that applies, answered or not: what news for a sent report may change.
+export function allGroups(states: FieldStates): SummaryGroup[] {
+  const told = summaryGroups(states);
+  const ids = new Set(applicableFields(states).map((field) => field.group));
+  return GROUP_IDS.filter((groupId) => ids.has(groupId)).map(
+    (groupId) => told.find((group) => group.groupId === groupId) ?? { groupId, rows: [] },
+  );
 }
 
 // Every applicable field in table order, by group. A field never reached does not show.

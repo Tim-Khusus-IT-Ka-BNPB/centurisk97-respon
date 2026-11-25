@@ -43,6 +43,8 @@ export const draftBodySchema = z.object({
   keptUntil: timeSchema,
   canGoBack: z.boolean(),
   freeTextAllowed: z.boolean(),
+  // The sent report this draft adds news to; null for a report of its own.
+  followUpOf: z.string().nullable(),
   // Echo of the request's turn key.
   turnKey: z.uuid().nullable(),
 });
@@ -58,7 +60,13 @@ export const meResponseSchema = z.object({
       role: reporterRoleSchema,
       lastUsedAt: timeSchema,
       openDraft: z
-        .object({ draftId: z.uuid(), hazardType: hazardTypeSchema.nullable(), lastActedAt: timeSchema })
+        .object({
+          draftId: z.uuid(),
+          hazardType: hazardTypeSchema.nullable(),
+          lastActedAt: timeSchema,
+          // The sent report it adds news to; null for a report of its own.
+          followUpOf: z.string().nullable(),
+        })
         .nullable(),
     }),
   ),

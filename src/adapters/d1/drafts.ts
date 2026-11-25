@@ -41,6 +41,8 @@ export type DraftRecord = {
   readonly role: ReporterRole | null;
   // Notices of the last turn not yet shown; null when the reporter comes back to the draft.
   readonly pendingNotices: PendingNotices | null;
+  // The ticket of the sent report this draft adds news to; null for a report of its own.
+  readonly followUpOf: string | null;
 };
 
 type PendingNotices = DraftBody["notices"];
@@ -66,6 +68,7 @@ type Row = {
   name: string | null;
   role: ReporterRole | null;
   pending_notices: string | null;
+  follow_up_of: string | null;
 };
 
 const record = (found: Row): DraftRecord => ({
@@ -89,6 +92,7 @@ const record = (found: Row): DraftRecord => ({
   name: found.name,
   role: found.role,
   pendingNotices: parsed<PendingNotices>(found.pending_notices),
+  followUpOf: found.follow_up_of,
 });
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/;
@@ -102,7 +106,8 @@ export async function loadDraft(db: Database, draftId: string): Promise<DraftRec
     sql`
     select d.id, d.reporter_id, d.profile_id, d.owner_slot, d.state, d.revision, d.fields, d.back_stack, d.asked,
       d.off_topic_count, d.model_calls, d.templates_only, d.village_code, d.hazard_type, d.last_acted_at,
-      d.pending_notices, r.number_key, r.number, p.name, p.role
+      d.pending_notices, r.number_key, r.number, p.name, p.role,
+      (select f.ticket_number from report f where f.id = d.follow_up_of) as follow_up_of
     from report_draft d
     join reporter r on r.id = d.reporter_id
     left join reporter_profile p on p.id = d.profile_id

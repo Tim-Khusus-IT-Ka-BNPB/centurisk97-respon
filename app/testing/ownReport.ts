@@ -29,4 +29,5 @@ export const OWN_REPORT: OwnReportDetail = {
     },
     { version: 1, at: { utc: "2026-11-23T02:00:00.000Z", zone: "WIB" }, madeBy: "reporter", changes: [] },
   ],
+  followUp: { state: "open", until: { utc: "2026-11-26T02:00:00.000Z", zone: "WIB" } },
 };

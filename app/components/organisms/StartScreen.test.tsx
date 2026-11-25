@@ -259,6 +259,24 @@ describe("the home", () => {
     expect(screen.getByText(/Graha BNPB/).closest("a")).toBeNull();
   });
 
+  test("news not sent yet is offered as news, and a new report over it says only the news goes", async () => {
+    const open = { ...(withDraft.openDraft as NonNullable<typeof withDraft.openDraft>), followUpOf: "LA-231126-01" };
+    const me = { ...SAMPLE_ME, knownReporters: [{ ...withDraft, openDraft: open }] };
+    const view = renderPage(<HomeScreen me={me} />, { path: "/lapor" });
+    expect(await screen.findByRole("heading", { name: "Kabar belum dikirim" })).toBeTruthy();
+    expect(screen.getByText(/^Kabar untuk LA-231126-01, terakhir diisi pukul/)).toBeTruthy();
+    expect(screen.getByRole("link", { name: "Lanjutkan kabar" }).getAttribute("href")).toBe(
+      `/lapor/report/${open.draftId}`,
+    );
+    view.unmount();
+    draw(page({ me, view: "discardConfirm", profileId: withDraft.profileId }), null);
+    expect(
+      await screen.findByText(
+        "Kabar untuk LA-231126-01 yang belum dikirim akan dihapus. Laporan itu sendiri tidak berubah.",
+      ),
+    ).toBeTruthy();
+  });
+
   test("Laporan saya lists each sent report with its stage and tracking link; Cek status laporan leads there", async () => {
     renderPage(
       <>

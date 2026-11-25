@@ -54,7 +54,7 @@ export type TurnRequest = {
   readonly optionIds: readonly string[];
   readonly values: Readonly<Record<string, string>>;
   readonly text: string;
-  readonly groupId: GroupId | null;
+  readonly groupId: GroupId | "photos" | null;
   readonly villageCode: string | null;
 };
 
@@ -112,7 +112,7 @@ export async function viewOf(
   turnKey: string | null,
   photos?: readonly PhotoRecord[],
 ): Promise<DraftBody> {
-  const ticket = draft.state === "sent" ? await sentDetails(bindings, draft.id) : null;
+  const ticket = draft.state === "sent" && draft.followUpOf === null ? await sentDetails(bindings, draft.id) : null;
   return draftView({
     draft,
     transcript: await transcript(bindings.db, draft.id),
@@ -268,7 +268,7 @@ async function prepare(
     };
   }
   if (request.kind === "editGroup")
-    return { input: { kind: "editGroup", groupId: request.groupId as GroupId }, messages: [] };
+    return { input: { kind: "editGroup", groupId: request.groupId as GroupId | "photos" }, messages: [] };
   return { input: { kind: request.kind }, messages: [] };
 }
 

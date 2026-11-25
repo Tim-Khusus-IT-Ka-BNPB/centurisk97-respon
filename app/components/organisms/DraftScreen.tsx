@@ -28,8 +28,10 @@ function DraftBodyView({ view, quiet }: { readonly view: DraftView; readonly qui
   const now = Date.now();
   return (
     <>
-      <h1 className="sr-only lg:not-sr-only lg:text-section lg:font-bold lg:tracking-[-0.015em]">{t("home.report")}</h1>
-      {isFinalCard(card) ? null : (
+      <h1 className="sr-only lg:not-sr-only lg:text-section lg:font-bold lg:tracking-[-0.015em]">
+        {t(draft.followUpOf === null ? "home.report" : "followUp.title")}
+      </h1>
+      {isFinalCard(card) || draft.followUpOf !== null ? null : (
         <div className="flex items-center gap-3 lg:hidden">
           <ProgressBar percent={draft.completePercent} />
           <p className="shrink-0 text-meta font-semibold text-muted tabular-nums">
@@ -40,9 +42,13 @@ function DraftBodyView({ view, quiet }: { readonly view: DraftView; readonly qui
       <ChatLog transcript={draft.transcript} />
       {resumed ? (
         <Notice kind="info">
-          <p>{t("notice.resumed")}</p>
+          <p>{t(draft.followUpOf === null ? "notice.resumed" : "followUp.resumed")}</p>
           <p className="text-meta text-muted tabular-nums">
-            {t("resume.keptUntil", { time: clockTime(kept), zone: kept.zone, date: longDate(kept) })}
+            {t(draft.followUpOf === null ? "resume.keptUntil" : "card.followUp.keptUntil", {
+              time: clockTime(kept),
+              zone: kept.zone,
+              date: longDate(kept),
+            })}
           </p>
         </Notice>
       ) : null}

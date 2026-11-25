@@ -68,6 +68,7 @@ function draft(state: DraftBody["state"], card: Card, extra: Partial<DraftBody> 
     keptUntil: at("2026-11-24T01:01:00.000Z"),
     canGoBack: true,
     freeTextAllowed: false,
+    followUpOf: null,
     turnKey: null,
     ...extra,
   };
@@ -355,6 +356,19 @@ export const SAMPLE_DRAFTS: Readonly<Record<CardKind, DraftBody>> = {
     { ...card, kind: "cancelled", titleKey: "card.cancelled.title", promptKey: "card.cancelled.body" },
     { canGoBack: false, transcript: [] },
   ),
+  followUpEnded: draft(
+    "sent",
+    {
+      ...card,
+      kind: "followUpEnded",
+      titleKey: "card.followUp.sent.title",
+      promptKey: "card.followUp.sent.body",
+      params: { ticketNumber: "LA-231126-01" },
+      ticketNumber: "LA-231126-01",
+      outcome: "sent",
+    },
+    { canGoBack: false, transcript: [], followUpOf: "LA-231126-01" },
+  ),
 };
 
 export const SAMPLE_STALE_TURN: ErrorEnvelope = {
@@ -388,7 +402,7 @@ export const SAMPLE_ME: MeResponse = {
       maskedNumber: "0800****0001",
       role: "citizen",
       lastUsedAt: at("2026-11-23T01:00:00.000Z"),
-      openDraft: { draftId: DRAFT_ID, hazardType: null, lastActedAt: at("2026-11-23T01:01:00.000Z") },
+      openDraft: { draftId: DRAFT_ID, hazardType: null, lastActedAt: at("2026-11-23T01:01:00.000Z"), followUpOf: null },
     },
   ],
   privacyVersion: 1,

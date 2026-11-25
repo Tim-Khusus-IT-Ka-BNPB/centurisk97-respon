@@ -19,7 +19,11 @@ const turnBody = z.object({
   values: z.record(z.string().max(60), z.string().max(4000)).default({}),
   // Longer than a message may be, so the refusal can say how long it was.
   text: z.string().max(12_000).default(""),
-  groupId: z.enum(GROUP_IDS).nullable().default(null),
+  // A group of the summary, or the photos of news for a sent report.
+  groupId: z
+    .enum([...GROUP_IDS, "photos"])
+    .nullable()
+    .default(null),
   villageCode: z.string().max(20).nullable().default(null),
 });
 
@@ -84,9 +88,9 @@ export function addDraftRoutes(api: Api): void {
       responses: {
         201: jsonResponse("Sent", sentResponseSchema),
         200: jsonResponse("Already sent, the same ticket", sentResponseSchema),
-        409: refusal("The draft changed"),
+        409: refusal("The draft changed, or news for this report is no longer taken"),
         410: refusal("Expired, to its owner"),
-        422: refusal("The turn key was used for another answer"),
+        422: refusal("The turn key was used for another answer, or a follow-up holds nothing new"),
         429: refusal("Send limit"),
         503: refusal("Not sent; nothing was stored"),
       },
@@ -101,6 +105,11 @@ export function addDraftRoutes(api: Api): void {
         body.turnKey,
         await requestHash(body),
       );
+      if (answer.kind === "followUpClosed")
+        return refuse(c, 409, "followUp.closed", {
+          params: { reason: `followUp.closed.${answer.reason}` },
+          draft: answer.draft,
+        });
       if (answer.kind === "failed") return refuse(c, 503, "send.failed", { draft: answer.draft });
       return answered(c, answer);
     },

@@ -22,8 +22,17 @@ const roleKey = (role: Profile["role"]) =>
 
 // "Banjir, terakhir diubah pukul 14.05 WIB." for an open draft.
 export function resumeLine(t: Text, draft: NonNullable<Profile["openDraft"]>): string {
+  const at = { time: clockTime(draft.lastActedAt), zone: draft.lastActedAt.zone };
+  if (draft.followUpOf !== null) return t("resume.followUp.body", { ticketNumber: draft.followUpOf, ...at });
   const hazardType = draft.hazardType ? `hazard.${draft.hazardType}.label` : "resume.noHazardType";
-  return t("resume.body", { hazardType, time: clockTime(draft.lastActedAt), zone: draft.lastActedAt.zone });
+  return t("resume.body", { hazardType, ...at });
+}
+
+// What goes with the draft when a new report is started: a report not sent, or news for a sent one.
+function replaceBody(t: Text, draft: NonNullable<Profile["openDraft"]>): string {
+  if (draft.followUpOf !== null) return t("card.confirm.replaceFollowUp.body", { ticketNumber: draft.followUpOf });
+  const hazardType = draft.hazardType ? `hazard.${draft.hazardType}.label` : "resume.noHazardType";
+  return t("card.confirm.replaceDraft.body", { hazardType });
 }
 
 // The start page at another step, still an emergency when it is one.
@@ -237,11 +246,7 @@ export function StartScreen({ page, acted }: { readonly page: StartPageData; rea
       <Confirm
         id="replace-heading"
         title={t("card.confirm.replaceDraft.title")}
-        body={t("card.confirm.replaceDraft.body", {
-          hazardType: profile.openDraft.hazardType
-            ? `hazard.${profile.openDraft.hazardType}.label`
-            : "resume.noHazardType",
-        })}
+        body={replaceBody(t, profile.openDraft)}
       >
         {view === "discardConfirm" ? (
           <Form method="post" className="flex flex-col">

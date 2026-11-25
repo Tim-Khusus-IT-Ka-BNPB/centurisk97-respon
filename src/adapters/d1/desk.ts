@@ -44,6 +44,8 @@ export type QueueRow = {
   readonly numberUnverified: boolean;
   readonly emergency: { readonly kind: EmergencyKind; readonly victims: VictimAnswer } | null;
   readonly taker: string | null;
+  // The reporter added news that no officer has acted on yet.
+  readonly news: boolean;
 };
 
 type QueueRecord = {
@@ -61,14 +63,21 @@ type QueueRecord = {
   emergency: EmergencyKind | null;
   emergency_victims: VictimAnswer | null;
   taker: string | null;
+  news: number;
 };
 
 // The values shown are the newest version's: a field check's corrections make one.
 const LATEST = sql`(select max(m.version) from report_version m where m.report_id = r.id)`;
 
+// News from the reporter that nothing was done about since: reading a report, or taking a copy of
+// it, is not acting on it.
+const NEWS = sql`exists (select 1 from ticket_history n where n.ticket_number = r.ticket_number and n.event = 'followUp'
+    and not exists (select 1 from staff_action a where a.ticket_number = n.ticket_number and a.at > n.at
+      and a.action not in ('view', 'identityView', 'document', 'documentPack')))`;
+
 const SELECT = sql`select r.ticket_number, t.status, r.hazard_type, r.village_code, r.sent_at, v.fields,
     v.complete_percent, v.reporter_name, v.reporter_role, r.number_unverified, r.emergency, r.emergency_victims,
-    (select k.label from report_taker k where k.ticket_number = r.ticket_number) as taker,
+    (select k.label from report_taker k where k.ticket_number = r.ticket_number) as taker, ${NEWS} as news,
     (select count(*) from draft_photo p where p.draft_id = r.draft_id) as photo_count
   from report r
   join ticket t on t.report_id = r.id
@@ -93,6 +102,7 @@ const HAS: Readonly<Record<DeskHas, Query>> = {
     sql`json_extract(h.fields, '$.housesLight.value') > 0`,
   ),
   photos: sql`exists (select 1 from draft_photo h where h.draft_id = r.draft_id)`,
+  news: NEWS,
 };
 
 const whereAll = (parts: readonly Query[]): Query =>
@@ -122,6 +132,7 @@ const queueRow = (found: QueueRecord): QueueRow => ({
   reporterRole: found.reporter_role,
   numberUnverified: found.number_unverified === 1,
   taker: found.taker,
+  news: found.news === 1,
   emergency:
     found.emergency === null ? null : { kind: found.emergency, victims: found.emergency_victims as VictimAnswer },
 });
@@ -147,12 +158,16 @@ export async function queuePage(
   return { rows: found.map(queueRow), total: (counted as { total: number }).total };
 }
 
-// What a check found and put right, or what was done.
+type HistoryEvent = "fieldCheck" | "actions" | "take" | "followUp";
+
+// What a check found and put right, what was done, or what the reporter added.
 type HistoryDetail = {
   readonly result?: CheckResult;
   readonly changes?: readonly Change[];
   readonly actions?: readonly string[];
   readonly taker?: string;
+  // The version the reporter's news made.
+  readonly version?: number;
 };
 
 export type DeskReportRecord = QueueRow & {
@@ -164,7 +179,7 @@ export type DeskReportRecord = QueueRow & {
     readonly atMs: number;
     readonly actorLabel: string | null;
     readonly note: string | null;
-    readonly event: "fieldCheck" | "actions" | "take" | null;
+    readonly event: HistoryEvent | null;
     readonly detail: HistoryDetail | null;
   }[];
   readonly reporterWords: readonly { readonly text: string; readonly atMs: number }[];
@@ -193,7 +208,7 @@ export async function deskReport(
     db,
     sql`select r.ticket_number, t.status, r.hazard_type, r.village_code, r.sent_at, v.fields,
         v.complete_percent, v.reporter_name, v.reporter_role, r.number_unverified, r.emergency, r.emergency_victims,
-    (select k.label from report_taker k where k.ticket_number = r.ticket_number) as taker, r.draft_id, r.id as report_id, t.revision,
+    (select k.label from report_taker k where k.ticket_number = r.ticket_number) as taker, ${NEWS} as news, r.draft_id, r.id as report_id, t.revision,
         v.reporter_number, v.officer_regency, v.officer_position,
         (select count(*) from draft_photo p where p.draft_id = r.draft_id) as photo_count
       from report r
@@ -208,7 +223,7 @@ export async function deskReport(
       at: string;
       actor_label: string | null;
       note: string | null;
-      event: "fieldCheck" | "actions" | "take" | null;
+      event: HistoryEvent | null;
       detail: string | null;
     }>(
       db,
@@ -217,7 +232,10 @@ export async function deskReport(
     rows<{ text_masked: string; created_at: string }>(
       db,
       sql`select text_masked, created_at from draft_message
-        where draft_id = ${found.draft_id} and speaker = 'reporter' order by seq`,
+        where speaker = 'reporter' and draft_id in (
+          select ${found.draft_id}
+          union all select d.id from report_draft d where d.follow_up_of = ${found.report_id} and d.state = 'sent')
+        order by created_at, draft_id, seq`,
     ),
     rows<{ text: string; staff_label: string; at: string }>(
       db,

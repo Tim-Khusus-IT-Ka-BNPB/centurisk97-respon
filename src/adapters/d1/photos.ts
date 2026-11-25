@@ -1,7 +1,13 @@
 import type { KeptPhoto } from "../../domain/photoChecks";
 import { type Database, type Query, row, rows, sql } from "../../platform/database";
 
-export type PhotoRecord = KeptPhoto & { readonly id: string; readonly storeKey: string; readonly receivedAt: Date };
+export type PhotoRecord = KeptPhoto & {
+  readonly id: string;
+  readonly storeKey: string;
+  readonly receivedAt: Date;
+  // The report's version it came with; 1 until news brings more.
+  readonly version: number;
+};
 
 type PhotoRow = {
   id: string;
@@ -14,6 +20,7 @@ type PhotoRow = {
   taken_at: string;
   time_source: KeptPhoto["timeSource"];
   received_at: string;
+  version: number | null;
 };
 
 const recordOf = (one: PhotoRow): PhotoRecord => ({
@@ -26,9 +33,10 @@ const recordOf = (one: PhotoRow): PhotoRecord => ({
   timeSource: one.time_source,
   far: one.far === 1,
   receivedAt: new Date(one.received_at),
+  version: one.version ?? 1,
 });
 
-const COLUMNS = sql`id, store_key, lat, lon, accuracy_m, badge, far, taken_at, time_source, received_at`;
+const COLUMNS = sql`id, store_key, lat, lon, accuracy_m, badge, far, taken_at, time_source, received_at, version`;
 
 // The photos of a draft in the order they arrived.
 export async function draftPhotos(db: Database, draftId: string): Promise<PhotoRecord[]> {

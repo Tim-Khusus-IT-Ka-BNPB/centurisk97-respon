@@ -7,14 +7,21 @@ import { localDate, type Zone } from "../domain/eventTime";
 import type { FieldState } from "../domain/fieldState";
 import { chosenHazardType } from "../domain/fields/applicable";
 import { type FieldId, fieldById } from "../domain/fields/catalogue";
+import { isLocked, newsOf, withNews } from "../domain/followUp";
 import type { HazardTypeId } from "../domain/hazards";
 import { LENGTHS } from "../domain/limits";
 import type { KeptPhoto } from "../domain/photoChecks";
-import { PHOTO } from "../domain/photoChecks";
 import { DAY_MS, MINUTE_MS } from "../domain/time";
-import type { AskedCounts, DraftContent, PlaceReading, Question } from "../domain/turn/content";
+import {
+  type AskedCounts,
+  type DraftContent,
+  type FollowUpOf,
+  type PlaceReading,
+  photoMax,
+  type Question,
+} from "../domain/turn/content";
 import { choiceOptions, isExclusiveOption } from "../domain/turn/options";
-import { chronologyRow, summaryGroups } from "./summary";
+import { allGroups, changeRows, chronologyRow, summaryGroups } from "./summary";
 
 type CardField = Extract<Card, { kind: "numberForm" }>["fields"][number];
 type CardOption = Extract<Card, { kind: "choice" }>["options"][number];
@@ -196,14 +203,15 @@ function placeConfirmCard(base: CardBase, reading: PlaceReading): Card {
   };
 }
 
-function photosCard(base: CardBase, context: CardContext): Card {
+function photosCard(base: CardBase, content: DraftContent, context: CardContext): Card {
   const count = context.photos.length;
+  const max = photoMax(content);
   return {
     ...base,
     kind: "photos",
     titleKey: "card.photos.title",
     promptKey: "card.photos.prompt",
-    params: { count, max: PHOTO.maxPerDraft },
+    params: { count, max },
     photos: context.photos.map((photo) => ({
       photoId: photo.id,
       badge: photo.badge,
@@ -213,12 +221,41 @@ function photosCard(base: CardBase, context: CardContext): Card {
       point: photo.point,
       accuracyM: photo.accuracyM,
     })),
-    max: PHOTO.maxPerDraft,
+    max,
     options: [
       count > 0
         ? option("continue", "card.photos.continue", null)
         : option("cannotSend", "card.photos.cannotSend", null),
     ],
+  };
+}
+
+// The review of news for a sent report: what it would change, and what the report holds.
+function followUpCard(base: CardBase, content: DraftContent, followUp: FollowUpOf, context: CardContext): Card {
+  const news = newsOf(followUp.base, content.states);
+  return {
+    ...base,
+    kind: "summary",
+    titleKey: "card.followUp.title",
+    promptKey: "card.followUp.prompt",
+    params: { ticketNumber: followUp.ticketNumber },
+    reporter: context.reporter,
+    // What news may change: what the report is about stays, so it is not listed.
+    groups: allGroups(content.states).map((group) => ({
+      ...group,
+      rows: group.rows.filter((row) => !isLocked(followUp.base, row.fieldId as FieldId)),
+    })),
+    emergency: null,
+    photos: {
+      count: context.photos.length,
+      withPlace: context.photos.filter((photo) => photo.point !== null).length,
+    },
+    followUp: {
+      ticketNumber: followUp.ticketNumber,
+      hazardType: chosenHazardType(content.states),
+      changes: changeRows(followUp.base, withNews(followUp.base, news)),
+      mayAddPhotos: context.photos.length < followUp.photosLeft,
+    },
   };
 }
 
@@ -230,7 +267,7 @@ export function cardFor(question: Question, content: DraftContent, context: Card
     case "placeConfirm":
       return placeConfirmCard(base, content.placeReading as PlaceReading);
     case "photos":
-      return photosCard(base, context);
+      return photosCard(base, content, context);
     case "place":
       return {
         ...base,
@@ -318,6 +355,7 @@ export function cardFor(question: Question, content: DraftContent, context: Card
       };
     }
     case "summary":
+      if (content.followUp) return followUpCard(base, content, content.followUp, context);
       return {
         ...base,
         kind: "summary",
@@ -336,9 +374,18 @@ export function cardFor(question: Question, content: DraftContent, context: Card
       return {
         ...base,
         kind: "confirm",
-        titleKey: "card.confirm.cancelDraft.title",
-        promptKey: "card.confirm.cancelDraft.body",
-        confirmId: "cancelDraft",
+        ...(content.followUp
+          ? {
+              titleKey: "card.confirm.cancelFollowUp.title",
+              promptKey: "card.confirm.cancelFollowUp.body",
+              params: { ticketNumber: content.followUp.ticketNumber },
+              confirmId: "cancelFollowUp",
+            }
+          : {
+              titleKey: "card.confirm.cancelDraft.title",
+              promptKey: "card.confirm.cancelDraft.body",
+              confirmId: "cancelDraft",
+            }),
       };
   }
 }

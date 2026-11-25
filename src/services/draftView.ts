@@ -46,7 +46,19 @@ type ViewInput = {
   readonly photos: readonly PhotoRecord[];
 };
 
-function endedCard(ticket: SentTicket | null, cardId: string): Card {
+function endedCard(draft: DraftRecord, ticket: SentTicket | null, cardId: string): Card {
+  if (draft.followUpOf !== null) {
+    const outcome = draft.state === "sent" ? "sent" : "cancelled";
+    return {
+      cardId,
+      kind: "followUpEnded",
+      titleKey: `card.followUp.${outcome}.title`,
+      promptKey: `card.followUp.${outcome}.body`,
+      params: { ticketNumber: draft.followUpOf },
+      ticketNumber: draft.followUpOf,
+      outcome,
+    };
+  }
   if (ticket)
     return {
       cardId,
@@ -73,7 +85,7 @@ export function draftView(input: ViewInput): DraftBody {
   const cardId = `c-${draft.revision}`;
   const percent = completePercent(content.states);
   const card = final
-    ? endedCard(input.ticket, cardId)
+    ? endedCard(draft, input.ticket, cardId)
     : cardFor(currentQuestion({ state: draft.state, content, asked: draft.asked }), content, {
         cardId,
         nowMs: input.nowMs,
@@ -106,6 +118,7 @@ export function draftView(input: ViewInput): DraftBody {
     keptUntil: at(draft.lastActedAt.getTime() + DRAFT_LIFE_MS, zone),
     canGoBack: !final && (draft.backStack.length > 0 || content.overlay !== null),
     freeTextAllowed: !final,
+    followUpOf: draft.followUpOf,
     turnKey: input.turnKey,
   };
 }

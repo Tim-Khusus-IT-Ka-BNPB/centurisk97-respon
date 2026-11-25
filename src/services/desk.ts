@@ -93,6 +93,7 @@ function queueItem(staff: StaffPrincipal, found: QueueRow): DeskQueue["items"][n
     numberUnverified: found.numberUnverified,
     emergency: found.emergency,
     taker: found.taker,
+    news: found.news,
     impact: impactOf(found.states),
   };
 }

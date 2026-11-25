@@ -17,12 +17,13 @@ import { ownedReport } from "./tracking";
 // it is made. The document says how many it left out.
 const PHOTO_BYTES = 12 * 1024 * 1024;
 
-type Photos = { readonly photos: readonly DocumentPhoto[]; readonly left: number };
+type Photos = { readonly photos: readonly DocumentPhoto[]; readonly left: number; readonly added: number };
 
-async function photosOf(bindings: ServiceBindings, draftId: string, zone: Zone): Promise<Photos> {
+// The photos a version holds: its own and those that came before it.
+async function photosOf(bindings: ServiceBindings, draftId: string, version: number, zone: Zone): Promise<Photos> {
   const photos: DocumentPhoto[] = [];
   let bytes = 0;
-  const kept = await draftPhotos(bindings.db, draftId);
+  const kept = (await draftPhotos(bindings.db, draftId)).filter((photo) => photo.version <= version);
   for (const photo of kept) {
     const file = await bindings.photos.get(photo.storeKey);
     const picture = file === null ? null : pictureOf(file);
@@ -30,7 +31,8 @@ async function photosOf(bindings: ServiceBindings, draftId: string, zone: Zone):
     bytes += picture.bytes.length;
     photos.push({ picture, badge: photo.badge, far: photo.far, takenAt: at(photo.takenAtMs, zone) });
   }
-  return { photos, left: kept.length - photos.length };
+  const added = kept.filter((photo) => photo.version === version).length;
+  return { photos, left: kept.length - photos.length, added };
 }
 
 // One version of a report as a document, or null when there is no such version.
@@ -44,7 +46,7 @@ async function documentFor(
   if (found === null) return null;
   const before = version === 1 ? null : await versionDetail(bindings.db, ticketNumber, version - 1);
   const zone = draftZone(found.villageCode);
-  const { photos, left } = await photosOf(bindings, found.draftId, zone);
+  const { photos, left, added } = await photosOf(bindings, found.draftId, version, zone);
   return documentOf({
     ticketNumber,
     version,
@@ -54,7 +56,7 @@ async function documentFor(
     change:
       before === null
         ? null
-        : { before: before.states, madeBy: found.madeBy, note: forStaff ? found.note : null, newPhotos: 0 },
+        : { before: before.states, madeBy: found.madeBy, note: forStaff ? found.note : null, newPhotos: added },
     reporterRole: found.reporterRole,
     officerRegency: found.officerRegency,
     numberUnverified: found.numberUnverified,

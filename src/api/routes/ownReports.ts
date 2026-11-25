@@ -1,7 +1,8 @@
 import { createRoute, z } from "@hono/zod-openapi";
-import { ownReportDetailSchema } from "../../contract/ownReport";
+import { followUpSchema, ownReportDetailSchema } from "../../contract/ownReport";
 import { DOCUMENT_FORMATS } from "../../domain/document";
 import { ownDocument } from "../../services/documents";
+import { startFollowUp } from "../../services/followUp";
 import { readOwnReport } from "../../services/ownReport";
 import { ownProof } from "../../services/tracking";
 import { refuse } from "../envelope";
@@ -29,6 +30,36 @@ export function addOwnReportRoutes(api: Api): void {
       if (answer.kind === "notFound") return refuse(c, 404, "report.notFound");
       c.header("x-robots-tag", "noindex");
       return c.json(answer.body, 200);
+    },
+  );
+
+  addRoute(
+    api,
+    "reporter",
+    createRoute({
+      method: "post",
+      path: "/reports/{ticketNumber}/follow-ups",
+      request: { params },
+      responses: {
+        201: jsonResponse("A draft of news for this report, new or the one already open", followUpSchema),
+        409: refusal("News is no longer taken, or a report being written must be finished first"),
+        429: refusal("Too many from this number"),
+      },
+    }),
+    async (c) => {
+      const answer = await startFollowUp(c.env, c.var.principal, c.req.valid("param").ticketNumber);
+      switch (answer.kind) {
+        case "draft":
+          return c.json({ draftId: answer.draftId }, 201);
+        case "notFound":
+          return refuse(c, 404, "report.notFound");
+        case "limit":
+          return limitRefused(c, answer.refusal, null);
+        case "openExists":
+          return refuse(c, 409, "followUp.finishFirst", { params: { draftId: answer.draftId } });
+        default:
+          return refuse(c, 409, "followUp.closed", { params: { reason: `followUp.closed.${answer.reason}` } });
+      }
     },
   );
 

@@ -29,6 +29,7 @@ export const CARD_KINDS = [
   "confirm",
   "sent",
   "cancelled",
+  "followUpEnded",
 ] as const;
 export type CardKind = (typeof CARD_KINDS)[number];
 
@@ -149,6 +150,13 @@ export const summaryGroupSchema = z.object({
   ),
 });
 
+// A value that says something else than before; one never reached is null.
+export const valueChangeSchema = z.object({
+  fieldId: z.string(),
+  from: summaryGroupSchema.shape.rows.element.nullable(),
+  to: summaryGroupSchema.shape.rows.element.nullable(),
+});
+
 const base = {
   // Changes every revision, so an answer to an old card is recognised as stale.
   cardId: z.string(),
@@ -236,11 +244,22 @@ export const cardSchema = z.discriminatedUnion("kind", [
       .optional(),
     groups: z.array(summaryGroupSchema),
     photos: z.object({ count: z.number().int().nonnegative(), withPlace: z.number().int().nonnegative() }),
+    // News for a sent report: which one, what it would change, and whether it may add photos.
+    followUp: z
+      .object({
+        ticketNumber: z.string(),
+        // The report's hazard, which words some labels; null while it is not known.
+        hazardType: hazardTypeSchema.nullable(),
+        changes: z.array(valueChangeSchema),
+        mayAddPhotos: z.boolean(),
+      })
+      .nullable()
+      .optional(),
   }),
   z.object({
     ...base,
     kind: z.literal("confirm"),
-    confirmId: z.enum(["cancelDraft", "replaceDraft", "removeProfile", "declineConsent"]),
+    confirmId: z.enum(["cancelDraft", "cancelFollowUp", "replaceDraft", "removeProfile", "declineConsent"]),
   }),
   z.object({
     ...base,
@@ -256,6 +275,13 @@ export const cardSchema = z.discriminatedUnion("kind", [
     tracking: trackingSchema,
   }),
   z.object({ ...base, kind: z.literal("cancelled") }),
+  // News for a sent report that is sent or dropped; the report itself is as it was.
+  z.object({
+    ...base,
+    kind: z.literal("followUpEnded"),
+    ticketNumber: z.string(),
+    outcome: z.enum(["sent", "cancelled"]),
+  }),
 ]);
 
 export type Card = z.infer<typeof cardSchema>;

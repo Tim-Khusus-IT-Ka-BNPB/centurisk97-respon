@@ -1,0 +1,18 @@
+{
+  "followUp.title": "Tambah kabar",
+  "followUp.lead": "Ada perkembangan? Kabar Anda menjadi versi baru laporan ini, sampai {date}, pukul {time} {zone}.",
+  "followUp.start": "Tambah kabar",
+  "followUp.busy": "Membuka...",
+  "followUp.closed.title": "Kabar tidak bisa ditambah lagi",
+  "followUp.closed.tooLate": "Kabar bisa ditambah sampai 72 jam sejak laporan terkirim. Untuk kejadian baru, buat laporan baru.",
+  "followUp.closed.ended": "Laporan ini sudah ditutup petugas. Untuk kejadian baru, buat laporan baru.",
+  "followUp.closed.tooMany": "Laporan ini sudah punya 10 versi, jumlah paling banyak. Untuk kejadian baru, buat laporan baru.",
+  "followUp.closed.noProfile": "Nomor yang dipakai melapor sudah dihapus dari perangkat ini. Daftarkan lagi nomor itu, lalu tambah kabar.",
+  "followUp.newReport": "Buat laporan baru",
+  "followUp.finish": "Buka laporan yang belum selesai",
+  "followUp.saved.sent": "Kabar terkirim. Laporan ini sekarang versi {version}.",
+  "followUp.saved.cancelled": "Kabar dibatalkan. Laporan ini tidak berubah.",
+  "followUp.resumed": "Kabar dilanjutkan dari jawaban terakhir Anda.",
+  "followUp.aside": "Kabar untuk {ticketNumber}",
+  "followUp.asideLead": "Jenis bencana, lokasi, dan waktu kejadian tidak berubah."
+}

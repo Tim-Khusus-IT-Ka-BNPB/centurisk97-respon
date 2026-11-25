@@ -241,6 +241,7 @@ export async function knownReporters(bindings: ServiceBindings, principal: Princ
           : {
               draftId: row.draft_id,
               hazardType: row.draft_hazard_type,
+              followUpOf: row.draft_follow_up_of,
               lastActedAt: shownAt(row.draft_last_acted_at as Date, draftZone(row.draft_village_code)),
             },
     })),

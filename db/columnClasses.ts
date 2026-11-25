@@ -79,6 +79,7 @@ export const COLUMN_CLASSES: Readonly<Record<string, TableClasses>> = {
       ended_at: I,
       end_reason: I,
       pending_notices: I,
+      follow_up_of: I,
     },
   },
   draft_message: {
@@ -281,6 +282,7 @@ export const COLUMN_CLASSES: Readonly<Record<string, TableClasses>> = {
       taken_at: P,
       time_source: I,
       received_at: I,
+      version: I,
     },
   },
   report_rating: {

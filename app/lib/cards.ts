@@ -2,7 +2,8 @@ import type { Card } from "../../src/contract/card";
 import type { DraftBody } from "../../src/contract/draft";
 
 // A sent or cancelled draft takes no more answers: no message box, no live card form.
-export const isFinalCard = (card: Card) => card.kind === "sent" || card.kind === "cancelled";
+export const isFinalCard = (card: Card) =>
+  card.kind === "sent" || card.kind === "cancelled" || card.kind === "followUpEnded";
 
 // Which page-level notices of the read to draw. A read after a refused post or inside a search
 // is no resume, so it shows neither the resumed notice nor its 112 line; the summary draws its

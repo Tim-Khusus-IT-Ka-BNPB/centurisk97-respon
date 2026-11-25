@@ -28,6 +28,19 @@ export async function loadOwnReport(ticketNumber: string, api: ApiCall): Promise
   };
 }
 
+export type OwnReportActed =
+  | { readonly kind: "redirect"; readonly location: string }
+  | { readonly kind: "render"; readonly status: number; readonly envelope: ErrorEnvelope };
+
+// POST /lapor/reports/<ticket>: "Tambah kabar" opens its draft.
+export async function actOnOwnReport(ticketNumber: string, api: ApiCall): Promise<OwnReportActed> {
+  const response = await api("POST", `/reports/${encodeURIComponent(ticketNumber)}/follow-ups`);
+  if (!response.ok)
+    return { kind: "render", status: response.status, envelope: (await response.json()) as ErrorEnvelope };
+  const { draftId } = (await response.json()) as { draftId: string };
+  return { kind: "redirect", location: `/lapor/report/${draftId}` };
+}
+
 const FILE_NAME = /^v(\d{1,3})\.(pdf|docx)$/;
 
 // A document as the API sends it, or the page to go back to when it was refused.
