@@ -37,7 +37,7 @@ export function EmergencyPanel({ known = false }: { readonly known?: boolean }) 
         <p className="text-muted">{t("about.emergency.body")}</p>
       </div>
       <CallRow number={t("about.emergency.112")} label={t("about.emergency.112Label")} first />
-      <CallRow number={t("home.contact.callCenter")} label={`${t("home.contact.callCenterLabel")} BNPB`} />
+      <CallRow number={t("about.emergency.117")} label={t("about.emergency.117Label")} />
       {known ? (
         <Link to="/lapor/darurat?ketuk=1" className={buttonStyles({ variant: "danger", size: "main" })}>
           <Icon name="mapPin" className="size-5" />
