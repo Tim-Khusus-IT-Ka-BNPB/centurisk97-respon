@@ -25,6 +25,14 @@ export type Settings = {
   readonly secret: string;
 };
 
+type News = {
+  readonly id: string;
+  readonly wa: string;
+  readonly teks: string;
+  readonly url: string | null;
+  readonly nomor: string;
+};
+
 const DOWN = "Layanan lapor sedang gangguan, coba lagi beberapa menit lagi.";
 const OWN_NUMBERS = /^62800\d{6,10}$/;
 
@@ -118,7 +126,34 @@ export function createGateway(settings: Settings) {
       return answer(number, "/api/lapor/pesan", { wa: number, saluran: "wa", teks: caption });
     });
 
-  return { chats, files, calls, call, keep, keepFile, inTurn, say, share, photo };
+  // One document of news, read with a signature of our own.
+  async function document(url: string, ticket: string): Promise<string | null> {
+    const { origin, pathname, search } = new URL(url);
+    if (origin !== new URL(settings.app).origin) return null;
+    const response = await call("GET", `${pathname}${search}`);
+    if (!response.ok) return null;
+    const bytes = new Uint8Array(await response.arrayBuffer());
+    return keepFile({ bytes, mime: "application/pdf", name: `Laporan ${ticket}.pdf` });
+  }
+
+  // Sends what waits and marks each as sent, as the gateway does every minute.
+  async function pull(): Promise<number> {
+    const response = await call("GET", "/api/lapor/kabar");
+    if (!response.ok) return 0;
+    const { kabar } = (await response.json()) as { kabar: News[] };
+    let sent = 0;
+    for (const news of kabar) {
+      const file = news.url === null ? undefined : ((await document(news.url, news.nomor)) ?? undefined);
+      if (news.url !== null && file === undefined) continue;
+      const kind = file === undefined ? "text" : "document";
+      keep(news.wa, { from: "service", kind, text: news.teks, ...(file === undefined ? {} : { file }) });
+      await call("POST", `/api/lapor/kabar/${encodeURIComponent(news.id)}/terkirim`, {});
+      sent += 1;
+    }
+    return sent;
+  }
+
+  return { chats, files, calls, say, share, photo, pull };
 }
 
 export type Gateway = ReturnType<typeof createGateway>;

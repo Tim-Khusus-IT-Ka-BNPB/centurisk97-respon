@@ -33,7 +33,7 @@ function bubble(entry) {
         className: "document",
         href: entry.file,
         target: "_blank",
-        textContent: entry.name ?? "Document",
+        textContent: "Open the document (PDF)",
       }),
     );
   if (entry.kind === "location") item.append("Location shared\n");

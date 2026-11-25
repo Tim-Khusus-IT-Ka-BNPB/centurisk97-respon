@@ -12,6 +12,8 @@ function required(name: string): string {
   return value;
 }
 
+// Set to 0 to pull only when POST /api/pull asks.
+const PULL_MS = Number(process.env.TEST_GATEWAY_PULL_MS ?? "5000");
 const port = Number(process.env.TEST_GATEWAY_PORT ?? "8791");
 const gateway = createGateway({
   app: process.env.TEST_GATEWAY_APP ?? "http://localhost:5173",
@@ -79,6 +81,7 @@ async function route(request: IncomingMessage, response: ServerResponse) {
   if (request.method === "POST" && !/^application\/json/.test(request.headers["content-type"] ?? ""))
     return json(response, 415, {});
   if (request.method === "POST" && pathname === "/api/send") return send(request, response);
+  if (request.method === "POST" && pathname === "/api/pull") return json(response, 200, { sent: await gateway.pull() });
   json(response, 404, {});
 }
 
@@ -86,8 +89,14 @@ const server = createServer((request, response) => {
   route(request, response).catch(() => json(response, 500, {}));
 });
 
+// The real gateway comes once a minute; a walk need not wait that long.
+const pulling = PULL_MS > 0 ? setInterval(() => void gateway.pull().catch(() => 0), PULL_MS) : undefined;
+
 server.listen(port, "127.0.0.1", () => console.log(`test gateway listening on http://127.0.0.1:${port}`));
 
 for (const signal of ["SIGINT", "SIGTERM"] as const) {
-  process.on(signal, () => server.close(() => process.exit(0)));
+  process.on(signal, () => {
+    clearInterval(pulling);
+    server.close(() => process.exit(0));
+  });
 }
