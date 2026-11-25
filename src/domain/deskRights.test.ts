@@ -1,7 +1,7 @@
 import { describe, expect, test } from "vitest";
 import { type DeskCapability, mayUse } from "./deskRights";
 
-const ALL: readonly DeskCapability[] = ["readQueue", "readReport", "markSeen"];
+const ALL: readonly DeskCapability[] = ["readQueue", "readReport", "markSeen", "moveTicket", "reply"];
 
 describe("desk capabilities", () => {
   test.each(ALL)("a desk officer may %s", (capability) => {

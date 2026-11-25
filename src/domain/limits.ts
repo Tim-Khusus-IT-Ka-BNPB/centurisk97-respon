@@ -56,6 +56,9 @@ export const LENGTHS = {
   placeNames: { max: 300 },
   otherNeed: { max: 120 },
   placeQuery: { min: 3, max: 60 },
+  // A desk note or reply, and the reason a report is set aside, in characters.
+  staffText: { max: 1000 },
+  staffReason: { min: 5 },
 } as const;
 
 // "kembali" goes back at most this many steps.

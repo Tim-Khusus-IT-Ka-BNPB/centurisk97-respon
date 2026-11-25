@@ -144,5 +144,11 @@ exports[`limits table > rows as agreed 2`] = `
     "max": 60,
     "min": 3,
   },
+  "staffReason": {
+    "min": 5,
+  },
+  "staffText": {
+    "max": 1000,
+  },
 }
 `;
