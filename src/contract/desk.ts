@@ -188,7 +188,28 @@ export const deskReportSchema = queueItemSchema.extend({
   offeredActions: z.array(z.object({ code: z.string(), label: z.string() })),
   actions: z.array(z.object({ label: z.string(), at: timeSchema, actor: z.string() })),
   proofs: z.array(z.object({ proofId: z.string(), hasPoint: z.boolean(), at: timeSchema, actor: z.string() })),
-  replies: z.array(z.object({ text: z.string(), at: timeSchema, actor: z.string() })),
+  replies: z.array(
+    z.object({
+      text: z.string(),
+      at: timeSchema,
+      actor: z.string(),
+      // Where it is on its way to the reporter's chat; null when it does not go there.
+      chat: z
+        .discriminatedUnion("state", [
+          z.object({ state: z.literal("sent"), at: timeSchema }),
+          z.object({ state: z.literal("waiting") }),
+        ])
+        .nullable(),
+    }),
+  ),
+  // What of this report reaches its reporter's chat; null when it did not come through one.
+  chatNews: z
+    .object({
+      wanted: z.boolean(),
+      waiting: z.number().int().nonnegative(),
+      lastSentAt: timeSchema.nullable(),
+    })
+    .nullable(),
   photos: z.array(deskPhotoSchema),
   // The reporter stopped the news: a reply stays readable on their page but is not marked new.
   newsStopped: z.boolean(),

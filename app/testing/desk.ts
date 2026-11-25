@@ -147,6 +147,7 @@ export const REPORT: DeskReport = {
   actions: [],
   proofs: [],
   replies: [],
+  chatNews: null,
   newsStopped: false,
   versions: [
     {
