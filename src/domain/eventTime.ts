@@ -121,7 +121,8 @@ function writtenDate(text: string): { date: string; matched: string } | null {
   return { date: `${year}-${pad(Number(numeric[2]))}-${pad(Number(numeric[1]))}`, matched: numeric[0] };
 }
 
-function clockHour(text: string): string | null {
+// The hour told in folded words: "14.30", "jam 5 sore". Null when none is.
+export function readClock(text: string): string | null {
   const clock = CLOCK.exec(text);
   const spoken = clock ? null : SPOKEN_HOUR.exec(text);
   if (!clock && !spoken) return null;
@@ -144,7 +145,7 @@ export function parseEventTimeText(text: string, nowMs: number, zone: Zone): Par
   const relative = explicit ? null : relativeDay(words, todayLocal, localHour);
   if (!explicit && relative === null) return { error: "dateRequired" };
   const date = explicit ? explicit.date : new Date(relative as number).toISOString().slice(0, 10);
-  const time = clockHour(explicit ? words.replace(explicit.matched, " ") : words);
+  const time = readClock(explicit ? words.replace(explicit.matched, " ") : words);
   const value: EventTimeValue =
     time === null
       ? { kind: "dateOnly", localDate: date, zone }
