@@ -15,9 +15,8 @@ const styles = cva(
         link: "px-2 text-primary hover:bg-selected",
         quietDanger: "text-danger hover:bg-danger-tint",
         signal: "bg-signal text-on-signal hover:bg-signal-deep",
-        accent:
-          "bg-accent text-on-accent shadow-[0_2px_8px_oklch(0%_0_0/0.18)] hover:bg-[color-mix(in_oklab,var(--accent),white_16%)]",
-        onHero: "border border-on-hero-muted/60 text-on-hero hover:bg-[oklch(100%_0_0/0.08)]",
+        accent: "bg-accent text-on-accent shadow-card hover:bg-[color-mix(in_oklab,var(--accent),white_16%)]",
+        onHero: "border border-on-hero-muted/60 text-on-hero hover:bg-on-hero/8",
       },
       size: { default: "min-h-target", main: "min-h-target-main", min: "min-h-target-min" },
     },

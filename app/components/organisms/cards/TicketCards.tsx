@@ -166,7 +166,7 @@ function ThankYou({ card }: { readonly card: SentCardData }) {
           <h2 id="thanks-title" ref={heading} tabIndex={-1} className="text-display font-bold text-balance">
             {t("card.sent.thanks.title", { firstName: card.firstName })}
           </h2>
-          <span className="my-2 flex w-full max-w-xs flex-col gap-1 rounded-card border border-on-hero-muted/30 bg-[oklch(100%_0_0/0.06)] px-6 py-4">
+          <span className="my-2 flex w-full max-w-xs flex-col gap-1 rounded-card border border-on-hero-muted/30 bg-on-hero/6 px-6 py-4">
             <span className="text-on-hero-muted">{t("card.sent.thanks.ticket")}</span>
             <span className="text-ticket font-bold tabular-nums">{card.ticketNumber}</span>
           </span>
@@ -189,7 +189,7 @@ function RateButton({ n }: { readonly n: number }) {
       aria-label={t("card.sent.rate.choice", { n })}
       aria-disabled={busy ? true : undefined}
       onClick={(event) => busy && event.preventDefault()}
-      className="flex min-h-target-main min-w-0 items-center justify-center rounded-control border-2 border-on-hero-muted/60 text-card font-bold tabular-nums hover:bg-[oklch(100%_0_0/0.12)]"
+      className="flex min-h-target-main min-w-0 items-center justify-center rounded-control border-2 border-on-hero-muted/60 text-card font-bold tabular-nums hover:bg-on-hero/12"
     >
       {n}
     </button>

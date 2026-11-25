@@ -70,7 +70,10 @@ function EducationGroup({ education }: { readonly education: Education | null })
           <details key={topic.id} className="group border-t border-line first:border-t-0">
             <summary className="flex min-h-target-main list-none items-center justify-between gap-4 px-5 py-3 font-semibold hover:bg-sunken/60 [&::-webkit-details-marker]:hidden">
               {topic.title}
-              <Icon name="chevronRight" className="text-muted transition-transform group-open:rotate-90" />
+              <Icon
+                name="chevronRight"
+                className="text-muted transition-transform motion-reduce:transition-none group-open:rotate-90"
+              />
             </summary>
             <div className="flex flex-col gap-4 px-5 pb-5">
               <p>{topic.summary}</p>
@@ -131,7 +134,10 @@ export function HelpScreen({ education }: { readonly education: Education | null
                 <details key={item} className="group border-t border-line first:border-t-0">
                   <summary className="flex min-h-target-main list-none items-center justify-between gap-4 px-5 py-3 font-semibold hover:bg-sunken/60 [&::-webkit-details-marker]:hidden">
                     {t(`help.${group}.${item}.q`)}
-                    <Icon name="chevronRight" className="text-muted transition-transform group-open:rotate-90" />
+                    <Icon
+                      name="chevronRight"
+                      className="text-muted transition-transform motion-reduce:transition-none group-open:rotate-90"
+                    />
                   </summary>
                   <p className="max-w-[65ch] px-5 pb-5 text-muted">{t(`help.${group}.${item}.a`)}</p>
                 </details>
