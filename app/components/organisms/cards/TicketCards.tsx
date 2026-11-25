@@ -248,7 +248,10 @@ export function TicketCard({ card }: { readonly card: SentCardData }) {
             </p>
           )}
         </section>
-        <a href={link} className={buttonStyles({ variant: "primary", size: "main" })}>
+        <Link to={`/lapor/reports/${card.ticketNumber}`} className={buttonStyles({ variant: "primary", size: "main" })}>
+          {t("card.sent.open")}
+        </Link>
+        <a href={link} className={buttonStyles({ variant: "secondary", size: "main" })}>
           {t("card.sent.track")}
         </a>
         <ContactBlock contact={card.tracking.contact} />

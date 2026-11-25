@@ -9,7 +9,6 @@ import { Icon } from "../atoms/Icon";
 import { ActionRow } from "../molecules/layout";
 import { Notice } from "../molecules/Notice";
 import { ContactSection } from "./ContactSection";
-import { trackingPath } from "./cards/TicketCards";
 import { HowToReport } from "./HowToReport";
 import { resumeLine } from "./StartScreen";
 
@@ -40,13 +39,13 @@ function Resume({ profile }: { readonly profile: MeResponse["knownReporters"][nu
 
 type OwnReport = MeResponse["reports"][number];
 
-// The whole row leads to the report's tracking page.
+// The whole row leads to the report's own page.
 function ReportRow({ report }: { readonly report: OwnReport }) {
   const t = useText();
   return (
     <li className="border-t border-line first:border-t-0">
-      <a
-        href={trackingPath(report.trackingToken)}
+      <Link
+        to={`/lapor/reports/${report.ticketNumber}`}
         className="group flex min-h-target-main items-center gap-4 px-4 py-3 text-ink no-underline hover:bg-sunken md:px-5"
       >
         <span className="flex size-10 shrink-0 items-center justify-center rounded-control bg-selected text-primary">
@@ -70,7 +69,7 @@ function ReportRow({ report }: { readonly report: OwnReport }) {
         </span>
         <span className="text-meta font-semibold text-primary max-sm:sr-only">{t("home.reports.open")}</span>
         <Icon name="chevronRight" className="size-5 text-muted" />
-      </a>
+      </Link>
     </li>
   );
 }

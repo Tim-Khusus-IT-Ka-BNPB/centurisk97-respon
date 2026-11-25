@@ -1,5 +1,5 @@
 import { copy } from "../../src/copy";
-import type { Texts } from "./text";
+import type { Texts } from "../../src/copy/text";
 
 // Every page needs the shell's words; each page adds the namespaces it draws from.
 const SHELL = [
@@ -81,12 +81,32 @@ export const PAGE_TEXTS = {
     "card.sent.contact.",
     "error.network.lost",
   ],
+  ownReport: [
+    ...SHELL,
+    "ownReport.",
+    "version.",
+    "tracking.",
+    "stage.",
+    "hazard.",
+    "hazardSubtype.",
+    "card.sent.contactPromise",
+    "card.sent.contact.",
+    "field.",
+    "option.",
+    "state.",
+    "unit.",
+    "value.",
+    "card.placeSearch.rowVillage",
+    "card.placeSearch.rowPlace",
+    "card.placeConfirm.",
+  ],
   about: [...SHELL, "about."],
   privacy: [...SHELL, "privacy."],
   notFound: [...SHELL, "notFound."],
   desk: [
     ...SHELL,
     "desk.",
+    "version.",
     "stage.",
     "hazard.",
     "hazardSubtype.",

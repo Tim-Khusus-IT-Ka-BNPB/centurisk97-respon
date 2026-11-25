@@ -144,6 +144,7 @@
   "card.sent.qr": "Kode QR lacak laporan {ticketNumber}",
   "card.sent.qrHint": "Pindai kode ini untuk membuka halaman lacak di ponsel lain.",
   "card.sent.stages": "Tahap penanganan",
+  "card.sent.open": "Buka laporan dan dokumennya",
   "card.sent.track": "Lacak laporan",
   "card.sent.contact.title": "Hubungi BPBD setempat",
   "card.sent.contact.regency": "BPBD {name}",

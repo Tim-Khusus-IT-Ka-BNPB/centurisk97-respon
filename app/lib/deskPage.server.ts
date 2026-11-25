@@ -11,6 +11,7 @@ import type {
 import type { ErrorEnvelope } from "../../src/contract/errors";
 import type { Texts } from "../../src/copy/text";
 import { DESK_VIEWS, type DeskFilters, type DeskShown, type DeskTyped, type DeskView } from "./deskTypes";
+import { documentOrBack } from "./ownReportPage.server";
 import { PAGE_TEXTS, pickTexts } from "./texts.server";
 
 // What a desk page shows when its read is refused: sign in, not this account, or a notice.
@@ -239,4 +240,11 @@ export async function actOnDeskReport(ticketNumber: string, form: FormData, api:
   }
   if (path === "identity") return { kind: "identity", identity: (await response.json()) as DeskIdentity };
   return redirectTo(`/lapor/meja/${ticket}${path === "view" ? "" : `?saved=${path}`}`, response);
+}
+
+// POST /lapor/meja/<ticket>/documents: a version as a file.
+export async function downloadDeskDocument(ticketNumber: string, form: FormData, api: ApiCall): Promise<Response> {
+  const ticket = encodeURIComponent(ticketNumber);
+  const body = { version: formText(form, "version"), format: formText(form, "format") };
+  return documentOrBack(await api("POST", `/desk/reports/${ticket}/documents`, body), `/lapor/meja/${ticket}`);
 }

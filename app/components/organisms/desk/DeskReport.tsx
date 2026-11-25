@@ -11,6 +11,7 @@ import { Button, buttonStyles } from "../../atoms/Button";
 import { Icon } from "../../atoms/Icon";
 import { Notice } from "../../molecules/Notice";
 import { DeskMapCanvas, SMALL } from "../DeskMapCanvas";
+import { FileButtons, VersionList } from "../VersionList";
 import { DeskActions } from "./DeskActions";
 import { DeskHistory } from "./DeskHistory";
 import { Hazard, PhotoFigure } from "./DeskQueue";
@@ -134,6 +135,35 @@ function Handling({ report }: { readonly report: DeskReport }) {
   );
 }
 
+// The report as a file, one per version. A post, as each download is logged; the answer is a file,
+// so the page stays.
+function Documents({ report }: { readonly report: DeskReport }) {
+  const t = useText();
+  return (
+    <Section id="desk-documents" title={t("version.title")}>
+      <p className="text-meta text-muted">{t("version.desk.lead")}</p>
+      <VersionList
+        versions={report.versions}
+        hazardType={report.hazardType}
+        voice="desk"
+        files={(version) => (
+          <Form reloadDocument method="post" action={`/lapor/meja/${report.ticketNumber}/documents`}>
+            <input type="hidden" name="version" value={version} />
+            <FileButtons
+              version={version}
+              button={(format, look, children) => (
+                <button type="submit" name="format" value={format} aria-label={look.label} className={look.className}>
+                  {children}
+                </button>
+              )}
+            />
+          </Form>
+        )}
+      />
+    </Section>
+  );
+}
+
 // Who reported. An account that must ask for it is told each ask is logged; the answer is on this
 // page only.
 function Reporter({ report, identity }: { readonly report: DeskReport; readonly identity: DeskIdentity | null }) {
@@ -195,7 +225,8 @@ export function DeskReportView({
   // Kept the same between renders, so the map is drawn once.
   const { point } = report;
   const points = useMemo(() => (point === null ? [] : [point]), [point]);
-  const saved = useSearchParams()[0].get("saved");
+  const [search] = useSearchParams();
+  const saved = search.get("saved");
   const problem = cardProblem(refusal);
   return (
     <DeskShell place={{ filters: ALL_FILTERS, current: null, summary }} account={report.account.label}>
@@ -213,6 +244,7 @@ export function DeskReportView({
           <p>{t(problem.copyKey, problem.params)}</p>
         </Notice>
       )}
+      {search.get("refused") === "document" ? <Notice kind="error">{t("version.refused")}</Notice> : null}
       {refusal === null && saved !== null && SAVED.includes(saved) ? (
         <div role="status">
           <Notice kind="info">
@@ -302,6 +334,7 @@ export function DeskReportView({
           <Section id="desk-actions" title={t("desk.actions")}>
             <DeskActions report={report} envelope={refusal} typed={typed} />
           </Section>
+          <Documents report={report} />
           <Section id="desk-reporter" title={t("desk.reporter")}>
             <Reporter report={report} identity={report.reporter.identity ?? identity} />
           </Section>

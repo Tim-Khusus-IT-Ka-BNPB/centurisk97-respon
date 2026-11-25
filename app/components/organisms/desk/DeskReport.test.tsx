@@ -19,6 +19,25 @@ import { DeskReportView } from "./DeskReport";
 const PATH = { path: "/lapor/meja/LA-241126-01" };
 
 describe("a report on the desk", () => {
+  test("each version has its files, posted for as each download is logged; a refused one is told", async () => {
+    const view = await renderDesk(<DeskReportView report={REPORT} summary={SUMMARY} />, PATH);
+    const documents = within(screen.getByRole("region", { name: "Dokumen laporan" }));
+    expect(documents.getByText("Setiap unduhan", { exact: false })).toBeTruthy();
+    const pdf = documents.getByRole("button", { name: "Unduh PDF versi 2" }) as HTMLButtonElement;
+    expect([pdf.name, pdf.value]).toEqual(["format", "pdf"]);
+    expect(pdf.form?.getAttribute("action")).toBe("/lapor/meja/LA-241126-01/documents");
+    expect(pdf.form?.getAttribute("method")).toBe("post");
+    expect(new FormData(pdf.form as HTMLFormElement).get("version")).toBe("2");
+    expect(documents.getByRole("button", { name: "Unduh Word versi 1" })).toBeTruthy();
+    expect(documents.getByText(/Koreksi pengecekan lapangan/)).toBeTruthy();
+    view.unmount();
+    await renderDesk(<DeskReportView report={REPORT} summary={SUMMARY} />, {
+      ...PATH,
+      entry: `${PATH.path}?refused=document`,
+    });
+    expect(screen.getByRole("alert").textContent).toContain("Dokumen belum bisa diunduh.");
+  });
+
   test("its point on a small map, or none where its village has no outline", async () => {
     const view = await renderDesk(<DeskReportView report={REPORT} summary={SUMMARY} />, PATH);
     expect(drawn.points).toEqual([REPORT.point]);

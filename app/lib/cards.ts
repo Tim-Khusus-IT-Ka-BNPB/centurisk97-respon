@@ -24,5 +24,7 @@ export function refusedWords(code: string): RefusedWords {
     return { title: "error.auth.signInFirst", body: "error.auth.signInFirst.hint", action: NEW_REPORT };
   if (code === "draft.notFound")
     return { title: "error.draft.notFound.title", body: "error.draft.notFound.body", action: NEW_REPORT };
+  if (code === "report.notFound")
+    return { title: "error.draft.notFound.title", body: "error.report.notFound", action: NEW_REPORT };
   return { title: null, body: null, action: NEW_REPORT };
 }

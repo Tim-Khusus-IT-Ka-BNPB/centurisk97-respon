@@ -274,8 +274,8 @@ describe("the home", () => {
     expect(within(list).getByText("Banjir, dikirim 23 November 2026 pukul 09.00 WIB")).toBeTruthy();
     expect(within(list).getByText("Laporan diterima")).toBeTruthy();
     // The whole row is the link, so it is named by the ticket and its stage too.
-    const row = within(list).getByRole("link", { name: /LA-231126-01.*Laporan diterima.*Lacak laporan/ });
-    expect(row.getAttribute("href")).toBe("/lapor/lacak#t=0123456789abcdef0123456789abcdef");
+    const row = within(list).getByRole("link", { name: /LA-231126-01.*Laporan diterima.*Buka laporan/ });
+    expect(row.getAttribute("href")).toBe("/lapor/reports/LA-231126-01");
   });
 
   test("with nothing sent, Laporan saya says so and there is no Cek status laporan", async () => {

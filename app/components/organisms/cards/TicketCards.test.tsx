@@ -35,6 +35,9 @@ describe("ticket card", () => {
       "Ditindaklanjuti, Menunggu",
       "Selesai, Menunggu",
     ]);
+    expect(screen.getByRole("link", { name: "Buka laporan dan dokumennya" }).getAttribute("href")).toBe(
+      "/lapor/reports/LA-231126-01",
+    );
     expect(screen.getByRole("link", { name: "Lacak laporan" }).getAttribute("href")).toBe(
       "/lapor/lacak#t=0123456789abcdef0123456789abcdef",
     );

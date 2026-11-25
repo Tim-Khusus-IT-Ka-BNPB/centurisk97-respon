@@ -8,9 +8,11 @@ import { LOST } from "../lib/network";
 import { PAGE_TEXTS, pickTexts } from "../lib/texts.server";
 import * as root from "../root";
 import { SUMMARY } from "../testing/desk";
+import { OWN_REPORT } from "../testing/ownReport";
 import { never, renderPage } from "../testing/render";
 import AboutRoute, * as about from "./about";
 import DeskRoute, * as desk from "./desk";
+import * as deskDocument from "./deskDocument";
 import DeskReportRoute, * as deskReport from "./deskReport";
 import DeskResponseRoute, * as deskResponse from "./deskResponse";
 import DraftRoute, * as draft from "./draft";
@@ -19,6 +21,8 @@ import HelpRoute, * as help from "./help";
 import HomeRoute, * as home from "./home";
 import * as rootIndex from "./index";
 import NotFoundRoute, * as notFound from "./notFound";
+import * as ownDocument from "./ownDocument";
+import OwnReportRoute, * as ownReport from "./ownReport";
 import PrivacyRoute, * as privacy from "./privacy";
 import StartRoute, * as start from "./start";
 import * as theme from "./theme";
@@ -102,6 +106,48 @@ describe("route modules", () => {
     renderPage(routeElement(HomeRoute, { loaderData: down }), { path: "/lapor" });
     expect(await screen.findByRole("link", { name: "Lapor darurat" })).toBeTruthy();
     expect(screen.queryByRole("link", { name: "Darurat sekali ketuk" })).toBeNull();
+  });
+
+  test("a report's own page is read on the server, private; a refused one answers with its status", async () => {
+    expect(ownReport.headers()).toEqual({ "cache-control": "private, no-store", "x-robots-tag": "noindex" });
+    const params = { ticketNumber: "LA-231126-01" };
+    const path = "/reports/LA-231126-01";
+    const loaded = unwrap(
+      await ownReport.loader({ params, context: { api: api({ [`GET ${path}`]: json(OWN_REPORT) }) } } as Args),
+    );
+    expect(loaded.init?.status).toBe(200);
+    expect(ownReport.meta({ data: loaded.data, matches: [] } as Args)).toContainEqual({
+      title: "Laporan saya, Pantau Bencana BNPB",
+    });
+    renderPage(routeElement(OwnReportRoute, { loaderData: loaded.data }), { path: "/lapor/reports/LA-231126-01" });
+    expect(await screen.findByRole("heading", { level: 1, name: "LA-231126-01" })).toBeTruthy();
+    cleanup();
+
+    const missing = json(apiEnvelope("report.notFound"), 404);
+    const refused = unwrap(
+      await ownReport.loader({ params, context: { api: api({ [`GET ${path}`]: missing }) } } as Args),
+    );
+    expect(refused.init?.status).toBe(404);
+    renderPage(routeElement(OwnReportRoute, { loaderData: refused.data }), { path: "/lapor/reports/LA-231126-01" });
+    expect(await screen.findByRole("heading", { level: 1, name: "Laporan tidak ditemukan" })).toBeTruthy();
+  });
+
+  test("documents are files, read by the reporter and posted for by staff", async () => {
+    const file = () => new Response("isi");
+    const own = await ownDocument.loader({
+      params: { ticketNumber: "LA-1", file: "v1.pdf" },
+      context: { api: api({ "GET /reports/LA-1/documents/1/pdf": file }) },
+    } as Args);
+    expect(await own.text()).toBe("isi");
+    const staff = await deskDocument.action({
+      params: { ticketNumber: "LA-1" },
+      request: post("http://localhost/lapor/meja/LA-1/documents", [
+        ["version", "1"],
+        ["format", "docx"],
+      ]),
+      context: { api: api({ "POST /desk/reports/LA-1/documents": file }) },
+    } as Args);
+    expect(await staff.text()).toBe("isi");
   });
 
   test("one tap is for a reporter known here; anyone else goes to the short conversation", async () => {
@@ -413,6 +459,7 @@ describe("desk routes", () => {
       actions: [],
       proofs: [],
       replies: [],
+      versions: [],
       impact: { dead: null, missing: null, injured: null, displaced: null, houses: null },
     };
     const load = async (answer: () => Response) =>

@@ -29,6 +29,6 @@
   "home.reports.row": "{hazard}, dikirim {date} pukul {time} {zone}",
   "home.reports.track": "Lacak laporan {ticketNumber}",
   "home.reports.check": "Cek status laporan",
-  "home.reports.open": "Lacak laporan",
+  "home.reports.open": "Buka laporan",
   "home.emergency": "Lapor darurat"
 }

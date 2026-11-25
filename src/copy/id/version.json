@@ -1,0 +1,19 @@
+{
+  "version.title": "Dokumen laporan",
+  "version.own.lead": "Unduh laporan ini sebagai berkas untuk dikirim atau dicetak. Nama dan nomor Anda tidak dimuat.",
+  "version.desk.lead": "Nama dan nomor pelapor tidak dimuat. Setiap unduhan tercatat atas akun Anda.",
+  "version.name": "Versi {version}",
+  "version.newest": "Terbaru",
+  "version.maker.own.first": "Laporan awal Anda",
+  "version.maker.own.reporter": "Kabar tambahan Anda",
+  "version.maker.own.officer": "Koreksi petugas di lapangan",
+  "version.maker.desk.first": "Laporan awal",
+  "version.maker.desk.reporter": "Kabar tambahan pelapor",
+  "version.maker.desk.officer": "Koreksi pengecekan lapangan",
+  "version.change": "{from} menjadi",
+  "version.download.pdf": "PDF",
+  "version.download.docx": "Word",
+  "version.download.pdfLabel": "Unduh PDF versi {version}",
+  "version.download.docxLabel": "Unduh Word versi {version}",
+  "version.refused": "Dokumen belum bisa diunduh. Tunggu beberapa menit, lalu unduh lagi."
+}
