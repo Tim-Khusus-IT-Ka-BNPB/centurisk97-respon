@@ -33,8 +33,44 @@
   --header: oklch(100% 0 0);
 }
 
+/* Dark: picked with the theme switch, or followed from the device while nothing is picked. The
+   two blocks must stay equal; a test compares them. */
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --bg: oklch(17% 0.03 256);
+  --surface: oklch(21% 0.035 256);
+  --sunken: oklch(25% 0.04 256);
+  --ink: oklch(95% 0.01 255);
+  --muted: oklch(78% 0.03 255);
+  --line: oklch(32% 0.035 256);
+  --control: oklch(62% 0.03 256);
+  --primary: oklch(82% 0.09 252);
+  --on-primary: oklch(17% 0.03 256);
+  --selected: oklch(29% 0.05 255);
+  --focus: oklch(78% 0.11 252);
+  --signal: oklch(74% 0.14 45);
+  --on-signal: oklch(17% 0.03 256);
+  --signal-tint: oklch(26% 0.05 40);
+  --danger: oklch(76% 0.14 27);
+  --danger-tint: oklch(25% 0.05 27);
+  --warn-tint: oklch(27% 0.04 80);
+  --warn-icon: oklch(80% 0.12 80);
+  --dock-shadow: oklch(0% 0 0 / 0.4);
+  --accent: oklch(76% 0.16 62);
+  --on-accent: oklch(20% 0.05 256);
+  --hero: oklch(22% 0.06 257);
+  --on-hero: oklch(96% 0.01 255);
+  --on-hero-muted: oklch(80% 0.03 255);
+  --hero-line: oklch(100% 0 0 / 0.05);
+  --header: oklch(19% 0.035 256);
+}
+
+:root[data-theme="light"] {
+  color-scheme: light;
+}
+
 @media (prefers-color-scheme: dark) {
-  :root {
+  :root:not([data-theme="light"]) {
     --bg: oklch(17% 0.03 256);
     --surface: oklch(21% 0.035 256);
     --sunken: oklch(25% 0.04 256);

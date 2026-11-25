@@ -8,6 +8,7 @@ import { addDeskRoutes } from "./routes/desk";
 import { addDraftRoutes } from "./routes/drafts";
 import { addPhotoRoutes } from "./routes/photos";
 import { addPlaceRoutes } from "./routes/places";
+import { addPreferenceRoutes } from "./routes/preferences";
 import { addReporterRoutes } from "./routes/reporters";
 import { addTrackingRoutes } from "./routes/tracking";
 
@@ -49,3 +50,4 @@ addPlaceRoutes(api);
 addPhotoRoutes(api);
 addTrackingRoutes(api);
 addDeskRoutes(api);
+addPreferenceRoutes(api);

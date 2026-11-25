@@ -16,6 +16,7 @@ import HomeRoute, * as home from "./home";
 import NotFoundRoute, * as notFound from "./notFound";
 import PrivacyRoute, * as privacy from "./privacy";
 import StartRoute, * as start from "./start";
+import * as theme from "./theme";
 import TrackingRoute, * as tracking from "./tracking";
 
 const DRAFT = SAMPLE_DRAFTS.summary.draftId;
@@ -56,9 +57,12 @@ describe("route modules", () => {
   });
 
   test("the root hands the site's address to every page's links", () => {
-    expect(root.loader({ context: { origin: "https://lapor.example.test" } } as Args)).toEqual({
-      origin: "https://lapor.example.test",
-    });
+    expect(
+      root.loader({
+        request: new Request("https://lapor.example.test/lapor", { headers: { cookie: "theme=dark" } }),
+        context: { origin: "https://lapor.example.test" },
+      } as Args),
+    ).toEqual({ origin: "https://lapor.example.test", theme: "dark" });
     expect(root.links().map((link) => (link as { href: string }).href)).toEqual([
       "/favicon-32.png",
       "/apple-touch-icon.png",
@@ -369,5 +373,34 @@ describe("desk routes", () => {
       } as Args),
     );
     expect(limited.init?.status).toBe(403);
+  });
+});
+
+describe("theme route", () => {
+  test("keeps the choice through the API and returns to the page; a strange return goes home", async () => {
+    const calls: unknown[] = [];
+    const answer: ApiCall = async (_method, path, body) => {
+      calls.push([path, body]);
+      return new Response(null, { status: 204, headers: { "set-cookie": "theme=dark; Path=/" } });
+    };
+    const done = (await theme.action({
+      request: post("http://x/lapor/theme", [
+        ["theme", "dark"],
+        ["back", "/lapor/meja?view=map"],
+      ]),
+      context: { api: answer },
+    } as Args)) as Response;
+    expect(calls).toEqual([["/preferences/theme", { theme: "dark" }]]);
+    expect(done.status).toBe(303);
+    expect(done.headers.get("location")).toBe("/lapor/meja?view=map");
+    expect(done.headers.get("set-cookie")).toBe("theme=dark; Path=/");
+    const away = (await theme.action({
+      request: post("http://x/lapor/theme", [
+        ["theme", "dark"],
+        ["back", "https://evil.example"],
+      ]),
+      context: { api: answer },
+    } as Args)) as Response;
+    expect(away.headers.get("location")).toBe("/lapor");
   });
 });

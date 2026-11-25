@@ -3,6 +3,7 @@ import { cn } from "../../lib/cn";
 import { useText } from "../../lib/text";
 import { Icon } from "../atoms/Icon";
 import { BrandLockup } from "../molecules/BrandLockup";
+import { ThemeSwitch } from "../molecules/ThemeSwitch";
 
 const navLink =
   "inline-flex min-h-target-min items-center rounded-control px-3 text-body font-medium text-ink hover:bg-sunken";
@@ -37,18 +38,23 @@ export function SiteHeader({ nav, width }: { readonly nav: boolean; readonly wid
         <Link to="/lapor" className="-mx-1 inline-flex min-h-target-min min-w-0 items-center rounded-control px-1">
           <BrandLockup />
         </Link>
-        {nav ? (
-          <>
-            <NavLinks className="-mx-3 hidden sm:flex" />
+        <div className="flex items-center gap-2 sm:gap-4">
+          {nav ? <NavLinks className="hidden sm:flex" /> : null}
+          {/* On a phone a page with links keeps the switch in its menu, so the bar stays one row. */}
+          <ThemeSwitch className={nav ? "hidden sm:block" : undefined} />
+          {nav ? (
             <details key={pathname} className="group sm:hidden">
               <summary className="flex size-target-min cursor-pointer list-none items-center justify-center rounded-control text-ink hover:bg-sunken [&::-webkit-details-marker]:hidden">
                 <Icon name="menu" />
                 <span className="sr-only">{t("nav.menu")}</span>
               </summary>
-              <NavLinks className="absolute inset-x-0 top-full z-40 flex flex-col gap-1 border-b border-line bg-header px-4 py-2" />
+              <div className="absolute inset-x-0 top-full z-40 flex flex-col gap-1 border-b border-line bg-header px-4 py-2">
+                <NavLinks className="flex flex-col gap-1" />
+                <ThemeSwitch withLabel className="border-t border-line pt-1" />
+              </div>
             </details>
-          </>
-        ) : null}
+          ) : null}
+        </div>
       </div>
     </header>
   );

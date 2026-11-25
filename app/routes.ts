@@ -5,6 +5,7 @@ export default [
   route("lapor/report", "routes/start.tsx"),
   route("lapor/report/:draftId", "routes/draft.tsx"),
   route("lapor/lacak", "routes/tracking.tsx"),
+  route("lapor/theme", "routes/theme.tsx"),
   route("lapor/meja", "routes/desk.tsx"),
   route("lapor/meja/:ticketNumber", "routes/deskReport.tsx"),
   route("lapor/help", "routes/help.tsx"),

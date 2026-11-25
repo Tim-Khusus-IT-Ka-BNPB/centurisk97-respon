@@ -2,7 +2,17 @@ import { copy } from "../../src/copy";
 import type { Texts } from "./text";
 
 // Every page needs the shell's words; each page adds the namespaces it draws from.
-const SHELL = ["app.", "page.", "meta.", "notice.", "common.", "help.title", "nav.", "home.contact.organisation"];
+const SHELL = [
+  "app.",
+  "page.",
+  "meta.",
+  "notice.",
+  "common.",
+  "help.title",
+  "nav.",
+  "home.contact.organisation",
+  "theme.",
+];
 
 export const PAGE_TEXTS = {
   home: [
