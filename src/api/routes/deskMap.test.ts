@@ -95,6 +95,18 @@ describe("the desk map", () => {
     expect(map.cut).toBe(false);
   });
 
+  test("a report carries its own point, and none where its village has no outline", async () => {
+    const ticket = await report("gps");
+    const read = async () =>
+      deskReportSchema.parse((await deskOfficer().call("GET", `/desk/reports/${ticket}`)).json).point;
+    expect(await read()).toMatchObject({ ticketNumber: ticket, precision: "gpsPoint", ...INSIDE });
+    const other = await report("search");
+    await query`update report set village_code = '11.08.03.9999' where ticket_number = ${other}`;
+    const answer = await deskOfficer().call("GET", `/desk/reports/${other}`);
+    expect(deskReportSchema.parse(answer.json).point).toBeNull();
+    await query`update report set village_code = ${VILLAGE} where ticket_number = ${other}`;
+  });
+
   test("the queue's filters apply, and a wrong ticket number is refused on its field", async () => {
     const ticket = await report("search");
     const map = deskMapSchema.parse((await deskOfficer().call("GET", `/desk/map?ticket=${ticket}`)).json);

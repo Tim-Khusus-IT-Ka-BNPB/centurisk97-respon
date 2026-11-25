@@ -119,6 +119,7 @@ describe("the desk's emergencies", () => {
     view.unmount();
     alarm.ready = true;
     await draw([FIRST]);
+    await later(10);
     expect(screen.queryByRole("button")).toBeNull();
   });
 
