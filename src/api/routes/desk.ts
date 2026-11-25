@@ -34,7 +34,7 @@ import { checkLimits } from "../../services/limits";
 import type { ApiContext } from "../context";
 import { refuse } from "../envelope";
 import { type Api, addRoute, jsonBody, jsonResponse, refusal } from "../route";
-import { fieldErrors, jpegFile, limitRefused } from "./shared";
+import { fieldErrors, jpegFile, jpegSent, limitRefused } from "./shared";
 
 const queueQuery = z.object({
   status: ticketStatusSchema.optional(),
@@ -276,11 +276,7 @@ export function addDeskRoutes(api: Api): void {
     async (c) => {
       const file = await deskPhotoFile(c.env, staffOf(c), c.req.valid("param").photoId);
       if (file.kind !== "file") return answered(c, file);
-      return c.body(new Uint8Array(file.bytes), 200, {
-        "content-type": "image/jpeg",
-        "x-content-type-options": "nosniff",
-        "x-robots-tag": "noindex",
-      });
+      return jpegSent(c, file.bytes);
     },
   );
 

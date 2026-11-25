@@ -74,7 +74,31 @@ export function deviceFix(form: z.infer<typeof photoForm>): DeviceFix | null {
     : null;
 }
 
+// A report's document: saved under its own name, never shown in the page or sniffed.
+export const documentFile = (description: string) => ({
+  description,
+  content: { "application/octet-stream": { schema: z.string() } },
+});
+
+export const documentSent = (
+  c: ApiContext,
+  file: { readonly bytes: Uint8Array; readonly mime: string; readonly name: string },
+): Response =>
+  c.body(new Uint8Array(file.bytes), 200, {
+    "content-type": file.mime,
+    "content-disposition": `attachment; filename="${file.name}"`,
+    "x-content-type-options": "nosniff",
+    "x-robots-tag": "noindex",
+  });
+
 export const jpegFile = (description: string) => ({
   description,
   content: { "image/jpeg": { schema: z.string() } },
 });
+
+export const jpegSent = (c: ApiContext, bytes: Uint8Array): Response =>
+  c.body(new Uint8Array(bytes), 200, {
+    "content-type": "image/jpeg",
+    "x-content-type-options": "nosniff",
+    "x-robots-tag": "noindex",
+  });

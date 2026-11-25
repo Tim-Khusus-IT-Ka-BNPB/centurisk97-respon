@@ -49,6 +49,7 @@ import { at, draftZone } from "./draftView";
 import { emergencyList } from "./emergency";
 import { checkLimits, type LimitRefusal } from "./limits";
 import { summaryGroups } from "./summary";
+import { versionsOf } from "./versions";
 
 type Refused =
   | { readonly kind: "notAllowed" }
@@ -291,6 +292,7 @@ async function reportBody(bindings: ServiceBindings, staff: StaffPrincipal, tick
     })),
     reporterWords: found.reporterWords.map((one) => ({ text: one.text, at: at(one.atMs, zone) })),
     photos: (await reportPhotos(bindings.db, ticketNumber)).map(photoView),
+    versions: await versionsOf(bindings, ticketNumber, found.villageCode),
     nextStatuses: offeredStatuses(staff.role, found.status).map((status) => ({
       status,
       note: noteRule(found.status, status),

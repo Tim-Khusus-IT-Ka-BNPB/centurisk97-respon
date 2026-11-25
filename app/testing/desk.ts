@@ -144,6 +144,21 @@ export const REPORT: DeskReport = {
   actions: [],
   proofs: [],
   replies: [],
+  versions: [
+    {
+      version: 2,
+      at: { ...SENT, utc: "2026-11-24T03:00:00.000Z" },
+      madeBy: "officer",
+      changes: [
+        {
+          fieldId: "dead",
+          from: { fieldId: "dead", state: "value", value: { kind: "count", count: 3 }, origin: "boxEntry" },
+          to: { fieldId: "dead", state: "value", value: { kind: "count", count: 2 }, origin: "officer" },
+        },
+      ],
+    },
+    { version: 1, at: SENT, madeBy: "reporter", changes: [] },
+  ],
 };
 
 export const SUMMARY: DeskSummary = {

@@ -3,7 +3,7 @@ import { draftBodySchema } from "../../contract/draft";
 import { addPhoto, readPhoto } from "../../services/photos";
 import { refuse } from "../envelope";
 import { type Api, addRoute, jsonResponse, refusal } from "../route";
-import { answered, deviceFix, isSet, jpegFile, optionalBox, photoForm, requestHash } from "./shared";
+import { answered, deviceFix, isSet, jpegFile, jpegSent, optionalBox, photoForm, requestHash } from "./shared";
 
 const params = z.object({ draftId: z.string().max(64) });
 
@@ -74,11 +74,7 @@ export function addPhotoRoutes(api: Api): void {
       const { draftId, photoId } = c.req.valid("param");
       const file = await readPhoto(c.env, c.var.principal, draftId, photoId);
       if (file.kind === "notFound") return refuse(c, 404, "draft.notFound");
-      return c.body(new Uint8Array(file.bytes), 200, {
-        "content-type": "image/jpeg",
-        "x-content-type-options": "nosniff",
-        "x-robots-tag": "noindex",
-      });
+      return jpegSent(c, file.bytes);
     },
   );
 }

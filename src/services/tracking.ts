@@ -112,13 +112,34 @@ export async function trackedProof(
   return bytes === null ? { kind: "notFound" } : { kind: "file", bytes };
 }
 
+// The same photo on the reporter's own page, where the phone or session is the key.
+export async function ownProof(
+  bindings: ServiceBindings,
+  principal: Principal,
+  ticketNumber: string,
+  proofId: string,
+): Promise<Uint8Array | null> {
+  const report = await ownedReport(bindings, principal, ticketNumber);
+  const key = report === null ? null : await closedProofKey(bindings.db, ticketNumber, proofId);
+  return key === null ? null : bindings.photos.get(key);
+}
+
 export type RateAnswer =
   | { readonly kind: "ok" }
   | { readonly kind: "notFound" }
   | { readonly kind: "invalid"; readonly errors: readonly FieldError[] }
   | { readonly kind: "limit"; readonly refusal: LimitRefusal };
 
-const owner = (report: ReportRecord) => ({ reporterId: report.reporterId as string, ownerSlot: report.ownerSlot });
+// A sent report, to the phone or session that sent it; null to anyone else.
+export async function ownedReport(
+  bindings: ServiceBindings,
+  principal: Principal,
+  ticketNumber: string,
+): Promise<ReportRecord | null> {
+  const report = await reportByTicket(bindings.db, ticketNumber);
+  if (report === null || report.reporterId === null) return null;
+  return ownsDraft(principal, { reporterId: report.reporterId, ownerSlot: report.ownerSlot }) ? report : null;
+}
 
 // The reporter's 1 to 5 rating of one report (K81), by its owner only; a new one replaces the old.
 export async function rateOwnReport(
@@ -127,9 +148,8 @@ export async function rateOwnReport(
   ticketNumber: string,
   rating: number,
 ): Promise<RateAnswer> {
-  const report = await reportByTicket(bindings.db, ticketNumber);
-  if (report === null || report.reporterId === null || !ownsDraft(principal, owner(report)))
-    return { kind: "notFound" };
+  const report = await ownedReport(bindings, principal, ticketNumber);
+  if (report === null) return { kind: "notFound" };
   const refusal = await checkLimits(bindings, [
     ["rating.hour", { kind: "numberSlot", numberKey: report.numberKey, ownerSlot: report.ownerSlot }],
   ]);

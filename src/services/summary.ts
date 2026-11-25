@@ -83,24 +83,32 @@ function rowValue(
   }
 }
 
+export type SummaryRow = SummaryGroup["rows"][number];
+
+// One field as the summary tells it, or null when it was never reached.
+export function summaryRow(states: FieldStates, field: FieldDefinition): SummaryRow | null {
+  const state = states[field.id as FieldId];
+  if (state === undefined) return null;
+  return {
+    fieldId: field.id,
+    state: state.state,
+    value: state.state === "value" ? rowValue(field, state, chosenHazardType(states)) : null,
+    origin: "origin" in state ? state.origin : null,
+  };
+}
+
 // Every applicable field in table order, by group. A field never reached does not show.
 export function summaryGroups(states: FieldStates): SummaryGroup[] {
-  const hazardType = chosenHazardType(states);
   const groups: SummaryGroup[] = [];
   for (const field of applicableFields(states)) {
-    const state = states[field.id as FieldId];
-    if (state === undefined) continue;
+    const row = summaryRow(states, field);
+    if (row === null) continue;
     let group = groups.at(-1);
     if (group?.groupId !== field.group) {
       group = { groupId: field.group, rows: [] };
       groups.push(group);
     }
-    group.rows.push({
-      fieldId: field.id,
-      state: state.state,
-      value: state.state === "value" ? rowValue(field, state, hazardType) : null,
-      origin: "origin" in state ? state.origin : null,
-    });
+    group.rows.push(row);
   }
   return groups;
 }

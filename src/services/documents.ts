@@ -1,0 +1,121 @@
+import { deskReport, logDocument } from "../adapters/d1/desk";
+import { draftPhotos } from "../adapters/d1/photos";
+import { versionDetail } from "../adapters/d1/versions";
+import { renderDocx } from "../adapters/document/docx";
+import { renderPdf } from "../adapters/document/pdf";
+import type { DocumentFormat, ReportDocument } from "../domain/document";
+import type { Zone } from "../domain/eventTime";
+import type { Principal, StaffPrincipal } from "../ports/identity";
+import type { ServiceBindings } from "./bindings";
+import { admitted } from "./desk";
+import { type DocumentPhoto, documentOf, pictureOf } from "./documentContent";
+import { at, draftZone } from "./draftView";
+import { checkLimits, type LimitRefusal } from "./limits";
+import { ownedReport } from "./tracking";
+
+// Photos of one document stay under this many bytes together, so a Worker can hold the file while
+// it is made. The document says how many it left out.
+const PHOTO_BYTES = 12 * 1024 * 1024;
+
+type Photos = { readonly photos: readonly DocumentPhoto[]; readonly left: number };
+
+async function photosOf(bindings: ServiceBindings, draftId: string, zone: Zone): Promise<Photos> {
+  const photos: DocumentPhoto[] = [];
+  let bytes = 0;
+  const kept = await draftPhotos(bindings.db, draftId);
+  for (const photo of kept) {
+    const file = await bindings.photos.get(photo.storeKey);
+    const picture = file === null ? null : pictureOf(file);
+    if (picture === null || bytes + picture.bytes.length > PHOTO_BYTES) continue;
+    bytes += picture.bytes.length;
+    photos.push({ picture, badge: photo.badge, far: photo.far, takenAt: at(photo.takenAtMs, zone) });
+  }
+  return { photos, left: kept.length - photos.length };
+}
+
+// One version of a report as a document, or null when there is no such version.
+async function documentFor(
+  bindings: ServiceBindings,
+  ticketNumber: string,
+  version: number,
+  forStaff: boolean,
+): Promise<ReportDocument | null> {
+  const found = await versionDetail(bindings.db, ticketNumber, version);
+  if (found === null) return null;
+  const before = version === 1 ? null : await versionDetail(bindings.db, ticketNumber, version - 1);
+  const zone = draftZone(found.villageCode);
+  const { photos, left } = await photosOf(bindings, found.draftId, zone);
+  return documentOf({
+    ticketNumber,
+    version,
+    sentAt: at(found.sentAt, zone),
+    versionAt: at(found.createdAt, zone),
+    states: found.states,
+    change:
+      before === null
+        ? null
+        : { before: before.states, madeBy: found.madeBy, note: forStaff ? found.note : null, newPhotos: 0 },
+    reporterRole: found.reporterRole,
+    officerRegency: found.officerRegency,
+    numberUnverified: found.numberUnverified,
+    emergency: found.emergency,
+    photos,
+    photosLeft: left,
+    forStaff,
+  });
+}
+
+const WRITERS = {
+  pdf: { render: renderPdf, mime: "application/pdf" },
+  docx: {
+    render: renderDocx,
+    mime: "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+  },
+} as const;
+
+export type DocumentAnswer =
+  | { readonly kind: "file"; readonly bytes: Uint8Array; readonly mime: string; readonly name: string }
+  | { readonly kind: "notFound" }
+  | { readonly kind: "notAllowed" }
+  | { readonly kind: "limit"; readonly refusal: LimitRefusal };
+
+async function written(document: ReportDocument | null, format: DocumentFormat): Promise<DocumentAnswer> {
+  if (document === null) return { kind: "notFound" };
+  const { render, mime } = WRITERS[format];
+  return { kind: "file", bytes: await render(document), mime, name: `${document.title}.${format}` };
+}
+
+// The reporter's own copy, on the phone or session that sent the report. Anyone else is told there
+// is none.
+export async function ownDocument(
+  bindings: ServiceBindings,
+  principal: Principal,
+  ticketNumber: string,
+  version: number,
+  format: DocumentFormat,
+): Promise<DocumentAnswer> {
+  const report = await ownedReport(bindings, principal, ticketNumber);
+  if (report === null) return { kind: "notFound" };
+  const refusal = await checkLimits(bindings, [
+    ["document.hour", { kind: "numberSlot", numberKey: report.numberKey, ownerSlot: report.ownerSlot }],
+  ]);
+  if (refusal) return { kind: "limit", refusal };
+  return written(await documentFor(bindings, ticketNumber, version, false), format);
+}
+
+// Staff's copy, for an account whose region holds the report; logged, as it leaves the desk.
+export async function deskDocument(
+  bindings: ServiceBindings,
+  staff: StaffPrincipal,
+  ticketNumber: string,
+  version: number,
+  format: DocumentFormat,
+): Promise<DocumentAnswer> {
+  const refused = await admitted(bindings, staff, "downloadDocument", "desk.write");
+  if (refused) return refused;
+  if ((await deskReport(bindings.db, staff.scope, ticketNumber)) === null) return { kind: "notFound" };
+  const answer = await written(await documentFor(bindings, ticketNumber, version, true), format);
+  if (answer.kind === "file")
+    await logDocument(bindings.db, staff, ticketNumber, "document", new Date(bindings.clock.now()));
+  return answer;
+}

@@ -281,6 +281,17 @@ export async function logIdentityView(
   await run(db, actionRow(staff, ticketNumber, "identityView", at));
 }
 
+// A document of a report left the desk: who took it, when and which report.
+export async function logDocument(
+  db: Database,
+  staff: StaffPrincipal,
+  ticketNumber: string,
+  action: "document" | "documentPack",
+  at: Date,
+): Promise<void> {
+  await run(db, actionRow(staff, ticketNumber, action, at));
+}
+
 // The ticket, its history row and the log together, or nothing: false when another officer
 // changed the ticket after this one read it.
 export async function moveTicket(

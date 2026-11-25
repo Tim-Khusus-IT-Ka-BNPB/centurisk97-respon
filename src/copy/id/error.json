@@ -19,7 +19,7 @@
   "error.place.unavailable": "Pencarian tempat belum bisa dipakai karena data wilayah tidak terbaca. Laporan Anda tetap tersimpan di langkah ini. Cari lagi dalam beberapa menit.",
   "error.send.failed": "Laporan belum terkirim karena layanan sedang terganggu. Semua jawaban tetap tersimpan. Ketuk Kirim sekali lagi.",
   "error.tracking.notFound": "Laporan tidak ditemukan.",
-  "error.report.notFound": "Laporan tidak ditemukan, atau tidak bisa dinilai dari perangkat ini. Buka laporan dari perangkat yang Anda pakai untuk melapor.",
+  "error.report.notFound": "Laporan tidak ditemukan di perangkat ini. Buka dari perangkat yang Anda pakai untuk melapor, atau lihat statusnya lewat tautan lacak.",
   "error.auth.staffSignInFirst": "Masuk dulu dengan akun petugas untuk membuka meja laporan.",
   "error.desk.notAllowed": "Akun ini belum berhak memakai meja laporan untuk tindakan ini. Hubungi admin BNPB bila akun Anda memerlukannya.",
   "error.desk.reportNotFound": "Laporan tidak ditemukan di meja akun ini. Periksa nomor tiketnya, lalu cari lagi dari daftar laporan.",

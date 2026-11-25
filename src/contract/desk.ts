@@ -4,6 +4,7 @@ import { VICTIM_ANSWERS } from "../domain/emergency";
 import { CHECK_RESULTS } from "../domain/fieldCheck";
 import { summaryGroupSchema } from "./card";
 import { hazardTypeSchema, reporterRoleSchema, timeSchema } from "./common";
+import { reportVersionSchema } from "./ownReport";
 import { eventTimeSchema, ticketStatusSchema } from "./tracking";
 
 // The signed-in staff account as the desk names it.
@@ -183,6 +184,8 @@ export const deskReportSchema = queueItemSchema.extend({
   proofs: z.array(z.object({ proofId: z.string(), hasPoint: z.boolean(), at: timeSchema, actor: z.string() })),
   replies: z.array(z.object({ text: z.string(), at: timeSchema, actor: z.string() })),
   photos: z.array(deskPhotoSchema),
+  // Newest first, each with its document.
+  versions: z.array(reportVersionSchema),
 });
 
 export type DeskReport = z.infer<typeof deskReportSchema>;

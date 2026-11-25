@@ -1,13 +1,15 @@
 import { createRoute, z } from "@hono/zod-openapi";
 import { deskReportSchema, deskResponseSchema } from "../../contract/desk";
+import { DOCUMENT_FORMATS } from "../../domain/document";
 import { CHECK_RESULTS } from "../../domain/fieldCheck";
 import { monthOf } from "../../domain/response";
+import { deskDocument } from "../../services/documents";
 import { addHandling, addHandlingProof, checkInField, deskProofFile } from "../../services/handling";
 import { deskResponse, takeDeskReport } from "../../services/taker";
 import { refuse } from "../envelope";
 import { type Api, addRoute, jsonBody, jsonResponse, refusal } from "../route";
 import { answered, changeAnswered, staffOf, staffText, ticketParams } from "./desk";
-import { deviceFix, jpegFile, photoForm } from "./shared";
+import { deviceFix, documentFile, documentSent, jpegFile, jpegSent, photoForm } from "./shared";
 
 export function addDeskHandlingRoutes(api: Api): void {
   addRoute(
@@ -112,6 +114,27 @@ export function addDeskHandlingRoutes(api: Api): void {
     },
   );
 
+  // A post, as each download is logged and a GET never writes.
+  addRoute(
+    api,
+    "staff",
+    createRoute({
+      method: "post",
+      path: "/desk/reports/{ticketNumber}/documents",
+      request: {
+        params: ticketParams,
+        body: jsonBody(z.object({ version: z.coerce.number().int().positive(), format: z.enum(DOCUMENT_FORMATS) })),
+      },
+      responses: { 200: documentFile("The report at this version, as a file") },
+    }),
+    async (c) => {
+      const { version, format } = c.req.valid("json");
+      const { ticketNumber } = c.req.valid("param");
+      const answer = await deskDocument(c.env, staffOf(c), ticketNumber, version, format);
+      return answer.kind === "file" ? documentSent(c, answer) : answered(c, answer);
+    },
+  );
+
   // The figures the leaders' page will call (upstream's respons).
   addRoute(
     api,
@@ -145,11 +168,7 @@ export function addDeskHandlingRoutes(api: Api): void {
     async (c) => {
       const file = await deskProofFile(c.env, staffOf(c), c.req.valid("param").proofId);
       if (file.kind !== "file") return answered(c, file);
-      return c.body(new Uint8Array(file.bytes), 200, {
-        "content-type": "image/jpeg",
-        "x-content-type-options": "nosniff",
-        "x-robots-tag": "noindex",
-      });
+      return jpegSent(c, file.bytes);
     },
   );
 }

@@ -20,7 +20,8 @@ export type DeskCapability =
   | "takeReport"
   | "readResponse"
   | "readIdentity"
-  | "revealIdentity";
+  | "revealIdentity"
+  | "downloadDocument";
 
 // The roles holding each capability. A regional officer works only its own region (StaffScope),
 // asks for a reporter's identity each time, and neither forwards nor reopens.
@@ -38,6 +39,7 @@ const HOLDERS: Readonly<Record<DeskCapability, readonly StaffRole[]>> = {
   readResponse: ["deskOfficer"],
   readIdentity: ["deskOfficer"],
   revealIdentity: ["regionalOfficer"],
+  downloadDocument: ["deskOfficer", "regionalOfficer"],
 };
 
 export const mayUse = (role: StaffRole, capability: DeskCapability): boolean => HOLDERS[capability].includes(role);
