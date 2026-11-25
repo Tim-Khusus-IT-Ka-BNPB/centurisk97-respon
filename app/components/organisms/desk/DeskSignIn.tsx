@@ -19,6 +19,7 @@ export function DeskSignIn({ envelope }: { readonly envelope: ErrorEnvelope | nu
     <div className="mx-auto w-full max-w-[28rem] md:pt-10">
       <Panel
         id="desk-sign-in"
+        level={1}
         title={t("desk.signIn.title")}
         lead={t("desk.signIn.lead")}
         focusHeading={problem === null}
@@ -54,7 +55,7 @@ export function DeskRefused({ envelope }: { readonly envelope: ErrorEnvelope }) 
   const missing = envelope.error.code === "desk.reportNotFound";
   return (
     <div className="mx-auto w-full max-w-[32rem] md:pt-10">
-      <Panel id="desk-refused" title={t(missing ? "desk.refused.missing" : "desk.refused.title")}>
+      <Panel id="desk-refused" level={1} title={t(missing ? "desk.refused.missing" : "desk.refused.title")}>
         <Notice kind={envelope.error.code.startsWith("limit.") ? "limit" : "error"}>
           <p>{limitText(t, envelope, Date.now())}</p>
         </Notice>

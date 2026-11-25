@@ -28,7 +28,7 @@ export function EmergencyPanel({ known = false }: { readonly known?: boolean }) 
   return (
     <aside
       aria-labelledby="emergency-heading"
-      className="flex flex-col gap-3 rounded-card bg-surface p-5 text-ink shadow-float"
+      className="flex flex-col gap-3 rounded-card bg-surface p-5 text-ink shadow-float [--focus:var(--focus-page)]"
     >
       <div className="flex flex-col gap-1 pb-1">
         <h2 id="emergency-heading" className="text-page font-bold">

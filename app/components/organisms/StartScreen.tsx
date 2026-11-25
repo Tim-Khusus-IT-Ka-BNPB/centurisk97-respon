@@ -174,6 +174,12 @@ function ReadBack({ number, children }: { readonly number: string; readonly chil
   );
 }
 
+// The page's name for a screen reader; its panel says the step.
+export function StartHeading() {
+  const t = useText();
+  return <h1 className="sr-only">{t("home.report")}</h1>;
+}
+
 // The start step: who reports, then consent. Every view is a page of its own with no script.
 export function StartScreen({ page, acted }: { readonly page: StartPageData; readonly acted: StartActionData | null }) {
   const t = useText();

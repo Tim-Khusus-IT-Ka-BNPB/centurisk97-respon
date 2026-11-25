@@ -1,6 +1,6 @@
 import { data, redirect } from "react-router";
 import { EmergencyStart } from "../components/organisms/EmergencyPanel";
-import { StartScreen } from "../components/organisms/StartScreen";
+import { StartHeading, StartScreen } from "../components/organisms/StartScreen";
 import { Page } from "../components/templates/Page";
 import { pageMeta } from "../lib/meta";
 import { actOnStart, isEmergency, loadStartPage } from "../lib/startPage.server";
@@ -24,7 +24,7 @@ export async function action({ request, context }: Route.ActionArgs) {
 export default function StartRoute({ loaderData, actionData }: Route.ComponentProps) {
   return (
     <Page texts={loaderData.texts} publicPage={false}>
-      {loaderData.emergency ? <EmergencyStart /> : null}
+      {loaderData.emergency ? <EmergencyStart /> : <StartHeading />}
       <StartScreen page={loaderData} acted={actionData ?? null} />
     </Page>
   );

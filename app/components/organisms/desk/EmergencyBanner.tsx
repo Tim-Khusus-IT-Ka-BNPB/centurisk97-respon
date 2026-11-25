@@ -58,7 +58,7 @@ export function EmergencyBanner({ initial }: { readonly initial: readonly DeskEm
   return (
     <section
       aria-labelledby="desk-emergency"
-      className="sticky top-14 z-20 flex flex-wrap items-center gap-x-5 gap-y-2 bg-signal px-4 py-2.5 text-on-signal md:px-6 lg:top-0 lg:flex-nowrap lg:py-2"
+      className="sticky top-14 z-20 flex flex-wrap items-center gap-x-5 gap-y-2 bg-signal px-4 py-2.5 text-on-signal [--focus:var(--on-signal)] md:px-6 lg:top-0 lg:flex-nowrap lg:py-2"
     >
       <h2
         id="desk-emergency"

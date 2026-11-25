@@ -8,7 +8,7 @@ const link = "inline-flex min-h-target-min items-center underline-offset-4 hover
 export function SiteFooter({ width }: { readonly width: string }) {
   const t = useText();
   return (
-    <footer className="bg-hero text-on-hero-muted">
+    <footer className="bg-hero text-on-hero-muted [--focus:var(--on-hero)]">
       <div
         className={cn(
           "mx-auto flex flex-col gap-4 px-4 py-8 md:flex-row md:items-center md:justify-between md:px-6",

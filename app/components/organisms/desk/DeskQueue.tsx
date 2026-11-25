@@ -263,7 +263,10 @@ export function PhotoFigure({
       </a>
       <figcaption className={cn("flex flex-col gap-1 text-meta", own ? "" : "px-1 pb-1")}>
         {own ? null : (
-          <Link to={`/lapor/meja/${photo.ticketNumber}`} className="font-bold tabular-nums">
+          <Link
+            to={`/lapor/meja/${photo.ticketNumber}`}
+            className="inline-flex min-h-target-min items-center font-bold tabular-nums"
+          >
             {photo.ticketNumber}
           </Link>
         )}

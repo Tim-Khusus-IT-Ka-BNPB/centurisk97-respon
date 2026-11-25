@@ -47,7 +47,6 @@ function ReportRow({ report }: { readonly report: OwnReport }) {
     <li className="border-t border-line first:border-t-0">
       <a
         href={trackingPath(report.trackingToken)}
-        aria-label={t("home.reports.track", { ticketNumber: report.ticketNumber })}
         className="group flex min-h-target-main items-center gap-4 px-4 py-3 text-ink no-underline hover:bg-sunken md:px-5"
       >
         <span className="flex size-10 shrink-0 items-center justify-center rounded-control bg-selected text-primary">
@@ -69,7 +68,7 @@ function ReportRow({ report }: { readonly report: OwnReport }) {
             })}
           </span>
         </span>
-        <span className="hidden text-meta font-semibold text-primary sm:block">{t("home.reports.open")}</span>
+        <span className="text-meta font-semibold text-primary max-sm:sr-only">{t("home.reports.open")}</span>
         <Icon name="chevronRight" className="size-5 text-muted" />
       </a>
     </li>

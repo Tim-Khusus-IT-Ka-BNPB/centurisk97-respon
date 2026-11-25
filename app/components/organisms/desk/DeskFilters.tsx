@@ -5,7 +5,6 @@ import type { ErrorEnvelope } from "../../../../src/contract/errors";
 import { DESK_HAS, DESK_PERIODS, type DeskHas } from "../../../../src/domain/deskQueue";
 import { HAZARD_TYPE_IDS, SELECTABLE_HAZARD_TYPES } from "../../../../src/domain/hazards";
 import { cn } from "../../../lib/cn";
-import { hazardLabel } from "../../../lib/deskMap";
 import { DESK_VIEWS, type DeskFilters } from "../../../lib/deskTypes";
 import { problemOf } from "../../../lib/envelope";
 import { hazardIcon } from "../../../lib/hazardIcons";
@@ -21,12 +20,12 @@ import { counted } from "./DeskShell";
 import { clearedLink, deskLink, isFiltered } from "./parts";
 
 const chip =
-  "inline-flex min-h-target-min shrink-0 items-center gap-2 rounded-control border border-line bg-surface px-3 text-ink no-underline transition-colors duration-100 motion-reduce:transition-none hover:border-control lg:min-h-10 lg:text-[0.9375rem] aria-[current=true]:border-primary aria-[current=true]:bg-selected aria-[current=true]:font-semibold aria-[current=true]:text-primary";
+  "inline-flex min-h-target-min shrink-0 items-center gap-2 rounded-control border border-line bg-surface px-3 text-ink no-underline transition-colors duration-100 motion-reduce:transition-none hover:border-control pointer-fine:min-h-10 lg:text-[0.9375rem] aria-[current=true]:border-primary aria-[current=true]:bg-selected aria-[current=true]:font-semibold aria-[current=true]:text-primary";
 
 const switcher = "inline-flex w-fit max-w-full flex-wrap rounded-control bg-sunken p-1";
 
 const segment =
-  "inline-flex min-h-10 items-center justify-center rounded-[6px] px-3 whitespace-nowrap text-muted no-underline hover:text-ink lg:min-h-8 lg:text-[0.9375rem] max-[359px]:px-2 max-[359px]:text-meta aria-[current=true]:bg-thumb aria-[current=true]:font-semibold aria-[current=true]:text-ink aria-[current=true]:shadow-card";
+  "inline-flex min-h-target-min items-center justify-center rounded-[6px] px-3 whitespace-nowrap text-muted no-underline hover:text-ink pointer-fine:min-h-8 lg:text-[0.9375rem] max-[359px]:px-2 max-[359px]:text-meta aria-[current=true]:bg-thumb aria-[current=true]:font-semibold aria-[current=true]:text-ink aria-[current=true]:shadow-card";
 
 function Tally({ n }: { readonly n: number | undefined }) {
   return n === undefined ? null : (
@@ -195,9 +194,12 @@ export function TicketSearch({
           aria-invalid={problem ? true : undefined}
           aria-describedby={problem ? "ticket-error" : undefined}
           autoFocus={problem !== null}
-          className="min-w-0 flex-1 lg:min-h-10 lg:py-1.5"
+          className="min-w-0 flex-1 pointer-fine:min-h-10 pointer-fine:py-1.5"
         />
-        <button type="submit" className={buttonStyles({ variant: "secondary", className: "lg:min-h-10 lg:py-1.5" })}>
+        <button
+          type="submit"
+          className={buttonStyles({ variant: "secondary", className: "pointer-fine:min-h-10 pointer-fine:py-1.5" })}
+        >
           <Icon name="search" className="size-4" />
           {t("desk.filter.search")}
         </button>

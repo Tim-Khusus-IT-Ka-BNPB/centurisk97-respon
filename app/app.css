@@ -14,7 +14,9 @@
   --primary: oklch(37% 0.125 258);
   --on-primary: oklch(100% 0 0);
   --selected: oklch(94.5% 0.028 255);
-  --focus: oklch(52% 0.17 255);
+  --focus-page: oklch(52% 0.17 255);
+  /* The ring in use: a coloured ground sets its own, and a panel on it takes the page's back. */
+  --focus: var(--focus-page);
   --signal: oklch(53% 0.205 28);
   --on-signal: oklch(100% 0 0);
   --signal-deep: oklch(45% 0.18 28);
@@ -53,7 +55,7 @@
   --primary: oklch(82% 0.09 252);
   --on-primary: oklch(17% 0.03 256);
   --selected: oklch(29% 0.05 255);
-  --focus: oklch(78% 0.11 252);
+  --focus-page: oklch(78% 0.11 252);
   --signal: oklch(57% 0.205 27);
   --on-signal: oklch(100% 0 0);
   --signal-deep: oklch(47% 0.18 27);
@@ -232,6 +234,7 @@
 
 /* Contour lines, as on a hazard map, faint behind the home's opening band. One drawing, never tiled. */
 @utility contours {
+  --focus: var(--on-hero);
   background: var(--hero) url("./assets/contours.svg") right center / cover no-repeat;
 }
 

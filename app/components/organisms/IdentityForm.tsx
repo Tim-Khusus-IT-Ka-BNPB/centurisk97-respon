@@ -88,7 +88,13 @@ export function IdentityForm({ values, envelope, askNumber, profileId, editing, 
       focus={focus === name}
     >
       {(control) => (
-        <Input {...control} type={extra.type ?? "text"} autoComplete={autoComplete} defaultValue={values[name]} />
+        <Input
+          {...control}
+          type={extra.type ?? "text"}
+          autoComplete={autoComplete}
+          defaultValue={values[name]}
+          aria-required
+        />
       )}
     </Field>
   );

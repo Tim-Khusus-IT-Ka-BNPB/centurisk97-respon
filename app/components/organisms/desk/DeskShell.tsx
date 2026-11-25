@@ -17,7 +17,7 @@ const RESPONSE = "/lapor/meja/respons";
 const VIEW_ICON: Readonly<Record<DeskView, IconName>> = { list: "list", map: "map", gallery: "images" };
 
 const item =
-  "group/item flex min-h-target-min items-center gap-3 rounded-control px-3 text-ink no-underline transition-colors duration-100 motion-reduce:transition-none hover:bg-sunken lg:min-h-10 lg:text-[0.9375rem] aria-[current=page]:bg-selected aria-[current=page]:font-semibold aria-[current=page]:text-primary";
+  "group/item flex min-h-target-min items-center gap-3 rounded-control px-3 text-ink no-underline transition-colors duration-100 motion-reduce:transition-none hover:bg-sunken pointer-fine:min-h-10 lg:text-[0.9375rem] aria-[current=page]:bg-selected aria-[current=page]:font-semibold aria-[current=page]:text-primary";
 
 const navIcon = "text-muted group-aria-[current=page]/item:text-primary";
 
