@@ -26,9 +26,12 @@ const BETWEEN_LABELS = / ?(?:[,;&+/]|\bdan\b) ?/;
 export const said = (text: string): string => folded(text).replace(/[.!]+$/, "");
 
 const MEANING = [
-  ["yes", /^(?:ya|iya|y|ok|oke|betul|benar)$/],
-  ["no", /^(?:tidak|tdk|bukan|nggak|enggak|ga|gak)$/],
+  ["yes", /^(?:(?:ya|iya|y|ok|oke)(?:,? (?:mau|boleh|betul|benar))?|mau|boleh|betul|benar)$/],
+  ["no", /^(?:(?:tidak|tdk|nggak|enggak|ga|gak)(?: (?:usah|perlu|mau))?|bukan|jangan)$/],
 ] as const;
+
+// Words a person says beside an answer: "saya warga", "warga aja".
+const FILLER = /\b(?:saya|aja|saja|sih|dong|deh|kak|pak|bu)\b/g;
 
 // Numbers, the words of an answer, or the start of one answer alone.
 export function readChoice(text: string, choices: readonly Choice[], multiple = false): ChoiceRead {
@@ -40,8 +43,10 @@ export function readChoice(text: string, choices: readonly Choice[], multiple = 
     words: rest,
   });
   const idAt = (index: number) => (choices[index] as Choice).id;
-  if (labels.includes(words)) return picked([idAt(labels.indexOf(words))]);
-  const meaning = MEANING.find(([, pattern]) => pattern.test(words))?.[0];
+  const bare = tidy(words.replace(FILLER, ""));
+  const named = labels.findIndex((label) => label === words || label === bare);
+  if (named >= 0) return picked([idAt(named)]);
+  const meaning = MEANING.find(([, pattern]) => pattern.test(bare))?.[0];
   const meant = meaning && choices.find((choice) => choice.means === meaning);
   if (meant) return picked([meant.id]);
   const numbered = NUMBERS_FIRST.exec(tidy(text));

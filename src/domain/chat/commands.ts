@@ -79,10 +79,28 @@ const EVENT = new RegExp(
     "mengungsi",
     "pengungsi",
     "tanggul",
-    "air naik",
+    "jebol",
+    "hanyut",
+    "terseret",
+    "terjebak",
+    "ambruk",
+    "tumbang",
+    "asap",
+    "air (?:makin |terus |sudah )?naik",
     "bencana",
   ].join("|")})\\b`,
 );
 
 // A message that tells of an event, though no report is open.
 export const tellsOfEvent = (text: string): boolean => EVENT.test(folded(text)) && topicGate(text) === null;
+
+const SENTENCE_WORDS = 3;
+
+// While news may still be told of a report, any sentence may be it.
+export const mayBeNews = (text: string): boolean =>
+  tellsOfEvent(text) || (tidy(text).split(" ").length >= SENTENCE_WORDS && topicGate(text) === null);
+
+const THANKS =
+  /^(?:(?:ok|oke|baik|siap|sip|ya)[, ]+)?(?:terima ?kasih|makasih|trims|thanks)(?: (?:banyak|kak|pak|bu|min))*$|^(?:ok|oke|baik|siap|sip|mantap)$/;
+
+export const saysThanks = (text: string): boolean => THANKS.test(said(text));

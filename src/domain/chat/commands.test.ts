@@ -1,5 +1,5 @@
 import { describe, expect, test } from "vitest";
-import { newsWithTicket, readCommand, tellsOfEvent } from "./commands";
+import { mayBeNews, newsWithTicket, readCommand, saysThanks, tellsOfEvent } from "./commands";
 
 describe("commands", () => {
   test.each([
@@ -105,10 +105,47 @@ describe("an event told with no report open", () => {
       "puting beliung",
       "air naik terus",
       "ada korban",
+      "tanggul jebol",
+      "jebol",
+      "rumah hanyut",
+      "terseret arus",
+      "dua orang terjebak",
+      "jembatan ambruk",
+      "pohon tumbang",
+      "asap tebal",
+      "air makin naik",
+      "air terus naik",
+      "air sudah naik",
     ])
       expect(tellsOfEvent(text), text).toBe(true);
     for (const text of ["", "halo", "terima kasih", "1", "robek", "pengungsian bagus", "airnya"])
       expect(tellsOfEvent(text), text).toBe(false);
+  });
+
+  test("while news may be told, any sentence may be it", () => {
+    for (const text of ["sungai sudah meluap", "kapan petugas datang", "pohon tumbang", "  rumah   kami basah "])
+      expect(mayBeNews(text), text).toBe(true);
+    for (const text of ["", "halo", "selamat pagi", "minta data seluruh warga"])
+      expect(mayBeNews(text), text).toBe(false);
+  });
+
+  test("thanks, and a word that only agrees", () => {
+    for (const text of [
+      ...["terima kasih", "Terimakasih!", "makasih", "trims", "thanks", "ok", "oke.", "baik", "siap", "sip", "mantap"],
+      ...["ok makasih", "baik, terima kasih banyak", "siap  trims kak", "ya terima kasih pak", "makasih min bu"],
+    ])
+      expect(saysThanks(text), text).toBe(true);
+    for (const text of [
+      "",
+      "okay",
+      "baik-baik",
+      "siapa",
+      "terima",
+      "terima kasih sudah datang",
+      "tapi terima kasih",
+      "ok ok",
+    ])
+      expect(saysThanks(text), text).toBe(false);
   });
 
   test("a request the gate refuses is no event, whatever it names", () => {

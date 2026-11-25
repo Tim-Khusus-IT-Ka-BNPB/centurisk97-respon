@@ -41,17 +41,42 @@ describe("a choice", () => {
     expect(readChoice("banjir rob..", CHOICES)).toEqual(picked("b"));
   });
 
+  test("by its words among words that add nothing", () => {
+    const choices: readonly Choice[] = [
+      { id: "warga", label: "Warga" },
+      { id: "only", label: "Listrik saja" },
+      { id: "lone", label: "Listrik" },
+    ];
+    for (const text of ["saya warga", "warga aja", "warga saja sih", "Warga dong", "warga deh", "warga kak"])
+      expect(readChoice(text, choices), text).toEqual(picked("warga"));
+    for (const text of ["pak, warga", "wargaku", "sayawarga", "warga baru"])
+      expect(readChoice(text, choices), text).toEqual(WORDS);
+    expect(readChoice("warga, pak", choices)).toEqual(WORDS);
+    expect(readChoice("bu warga pak", choices)).toEqual(picked("warga"));
+    expect(readChoice("listrik saja", choices)).toEqual(picked("only"));
+    expect(readChoice("listrik aja", choices)).toEqual(picked("lone"));
+  });
+
   test("ya and tidak stand for the choice that means them", () => {
     const choices: readonly Choice[] = [
       { id: "agree", label: "Setuju", means: "yes" },
       { id: "decline", label: "Tidak setuju", means: "no" },
       { id: "none", label: "Tidak ada" },
     ];
-    for (const text of ["ya", "Iya", "y", "ok", "oke", "betul", "benar"])
+    for (const text of [
+      ...["ya", "Iya", "y", "ok", "oke", "betul", "benar", "mau", "boleh", "ya mau", "ya, boleh", "ok betul"],
+      ...["ya dong", "iya kak", "iya benar", "saya mau"],
+    ])
       expect(readChoice(text, choices), text).toEqual(picked("agree"));
-    for (const text of ["tidak", "tdk", "bukan", "nggak", "enggak", "ga", "gak"])
+    for (const text of [
+      ...["tidak", "tdk", "bukan", "nggak", "enggak", "ga", "gak", "jangan", "tidak usah", "ga perlu", "tidak mau"],
+      ...["tidak deh", "bukan pak"],
+    ])
       expect(readChoice(text, choices), text).toEqual(picked("decline"));
-    for (const text of ["yang", "oya", "okey", "tidakkah", "bukankah"])
+    for (const text of [
+      ...["yang", "oya", "okey", "tidakkah", "bukankah", "maukah", "si mau", "yamau", "tidakusah", "bukan usah"],
+      ...["ya mau apa", "tidak usah itu", "saya", "jangan mau"],
+    ])
       expect(readChoice(text, choices), text).toEqual(WORDS);
     expect(readChoice("ya", [{ id: "x", label: "Lanjut" }])).toEqual(WORDS);
   });
