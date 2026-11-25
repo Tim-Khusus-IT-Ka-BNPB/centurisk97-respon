@@ -2,6 +2,7 @@ import type { Card } from "../contract/card";
 import { copy } from "../copy";
 import { chronologySteps, isExclusive } from "../domain/chronology";
 import type { ChronologyAnswers } from "../domain/chronology/sentence";
+import { VICTIM_ANSWERS } from "../domain/emergency";
 import { localDate, type Zone } from "../domain/eventTime";
 import type { FieldState } from "../domain/fieldState";
 import { chosenHazardType } from "../domain/fields/applicable";
@@ -70,7 +71,7 @@ function choiceCard(base: CardBase, fieldId: FieldId, content: DraftContent, mul
     return {
       ...base,
       kind: "choice",
-      titleKey: "card.choice.hazardType.title",
+      titleKey: content.emergency ? "card.emergency.type.title" : "card.choice.hazardType.title",
       promptKey: "card.choice.hazardType.prompt",
       fieldId,
       options: ordered.map((id) =>
@@ -239,6 +240,15 @@ export function cardFor(question: Question, content: DraftContent, context: Card
         query: null,
         places: null,
       };
+    case "emergencyVictims":
+      return {
+        ...base,
+        kind: "choice",
+        titleKey: "card.emergency.victims.title",
+        promptKey: null,
+        fieldId: "emergencyVictims",
+        options: VICTIM_ANSWERS.map((id) => option(id, `card.emergency.victims.${id}`, null)),
+      };
     case "neighbourhood":
       return {
         ...base,
@@ -316,6 +326,7 @@ export function cardFor(question: Question, content: DraftContent, context: Card
         params: { percent: context.completePercent },
         reporter: context.reporter,
         groups: summaryGroups(content.states),
+        emergency: content.emergency ?? null,
         photos: {
           count: context.photos.length,
           withPlace: context.photos.filter((photo) => photo.point !== null).length,

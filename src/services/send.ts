@@ -9,6 +9,7 @@ import {
   storeTicketReply,
   ticketNumberOf,
 } from "../adapters/d1/send";
+import { emergencyStates } from "../domain/emergency";
 import { applicableFields, completePercent } from "../domain/fields/applicable";
 import type { FieldId } from "../domain/fields/catalogue";
 import { LIMITS, rollingRetryAt } from "../domain/limits";
@@ -18,7 +19,7 @@ import { atomically, decide, holds, sql } from "../platform/database";
 import { sha256Hex } from "../platform/keys";
 import type { Principal } from "../ports/identity";
 import type { ServiceBindings } from "./bindings";
-import { LIFE_LINE } from "./draftView";
+import { draftZone, LIFE_LINE } from "./draftView";
 import { trackingToken } from "./tracking";
 import { type Answer, ownedDraft, viewOf } from "./turn";
 
@@ -68,6 +69,9 @@ async function sendOnce(
   const day = ticketDay(nowMs);
   const ticketNumber = ticketNumberOf(formatTicketNumber(day, 1).slice(0, -3), day);
   const content = draft.content as DraftContent;
+  const emergency = content.emergency ?? null;
+  const states =
+    emergency === null ? content.states : emergencyStates(content.states, nowMs, draftZone(draft.villageCode));
   const reportId = crypto.randomUUID();
   const trackingHash = await sha256Hex(await trackingToken(bindings.settings.keyHmacSecret, reportId));
   const consent = await latestConsent(db, profile.id);
@@ -95,10 +99,9 @@ async function sendOnce(
       // The version holds what the summary showed: fields hidden by type or by a parent of 0 are left out.
       content: {
         ...content,
-        states: Object.fromEntries(
-          applicableFields(content.states).map((field) => [field.id, content.states[field.id as FieldId]]),
-        ),
+        states: Object.fromEntries(applicableFields(states).map((field) => [field.id, states[field.id as FieldId]])),
       },
+      emergency: emergency && { kind: "chat", victims: emergency.victims ?? "unknown" },
       reporter: {
         name: profile.name,
         number: profile.number,
@@ -107,7 +110,7 @@ async function sendOnce(
         officerPosition: profile.officer_position,
       },
       consent,
-      completePercent: completePercent(content.states),
+      completePercent: completePercent(states),
     }),
     ...endDraft(draft.id, "sent", at),
     storeTicketReply(draft.id, turnKey, requestHash, ticketNumber, at),

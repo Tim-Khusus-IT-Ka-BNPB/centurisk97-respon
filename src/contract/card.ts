@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { VICTIM_ANSWERS } from "../domain/emergency";
 import {
   copyKeySchema,
   fieldStateSchema,
@@ -228,6 +229,11 @@ export const cardSchema = z.discriminatedUnion("kind", [
     ...base,
     kind: z.literal("summary"),
     reporter: z.object({ name: z.string(), role: reporterRoleSchema }),
+    // An emergency, with what the reporter said of victims; absent in a body from before it existed.
+    emergency: z
+      .object({ victims: z.enum(VICTIM_ANSWERS).nullable() })
+      .nullable()
+      .optional(),
     groups: z.array(summaryGroupSchema),
     photos: z.object({ count: z.number().int().nonnegative(), withPlace: z.number().int().nonnegative() }),
   }),

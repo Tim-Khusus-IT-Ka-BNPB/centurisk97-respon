@@ -6,6 +6,7 @@ import {
   deleteProfile,
   deleteUnusedReporters,
   knownProfiles,
+  makeEmergency,
   profileById,
   profileBySlot,
   profileCount,
@@ -21,6 +22,7 @@ import { LIMITS } from "../domain/limits";
 import { ownerSlotOf } from "../domain/ownership";
 import { maskNumber } from "../domain/phoneNumber";
 import { PRIVACY } from "../domain/privacy";
+import { EMERGENCY_CONTENT, EMPTY_CONTENT } from "../domain/turn/content";
 import { atomically, decide, holds, type Query, row, sql } from "../platform/database";
 import { hmacKey, sha256Hex } from "../platform/keys";
 import type { Principal } from "../ports/identity";
@@ -51,14 +53,29 @@ const openingMessages = (draftId: string, at: Date): Query[] =>
 
 // A new draft, with the open one ended first when it is past its 24 hours. The one-open-draft
 // index refuses a second open draft, so a race between two of these ends in one draft.
-function newDraft(numberKey: string, profileIdOf: Query, slot: string, open: OpenDraft | null, at: Date) {
+function newDraft(
+  numberKey: string,
+  profileIdOf: Query,
+  slot: string,
+  open: OpenDraft | null,
+  at: Date,
+  emergency: boolean,
+) {
   const draftId = crypto.randomUUID();
   const expired = open === null ? [] : endDraft(open.id, "expired", at, sql`last_acted_at = ${open.lastActedAt}`);
   return {
     draftId,
     writes: [
       ...expired,
-      createDraft(draftId, numberKey, profileIdOf, slot, at, [LIFE_LINE]),
+      createDraft(
+        draftId,
+        numberKey,
+        profileIdOf,
+        slot,
+        at,
+        [LIFE_LINE],
+        emergency ? EMERGENCY_CONTENT : EMPTY_CONTENT,
+      ),
       ...openingMessages(draftId, at),
     ],
   };
@@ -79,6 +96,7 @@ export async function giveConsent(
   bindings: ServiceBindings,
   principal: Principal,
   identity: Identity,
+  emergency: boolean,
 ): Promise<ConsentResult> {
   const at = new Date(bindings.clock.now());
   const deviceKey = principal.kind === "anonymous" ? newDeviceKey() : null;
@@ -120,10 +138,14 @@ export async function giveConsent(
     writes.push(addConsent(crypto.randomUUID(), profileIdOf, PRIVACY.version, at));
     const open = reporterId === null ? null : await openDraftOf(db, reporterId, slot);
     if (open && isLive(open, at)) {
-      const kept = await atomically(db, [...writes, STILL_OPEN(open.id)]);
+      const kept = await atomically(db, [
+        ...writes,
+        STILL_OPEN(open.id),
+        ...(emergency ? [makeEmergency(open.id)] : []),
+      ]);
       return kept === null ? null : { kind: "draft", draftId: open.id, deviceKey };
     }
-    const created = newDraft(key, profileIdOf, slot, open, at);
+    const created = newDraft(key, profileIdOf, slot, open, at, emergency);
     const done = await atomically(db, [...writes, ...created.writes]);
     return done === null ? null : { kind: "draft", draftId: created.draftId, deviceKey };
   });
@@ -141,6 +163,7 @@ export async function startDraft(
   profileId: string,
   replaceOpenDraft: boolean,
   edit: Omit<Identity, "number"> | null,
+  emergency: boolean,
 ): Promise<StartResult> {
   const at = new Date(bindings.clock.now());
   const slot = ownerSlotOf(principal);
@@ -152,7 +175,14 @@ export async function startDraft(
     const live = open !== null && isLive(open, at);
     if (open !== null && live && !replaceOpenDraft) return { kind: "openExists", draftId: open.id };
     const replaced = open !== null && live ? endDraft(open.id, "cancelled", at) : [];
-    const created = newDraft(profile.number_key, sql`${profile.id}`, profile.owner_slot, live ? null : open, at);
+    const created = newDraft(
+      profile.number_key,
+      sql`${profile.id}`,
+      profile.owner_slot,
+      live ? null : open,
+      at,
+      emergency,
+    );
     const done = await atomically(bindings.db, [
       ...replaced,
       updateProfile(profile.id, edit, at),

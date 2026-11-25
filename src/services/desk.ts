@@ -16,7 +16,15 @@ import {
   sentPhoto,
 } from "../adapters/d1/desk";
 import { referenceFile } from "../adapters/d1/reports";
-import type { DeskGallery, DeskIdentity, DeskMap, DeskQueue, DeskReport, DeskSummary } from "../contract/desk";
+import type {
+  DeskEmergencies,
+  DeskGallery,
+  DeskIdentity,
+  DeskMap,
+  DeskQueue,
+  DeskReport,
+  DeskSummary,
+} from "../contract/desk";
 import {
   DESK_PAGE_SIZE,
   type DeskHas,
@@ -37,6 +45,7 @@ import { checkMove, checkReply, moveCapability, noteRule, offeredStatuses } from
 import type { StaffPrincipal } from "../ports/identity";
 import type { ServiceBindings } from "./bindings";
 import { at, draftZone } from "./draftView";
+import { emergencyList } from "./emergency";
 import { checkLimits, type LimitRefusal } from "./limits";
 import { summaryGroups } from "./summary";
 
@@ -52,14 +61,14 @@ export async function admitted(
   bindings: ServiceBindings,
   staff: StaffPrincipal,
   capability: DeskCapability,
-  limit: "desk.read" | "desk.write",
+  limit: "desk.read" | "desk.write" | "desk.alarm",
 ): Promise<Refused | null> {
   if (!mayUse(staff.role, capability)) return { kind: "notAllowed" };
   const refusal = await checkLimits(bindings, [[limit, { kind: "staff", staffId: staff.staffId }]]);
   return refusal ? { kind: "limit", refusal } : null;
 }
 
-// A sent report holds every required field as a value: the place, the subtype and the event time.
+// A sent report holds its place and the time of its event as values.
 const fieldValue = <T>(states: QueueRow["states"], field: string): T =>
   (states[field] as { readonly value: unknown }).value as T;
 
@@ -71,7 +80,8 @@ function queueItem(staff: StaffPrincipal, found: QueueRow): DeskQueue["items"][n
     ticketNumber: found.ticketNumber,
     status: found.status,
     hazardType: found.hazardType as DeskQueue["items"][number]["hazardType"],
-    hazardSubtype: fieldValue<string>(found.states, "hazardSubtype"),
+    // One tap asks nothing, so its kind is not known.
+    hazardSubtype: (found.states.hazardSubtype?.value as string | undefined) ?? "unknown",
     place: { villageName: place.villageName, districtName: place.districtName, regencyName: place.regencyName },
     eventTime: fieldValue<EventTimeValue>(found.states, "eventTime"),
     sentAt: at(found.sentAt, zone),
@@ -79,6 +89,7 @@ function queueItem(staff: StaffPrincipal, found: QueueRow): DeskQueue["items"][n
     photoCount: found.photoCount,
     reporter: { name: mayUse(staff.role, "readIdentity") ? found.reporterName : null, role: found.reporterRole },
     numberUnverified: found.numberUnverified,
+    emergency: found.emergency,
     impact: impactOf(found.states),
   };
 }
@@ -196,6 +207,7 @@ export async function deskSummary(
       byStatus: byStatus as DeskSummary["byStatus"],
       byHazard: counts.byHazard as DeskSummary["byHazard"],
       byHas: counts.byHas,
+      emergencies: await emergencyList(bindings, staff),
     },
   };
 }
@@ -282,6 +294,15 @@ async function reportBody(bindings: ServiceBindings, staff: StaffPrincipal, tick
     replies: found.replies.map((one) => ({ text: one.text, at: at(one.atMs, zone), actor: one.staffLabel })),
   };
   return body;
+}
+
+export async function deskEmergencies(
+  bindings: ServiceBindings,
+  staff: StaffPrincipal,
+): Promise<DeskAnswer<DeskEmergencies>> {
+  const refused = await admitted(bindings, staff, "readQueue", "desk.alarm");
+  if (refused) return refused;
+  return { kind: "ok", body: { emergencies: await emergencyList(bindings, staff) } };
 }
 
 // A GET never writes: reading a report does not mark it seen.

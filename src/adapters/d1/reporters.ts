@@ -1,5 +1,5 @@
 import type { Identity, ReporterRole } from "../../domain/identityForm";
-import { EMPTY_CONTENT } from "../../domain/turn/content";
+import type { DraftContent } from "../../domain/turn/content";
 import { type Database, type Query, row, rows, sql } from "../../platform/database";
 
 export type ProfileRow = {
@@ -113,11 +113,17 @@ export const createDraft = (
   ownerSlot: string,
   at: Date,
   firstNotices: unknown,
+  content: DraftContent,
 ): Query =>
   sql`insert into report_draft (id, reporter_id, profile_id, owner_slot, state, fields, back_stack, asked, created_at,
       last_acted_at, pending_notices)
     values (${draftId}, (select id from reporter where number_key = ${numberKey}), ${profileIdOf}, ${ownerSlot}, 'place',
-      ${EMPTY_CONTENT}, '[]', '{}', ${at}, ${at}, ${firstNotices})`;
+      ${content}, '[]', '{}', ${at}, ${at}, ${firstNotices})`;
+
+// An open draft turned into an emergency, its answers kept.
+export const makeEmergency = (draftId: string): Query =>
+  sql`update report_draft set fields = json_set(fields, '$.emergency', json('{"victims":null}')), revision = revision + 1
+    where id = ${draftId} and fields is not null and json_extract(fields, '$.emergency') is null`;
 
 export type KnownRow = ProfileRow & {
   draft_id: string | null;

@@ -25,6 +25,7 @@ const consentBody = z.object({
   officerPosition: text(400).default(""),
   privacyVersion: z.literal(PRIVACY.version),
   agree: z.literal(true),
+  emergency: z.boolean().default(false),
 });
 
 const identityEdit = z.object({
@@ -38,6 +39,7 @@ const startBody = z.object({
   profileId: z.uuid(),
   replaceOpenDraft: z.boolean().default(false),
   profileEdit: identityEdit.optional(),
+  emergency: z.boolean().default(false),
 });
 
 async function createdDraft(c: ApiContext, draftId: string): Promise<Response> {
@@ -80,7 +82,7 @@ export function addReporterRoutes(api: Api): void {
       if ("errors" in checked) return refuse(c, 422, "request.invalidFields", { fields: fieldErrors(checked.errors) });
       const limited = await checkLimits(c.env, [["address.bindings", { kind: "address", bucket: c.var.address }]]);
       if (limited) return limitRefused(c, limited, null);
-      const result = await giveConsent(c.env, principal, checked.identity);
+      const result = await giveConsent(c.env, principal, checked.identity, body.emergency);
       if (result.kind === "deviceFull") return limitRefused(c, { limitId: "device.numbers", retryAtMs: null }, null);
       if (result.deviceKey !== null) {
         setCookie(c, DEVICE_COOKIE, result.deviceKey, {
@@ -119,7 +121,14 @@ export function addReporterRoutes(api: Api): void {
           return refuse(c, 422, "request.invalidFields", { fields: fieldErrors(checked.errors) });
         edit = checked.identity;
       }
-      const result = await startDraft(c.env, c.var.principal, body.profileId, body.replaceOpenDraft, edit);
+      const result = await startDraft(
+        c.env,
+        c.var.principal,
+        body.profileId,
+        body.replaceOpenDraft,
+        edit,
+        body.emergency,
+      );
       if (result.kind === "notFound") return refuse(c, 404, "draft.notFound");
       if (result.kind === "openExists") {
         const open = (await loadDraft(c.env.db, result.draftId)) as DraftRecord;

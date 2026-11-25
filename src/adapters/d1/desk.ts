@@ -1,5 +1,6 @@
 import { DESK_HAS, type DeskHas } from "../../domain/deskQueue";
 import type { StaffScope } from "../../domain/deskRights";
+import type { EmergencyKind, VictimAnswer } from "../../domain/emergency";
 import type { Change, CheckResult } from "../../domain/fieldCheck";
 import type { TakenAction } from "../../domain/handling";
 import type { TicketStatus } from "../../domain/stages";
@@ -41,6 +42,7 @@ export type QueueRow = {
   readonly reporterName: string;
   readonly reporterRole: "citizen" | "claimedOfficer";
   readonly numberUnverified: boolean;
+  readonly emergency: { readonly kind: EmergencyKind; readonly victims: VictimAnswer } | null;
 };
 
 type QueueRecord = {
@@ -55,13 +57,15 @@ type QueueRecord = {
   reporter_name: string;
   reporter_role: "citizen" | "claimedOfficer";
   number_unverified: number;
+  emergency: EmergencyKind | null;
+  emergency_victims: VictimAnswer | null;
 };
 
 // The values shown are the newest version's: a field check's corrections make one.
 const LATEST = sql`(select max(m.version) from report_version m where m.report_id = r.id)`;
 
 const SELECT = sql`select r.ticket_number, t.status, r.hazard_type, r.village_code, r.sent_at, v.fields,
-    v.complete_percent, v.reporter_name, v.reporter_role, r.number_unverified,
+    v.complete_percent, v.reporter_name, v.reporter_role, r.number_unverified, r.emergency, r.emergency_victims,
     (select count(*) from draft_photo p where p.draft_id = r.draft_id) as photo_count
   from report r
   join ticket t on t.report_id = r.id
@@ -114,6 +118,8 @@ const queueRow = (found: QueueRecord): QueueRow => ({
   reporterName: found.reporter_name,
   reporterRole: found.reporter_role,
   numberUnverified: found.number_unverified === 1,
+  emergency:
+    found.emergency === null ? null : { kind: found.emergency, victims: found.emergency_victims as VictimAnswer },
 });
 
 // One page of sent reports, newest first, and how many match in all.
@@ -181,7 +187,7 @@ export async function deskReport(
   >(
     db,
     sql`select r.ticket_number, t.status, r.hazard_type, r.village_code, r.sent_at, v.fields,
-        v.complete_percent, v.reporter_name, v.reporter_role, r.number_unverified, r.draft_id, r.id as report_id, t.revision,
+        v.complete_percent, v.reporter_name, v.reporter_role, r.number_unverified, r.emergency, r.emergency_victims, r.draft_id, r.id as report_id, t.revision,
         v.reporter_number, v.officer_regency, v.officer_position,
         (select count(*) from draft_photo p where p.draft_id = r.draft_id) as photo_count
       from report r
@@ -318,6 +324,7 @@ export type MapPoint = {
   readonly hazardType: string;
   readonly villageName: string;
   readonly precision: "gpsPoint" | "estimate" | "villageLevel";
+  readonly emergency: boolean;
   readonly lat: number;
   readonly lon: number;
 };
@@ -332,11 +339,12 @@ export async function mapPoints(db: Database, filters: QueueFilters, limit: numb
     hazard_type: string;
     village_name: string;
     precision: MapPoint["precision"];
+    emergency: string | null;
     lat: number;
     lon: number;
   }>(
     db,
-    sql`select r.ticket_number, t.status, r.hazard_type,
+    sql`select r.ticket_number, t.status, r.hazard_type, r.emergency,
         json_extract(v.fields, '$.place.value.villageName') as village_name,
         json_extract(v.fields, '$.place.value.precision') as precision,
         coalesce(json_extract(v.fields, '$.place.value.point.lat'), s.centre_lat) as lat,
@@ -355,6 +363,7 @@ export async function mapPoints(db: Database, filters: QueueFilters, limit: numb
     hazardType: one.hazard_type,
     villageName: one.village_name,
     precision: one.precision,
+    emergency: one.emergency !== null,
     lat: one.lat,
     lon: one.lon,
   }));

@@ -12,7 +12,7 @@ export const ticketStatusSchema = z.enum([
 ]);
 
 // Who to call: the regency's or province's BPBD from the contact file, else BNPB's 117.
-const contactSchema = z.discriminatedUnion("level", [
+export const contactSchema = z.discriminatedUnion("level", [
   z.object({ level: z.literal("regency"), name: z.string(), phone: z.string() }),
   z.object({ level: z.literal("province"), name: z.string(), phone: z.string() }),
   z.object({ level: z.literal("national") }),

@@ -113,6 +113,8 @@ export const COLUMN_CLASSES: Readonly<Record<string, TableClasses>> = {
       province_code: I,
       sent_at: I,
       tracking_hash: I,
+      emergency: I,
+      emergency_victims: I,
     },
   },
   report_version: {

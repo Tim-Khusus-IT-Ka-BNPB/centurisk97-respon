@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { DESK_HAS } from "../domain/deskQueue";
+import { VICTIM_ANSWERS } from "../domain/emergency";
 import { CHECK_RESULTS } from "../domain/fieldCheck";
 import { summaryGroupSchema } from "./card";
 import { hazardTypeSchema, reporterRoleSchema, timeSchema } from "./common";
@@ -9,6 +10,8 @@ import { eventTimeSchema, ticketStatusSchema } from "./tracking";
 const accountSchema = z.object({ label: z.string() });
 
 const placeSchema = z.object({ villageName: z.string(), districtName: z.string(), regencyName: z.string() });
+
+const emergencySchema = z.object({ kind: z.enum(["chat", "oneTap"]), victims: z.enum(VICTIM_ANSWERS) });
 
 // One sent report in the queue. The reporter's number never travels in the queue.
 const queueItemSchema = z.object({
@@ -24,6 +27,8 @@ const queueItemSchema = z.object({
   // The name is null for an account that must ask for identity on the report.
   reporter: z.object({ name: z.string().nullable(), role: reporterRoleSchema }),
   numberUnverified: z.boolean(),
+  // Raised as an emergency, and what the reporter said of victims. One tap's kind is not known.
+  emergency: emergencySchema.nullable(),
   // The report's own figures: a count, 0 for an explicit none, null when not known.
   impact: z.object({
     dead: z.number().int().nonnegative().nullable(),
@@ -44,6 +49,21 @@ export const deskQueueSchema = z.object({
 
 export type DeskQueue = z.infer<typeof deskQueueSchema>;
 
+// An emergency nobody has opened yet.
+const deskEmergencySchema = emergencySchema.extend({
+  ticketNumber: z.string(),
+  hazardType: hazardTypeSchema,
+  villageName: z.string(),
+  regencyName: z.string(),
+  sentAt: timeSchema,
+});
+
+export type DeskEmergency = z.infer<typeof deskEmergencySchema>;
+
+export const deskEmergenciesSchema = z.object({ emergencies: z.array(deskEmergencySchema) });
+
+export type DeskEmergencies = z.infer<typeof deskEmergenciesSchema>;
+
 // How many reports each status queue, hazard chip and holding (victims, photos...) would show
 // under the other filters.
 export const deskSummarySchema = z.object({
@@ -52,6 +72,7 @@ export const deskSummarySchema = z.object({
   byStatus: z.record(ticketStatusSchema, z.number().int().nonnegative()),
   byHazard: z.partialRecord(hazardTypeSchema, z.number().int().nonnegative()),
   byHas: z.record(z.enum(DESK_HAS), z.number().int().nonnegative()),
+  emergencies: z.array(deskEmergencySchema),
 });
 
 export type DeskSummary = z.infer<typeof deskSummarySchema>;
@@ -81,6 +102,7 @@ export const deskMapSchema = z.object({
       villageName: z.string(),
       // A village picked by search sits at the village's centre, never at a made-up point.
       precision: z.enum(["gpsPoint", "estimate", "villageLevel"]),
+      emergency: z.boolean(),
       lat: z.number(),
       lon: z.number(),
     }),

@@ -3,6 +3,7 @@ import { deleteCookie, setCookie } from "hono/cookie";
 import { isSeededStaffCode, SESSION_COOKIE } from "../../adapters/identity/seeded";
 import { hazardTypeSchema } from "../../contract/common";
 import {
+  deskEmergenciesSchema,
   deskGallerySchema,
   deskIdentitySchema,
   deskMapSchema,
@@ -17,6 +18,7 @@ import type { StaffPrincipal } from "../../ports/identity";
 import {
   type DeskAnswer,
   type DeskChange,
+  deskEmergencies,
   deskGallery,
   deskMap,
   deskPhotoFile,
@@ -206,6 +208,21 @@ export function addDeskRoutes(api: Api): void {
       c.header("x-robots-tag", "noindex");
       const { ticketNumber } = c.req.valid("param");
       return changeAnswered(c, await replyToReporter(c.env, staffOf(c), ticketNumber, c.req.valid("json").text));
+    },
+  );
+
+  // Read by every open desk page every 20 seconds, so it is counted apart from the desk's reads.
+  addRoute(
+    api,
+    "staff",
+    createRoute({
+      method: "get",
+      path: "/desk/emergencies",
+      responses: { 200: jsonResponse("Emergencies nobody has opened yet, newest first", deskEmergenciesSchema) },
+    }),
+    async (c) => {
+      c.header("x-robots-tag", "noindex");
+      return answered(c, await deskEmergencies(c.env, staffOf(c)));
     },
   );
 

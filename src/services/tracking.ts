@@ -29,7 +29,7 @@ export async function trackingToken(secret: string, reportId: string): Promise<s
 const TOKEN = /^[0-9a-f]{32}$/;
 
 // The BPBD to call. A contact file that cannot be read shows BNPB's 117; the report is unaffected.
-async function contactOf(bindings: ServiceBindings, place: PlaceValue): Promise<Tracking["contact"]> {
+export async function contactOf(bindings: ServiceBindings, place: PlaceValue): Promise<Tracking["contact"]> {
   let file = null;
   try {
     file = checkContactFile(await referenceFile(bindings.db, "bpbdContacts"));

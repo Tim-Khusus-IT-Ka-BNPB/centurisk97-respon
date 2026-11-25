@@ -151,5 +151,12 @@
   "card.sent.contact.national": "Call Center BNPB 117",
   "card.sent.contact.missing": "Nomor BPBD daerah Anda belum tercatat.",
   "card.sent.contact.call": "Telepon {phone}",
-  "card.sent.contactPromise": "Petugas kami akan menghubungi Anda bila perlu keterangan tambahan."
+  "card.sent.contactPromise": "Petugas kami akan menghubungi Anda bila perlu keterangan tambahan.",
+  "card.emergency.type.title": "Kejadian apa yang sedang terjadi?",
+  "card.emergency.victims.title": "Ada orang terluka, hilang, atau terjebak?",
+  "card.emergency.victims.yes": "Ya, ada",
+  "card.emergency.victims.no": "Tidak ada",
+  "card.emergency.victims.unknown": "Belum tahu",
+  "card.emergency.summary": "Laporan darurat, sedang berlangsung",
+  "card.emergency.summaryVictims": "Orang terluka, hilang, atau terjebak: {victims}"
 }

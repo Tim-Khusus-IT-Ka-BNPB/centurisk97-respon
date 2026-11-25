@@ -14,5 +14,9 @@
   "limit.rating.hour": "Batas penilaian tercapai: paling banyak {limit} penilaian per jam untuk nomor ini. Nilai lagi mulai {retryTime}.",
   "limit.desk.read": "Batas pembukaan meja tercapai: paling banyak {limit} pembukaan per jam untuk akun ini. Buka lagi mulai {retryTime}.",
   "limit.desk.write": "Batas tindakan meja tercapai: paling banyak {limit} tindakan per jam untuk akun ini. Tindakan ini belum tersimpan. Coba lagi mulai {retryTime}.",
-  "limit.address.staffSignIn": "Terlalu banyak percobaan masuk dari jaringan ini: paling banyak {limit} per jam. Masuk lagi mulai {retryTime}."
+  "limit.address.staffSignIn": "Terlalu banyak percobaan masuk dari jaringan ini: paling banyak {limit} per jam. Masuk lagi mulai {retryTime}.",
+  "limit.oneTap.device": "Darurat sekali ketuk sudah terkirim dari ponsel ini. Bisa dikirim lagi mulai {retryTime}. Bila nyawa terancam, telepon 112 sekarang.",
+  "limit.oneTap.number": "Nomor ini sudah mengirim {limit} darurat sekali ketuk dalam 24 jam. Bisa lagi mulai {retryTime}. Bila nyawa terancam, telepon 112 sekarang.",
+  "limit.address.oneTap": "Dari jaringan ini sudah {limit} darurat sekali ketuk dalam satu jam. Bisa lagi mulai {retryTime}. Bila nyawa terancam, telepon 112 sekarang.",
+  "limit.desk.alarm": "Pembaruan alarm darurat terlalu sering untuk akun ini. Alarm diperbarui lagi mulai {retryTime}."
 }
