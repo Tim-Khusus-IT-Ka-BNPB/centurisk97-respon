@@ -25,6 +25,7 @@ describe("reference file importer", () => {
     expect(await stored()).toEqual([
       { name: "bpbdContacts", data_date: "2026-11-22", source: "seed" },
       { name: "education", data_date: "2026-11-19", source: "seed" },
+      { name: "responseActions", data_date: "versi 1", source: "seed" },
     ]);
     expect(await importReferenceFile(db, "education", "db/reference/education.json", "upstream")).toEqual({
       written: false,
@@ -50,6 +51,9 @@ describe("reference file importer", () => {
       ReferenceFileRefused,
     );
     await expect(importReferenceFile(db, "education", path, "upstream")).rejects.toThrow("education does not match");
+    await expect(importReferenceFile(db, "responseActions", path, "upstream")).rejects.toBeInstanceOf(
+      ReferenceFileRefused,
+    );
     expect(await stored()).toEqual(before);
     await importReferenceFile(db, "bpbdContacts", "db/reference/bpbd-contacts.json", "seed");
   });

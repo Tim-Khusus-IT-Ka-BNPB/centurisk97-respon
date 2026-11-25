@@ -7,4 +7,6 @@ import { importReferenceFile } from "../../tools/reference-import/file.ts";
 export default async function seedReference(db: Database): Promise<void> {
   await importReferenceFile(db, "bpbdContacts", "db/reference/bpbd-contacts.json", "seed");
   await importReferenceFile(db, "education", "db/reference/education.json", "seed");
+  // The action labels and codes are upstream's own (owner's yes, 2026-11-25); they name no one.
+  await importReferenceFile(db, "responseActions", "db/reference/response-actions.json", "seed");
 }

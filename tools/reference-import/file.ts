@@ -2,9 +2,10 @@ import { createHash } from "node:crypto";
 import { readFile } from "node:fs/promises";
 import { checkContactFile } from "../../src/domain/contacts.ts";
 import { checkEducationFile } from "../../src/domain/education.ts";
+import { checkActionFile } from "../../src/domain/responseActions.ts";
 import { type Database, row, run, sql } from "../../src/platform/database.ts";
 
-export type ReferenceName = "bpbdContacts" | "education";
+export type ReferenceName = "bpbdContacts" | "education" | "responseActions";
 
 export class ReferenceFileRefused extends Error {
   constructor(name: ReferenceName) {
@@ -13,10 +14,14 @@ export class ReferenceFileRefused extends Error {
   }
 }
 
-// The data date each file names, once it passed its contract.
+// The data date each file names, or its version when it names none, once it passed its contract.
 const CHECKS: Readonly<Record<ReferenceName, (json: unknown) => string | null>> = {
   bpbdContacts: (json) => checkContactFile(json)?.diperbarui ?? null,
   education: (json) => checkEducationFile(json)?.dibuat ?? null,
+  responseActions: (json) => {
+    const file = checkActionFile(json);
+    return file === null ? null : `versi ${file.versi}`;
+  },
 };
 
 // Reads a small upstream file, checks it against its contract and keeps it whole as the one in
