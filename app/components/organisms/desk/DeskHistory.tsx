@@ -1,22 +1,29 @@
 import type { DeskReport } from "../../../../src/contract/desk";
 import type { Text } from "../../../../src/copy/text";
 import { useText } from "../../../lib/text";
+import { ChangeList } from "../VersionList";
 import { when } from "./parts";
 
 type History = DeskReport["history"];
+type Change = DeskReport["versions"][number]["changes"];
 
 // A history row's name: the status it reached, or the work it tells of.
 function historyTitle(t: Text, entry: History[number]): string {
   if (entry.event === "actions") return t("desk.handling.actions");
   if (entry.event === "take") return t("desk.taker", { taker: entry.detail?.taker as string });
+  if (entry.event === "followUp") return t("desk.history.followUp", { version: entry.detail?.version as number });
   if (entry.event === "fieldCheck")
     return t("desk.history.check", { result: `desk.check.result.${entry.detail?.result}` });
   return t(`stage.long.${entry.status}`);
 }
 
 // What happened to the ticket, oldest first.
-export function DeskHistory({ history }: { readonly history: History }) {
+export function DeskHistory({ report }: { readonly report: DeskReport }) {
   const t = useText();
+  const { history, versions } = report;
+  // What the reporter's own news changed is told by the version it made.
+  const added = (entry: History[number]): Change =>
+    versions.find((one) => one.version === entry.detail?.version)?.changes ?? [];
   return (
     <ol className="flex flex-col">
       {history.map((entry, index) => (
@@ -28,7 +35,10 @@ export function DeskHistory({ history }: { readonly history: History }) {
           <span className="flex min-w-0 flex-col">
             <span className="font-semibold">{historyTitle(t, entry)}</span>
             <span className="text-meta text-muted tabular-nums">{when(t, "desk.history.at", entry.at)}</span>
-            <span className="text-meta">{entry.actor ?? t("desk.history.system")}</span>
+            <span className="text-meta">
+              {entry.actor ?? t(entry.event === "followUp" ? "desk.history.reporter" : "desk.history.system")}
+            </span>
+            {added(entry).length === 0 ? null : <ChangeList changes={added(entry)} hazardType={report.hazardType} />}
             {(entry.detail?.changes ?? []).map((change) => (
               <span key={change.fieldId}>
                 {t("desk.history.change", {

@@ -11,7 +11,7 @@ import { Button, buttonStyles } from "../../atoms/Button";
 import { Icon } from "../../atoms/Icon";
 import { Notice } from "../../molecules/Notice";
 import { DeskMapCanvas, SMALL } from "../DeskMapCanvas";
-import { FileButtons, VersionList } from "../VersionList";
+import { ChangeList, FileButtons, VersionList } from "../VersionList";
 import { DeskActions } from "./DeskActions";
 import { DeskHistory } from "./DeskHistory";
 import { Hazard, PhotoFigure } from "./DeskQueue";
@@ -21,6 +21,7 @@ import {
   ALL_FILTERS,
   EmergencyChip,
   ImpactStrip,
+  NewsChip,
   StatusChip,
   spacedNumber,
   Taker,
@@ -164,6 +165,27 @@ function Documents({ report }: { readonly report: DeskReport }) {
   );
 }
 
+// What the reporter added last, until an officer acts on the report.
+function News({ report }: { readonly report: DeskReport }) {
+  const t = useText();
+  const added = report.versions.find((one) => one.madeBy === "reporter" && one.version > 1);
+  if (added === undefined) return null;
+  return (
+    <section aria-labelledby="desk-news" className="flex flex-col gap-2 rounded-card bg-selected p-4 md:px-5">
+      <h2 id="desk-news" className="flex items-center gap-2 font-bold">
+        <Icon name="messageSquare" className="size-5 text-primary" />
+        {t("desk.news.title", { version: added.version })}
+      </h2>
+      <p className="text-meta text-muted tabular-nums">{when(t, "desk.history.at", added.at)}</p>
+      {added.changes.length === 0 ? (
+        <p>{t("desk.news.photosOnly")}</p>
+      ) : (
+        <ChangeList changes={added.changes} hazardType={report.hazardType} />
+      )}
+    </section>
+  );
+}
+
 // Who reported. An account that must ask for it is told each ask is logged; the answer is on this
 // page only.
 function Reporter({ report, identity }: { readonly report: DeskReport; readonly identity: DeskIdentity | null }) {
@@ -259,6 +281,7 @@ export function DeskReportView({
               <h1 className="text-ticket font-bold tabular-nums">{report.ticketNumber}</h1>
               <StatusChip status={report.status} />
               {report.emergency === null ? null : <EmergencyChip />}
+              {report.news ? <NewsChip /> : null}
               {report.numberUnverified ? <UnverifiedChip /> : null}
             </div>
             <Hazard item={report} />
@@ -288,6 +311,7 @@ export function DeskReportView({
           </div>
         </div>
         <ImpactStrip impact={report.impact} />
+        {report.news ? <News report={report} /> : null}
       </header>
       {/* On a phone the report is read first; the link in its header leads to the work under it. */}
       <div className="grid gap-5 xl:grid-cols-[minmax(0,1fr)_24rem] xl:grid-rows-[auto_1fr] xl:items-start">
@@ -341,7 +365,7 @@ export function DeskReportView({
         </div>
         <div className="flex min-w-0 flex-col gap-5 xl:col-start-2 xl:row-start-2">
           <Section id="desk-history" title={t("desk.history")}>
-            <DeskHistory history={report.history} />
+            <DeskHistory report={report} />
           </Section>
           <Section id="desk-words" title={t("desk.words")}>
             {report.reporterWords.length === 0 ? (

@@ -94,6 +94,7 @@ export function PeriodSegment({ filters, className }: Pick<Counted, "filters"> &
 }
 
 const HAS_ICON: Readonly<Record<DeskHas, IconName>> = {
+  news: "messageSquare",
   victims: "heartCrack",
   displaced: "tent",
   houses: "house",
@@ -147,7 +148,11 @@ export function HasTiles({ filters, summary }: Counted) {
           has={has}
           filters={filters}
           summary={summary}
-          className="flex min-h-target items-center gap-2.5 rounded-control border border-line bg-surface px-2.5 py-1.5 text-ink no-underline hover:bg-sunken aria-[current=true]:border-primary aria-[current=true]:bg-selected"
+          className={cn(
+            "flex min-h-target items-center gap-2.5 rounded-control border border-line bg-surface px-2.5 py-1.5 text-ink no-underline hover:bg-sunken aria-[current=true]:border-primary aria-[current=true]:bg-selected",
+            // Work to do stands apart from what the reports hold.
+            has === "news" && "col-span-full",
+          )}
         >
           <Icon name={HAS_ICON[has]} className="size-5 text-muted" />
           <span className="flex min-w-0 flex-col leading-tight">

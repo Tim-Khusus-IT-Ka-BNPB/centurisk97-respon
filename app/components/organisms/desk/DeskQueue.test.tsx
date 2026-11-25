@@ -31,6 +31,23 @@ const POINT = {
 
 const table = () => within(screen.getByRole("table"));
 
+test("a report with news no officer has acted on is marked in the table and the cards", async () => {
+  const [item] = queue().items as [ReturnType<typeof queue>["items"][number]];
+  await renderDesk(
+    <DeskQueueView
+      shown={list(queue({ items: [{ ...item, news: true }], total: 1 }))}
+      summary={SUMMARY}
+      filters={FILTERS}
+      envelope={null}
+    />,
+    { path: "/lapor/meja" },
+  );
+  expect(within(screen.getByRole("table")).getByText("Kabar baru")).toBeTruthy();
+  expect(screen.getByRole("link", { name: "Kabar baru, 2 laporan" }).getAttribute("href")).toBe(
+    "/lapor/meja?view=list&has=news",
+  );
+});
+
 describe("the side menu", () => {
   test("names the account, links each view and status queue with its count, and marks the one in use", async () => {
     await renderDesk(

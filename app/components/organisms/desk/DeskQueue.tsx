@@ -22,6 +22,7 @@ import {
   Impact,
   type Item,
   isFiltered,
+  NewsChip,
   StatusChip,
   Taker,
   UnverifiedMark,
@@ -111,6 +112,7 @@ function QueueTable({ items }: { readonly items: readonly Item[] }) {
                   <span className="flex flex-wrap gap-1.5">
                     <StatusChip status={item.status} />
                     {item.emergency === null ? null : <EmergencyChip />}
+                    {item.news ? <NewsChip /> : null}
                   </span>
                 </span>
               </td>
@@ -162,6 +164,7 @@ function QueueCards({ items }: { readonly items: readonly Item[] }) {
               <span className="font-bold whitespace-nowrap tabular-nums">{item.ticketNumber}</span>
               <span className="flex flex-wrap justify-end gap-1.5">
                 {item.emergency === null ? null : <EmergencyChip />}
+                {item.news ? <NewsChip /> : null}
                 <StatusChip status={item.status} />
               </span>
             </span>

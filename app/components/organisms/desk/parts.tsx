@@ -113,6 +113,17 @@ export function EmergencyChip() {
   );
 }
 
+// The reporter added something no officer has acted on yet.
+export function NewsChip() {
+  const t = useText();
+  return (
+    <span className="inline-flex items-center gap-1 rounded-chip bg-selected px-1.5 py-0.5 text-meta font-semibold whitespace-nowrap text-primary">
+      <Icon name="messageSquare" className="size-4" />
+      {t("desk.news.chip")}
+    </span>
+  );
+}
+
 export function UnverifiedChip() {
   const t = useText();
   return (

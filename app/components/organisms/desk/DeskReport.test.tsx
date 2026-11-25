@@ -259,6 +259,49 @@ describe("a report on the desk", () => {
     ).toBeTruthy();
   });
 
+  test("the reporter's news stands out until acted on, and its history row tells what it changed", async () => {
+    const change = {
+      fieldId: "displacedPeople",
+      from: null,
+      to: {
+        fieldId: "displacedPeople",
+        state: "value" as const,
+        value: { kind: "count" as const, count: 30 },
+        origin: "quote" as const,
+      },
+    };
+    const versions = [{ version: 2, at: SENT, madeBy: "reporter" as const, changes: [change] }];
+    const history = [
+      ...REPORT.history,
+      {
+        status: "seen" as const,
+        at: { ...SENT, utc: "2026-11-24T05:00:00.000Z" },
+        actor: null,
+        note: null,
+        forwardedTo: null,
+        event: "followUp" as const,
+        detail: { version: 2 },
+      },
+    ];
+    const report = { ...REPORT, news: true, versions, history };
+    const view = await renderDesk(<DeskReportView report={report} summary={SUMMARY} />, PATH);
+    const news = within(screen.getByRole("region", { name: "Kabar baru dari pelapor, versi 2" }));
+    expect(news.getByRole("listitem").textContent).toBe("Mengungsi: belum didata menjadi 30 orang");
+    expect(screen.getByText("Kabar baru")).toBeTruthy();
+    const told = within(screen.getByRole("region", { name: "Riwayat tiket" }));
+    expect(told.getByText("Kabar tambahan, versi 2")).toBeTruthy();
+    expect(told.getByText("Pelapor")).toBeTruthy();
+    expect(told.getByText("30 orang")).toBeTruthy();
+    view.unmount();
+    // Photos alone are news too; news with no version of its own draws nothing.
+    const photos = { ...report, versions: [{ ...(versions[0] as (typeof versions)[0]), changes: [] }] };
+    const second = await renderDesk(<DeskReportView report={photos} summary={SUMMARY} />, PATH);
+    expect(screen.getByText("Pelapor menambah foto. Tidak ada isian yang berubah.")).toBeTruthy();
+    second.unmount();
+    await renderDesk(<DeskReportView report={{ ...report, versions: [] }} summary={SUMMARY} />, PATH);
+    expect(screen.queryByRole("region", { name: /Kabar baru dari pelapor/ })).toBeNull();
+  });
+
   test("work is told in the history, and what was done is shown with its photos", async () => {
     const event = { at: SENT, actor: "Petugas Uji", forwardedTo: null, status: "in_handling" as const };
     await renderDesk(

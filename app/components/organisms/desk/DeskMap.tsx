@@ -11,7 +11,7 @@ import { buttonStyles } from "../../atoms/Button";
 import { Icon } from "../../atoms/Icon";
 import { DeskMapCanvas } from "../DeskMapCanvas";
 import { ClearFilters, HasTiles, HazardChips, PeriodSegment, TicketSearch, ViewTabs } from "./DeskFilters";
-import { deskLink, EmergencyChip, Impact, type Item, isFiltered, StatusChip, whenShort } from "./parts";
+import { deskLink, EmergencyChip, Impact, type Item, isFiltered, NewsChip, StatusChip, whenShort } from "./parts";
 
 function Legend() {
   const t = useText();
@@ -51,6 +51,7 @@ function PanelItem({ item, onPoint }: { readonly item: Item; readonly onPoint: (
             <span className="font-bold tabular-nums">{item.ticketNumber}</span>
             <span className="flex flex-wrap justify-end gap-1.5">
               {item.emergency === null ? null : <EmergencyChip />}
+              {item.news ? <NewsChip /> : null}
               <StatusChip status={item.status} />
             </span>
           </span>
