@@ -16,7 +16,7 @@ Status: the guided report (identity and consent, place by search or GPS, hazard,
 - `workflow/`: planning and task files. Local only, not tracked.
 - `app/`: pages (React Router, server rendered). `src/`: the API (Hono), domain rules and adapters. `src/platform/cloudflare/`: the Worker entry, the only code that names a Cloudflare binding.
 - `db/migrations/`, `db/seed/`: D1 migrations (forward only) and synthetic seed data.
-- `scripts/`: database, sweep and budget commands. `tools/model-stub/`: a local stand-in for the model provider.
+- `scripts/`: database, sweep and budget commands. `tools/model-stub/`: a local stand-in for the model provider. `tools/test-gateway/`: a local stand-in for WhatsApp.
 
 ## Rules for this repo
 
@@ -56,7 +56,10 @@ Needs Node 26.3 (see `.nvmrc`) and pnpm 10.34.5 (the `packageManager` field; `np
    pnpm dev
    pnpm model-stub          # only when MODEL_MODE=recorded in .dev.vars
    pnpm sweep:local         # fires the scheduled expiry sweep on the running dev server
+   pnpm test-gateway        # a chat page at http://127.0.0.1:8791 that stands in for WhatsApp
    ```
+
+   The test gateway signs each message with the secret in `.env`, which must equal its entry in `GATEWAY_SECRETS` of `.dev.vars`, and keeps what each number received as its outbox (`/api/outbox`). It takes 0800 numbers only and sends nothing to WhatsApp. Only numbers of the pilot are served: allow one on the desk under "Nomor uji WhatsApp", or write `lapor izin 0800...` as 0800 0000 0000.
 
    Contacts and preparedness topics. The seed loads synthetic stand-ins: the BPBD numbers there are 0800 numbers, never an agency's real line. Upstream's real files load with `reference:import-file`, each checked against its contract first.
 
