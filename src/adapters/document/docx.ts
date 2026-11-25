@@ -98,7 +98,7 @@ function grid(
 }
 
 // Two tables with nothing between them are read as one.
-const GAP = para("", { after: 60 });
+const GAP = '<w:p><w:pPr><w:spacing w:before="0" w:after="0" w:line="120" w:lineRule="exact"/></w:pPr></w:p>';
 
 // Media parts of the file, numbered as they are met.
 class Media {

@@ -228,6 +228,7 @@ function table(canvas: Canvas, block: Extract<DocumentBlock, { kind: "table" }>)
     canvas.y += 16;
     canvas.rule(canvas.y, 0.75, LINE);
   };
+  canvas.y += 3;
   canvas.room(40);
   headRow();
   let striped = false;
