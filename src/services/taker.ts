@@ -1,4 +1,3 @@
-import { deskReport } from "../adapters/d1/desk";
 import { responseRows, takeReport } from "../adapters/d1/taker";
 import type { DeskResponse } from "../contract/desk";
 import { monthSpan, responseByAgency } from "../domain/response";
@@ -20,11 +19,10 @@ export async function takeDeskReport(
     if (profile === null) return { kind: "notAllowed" };
     if (found.taker !== null) return { kind: "taken", label: found.taker };
     if (ENDED.includes(found.status)) return { kind: "transitionRefused" };
-    const taker = { ticketNumber, profileId: profile.id, label: takerLabel(profile), status: found.status };
+    const taker = { ticketNumber, profileId: profile.id, label: takerLabel(profile) };
     if (await takeReport(bindings.db, staff, taker, at)) return null;
-    const now = await deskReport(bindings.db, staff.scope, ticketNumber);
-    const label = now?.taker ?? null;
-    return label === null ? { kind: "transitionRefused" } : { kind: "taken", label };
+    // Another officer took it, or it ended, after it was read: read again, which says which.
+    return takeDeskReport(bindings, staff, ticketNumber);
   });
 }
 

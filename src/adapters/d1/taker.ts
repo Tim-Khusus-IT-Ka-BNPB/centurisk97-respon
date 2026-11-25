@@ -1,5 +1,4 @@
 import type { ResponseRow } from "../../domain/response";
-import type { TicketStatus } from "../../domain/stages";
 import { atomically, type Database, holds, rows, sql } from "../../platform/database";
 import type { StaffPrincipal } from "../../ports/identity";
 import { actionRow } from "./deskShared";
@@ -13,18 +12,19 @@ export async function takeReport(
     readonly ticketNumber: string;
     readonly profileId: string;
     readonly label: string;
-    readonly status: TicketStatus;
   },
   at: Date,
 ): Promise<boolean> {
-  const { ticketNumber, profileId, label, status } = taker;
+  const { ticketNumber, profileId, label } = taker;
   const done = await atomically(db, [
-    holds(sql`exists (select 1 from ticket where ticket_number = ${ticketNumber} and status = ${status})`),
+    holds(
+      sql`exists (select 1 from ticket where ticket_number = ${ticketNumber} and status not in ('closed', 'invalid'))`,
+    ),
     sql`insert into report_taker (ticket_number, profile_id, staff_id, label, at)
       values (${ticketNumber}, ${profileId}, ${staff.staffId}, ${label}, ${at})`,
     sql`insert into ticket_history (ticket_number, from_status, to_status, actor, actor_id, actor_label, at, event, detail)
-      values (${ticketNumber}, ${status}, ${status}, 'staff', ${staff.staffId}, ${staff.label}, ${at},
-        'take', ${{ taker: label }})`,
+      select ticket_number, status, status, 'staff', ${staff.staffId}, ${staff.label}, ${at}, 'take', ${{ taker: label }}
+      from ticket where ticket_number = ${ticketNumber}`,
     actionRow(staff, ticketNumber, "take", at),
   ]);
   return done !== null;

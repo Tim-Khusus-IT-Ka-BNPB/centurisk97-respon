@@ -82,7 +82,7 @@ describe("a report taken in hand", () => {
     expect(await query`select 1 from report_taker where ticket_number = ${ticket}`).toHaveLength(1);
   });
 
-  test("is not for one closed or set aside, nor one that closes while it is being taken", async () => {
+  test("is not for one closed or set aside, and one being opened is taken all the same", async () => {
     const ticket = await sentReport();
     await desk().call("POST", `/desk/reports/${ticket}/view`);
     const aside = await desk().call("POST", `/desk/reports/${ticket}/status`, {
@@ -93,13 +93,13 @@ describe("a report taken in hand", () => {
     expect(aside.status).toBe(200);
     expect((await read(andi(), ticket)).mayTake).toBe(false);
     expect((await take(andi(), ticket)).error.error.code).toBe("ticket.transitionRefused");
+    // One opened while it is being taken is taken all the same, at whichever status it is in.
     const other = await sentReport();
     const [taken, viewed] = await Promise.all([
       take(andi(), other),
       desk().call("POST", `/desk/reports/${other}/view`),
     ]);
-    expect(viewed.status).toBe(200);
-    expect([200, 409]).toContain(taken.status);
+    expect([taken.status, viewed.status]).toEqual([200, 200]);
   });
 
   test("is for an officer with a profile, in their own region", async () => {

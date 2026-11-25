@@ -3,7 +3,7 @@ import { MINUTE_MS } from "./time";
 // How fast each agency answers (K12): from a report sent to its first seen and to it being taken in
 // hand. Never a ranking; too few reports say nothing.
 
-export const RESPONSE_MIN_REPORTS = 5;
+const RESPONSE_MIN_REPORTS = 5;
 
 export type ResponseRow = {
   readonly regencyCode: string;
@@ -13,9 +13,9 @@ export type ResponseRow = {
 };
 
 // Whole minutes.
-export type Spread = { readonly count: number; readonly median: number; readonly p90: number };
+type Spread = { readonly count: number; readonly median: number; readonly p90: number };
 
-export type ResponseFigures = {
+type ResponseFigures = {
   readonly seen: Spread | null;
   readonly taken: Spread | null;
   readonly notSeen: number;
