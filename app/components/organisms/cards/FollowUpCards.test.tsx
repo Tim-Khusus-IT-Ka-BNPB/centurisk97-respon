@@ -129,5 +129,6 @@ describe("news for a sent report", () => {
     renderPage(<DraftAside draft={news()} />);
     expect(await screen.findByRole("heading", { name: "Kabar untuk LA-231126-01" })).toBeTruthy();
     expect(screen.queryByText(/Lengkap/)).toBeNull();
+    expect(screen.getByText(/^batal: membatalkan kabar/)).toBeTruthy();
   });
 });

@@ -14,5 +14,6 @@
   "followUp.saved.cancelled": "Kabar dibatalkan. Laporan ini tidak berubah.",
   "followUp.resumed": "Kabar dilanjutkan dari jawaban terakhir Anda.",
   "followUp.aside": "Kabar untuk {ticketNumber}",
-  "followUp.asideLead": "Jenis bencana, lokasi, dan waktu kejadian tidak berubah."
+  "followUp.asideLead": "Lokasi dan waktu kejadian tidak berubah.",
+  "followUp.words.cancel": "batal: membatalkan kabar yang belum dikirim, sesudah Anda memastikannya. Laporan Anda tetap."
 }
