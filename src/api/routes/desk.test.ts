@@ -259,7 +259,15 @@ describe("a report on the desk", () => {
     expect(report.numberUnverified).toBe(true);
     expect(report.reporterWords.map((word) => word.text)).toContain("banjir, dua orang meninggal");
     expect(report.history).toEqual([
-      { status: "new", at: expect.objectContaining({ zone: "WIB" }), actor: null, note: null, forwardedTo: null },
+      {
+        status: "new",
+        at: expect.objectContaining({ zone: "WIB" }),
+        actor: null,
+        note: null,
+        forwardedTo: null,
+        event: null,
+        detail: null,
+      },
     ]);
   });
 

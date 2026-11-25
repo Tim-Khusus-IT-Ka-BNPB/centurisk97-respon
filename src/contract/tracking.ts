@@ -33,6 +33,9 @@ export const trackingSchema = z.object({
   stages: z.array(z.object({ status: ticketStatusSchema, reachedAt: timeSchema.nullable() })),
   // Set aside, with the reason an officer wrote for the reporter. Nothing else staff write is here.
   rejected: z.object({ at: timeSchema, reason: z.string() }).nullable(),
+  // What was done, and once the report is closed the photos of it.
+  actions: z.array(z.string()),
+  proofs: z.array(z.object({ proofId: z.string(), at: timeSchema })),
   hazardType: hazardTypeSchema,
   hazardSubtype: z.string().nullable(),
   place: z.object({ villageName: z.string(), districtName: z.string(), regencyName: z.string() }),

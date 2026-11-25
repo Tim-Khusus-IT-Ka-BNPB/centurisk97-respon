@@ -32,5 +32,12 @@
   "fieldError.rating.range": "Nilai harus angka bulat 1 sampai 5. Pilih salah satu dari lima pilihan di atas.",
   "fieldError.ticketNumber.format": "Nomor tiket ditulis seperti LA-241126-01. Periksa lagi nomornya, lalu cari.",
   "fieldError.staffCode.unknown": "Kode masuk tidak dikenal. Periksa kode dari admin, lalu masuk lagi.",
-  "fieldError.staffReason.tooShort": "Alasan terlalu pendek. Tulis paling sedikit {min} huruf, karena alasan ini dibaca pelapor."
+  "fieldError.staffText.tooShort": "{label} terlalu pendek. Tulis paling sedikit {min} huruf.",
+  "fieldError.closing.photoOrReason": "Belum ada foto penanganan. Tambahkan foto dulu, atau tulis alasannya di sini, paling sedikit {min} huruf.",
+  "fieldError.check.validWithChanges": "Ada angka yang diubah. Pilih Sebagian benar, atau kembalikan angkanya.",
+  "fieldError.check.notValidWithChanges": "Laporan tidak valid tidak dikoreksi angkanya. Kembalikan angkanya, atau pilih Sebagian benar.",
+  "fieldError.actions.none": "Pilih paling sedikit satu tindakan, atau tulis tindakan lain.",
+  "fieldError.actions.unknown": "Ada tindakan yang tidak dikenal untuk jenis bencana ini. Muat ulang halaman, lalu pilih lagi.",
+  "fieldError.photo.proofFormat": "Foto harus JPEG dan paling besar 3 MB. Foto ini tidak disimpan. Ambil ulang dengan kamera.",
+  "fieldError.photo.proofTooMany": "Paling banyak 10 foto penanganan per laporan. Foto ini tidak disimpan."
 }

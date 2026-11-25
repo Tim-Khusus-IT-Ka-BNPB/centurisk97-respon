@@ -15,6 +15,7 @@ import {
   reportPhotos,
   sentPhoto,
 } from "../adapters/d1/desk";
+import { referenceFile } from "../adapters/d1/reports";
 import type { DeskGallery, DeskIdentity, DeskMap, DeskQueue, DeskReport, DeskSummary } from "../contract/desk";
 import {
   DESK_PAGE_SIZE,
@@ -25,9 +26,12 @@ import {
   periodStart,
 } from "../domain/deskQueue";
 import { type DeskCapability, mayUse } from "../domain/deskRights";
+import { revisableOf } from "../domain/fieldCheck";
 import type { EventTimeValue, FieldStates, PlaceValue } from "../domain/fieldState";
+import { checkActions } from "../domain/handling";
 import type { FieldError } from "../domain/identityForm";
 import { impactOf } from "../domain/impact";
+import { actionsFor, checkActionFile, type ResponseAction } from "../domain/responseActions";
 import type { TicketStatus } from "../domain/stages";
 import { checkMove, checkReply, moveCapability, noteRule, offeredStatuses } from "../domain/ticketMoves";
 import type { StaffPrincipal } from "../ports/identity";
@@ -44,7 +48,7 @@ type Refused =
 export type DeskAnswer<T> = { readonly kind: "ok"; readonly body: T } | Refused;
 
 // Every desk service starts here: the role may do this, and the account is within its hourly limit.
-async function admitted(
+export async function admitted(
   bindings: ServiceBindings,
   staff: StaffPrincipal,
   capability: DeskCapability,
@@ -224,6 +228,11 @@ const identityOf = (found: DeskReportRecord): DeskIdentity => ({
   officerPosition: found.officerPosition,
 });
 
+// The actions offered for a hazard type. With no catalogue loaded only the officer's own words are.
+export async function offeredActions(bindings: ServiceBindings, hazardType: string): Promise<ResponseAction[]> {
+  return actionsFor(checkActionFile(await referenceFile(bindings.db, "responseActions")), hazardType);
+}
+
 async function reportBody(bindings: ServiceBindings, staff: StaffPrincipal, ticketNumber: string) {
   const found = await deskReport(bindings.db, staff.scope, ticketNumber);
   if (found === null) return null;
@@ -250,7 +259,9 @@ async function reportBody(bindings: ServiceBindings, staff: StaffPrincipal, tick
       actor: one.actorLabel,
       note: one.note,
       // Forwarding sends a report to the desk of its own place.
-      forwardedTo: one.toStatus === "forwarded" ? place.regencyName : null,
+      forwardedTo: one.toStatus === "forwarded" && one.event === null ? place.regencyName : null,
+      event: one.event,
+      detail: one.detail,
     })),
     reporterWords: found.reporterWords.map((one) => ({ text: one.text, at: at(one.atMs, zone) })),
     photos: (await reportPhotos(bindings.db, ticketNumber)).map(photoView),
@@ -259,6 +270,15 @@ async function reportBody(bindings: ServiceBindings, staff: StaffPrincipal, tick
       note: noteRule(found.status, status),
     })),
     revision: found.revision,
+    revisable: revisableOf(states),
+    offeredActions: await offeredActions(bindings, found.hazardType),
+    actions: found.handling.actions.map((one) => ({ label: one.label, at: at(one.atMs, zone), actor: one.staffLabel })),
+    proofs: found.handling.proofs.map((one) => ({
+      proofId: one.id,
+      hasPoint: one.hasPoint,
+      at: at(one.atMs, zone),
+      actor: one.staffLabel,
+    })),
     replies: found.replies.map((one) => ({ text: one.text, at: at(one.atMs, zone), actor: one.staffLabel })),
   };
   return body;
@@ -310,31 +330,58 @@ export type DeskChange =
   // Another officer moved it first; nothing of this change is written.
   | { readonly kind: "changed"; readonly status: TicketStatus };
 
-const after = async (bindings: ServiceBindings, staff: StaffPrincipal, ticketNumber: string): Promise<DeskChange> => ({
-  kind: "ok",
-  body: (await reportBody(bindings, staff, ticketNumber)) as DeskReport,
-});
+// One change to a ticket: the account may make it and has calls left, its region holds the report,
+// and the report is answered as it is after. A change that did not go in answers why.
+export async function changeTicket(
+  bindings: ServiceBindings,
+  staff: StaffPrincipal,
+  capability: DeskCapability,
+  ticketNumber: string,
+  change: (found: DeskReportRecord, at: Date) => Promise<DeskChange | null>,
+): Promise<DeskChange> {
+  const refused = await admitted(bindings, staff, capability, "desk.write");
+  if (refused) return refused;
+  const found = await deskReport(bindings.db, staff.scope, ticketNumber);
+  if (found === null) return { kind: "notFound" };
+  const outcome = await change(found, new Date(bindings.clock.now()));
+  return outcome ?? { kind: "ok", body: (await reportBody(bindings, staff, ticketNumber)) as DeskReport };
+}
 
 export async function moveDeskTicket(
   bindings: ServiceBindings,
   staff: StaffPrincipal,
   ticketNumber: string,
-  change: { readonly to: TicketStatus; readonly note: string; readonly revision: number },
+  move: {
+    readonly to: TicketStatus;
+    readonly note: string;
+    readonly revision: number;
+    readonly actions: readonly string[];
+    readonly otherAction: string;
+  },
 ): Promise<DeskChange> {
-  const refused = await admitted(bindings, staff, "moveTicket", "desk.write");
-  if (refused) return refused;
-  const found = await deskReport(bindings.db, staff.scope, ticketNumber);
-  if (found === null) return { kind: "notFound" };
-  if (!mayUse(staff.role, moveCapability(found.status, change.to))) return { kind: "notAllowed" };
-  if (found.revision !== change.revision) return { kind: "changed", status: found.status };
-  const check = checkMove(found.status, change.to, change.note);
-  if (check.kind === "refused") return { kind: "transitionRefused" };
-  if (check.kind === "invalid") return check;
-  const move = { from: found.status, to: change.to, note: check.note, revision: change.revision };
-  if (await moveTicket(bindings.db, staff, ticketNumber, move, new Date(bindings.clock.now())))
-    return after(bindings, staff, ticketNumber);
-  const now = (await deskReport(bindings.db, staff.scope, ticketNumber)) as { readonly status: TicketStatus };
-  return { kind: "changed", status: now.status };
+  return changeTicket(bindings, staff, "moveTicket", ticketNumber, async (found, at) => {
+    if (!mayUse(staff.role, moveCapability(found.status, move.to))) return { kind: "notAllowed" };
+    if (found.revision !== move.revision) return { kind: "changed", status: found.status };
+    const check = checkMove(found.status, move.to, move.note, found.handling.proofs.length);
+    if (check.kind === "refused") return { kind: "transitionRefused" };
+    if (check.kind === "invalid") return check;
+    // Starting the work names what is being done (D112).
+    const taken =
+      move.to === "in_handling"
+        ? checkActions(await offeredActions(bindings, found.hazardType), move.actions, move.otherAction)
+        : ({ kind: "ok", actions: [] } as const);
+    if (taken.kind === "invalid") return taken;
+    const done = await moveTicket(
+      bindings.db,
+      staff,
+      ticketNumber,
+      { from: found.status, to: move.to, note: check.note, revision: move.revision, actions: taken.actions },
+      at,
+    );
+    if (done) return null;
+    const now = (await deskReport(bindings.db, staff.scope, ticketNumber)) as { readonly status: TicketStatus };
+    return { kind: "changed", status: now.status };
+  });
 }
 
 export async function replyToReporter(
@@ -343,11 +390,10 @@ export async function replyToReporter(
   ticketNumber: string,
   typed: string,
 ): Promise<DeskChange> {
-  const refused = await admitted(bindings, staff, "reply", "desk.write");
-  if (refused) return refused;
-  if ((await deskReport(bindings.db, staff.scope, ticketNumber)) === null) return { kind: "notFound" };
-  const check = checkReply(typed);
-  if (check.kind === "invalid") return check;
-  await addReply(bindings.db, staff, ticketNumber, check.text, new Date(bindings.clock.now()));
-  return after(bindings, staff, ticketNumber);
+  return changeTicket(bindings, staff, "reply", ticketNumber, async (_found, at) => {
+    const check = checkReply(typed);
+    if (check.kind === "invalid") return check;
+    await addReply(bindings.db, staff, ticketNumber, check.text, at);
+    return null;
+  });
 }

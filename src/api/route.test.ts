@@ -14,6 +14,7 @@ describe("route list", () => {
       { key: "GET /api/lapor/desk/map", policy: "staff" },
       { key: "GET /api/lapor/desk/photos", policy: "staff" },
       { key: "GET /api/lapor/desk/photos/:photoId", policy: "staff" },
+      { key: "GET /api/lapor/desk/proofs/:proofId", policy: "staff" },
       { key: "GET /api/lapor/desk/reports", policy: "staff" },
       { key: "GET /api/lapor/desk/reports/:ticketNumber", policy: "staff" },
       { key: "GET /api/lapor/desk/summary", policy: "staff" },
@@ -26,7 +27,10 @@ describe("route list", () => {
       { key: "GET /api/lapor/places/regencies/:code/villages", policy: "public" },
       { key: "GET /api/lapor/places/search", policy: "public" },
       { key: "POST /api/lapor/consent", policy: "public" },
+      { key: "POST /api/lapor/desk/reports/:ticketNumber/actions", policy: "staff" },
+      { key: "POST /api/lapor/desk/reports/:ticketNumber/checks", policy: "staff" },
       { key: "POST /api/lapor/desk/reports/:ticketNumber/identity", policy: "staff" },
+      { key: "POST /api/lapor/desk/reports/:ticketNumber/proofs", policy: "staff" },
       { key: "POST /api/lapor/desk/reports/:ticketNumber/replies", policy: "staff" },
       { key: "POST /api/lapor/desk/reports/:ticketNumber/status", policy: "staff" },
       { key: "POST /api/lapor/desk/reports/:ticketNumber/view", policy: "staff" },
@@ -38,6 +42,7 @@ describe("route list", () => {
       { key: "POST /api/lapor/preferences/theme", policy: "public" },
       { key: "POST /api/lapor/reports/:ticketNumber/rating", policy: "reporter" },
       { key: "POST /api/lapor/tracking", policy: "public" },
+      { key: "POST /api/lapor/tracking/photos", policy: "public" },
     ]);
     expect(routes.filter((route) => route.policy === null)).toEqual([]);
   });
@@ -272,9 +277,13 @@ describe("response schemas and the OpenAPI document", () => {
       "/api/lapor/desk/map",
       "/api/lapor/desk/photos",
       "/api/lapor/desk/photos/{photoId}",
+      "/api/lapor/desk/proofs/{proofId}",
       "/api/lapor/desk/reports",
       "/api/lapor/desk/reports/{ticketNumber}",
+      "/api/lapor/desk/reports/{ticketNumber}/actions",
+      "/api/lapor/desk/reports/{ticketNumber}/checks",
       "/api/lapor/desk/reports/{ticketNumber}/identity",
+      "/api/lapor/desk/reports/{ticketNumber}/proofs",
       "/api/lapor/desk/reports/{ticketNumber}/replies",
       "/api/lapor/desk/reports/{ticketNumber}/status",
       "/api/lapor/desk/reports/{ticketNumber}/view",
@@ -296,6 +305,7 @@ describe("response schemas and the OpenAPI document", () => {
       "/api/lapor/preferences/theme",
       "/api/lapor/reports/{ticketNumber}/rating",
       "/api/lapor/tracking",
+      "/api/lapor/tracking/photos",
     ]);
     const turns = document.paths?.["/api/lapor/drafts/{draftId}/turns"]?.post?.responses ?? {};
     expect(Object.keys(turns).sort()).toEqual([

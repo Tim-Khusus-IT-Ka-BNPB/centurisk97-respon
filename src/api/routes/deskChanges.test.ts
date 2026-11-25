@@ -46,18 +46,21 @@ const seenReport = async () => {
   await deskOfficer().call("POST", `/desk/reports/${ticket}/view`);
   return ticket;
 };
+// Starting the work always names an action here.
 const move = async (ticket: string, to: string, note = "", revision?: number) => {
   tick();
   return deskOfficer().call("POST", `/desk/reports/${ticket}/status`, {
     to,
     note,
     revision: revision ?? (await read(ticket)).revision,
+    actions: to === "in_handling" ? ["evakuasi"] : [],
   });
 };
 const reply = (ticket: string, text: string) => deskOfficer().call("POST", `/desk/reports/${ticket}/replies`, { text });
 const history = (ticket: string) =>
   query<{ from_status: string | null; to_status: string; note: string | null; actor_label: string | null }>`
-    select from_status, to_status, note, actor_label from ticket_history where ticket_number = ${ticket} order by id`;
+    select from_status, to_status, note, actor_label from ticket_history
+    where ticket_number = ${ticket} and event is null order by id`;
 const actions = async (ticket: string) =>
   (await query<{ action: string }>`select action from staff_action where ticket_number = ${ticket} order by id`).map(
     (one) => one.action,
@@ -134,7 +137,7 @@ describe("a ticket moved along", () => {
     // Every stage done, each at its history row's time.
     const done = await tracked(ticket);
     const [...rows] = await query<{ to_status: string; at: string }>`
-      select to_status, at from ticket_history where ticket_number = ${ticket} order by id`;
+      select to_status, at from ticket_history where ticket_number = ${ticket} and event is null order by id`;
     expect(done.stages.map((stage) => [stage.status, stage.reachedAt?.utc])).toEqual(
       rows.map((row) => [row.to_status, row.at]),
     );
@@ -158,7 +161,7 @@ describe("a ticket moved along", () => {
     const short = await move(ticket, "invalid", "dup");
     expect(short.status).toBe(422);
     expect(short.error.fields).toEqual([
-      { fieldId: "note", copyKey: "fieldError.staffReason.tooShort", params: { min: 5 } },
+      { fieldId: "note", copyKey: "fieldError.staffText.tooShort", params: { label: "desk.move.note.reason", min: 5 } },
     ]);
     expect((await tracked(ticket)).rejected).toBeNull();
     expect((await move(ticket, "invalid", "Laporan ganda dari kejadian yang sama")).status).toBe(200);

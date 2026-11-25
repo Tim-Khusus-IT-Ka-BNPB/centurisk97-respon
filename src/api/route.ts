@@ -19,7 +19,8 @@ const MAX_BODY_BYTES = 16 * 1024;
 // A photo upload: 2.5 MB is the photo rule, and a page with no script cannot shrink a camera
 // file first, so the route takes more and the photo check names the size.
 const PHOTO_BODY_BYTES = 12 * 1024 * 1024;
-const isPhotoUpload = (method: string, path: string) => method === "POST" && /\/drafts\/[^/]+\/photos$/.test(path);
+const isPhotoUpload = (method: string, path: string) =>
+  method === "POST" && /\/(?:drafts\/[^/]+\/photos|desk\/reports\/[^/]+\/proofs)$/.test(path);
 const READ_METHODS = new Set(["GET", "HEAD"]);
 
 export type Api = {

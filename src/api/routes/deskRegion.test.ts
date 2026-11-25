@@ -74,6 +74,7 @@ const move = async (phone: Phone, ticket: string, to: string, note = "") => {
     to,
     note,
     revision: (await read(desk(), ticket)).revision,
+    actions: to === "in_handling" ? ["evakuasi"] : [],
   });
 };
 

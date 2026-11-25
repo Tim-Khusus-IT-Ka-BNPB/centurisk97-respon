@@ -1,3 +1,4 @@
+import { closedProofKey, handlingOf } from "../adapters/d1/handling";
 import {
   ownReports,
   type ReportRecord,
@@ -55,9 +56,13 @@ export async function trackingOf(bindings: ServiceBindings, report: ReportRecord
   const zone = draftZone(report.villageCode);
   const place = fieldValue<PlaceValue>(report, "place") as PlaceValue;
   const rejection = rejectionOf(report.history);
+  const handling = await handlingOf(bindings.db, report.ticketNumber);
+  const closed = report.history.at(-1)?.toStatus === "closed";
   return {
     ticketNumber: report.ticketNumber,
     sentAt: at(report.sentAt, zone),
+    actions: handling.actions.map((action) => action.label),
+    proofs: closed ? handling.proofs.map((proof) => ({ proofId: proof.id, at: at(proof.atMs, zone) })) : [],
     rejected: rejection === null ? null : { at: at(rejection.atMs, zone), reason: rejection.note as string },
     stages: stagesOf(report.history).map((stage) => ({
       status: stage.status,
@@ -85,6 +90,26 @@ export async function trackReport(bindings: ServiceBindings, address: string, to
   if (!TOKEN.test(token)) return { kind: "notFound" };
   const report = await reportByTrackingHash(bindings.db, await sha256Hex(token));
   return report ? { kind: "ok", tracking: await trackingOf(bindings, report) } : { kind: "notFound" };
+}
+
+export type ProofAnswer =
+  | { readonly kind: "file"; readonly bytes: Uint8Array }
+  | { readonly kind: "notFound" }
+  | { readonly kind: "limit"; readonly refusal: LimitRefusal };
+
+// A photo of the work, for the holder of a closed report's own link.
+export async function trackedProof(
+  bindings: ServiceBindings,
+  address: string,
+  token: string,
+  proofId: string,
+): Promise<ProofAnswer> {
+  const refusal = await checkLimits(bindings, [["address.tracking", { kind: "address", bucket: address }]]);
+  if (refusal) return { kind: "limit", refusal };
+  const report = TOKEN.test(token) ? await reportByTrackingHash(bindings.db, await sha256Hex(token)) : null;
+  const key = report === null ? null : await closedProofKey(bindings.db, report.ticketNumber, proofId);
+  const bytes = key === null ? null : await bindings.photos.get(key);
+  return bytes === null ? { kind: "notFound" } : { kind: "file", bytes };
 }
 
 export type RateAnswer =

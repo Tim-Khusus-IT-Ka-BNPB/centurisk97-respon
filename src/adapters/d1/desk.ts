@@ -1,5 +1,7 @@
 import { DESK_HAS, type DeskHas } from "../../domain/deskQueue";
 import type { StaffScope } from "../../domain/deskRights";
+import type { Change, CheckResult } from "../../domain/fieldCheck";
+import type { TakenAction } from "../../domain/handling";
 import type { TicketStatus } from "../../domain/stages";
 import {
   atomically,
@@ -14,6 +16,8 @@ import {
   sql,
 } from "../../platform/database";
 import type { StaffPrincipal } from "../../ports/identity";
+import { actionRow, regionParts } from "./deskShared";
+import { actionRows, type Handling, handlingOf, historyEvent } from "./handling";
 
 // Every read names the region it may read: a report outside it is as if it were not there (D95).
 export type QueueFilters = {
@@ -53,17 +57,19 @@ type QueueRecord = {
   number_unverified: number;
 };
 
-// The values shown are the first version's; later versions arrive with field checks and follow-ups.
+// The values shown are the newest version's: a field check's corrections make one.
+const LATEST = sql`(select max(m.version) from report_version m where m.report_id = r.id)`;
+
 const SELECT = sql`select r.ticket_number, t.status, r.hazard_type, r.village_code, r.sent_at, v.fields,
     v.complete_percent, v.reporter_name, v.reporter_role, r.number_unverified,
     (select count(*) from draft_photo p where p.draft_id = r.draft_id) as photo_count
   from report r
   join ticket t on t.report_id = r.id
-  join report_version v on v.report_id = r.id and v.version = 1`;
+  join report_version v on v.report_id = r.id and v.version = ${LATEST}`;
 
-// A count above zero in the first version's values: not known and none are both left out (HF2).
+// A count above zero in the newest version's values: not known and none are both left out (HF2).
 const anyAbove = (...paths: Query[]): Query =>
-  sql`exists (select 1 from report_version h where h.report_id = r.id and h.version = 1 and (${paths.reduce(
+  sql`exists (select 1 from report_version h where h.report_id = r.id and h.version = ${LATEST} and (${paths.reduce(
     (joined, path) => sql`${joined} or ${path}`,
   )}))`;
 
@@ -81,12 +87,6 @@ const HAS: Readonly<Record<DeskHas, Query>> = {
   ),
   photos: sql`exists (select 1 from draft_photo h where h.draft_id = r.draft_id)`,
 };
-
-// The region's condition, by the codes of the report's place; none for a national account.
-function regionParts(scope: StaffScope): Query[] {
-  if (scope.level === "national") return [];
-  return scope.level === "regency" ? [sql`r.regency_code = ${scope.code}`] : [sql`r.province_code = ${scope.code}`];
-}
 
 const whereAll = (parts: readonly Query[]): Query =>
   parts.reduce((joined, part, index) => (index === 0 ? sql` where ${part}` : sql`${joined} and ${part}`), empty);
@@ -137,6 +137,13 @@ export async function queuePage(
   return { rows: found.map(queueRow), total: (counted as { total: number }).total };
 }
 
+// What a check found and put right, or what was done.
+export type HistoryDetail = {
+  readonly result?: CheckResult;
+  readonly changes?: readonly Change[];
+  readonly actions?: readonly string[];
+};
+
 export type DeskReportRecord = QueueRow & {
   readonly reporterNumber: string;
   readonly officerRegency: string | null;
@@ -146,11 +153,15 @@ export type DeskReportRecord = QueueRow & {
     readonly atMs: number;
     readonly actorLabel: string | null;
     readonly note: string | null;
+    readonly event: "fieldCheck" | "actions" | null;
+    readonly detail: HistoryDetail | null;
   }[];
   readonly reporterWords: readonly { readonly text: string; readonly atMs: number }[];
   readonly replies: readonly { readonly text: string; readonly atMs: number; readonly staffLabel: string }[];
   // Grows with every status change; a change names the one it read.
   readonly revision: number;
+  readonly reportId: string;
+  readonly handling: Handling;
 };
 
 export async function deskReport(
@@ -165,23 +176,31 @@ export async function deskReport(
       officer_regency: string | null;
       officer_position: string | null;
       revision: number;
+      report_id: string;
     }
   >(
     db,
     sql`select r.ticket_number, t.status, r.hazard_type, r.village_code, r.sent_at, v.fields,
-        v.complete_percent, v.reporter_name, v.reporter_role, r.number_unverified, r.draft_id, t.revision,
+        v.complete_percent, v.reporter_name, v.reporter_role, r.number_unverified, r.draft_id, r.id as report_id, t.revision,
         v.reporter_number, v.officer_regency, v.officer_position,
         (select count(*) from draft_photo p where p.draft_id = r.draft_id) as photo_count
       from report r
       join ticket t on t.report_id = r.id
-      join report_version v on v.report_id = r.id and v.version = 1
+      join report_version v on v.report_id = r.id and v.version = ${LATEST}
       ${whereAll([sql`r.ticket_number = ${ticketNumber}`, ...regionParts(scope)])}`,
   );
   if (found === null) return null;
-  const [history, words, replies] = await Promise.all([
-    rows<{ to_status: TicketStatus; at: string; actor_label: string | null; note: string | null }>(
+  const [history, words, replies, handling] = await Promise.all([
+    rows<{
+      to_status: TicketStatus;
+      at: string;
+      actor_label: string | null;
+      note: string | null;
+      event: "fieldCheck" | "actions" | null;
+      detail: string | null;
+    }>(
       db,
-      sql`select to_status, at, actor_label, note from ticket_history where ticket_number = ${ticketNumber} order by at, id`,
+      sql`select to_status, at, actor_label, note, event, detail from ticket_history where ticket_number = ${ticketNumber} order by at, id`,
     ),
     rows<{ text_masked: string; created_at: string }>(
       db,
@@ -192,6 +211,7 @@ export async function deskReport(
       db,
       sql`select text, staff_label, at from report_reply where ticket_number = ${ticketNumber} order by at, id`,
     ),
+    handlingOf(db, ticketNumber),
   ]);
   return {
     ...queueRow(found),
@@ -203,18 +223,16 @@ export async function deskReport(
       atMs: Date.parse(one.at),
       actorLabel: one.actor_label,
       note: one.note,
+      event: one.event,
+      detail: parsed<HistoryDetail>(one.detail),
     })),
     reporterWords: words.map((one) => ({ text: one.text_masked, atMs: Date.parse(one.created_at) })),
     replies: replies.map((one) => ({ text: one.text, atMs: Date.parse(one.at), staffLabel: one.staff_label })),
     revision: found.revision,
+    reportId: found.report_id,
+    handling,
   };
 }
-
-type LoggedAction = "view" | "identityView" | "status" | "reply";
-
-const actionRow = (staff: StaffPrincipal, ticketNumber: string, action: LoggedAction, at: Date): Query =>
-  sql`insert into staff_action (ticket_number, staff_id, staff_label, staff_kind, action, at)
-    values (${ticketNumber}, ${staff.staffId}, ${staff.label}, ${staff.role}, ${action}, ${at})`;
 
 type Move = { readonly from: TicketStatus; readonly to: TicketStatus; readonly note: string | null };
 
@@ -257,14 +275,19 @@ export async function moveTicket(
   db: Database,
   staff: StaffPrincipal,
   ticketNumber: string,
-  move: Move & { readonly revision: number },
+  move: Move & { readonly revision: number; readonly actions: readonly TakenAction[] },
   at: Date,
 ): Promise<boolean> {
+  const { actions } = move;
   const done = await atomically(db, [
     sql`${moveRow(ticketNumber, move, at)} and revision = ${move.revision}`,
     historyRow(staff, ticketNumber, move, at),
     changedOne,
     actionRow(staff, ticketNumber, "status", at),
+    // What is being done, told with the move that starts it.
+    ...(actions.length === 0
+      ? []
+      : [historyEvent(staff, ticketNumber, move.to, actions, at), ...actionRows(staff, ticketNumber, actions, at)]),
   ]);
   return done !== null;
 }
@@ -320,7 +343,7 @@ export async function mapPoints(db: Database, filters: QueueFilters, limit: numb
         coalesce(json_extract(v.fields, '$.place.value.point.lon'), s.centre_lon) as lon
       from report r
       join ticket t on t.report_id = r.id
-      join report_version v on v.report_id = r.id and v.version = 1
+      join report_version v on v.report_id = r.id and v.version = ${LATEST}
       left join place_snapshot p on p.active = 1
       left join place_village_shape s on s.snapshot_id = p.id and s.code = r.village_code
       ${where(filters, sql`coalesce(json_extract(v.fields, '$.place.value.point.lat'), s.centre_lat) is not null`)}

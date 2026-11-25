@@ -205,11 +205,19 @@ export function browser(fetchApi: Fetch, address = freshAddress()) {
     const json: unknown = await response.json();
     return { status: response.status, json, draft: json as DraftBody, error: json as ErrorEnvelope };
   };
-  // A file read, answered as its status, type and bytes.
-  const file = async (path: string) => {
-    const headers: Record<string, string> = { "cf-connecting-ip": address };
+  // A file read, answered as its status, type and bytes; with a body it is asked for by a post.
+  const file = async (path: string, body?: unknown) => {
+    const headers: Record<string, string> = { "cf-connecting-ip": address, origin: TEST_ORIGIN, "x-lapor-client": "1" };
     if (cookies.size > 0) headers.cookie = [...cookies].map(([name, value]) => `${name}=${value}`).join("; ");
-    const response = await fetchApi(new Request(`http://localhost/api/lapor${path}`, { headers }));
+    const init: RequestInit =
+      body === undefined
+        ? { headers }
+        : {
+            method: "POST",
+            headers: { ...headers, "content-type": "application/json" },
+            body: JSON.stringify(body),
+          };
+    const response = await fetchApi(new Request(`http://localhost/api/lapor${path}`, init));
     return { status: response.status, headers: response.headers, bytes: new Uint8Array(await response.arrayBuffer()) };
   };
   return { call, upload, file, cookies, address };

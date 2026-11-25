@@ -152,6 +152,31 @@ export const COLUMN_CLASSES: Readonly<Record<string, TableClasses>> = {
       actor_label: I,
       note: I,
       at: I,
+      event: I,
+      detail: I,
+    },
+  },
+  field_check: {
+    retention: "with the report; append-only",
+    columns: { id: I, ticket_number: I, staff_id: I, staff_label: I, result: I, note: I, version: I, at: I },
+  },
+  handling_action: {
+    retention: "with the report; append-only",
+    columns: { id: I, ticket_number: I, code: I, label: I, staff_id: I, staff_label: I, at: I },
+  },
+  handling_proof: {
+    retention: "with the report; append-only",
+    columns: {
+      id: I,
+      ticket_number: I,
+      store_key: I,
+      bytes: I,
+      lat: I,
+      lon: I,
+      accuracy_m: I,
+      staff_id: I,
+      staff_label: I,
+      received_at: I,
     },
   },
   staff_action: {

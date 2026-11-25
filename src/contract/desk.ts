@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { DESK_HAS } from "../domain/deskQueue";
+import { CHECK_RESULTS } from "../domain/fieldCheck";
 import { summaryGroupSchema } from "./card";
 import { hazardTypeSchema, reporterRoleSchema, timeSchema } from "./common";
 import { eventTimeSchema, ticketStatusSchema } from "./tracking";
@@ -121,13 +122,34 @@ export const deskReportSchema = queueItemSchema.extend({
       note: z.string().nullable(),
       // The regency whose desk it went to.
       forwardedTo: z.string().nullable(),
+      // Work told in the history: what a check found and put right, or what was done.
+      event: z.enum(["fieldCheck", "actions"]).nullable(),
+      detail: z
+        .object({
+          result: z.enum(CHECK_RESULTS).optional(),
+          changes: z
+            .array(z.object({ fieldId: z.string(), from: z.number().nullable(), to: z.number() }))
+            .readonly()
+            .optional(),
+          actions: z.array(z.string()).readonly().optional(),
+        })
+        .nullable(),
     }),
   ),
   reporterWords: z.array(z.object({ text: z.string(), at: timeSchema })),
   // Where the ticket may go from here, and what the note must hold for each.
-  nextStatuses: z.array(z.object({ status: ticketStatusSchema, note: z.enum(["optional", "required", "reason"]) })),
+  nextStatuses: z.array(
+    z.object({ status: ticketStatusSchema, note: z.enum(["optional", "required", "reason", "closing"]) }),
+  ),
   // Sent back with a change, so a change made on an old reading is refused.
   revision: z.number().int().nonnegative(),
+  // The figures a field check may put right, with what each holds.
+  revisable: z.array(
+    z.object({ fieldId: z.string(), unit: z.string(), max: z.number(), count: z.number().nullable() }),
+  ),
+  offeredActions: z.array(z.object({ code: z.string(), label: z.string() })),
+  actions: z.array(z.object({ label: z.string(), at: timeSchema, actor: z.string() })),
+  proofs: z.array(z.object({ proofId: z.string(), hasPoint: z.boolean(), at: timeSchema, actor: z.string() })),
   replies: z.array(z.object({ text: z.string(), at: timeSchema, actor: z.string() })),
   photos: z.array(deskPhotoSchema),
 });

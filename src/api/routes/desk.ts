@@ -32,7 +32,7 @@ import { checkLimits } from "../../services/limits";
 import type { ApiContext } from "../context";
 import { refuse } from "../envelope";
 import { type Api, addRoute, jsonBody, jsonResponse, refusal } from "../route";
-import { fieldErrors, limitRefused } from "./shared";
+import { fieldErrors, jpegFile, limitRefused } from "./shared";
 
 const queueQuery = z.object({
   status: ticketStatusSchema.optional(),
@@ -45,9 +45,9 @@ const queueQuery = z.object({
 });
 
 // Any length a person could type, so a text too long is answered on its field.
-const staffText = z.string().max(20_000);
+export const staffText = z.string().max(20_000);
 
-const ticketParams = z.object({ ticketNumber: z.string().max(20) });
+export const ticketParams = z.object({ ticketNumber: z.string().max(20) });
 
 // The map and the gallery share the queue's filters, with no paging.
 const filterQuery = queueQuery.omit({ page: true });
@@ -64,7 +64,7 @@ function searchedTicket(text: string | undefined): string | null | "invalid" {
   return isTicketNumber(ticket) ? ticket : "invalid";
 }
 
-function answered<T>(c: ApiContext, answer: DeskAnswer<T>): Response {
+export function answered<T>(c: ApiContext, answer: DeskAnswer<T>): Response {
   if (answer.kind === "ok") return c.json(answer.body as object, 200);
   if (answer.kind === "notAllowed") return refuse(c, 403, "desk.notAllowed");
   if (answer.kind === "notFound") return refuse(c, 404, "desk.reportNotFound");
@@ -72,7 +72,7 @@ function answered<T>(c: ApiContext, answer: DeskAnswer<T>): Response {
 }
 
 // A change to a ticket: refused on a field, as a move not offered, or because another was first.
-function changeAnswered(c: ApiContext, change: DeskChange): Response {
+export function changeAnswered(c: ApiContext, change: DeskChange): Response {
   if (change.kind === "invalid")
     return refuse(c, 422, "request.invalidFields", { fields: fieldErrors([change.error]) });
   if (change.kind === "transitionRefused") return refuse(c, 409, "ticket.transitionRefused");
@@ -81,7 +81,7 @@ function changeAnswered(c: ApiContext, change: DeskChange): Response {
   return answered(c, change);
 }
 
-const staffOf = (c: ApiContext) => c.var.principal as StaffPrincipal;
+export const staffOf = (c: ApiContext) => c.var.principal as StaffPrincipal;
 
 export function addDeskRoutes(api: Api): void {
   addRoute(
@@ -168,13 +168,19 @@ export function addDeskRoutes(api: Api): void {
       request: {
         params: ticketParams,
         body: jsonBody(
-          z.object({ to: ticketStatusSchema, note: staffText.default(""), revision: z.number().int().nonnegative() }),
+          z.object({
+            to: ticketStatusSchema,
+            note: staffText.default(""),
+            revision: z.number().int().nonnegative(),
+            actions: z.array(z.string().max(60)).max(60).default([]),
+            otherAction: staffText.default(""),
+          }),
         ),
       },
       responses: {
         200: jsonResponse("Moved, with its history row", deskReportSchema),
         409: refusal("Not a move from here, or another officer changed the ticket first"),
-        422: refusal("The note is missing, too short or too long, on field note"),
+        422: refusal("The note or the actions are missing or too long, on fields note, actions or otherAction"),
       },
     }),
     async (c) => {
@@ -246,10 +252,7 @@ export function addDeskRoutes(api: Api): void {
       path: "/desk/photos/{photoId}",
       request: { params: z.object({ photoId: z.uuid() }) },
       responses: {
-        200: {
-          description: "A sent report's photo, metadata stripped",
-          content: { "image/jpeg": { schema: z.string() } },
-        },
+        200: jpegFile("A sent report's photo, metadata stripped"),
       },
     }),
     async (c) => {

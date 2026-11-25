@@ -137,6 +137,8 @@ const SAMPLE_PHOTOS: CardContext["photos"] = [
 const SAMPLE_TRACKING: Tracking = {
   ticketNumber: "LA-231126-01",
   rejected: null,
+  actions: [],
+  proofs: [],
   sentAt: at("2026-11-23T02:00:00.000Z"),
   stages: [
     { status: "new", reachedAt: at("2026-11-23T02:00:00.000Z") },

@@ -2,10 +2,10 @@ import { createRoute, z } from "@hono/zod-openapi";
 import { referenceFile } from "../../adapters/d1/reports";
 import { trackingSchema } from "../../contract/tracking";
 import { checkEducationFile, TOPIC_LISTS } from "../../domain/education";
-import { rateOwnReport, trackReport } from "../../services/tracking";
+import { rateOwnReport, trackedProof, trackReport } from "../../services/tracking";
 import { refuse } from "../envelope";
 import { type Api, addRoute, jsonBody, jsonResponse, refusal } from "../route";
-import { fieldErrors, limitRefused } from "./shared";
+import { fieldErrors, jpegFile, limitRefused } from "./shared";
 
 // The token travels in the body: the page reads it from the link's fragment, so it never sits in
 // an address a log or a referrer could keep.
@@ -87,6 +87,34 @@ export function addTrackingRoutes(api: Api): void {
       if (answer.kind === "notFound") return refuse(c, 404, "tracking.notFound");
       c.header("x-robots-tag", "noindex");
       return c.json(answer.tracking, 200);
+    },
+  );
+
+  // The token travels in the body here too, so a photo has no address of its own to share.
+  addRoute(
+    api,
+    "public",
+    createRoute({
+      method: "post",
+      path: "/tracking/photos",
+      request: { body: jsonBody(trackBody.extend({ proofId: z.uuid() })) },
+      responses: {
+        200: jpegFile("A photo of the work on this closed report"),
+        404: refusal("No such photo for this link"),
+        429: refusal("Too many opens from this address"),
+      },
+    }),
+    async (c) => {
+      const { token, proofId } = c.req.valid("json");
+      const answer = await trackedProof(c.env, c.var.address, token, proofId);
+      if (answer.kind === "limit") return limitRefused(c, answer.refusal, null);
+      if (answer.kind === "notFound") return refuse(c, 404, "tracking.notFound");
+      return c.body(new Uint8Array(answer.bytes), 200, {
+        "content-type": "image/jpeg",
+        "x-content-type-options": "nosniff",
+        "x-robots-tag": "noindex",
+        "cache-control": "private, no-store",
+      });
     },
   );
 
