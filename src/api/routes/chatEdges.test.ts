@@ -142,13 +142,14 @@ describe("two messages at once", () => {
 });
 
 describe("the last of what may be said", () => {
-  test("news started on the 20th message of a minute waits", async () => {
+  test("news may be started with the 20th message of a minute, which is counted once", async () => {
     const { clock, one, hurry } = world();
     const ticket = await sent(one);
     clock.set(Math.ceil(clock.now() / 60_000) * 60_000);
     hurry();
     for (let count = 0; count < 19; count += 1) await one.send("halo");
-    expect((await one.send(`kabar ${ticket}`)).text).toMatch(/^Batas pesan untuk nomor ini tercapai/);
+    expect((await one.send(`kabar ${ticket}`)).text).toMatch(new RegExp(`^\\*Tambah kabar untuk ${ticket}`));
+    expect((await one.send("status")).text).toMatch(/^Batas pesan untuk nomor ini tercapai/);
   });
 
   test("a story is met with a word of sympathy before the next question", async () => {
