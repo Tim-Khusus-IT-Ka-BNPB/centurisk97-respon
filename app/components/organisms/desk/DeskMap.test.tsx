@@ -121,10 +121,19 @@ describe("the map view", () => {
     expect(panel().getByRole("link", { name: "Ada rumah rusak" })).toBeTruthy();
   });
 
+  test("with a filter on and nothing to show, it says the filter is why", async () => {
+    await draw({
+      map: map([]),
+      queue: queue({ items: [], total: 0, pageCount: 0 }),
+      filters: { ...MAP, status: "seen" },
+    });
+    expect(panel().getByText(/Tidak ada laporan yang cocok dengan saringan ini/)).toBeTruthy();
+  });
+
   test("with nothing to show the map stays and says so", async () => {
     await draw({ map: map([]), queue: queue({ items: [], total: 0, pageCount: 0 }) });
     expect(screen.getByRole("region", { name: "Peta laporan" })).toBeTruthy();
-    expect(panel().getByText("Belum ada laporan yang cocok dengan saringan ini.")).toBeTruthy();
+    expect(panel().getByText("Belum ada laporan masuk. Laporan baru tampil di sini.")).toBeTruthy();
     expect(panel().queryByText(/Daftar titik/)).toBeNull();
   });
 

@@ -232,7 +232,7 @@ describe("the list", () => {
       .getAllByRole("row")
       .slice(1)
       .map((row) => within(row).getAllByRole("cell")[2]?.textContent);
-    expect(told).toEqual(["Tidak ada dampak", "Dampak belum didata", "Tidak ada, sebagian belum didata"]);
+    expect(told).toEqual(["Tidak ada dampak", "Dampak belum didata", "Tidak ada dampak, sebagian belum didata"]);
   });
 
   test("an emergency is marked, with what was told of victims; one tap told no hazard", async () => {
@@ -322,7 +322,8 @@ describe("the list", () => {
       />,
       { path: "/lapor/meja" },
     );
-    expect(screen.getByText("Belum ada laporan yang cocok dengan saringan ini.")).toBeTruthy();
+    expect(screen.getByText("Belum ada laporan masuk. Laporan baru tampil di sini.")).toBeTruthy();
+    expect(screen.queryByRole("link", { name: "Tampilkan semua" })).toBeNull();
     view.unmount();
     await renderDesk(
       <DeskQueueView
@@ -451,6 +452,32 @@ describe("the map and the gallery", () => {
       />,
       { path: "/lapor/meja" },
     );
-    expect(screen.getByText("Belum ada foto untuk saringan ini.")).toBeTruthy();
+    expect(screen.getByText("Belum ada foto masuk. Foto pelapor tampil di sini setelah dikirim.")).toBeTruthy();
+  });
+
+  test("with a filter on, an empty list or gallery says so and leads back to everything", async () => {
+    const filtered = { ...FILTERS, hazardType: "flood" };
+    const view = await renderDesk(
+      <DeskQueueView
+        shown={list(queue({ items: [], total: 0 }))}
+        summary={SUMMARY}
+        filters={filtered}
+        envelope={null}
+      />,
+      { path: "/lapor/meja" },
+    );
+    expect(screen.getByText(/Tidak ada laporan yang cocok dengan saringan ini/)).toBeTruthy();
+    expect(screen.getByRole("link", { name: "Tampilkan semua" }).getAttribute("href")).toBe("/lapor/meja?view=list");
+    view.unmount();
+    await renderDesk(
+      <DeskQueueView
+        shown={{ view: "gallery", gallery: { account: { label: "Petugas Uji" }, photos: [], cut: false } }}
+        summary={SUMMARY}
+        filters={{ ...filtered, view: "gallery" }}
+        envelope={null}
+      />,
+      { path: "/lapor/meja" },
+    );
+    expect(screen.getByText(/Tidak ada foto yang cocok dengan saringan ini/)).toBeTruthy();
   });
 });

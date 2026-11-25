@@ -15,11 +15,13 @@ import { FilterBar, ViewTabs } from "./DeskFilters";
 import { DeskMapView } from "./DeskMap";
 import { DeskShell } from "./DeskShell";
 import {
+  clearedLink,
   deskLink,
   EmergencyChip,
   eventShort,
   Impact,
   type Item,
+  isFiltered,
   StatusChip,
   Taker,
   UnverifiedMark,
@@ -180,21 +182,36 @@ function QueueCards({ items }: { readonly items: readonly Item[] }) {
   );
 }
 
-// Nothing to show. The way back to everything is in the filters above it.
-function Empty({ icon, text }: { readonly icon: IconName; readonly text: string }) {
+// Nothing to show: what that means, and while something is filtered the way back to everything.
+function Empty({
+  icon,
+  text,
+  filters,
+}: {
+  readonly icon: IconName;
+  readonly text: string;
+  readonly filters: DeskFilters;
+}) {
+  const t = useText();
   return (
-    <div className="flex flex-col items-center gap-3 card-surface px-6 py-14 text-center">
+    <div className="flex flex-col items-center gap-4 card-surface px-6 py-14 text-center">
       <span className="flex size-14 items-center justify-center rounded-full bg-sunken text-muted">
         <Icon name={icon} className="size-7" />
       </span>
-      <p className="max-w-[40ch] text-muted">{text}</p>
+      <p className="max-w-[44ch] text-muted">{text}</p>
+      {isFiltered(filters) ? (
+        <Link to={clearedLink(filters)} className={buttonStyles({ variant: "primary" })}>
+          {t("desk.empty.all")}
+        </Link>
+      ) : null}
     </div>
   );
 }
 
 function ListView({ queue, filters }: { readonly queue: DeskQueue; readonly filters: DeskFilters }) {
   const t = useText();
-  if (queue.items.length === 0) return <Empty icon="inbox" text={t("desk.empty")} />;
+  if (queue.items.length === 0)
+    return <Empty icon="inbox" text={t(isFiltered(filters) ? "desk.empty" : "desk.empty.none")} filters={filters} />;
   return (
     <>
       <QueueTable items={queue.items} />
@@ -266,9 +283,16 @@ export function PhotoFigure({
   );
 }
 
-function GalleryView({ gallery }: { readonly gallery: DeskGallery }) {
+function GalleryView({ gallery, filters }: { readonly gallery: DeskGallery; readonly filters: DeskFilters }) {
   const t = useText();
-  if (gallery.photos.length === 0) return <Empty icon="images" text={t("desk.gallery.empty")} />;
+  if (gallery.photos.length === 0)
+    return (
+      <Empty
+        icon="images"
+        text={t(isFiltered(filters) ? "desk.gallery.empty" : "desk.gallery.empty.none")}
+        filters={filters}
+      />
+    );
   return (
     <>
       {gallery.cut ? (
@@ -333,9 +357,9 @@ export function DeskQueueView({
         <ViewTabs filters={filters} />
       </div>
       <FilterBar filters={filters} summary={summary} envelope={envelope} />
-      {shown === null ? <Empty icon="search" text={t("desk.refusedSearch")} /> : null}
+      {shown === null ? <Empty icon="search" text={t("desk.refusedSearch")} filters={filters} /> : null}
       {shown?.view === "list" ? <ListView queue={shown.queue} filters={filters} /> : null}
-      {shown?.view === "gallery" ? <GalleryView gallery={shown.gallery} /> : null}
+      {shown?.view === "gallery" ? <GalleryView gallery={shown.gallery} filters={filters} /> : null}
     </DeskShell>
   );
 }

@@ -11,7 +11,7 @@ import { buttonStyles } from "../../atoms/Button";
 import { Icon } from "../../atoms/Icon";
 import { DeskMapCanvas } from "../DeskMapCanvas";
 import { ClearFilters, HasTiles, HazardChips, PeriodSegment, TicketSearch, ViewTabs } from "./DeskFilters";
-import { deskLink, EmergencyChip, Impact, type Item, StatusChip, whenShort } from "./parts";
+import { deskLink, EmergencyChip, Impact, type Item, isFiltered, StatusChip, whenShort } from "./parts";
 
 function Legend() {
   const t = useText();
@@ -147,7 +147,9 @@ export function DeskMapView({
           <TicketSearch filters={filters} envelope={envelope} />
           <HasTiles filters={filters} summary={summary} />
         </div>
-        {queue !== null && items.length === 0 ? <p className="p-4 text-muted xl:p-5">{t("desk.empty")}</p> : null}
+        {queue !== null && items.length === 0 ? (
+          <p className="p-4 text-muted xl:p-5">{t(isFiltered(filters) ? "desk.empty" : "desk.empty.none")}</p>
+        ) : null}
         {items.length > 0 && listed.length === 0 ? (
           <p className="p-4 text-muted xl:p-5">{t("desk.map.inViewNone")}</p>
         ) : null}
