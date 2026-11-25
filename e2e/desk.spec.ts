@@ -205,7 +205,7 @@ test("signing out ends the desk session", async ({ page }) => {
   await signIn(page);
   // On a phone the way out sits in the menu.
   const out = page.getByRole("button", { name: "Keluar" });
-  if (!(await out.isVisible())) await page.getByText("Menu", { exact: true }).click();
+  if (!(await out.isVisible())) await page.locator("summary", { hasText: "Menu" }).click();
   await out.click();
   await expect(page.getByRole("heading", { name: "Masuk meja laporan" })).toBeVisible();
 });
