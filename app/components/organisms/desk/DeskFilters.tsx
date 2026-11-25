@@ -9,6 +9,7 @@ import { hazardLabel } from "../../../lib/deskMap";
 import { DESK_VIEWS, type DeskFilters } from "../../../lib/deskTypes";
 import { problemOf } from "../../../lib/envelope";
 import { hazardIcon } from "../../../lib/hazardIcons";
+import { hazardKey } from "../../../lib/hazardLabel";
 import { useFocusOnChange } from "../../../lib/hooks";
 import { useText } from "../../../lib/text";
 import { buttonStyles } from "../../atoms/Button";
@@ -63,11 +64,11 @@ export function HazardChips({ filters, summary, className }: Counted & { readonl
           key={id}
           to={deskLink(filters, { hazardType: filters.hazardType === id ? "" : id, page: 1 })}
           aria-current={filters.hazardType === id ? "true" : undefined}
-          aria-label={counted(t, hazardLabel(t, id), countOf(id))}
+          aria-label={counted(t, t(hazardKey(id)), countOf(id))}
           className={chip}
         >
           <Icon name={hazardIcon(id)} className="size-4" />
-          {hazardLabel(t, id)}
+          {t(hazardKey(id))}
           <Tally n={countOf(id)} />
         </Link>
       ))}

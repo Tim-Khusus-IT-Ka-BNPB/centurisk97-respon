@@ -2,9 +2,10 @@ import { useMemo, useState } from "react";
 import { Link } from "react-router";
 import type { DeskMap, DeskQueue, DeskSummary } from "../../../../src/contract/desk";
 import type { ErrorEnvelope } from "../../../../src/contract/errors";
-import { GROUPS, hazardLabel, STATUS_GROUPS } from "../../../lib/deskMap";
+import { GROUPS, STATUS_GROUPS } from "../../../lib/deskMap";
 import type { DeskFilters } from "../../../lib/deskTypes";
 import { hazardIcon } from "../../../lib/hazardIcons";
+import { hazardKey } from "../../../lib/hazardLabel";
 import { useText } from "../../../lib/text";
 import { buttonStyles } from "../../atoms/Button";
 import { Icon } from "../../atoms/Icon";
@@ -55,7 +56,7 @@ function PanelItem({ item, onPoint }: { readonly item: Item; readonly onPoint: (
           </span>
           <span>
             {t("desk.map.row", {
-              hazard: hazardLabel(t, item.hazardType),
+              hazard: t(hazardKey(item.hazardType)),
               village: item.place.villageName,
               regency: item.place.regencyName,
             })}
@@ -179,7 +180,7 @@ export function DeskMapView({
                   <Link to={`/lapor/meja/${point.ticketNumber}`} className="font-bold tabular-nums">
                     {point.ticketNumber}
                   </Link>
-                  <span>{`${hazardLabel(t, point.hazardType)}, ${t(`stage.short.${point.status}`)}, ${point.villageName}`}</span>
+                  <span>{`${t(hazardKey(point.hazardType))}, ${t(`stage.short.${point.status}`)}, ${point.villageName}`}</span>
                   <span className="text-meta text-muted tabular-nums">
                     {`${point.lat.toFixed(6)}, ${point.lon.toFixed(6)}, ${t(`desk.map.precision.${point.precision}`)}`}
                   </span>

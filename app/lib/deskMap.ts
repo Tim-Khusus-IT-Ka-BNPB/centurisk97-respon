@@ -2,6 +2,7 @@ import Supercluster from "supercluster";
 import type { DeskMap } from "../../src/contract/desk";
 import { ICONS, type IconName } from "../components/atoms/icons";
 import { hazardIcon } from "./hazardIcons";
+import { hazardKey } from "./hazardLabel";
 import type { Text } from "./text";
 
 export type MapPoint = DeskMap["points"][number];
@@ -86,11 +87,6 @@ function iconElement(name: IconName): SVGSVGElement {
   return svg;
 }
 
-// A hazard in words. "other" is never offered to a reporter: it is what one tap stores, which
-// tells no hazard.
-export const hazardLabel = (t: Text, id: MapPoint["hazardType"]) =>
-  t(id === "other" ? "desk.emergency.oneTap" : `hazard.${id}.label`);
-
 // An emergency nobody has opened yet.
 const alarming = (point: MapPoint) => point.emergency && point.status === "new";
 
@@ -137,7 +133,7 @@ export function popupElement(point: MapPoint, t: Text): HTMLElement {
     element.textContent = text;
     box.appendChild(element);
   };
-  line(hazardLabel(t, point.hazardType), "text-body font-bold");
+  line(t(hazardKey(point.hazardType)), "text-body font-bold");
   line(`${point.villageName}, ${t(`desk.map.precision.${point.precision}`)}`, "");
   line(`${point.ticketNumber}, ${t(`stage.short.${point.status}`)}`, "text-muted tabular-nums");
   const link = document.createElement("a");
@@ -284,7 +280,7 @@ export function clusterList(points: readonly MapPoint[], t: Text): HTMLElement {
     link.appendChild(dot);
     link.appendChild(
       document.createTextNode(
-        `${point.ticketNumber}, ${hazardLabel(t, point.hazardType)}, ${t(`stage.short.${point.status}`)}`,
+        `${point.ticketNumber}, ${t(hazardKey(point.hazardType))}, ${t(`stage.short.${point.status}`)}`,
       ),
     );
     item.appendChild(link);

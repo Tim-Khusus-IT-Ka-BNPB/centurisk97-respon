@@ -1,8 +1,9 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router";
-import type { ErrorEnvelope } from "../../../src/contract/errors";
 import type { Tracking } from "../../../src/contract/tracking";
+import { postForFile, postJson } from "../../lib/clientApi";
 import { cn } from "../../lib/cn";
+import { hazardKey } from "../../lib/hazardLabel";
 import { useText } from "../../lib/text";
 import { clockTime, localClockText, localDateText, longDate } from "../../lib/time";
 import { buttonStyles } from "../atoms/Button";
@@ -212,7 +213,7 @@ function TrackingView({ tracking }: { readonly tracking: Tracking }) {
             {t("tracking.event")}
           </h2>
           <dl className="flex flex-col gap-3">
-            <Row label={t("tracking.row.type")} value={t(`hazard.${tracking.hazardType}.label`)} />
+            <Row label={t("tracking.row.type")} value={t(hazardKey(tracking.hazardType))} />
             {tracking.hazardSubtype ? (
               <Row
                 label={t("tracking.row.subtype")}

@@ -2,9 +2,9 @@ import { Link } from "react-router";
 import type { DeskGallery, DeskQueue, DeskSummary } from "../../../../src/contract/desk";
 import type { ErrorEnvelope } from "../../../../src/contract/errors";
 import { cn } from "../../../lib/cn";
-import { hazardLabel } from "../../../lib/deskMap";
 import type { DeskFilters, DeskShown } from "../../../lib/deskTypes";
 import { hazardIcon } from "../../../lib/hazardIcons";
+import { hazardKey } from "../../../lib/hazardLabel";
 import { valueLines } from "../../../lib/summary";
 import { useText } from "../../../lib/text";
 import { buttonStyles } from "../../atoms/Button";
@@ -48,7 +48,7 @@ export function Hazard({
         <Icon name={hazardIcon(item.hazardType)} />
       </span>
       <span className="flex min-w-0 flex-col">
-        <span className="font-semibold">{hazardLabel(t, item.hazardType)}</span>
+        <span className="font-semibold">{t(hazardKey(item.hazardType))}</span>
         <span className="text-meta text-muted">
           {item.emergency === null ? subtype : t(`desk.emergency.victims.${item.emergency.victims}`)}
         </span>

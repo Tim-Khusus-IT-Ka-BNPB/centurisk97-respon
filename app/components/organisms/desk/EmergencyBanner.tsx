@@ -2,7 +2,8 @@ import { useEffect, useRef, useState } from "react";
 import { Link } from "react-router";
 import type { DeskEmergencies, DeskEmergency } from "../../../../src/contract/desk";
 import { alarmReady, alarmSound, askForAlarm, notify } from "../../../lib/alarm";
-import { hazardLabel } from "../../../lib/deskMap";
+import { getJson } from "../../../lib/clientApi";
+import { hazardKey } from "../../../lib/hazardLabel";
 import { useHydrated } from "../../../lib/hooks";
 import { useText } from "../../../lib/text";
 import { Icon } from "../../atoms/Icon";
@@ -80,7 +81,7 @@ export function EmergencyBanner({ initial }: { readonly initial: readonly DeskEm
               className="flex min-h-target-min min-w-0 flex-col justify-center rounded-control bg-signal-deep px-3 py-1.5 text-meta leading-snug text-on-signal no-underline hover:bg-[color-mix(in_oklab,var(--signal-deep),var(--on-signal)_14%)]"
             >
               <span className="truncate font-bold">
-                {hazardLabel(t, one.hazardType)}
+                {t(hazardKey(one.hazardType))}
                 {", "}
                 {t("desk.emergency.place", { village: one.villageName, regency: one.regencyName })}
               </span>

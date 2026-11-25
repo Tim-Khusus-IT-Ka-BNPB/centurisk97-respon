@@ -20,5 +20,6 @@
   "hazard.buildingFire.label": "Kebakaran gedung dan permukiman",
   "hazard.buildingFire.note": "Api di rumah warga atau bangunan",
   "hazard.other.label": "Lainnya",
+  "hazard.other.unknown": "Jenis belum diketahui",
   "hazard.other.note": "Kejadian lain yang tidak ada di daftar"
 }

@@ -1,6 +1,7 @@
 import { Link } from "react-router";
 import type { MeResponse } from "../../../src/contract/draft";
 import { hazardIcon } from "../../lib/hazardIcons";
+import { hazardKey } from "../../lib/hazardLabel";
 import { useText } from "../../lib/text";
 import { clockTime, longDate } from "../../lib/time";
 import { buttonStyles } from "../atoms/Button";
@@ -61,7 +62,7 @@ function ReportRow({ report }: { readonly report: OwnReport }) {
           </span>
           <span className="text-meta text-muted">
             {t("home.reports.row", {
-              hazard: t(`hazard.${report.hazardType}.label`),
+              hazard: hazardKey(report.hazardType),
               date: longDate(report.sentAt),
               time: clockTime(report.sentAt),
               zone: report.sentAt.zone,
