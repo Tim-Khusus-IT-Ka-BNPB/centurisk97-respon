@@ -41,6 +41,28 @@ export function deskLink(filters: DeskFilters, change: Partial<DeskFilters> = {}
   return text === "" ? "/lapor/meja" : `/lapor/meja?${text}`;
 }
 
+// The desk with nothing filtered: what the side menu leads to from a page that is not a queue.
+export const ALL_FILTERS: DeskFilters = {
+  view: "map",
+  status: "",
+  hazardType: "",
+  period: "all",
+  ticket: "",
+  has: "",
+  page: 1,
+};
+
+// Who has a report in hand.
+export function Taker({ taker }: { readonly taker: string }) {
+  const t = useText();
+  return (
+    <span className="inline-flex items-start gap-1.5 text-meta">
+      <Icon name="circleCheck" className="mt-0.5 size-4 shrink-0 text-primary" />
+      <span className="min-w-0 break-words">{t("desk.taker", { taker })}</span>
+    </span>
+  );
+}
+
 // The same view with no filter but it.
 export const clearedLink = ({ view }: DeskFilters) =>
   deskLink({ view, status: "", hazardType: "", period: "all", ticket: "", has: "", page: 1 });

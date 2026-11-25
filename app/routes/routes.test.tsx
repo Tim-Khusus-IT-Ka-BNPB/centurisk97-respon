@@ -11,6 +11,7 @@ import { never, renderPage } from "../testing/render";
 import AboutRoute, * as about from "./about";
 import DeskRoute, * as desk from "./desk";
 import DeskReportRoute, * as deskReport from "./deskReport";
+import DeskResponseRoute, * as deskResponse from "./deskResponse";
 import DraftRoute, * as draft from "./draft";
 import EmergencyRoute, * as emergency from "./emergency";
 import HelpRoute, * as help from "./help";
@@ -335,6 +336,32 @@ describe("desk routes", () => {
     expect(await screen.findByRole("heading", { name: "Meja laporan belum bisa dibuka" })).toBeTruthy();
   });
 
+  test("the response figures, the sign-in form, and a refusal with its status", async () => {
+    expect(deskResponse.headers()).toEqual({ "cache-control": "private, no-store", "x-robots-tag": "noindex" });
+    expect(deskResponse.meta({ data: { texts: pickTexts(PAGE_TEXTS.desk) }, matches: [] } as Args)[0]).toEqual({
+      title: "Meja laporan, Pantau Bencana BNPB",
+    });
+    const load = async (answer: () => Response) =>
+      unwrap(
+        await deskResponse.loader({
+          request: new Request("http://x/lapor/meja/respons?month=2026-11"),
+          context: { api: api({ "GET /desk/response": answer, "GET /desk/summary": json(SUMMARY) }) },
+        } as Args),
+      );
+    const show = (loaderData: unknown) =>
+      renderPage(routeElement(DeskResponseRoute, { loaderData }), { path: "/lapor/meja/respons" });
+    show((await load(json({ account: { label: "Petugas Uji" }, month: "2026-11", agencies: [] }))).data);
+    expect(await screen.findByRole("heading", { level: 1, name: "Respons BPBD" })).toBeTruthy();
+    cleanup();
+    show((await load(json(signInFirst, 401))).data);
+    expect(await screen.findByRole("heading", { name: "Masuk meja laporan" })).toBeTruthy();
+    cleanup();
+    const refused = await load(json(notAllowed, 403));
+    expect(refused.init?.status).toBe(403);
+    show(refused.data);
+    expect(await screen.findByRole("heading", { name: "Meja laporan belum bisa dibuka" })).toBeTruthy();
+  });
+
   test("signing in redirects with the cookie; a refused code renders with its status", async () => {
     const signed = await desk.action({
       request: post("http://x/lapor/meja", [["code", "abc"]]),
@@ -366,6 +393,7 @@ describe("desk routes", () => {
       photoCount: 0,
       numberUnverified: false,
       emergency: null,
+      taker: null,
       account: { label: "Petugas Uji" },
       reporter: {
         role: "citizen",
@@ -377,6 +405,7 @@ describe("desk routes", () => {
       photos: [],
       nextStatuses: [],
       revision: 0,
+      mayTake: false,
       revisable: [],
       offeredActions: [],
       actions: [],

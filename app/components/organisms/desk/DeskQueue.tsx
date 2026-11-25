@@ -20,6 +20,7 @@ import {
   hazardLabel,
   type Item,
   StatusChip,
+  Taker,
   UnverifiedMark,
   Victims,
   when,
@@ -124,6 +125,7 @@ function QueueTable({ items }: { readonly items: readonly Item[] }) {
                   {item.reporter.name === null ? null : <span>{item.reporter.name}</span>}
                   <span className="text-meta text-muted">{t(`desk.role.${item.reporter.role}`)}</span>
                   {item.numberUnverified ? <UnverifiedMark /> : null}
+                  {item.taker === null ? null : <Taker taker={item.taker} />}
                 </span>
               </td>
               <td className={cn(cell, "text-right")}>
@@ -161,6 +163,7 @@ function QueueCards({ items }: { readonly items: readonly Item[] }) {
               <Victims impact={item.impact} />
               <Houses impact={item.impact} />
             </span>
+            {item.taker === null ? null : <Taker taker={item.taker} />}
             <span className="flex flex-wrap items-center justify-between gap-2 mt-auto border-t border-line pt-2.5 text-meta">
               <span className="flex flex-wrap items-center gap-2">
                 <span>{item.reporter.name ?? t(`desk.role.${item.reporter.role}`)}</span>

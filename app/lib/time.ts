@@ -12,6 +12,7 @@ const dayMonthYear = new Intl.DateTimeFormat("id-ID", {
   year: "numeric",
   timeZone: "UTC",
 });
+const monthYear = new Intl.DateTimeFormat("id-ID", { month: "long", year: "numeric", timeZone: "UTC" });
 const dayMonth = new Intl.DateTimeFormat("id-ID", { day: "numeric", month: "long", timeZone: "UTC" });
 const shortDayMonthYear = new Intl.DateTimeFormat("id-ID", {
   day: "numeric",
@@ -55,3 +56,6 @@ export function retryText(instant: Instant, nowMs: number) {
     params: { time: clockTime(instant), zone: instant.zone, date: dayMonth.format(local) },
   };
 }
+
+// "2026-11" as "November 2026".
+export const monthText = (month: string): string => monthYear.format(new Date(`${month}-01T00:00:00Z`));

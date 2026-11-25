@@ -1,5 +1,13 @@
 import type { ApiCall } from "../../src/api/bridge";
-import type { DeskGallery, DeskIdentity, DeskMap, DeskQueue, DeskReport, DeskSummary } from "../../src/contract/desk";
+import type {
+  DeskGallery,
+  DeskIdentity,
+  DeskMap,
+  DeskQueue,
+  DeskReport,
+  DeskResponse,
+  DeskSummary,
+} from "../../src/contract/desk";
 import type { ErrorEnvelope } from "../../src/contract/errors";
 import { DESK_VIEWS, type DeskFilters, type DeskShown, type DeskTyped, type DeskView } from "./deskTypes";
 import type { Texts } from "./text";
@@ -118,6 +126,23 @@ export async function loadDeskReport(ticketNumber: string, api: ApiCall): Promis
   return refusalOf(response);
 }
 
+export type DeskResponseLoad =
+  | DeskRefusal
+  | {
+      readonly kind: "response";
+      readonly texts: Texts;
+      readonly response: DeskResponse;
+      readonly summary: DeskSummary | null;
+    };
+
+// GET /lapor/meja/respons: how fast each agency answered a month's reports.
+export async function loadDeskResponse(month: string | null, api: ApiCall): Promise<DeskResponseLoad> {
+  const query = month === null ? "" : `?month=${encodeURIComponent(month)}`;
+  const [response, summary] = await Promise.all([api("GET", `/desk/response${query}`), summaryOf(api, "")]);
+  if (!response.ok) return refusalOf(response);
+  return { kind: "response", texts: texts(), response: (await response.json()) as DeskResponse, summary };
+}
+
 export type DeskActed =
   | { readonly kind: "redirect"; readonly location: string; readonly headers: Headers }
   | { readonly kind: "render"; readonly status: number; readonly envelope: ErrorEnvelope };
@@ -189,6 +214,8 @@ function deskPost(form: FormData): readonly [path: string, body?: unknown] {
       return ["proofs", proofForm(form)];
     case "identity":
       return ["identity"];
+    case "take":
+      return ["take"];
     default:
       return ["view"];
   }

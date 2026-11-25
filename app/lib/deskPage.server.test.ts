@@ -1,7 +1,15 @@
 import { describe, expect, test } from "vitest";
 import type { ApiCall } from "../../src/api/bridge";
 import { envelope } from "../../src/api/envelope";
-import { actOnDesk, actOnDeskReport, filtersOf, loadDeskQueue, loadDeskReport, queueQuery } from "./deskPage.server";
+import {
+  actOnDesk,
+  actOnDeskReport,
+  filtersOf,
+  loadDeskQueue,
+  loadDeskReport,
+  loadDeskResponse,
+  queueQuery,
+} from "./deskPage.server";
 import { PAGE_TEXTS, pickTexts } from "./texts.server";
 
 type Call = { method: string; path: string; body: unknown };
@@ -226,6 +234,30 @@ describe("a change to a ticket", () => {
       status: 422,
       typed: { values: { action: "status", to: "invalid", note: "dup", revision: "3" }, actions: [] },
     });
+  });
+});
+
+describe("taking a report and the response figures", () => {
+  test("taking is posted to its route and named on the page after", async () => {
+    const { api, calls } = fakeApi(() => Response.json({}));
+    expect(await actOnDeskReport("LA-241126-01", form({ action: "take" }), api)).toMatchObject({
+      location: "/lapor/meja/LA-241126-01?saved=take",
+    });
+    expect(calls[0]?.path).toBe("/desk/reports/LA-241126-01/take");
+  });
+
+  test("the figures are read for the month asked, or this one, with the menu's counts", async () => {
+    const { api, calls } = fakeApi(() => Response.json({ month: "2026-11", agencies: [] }));
+    expect(await loadDeskResponse("2026-10", api)).toMatchObject({ kind: "response", response: { agencies: [] } });
+    await loadDeskResponse(null, api);
+    expect(calls.map((call) => call.path)).toEqual([
+      "/desk/response?month=2026-10",
+      "/desk/summary",
+      "/desk/response",
+      "/desk/summary",
+    ]);
+    const refused = fakeApi(() => Response.json(envelope("desk.notAllowed"), { status: 403 }));
+    expect(await loadDeskResponse(null, refused.api)).toMatchObject({ kind: "refused", status: 403 });
   });
 });
 

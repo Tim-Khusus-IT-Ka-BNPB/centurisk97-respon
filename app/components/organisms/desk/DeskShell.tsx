@@ -118,6 +118,14 @@ function DeskNav({ place, account }: { readonly place: DeskPlace; readonly accou
         ))}
       </Group>
       <Group label={t("desk.nav.doors")}>
+        {summary?.mayReadResponse ? (
+          <li>
+            <Link to="/lapor/meja/respons" className={item}>
+              <Icon name="clock" />
+              {t("desk.response.title")}
+            </Link>
+          </li>
+        ) : null}
         <li>
           <Link to="/lapor" className={item}>
             <Icon name="send" />

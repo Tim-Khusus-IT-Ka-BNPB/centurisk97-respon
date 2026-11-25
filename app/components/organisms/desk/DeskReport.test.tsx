@@ -264,4 +264,36 @@ describe("a report on the desk", () => {
     await renderDesk(<DeskReportView report={REPORT} summary={SUMMARY} />, PATH);
     expect(screen.queryByRole("region", { name: "Penanganan" })).toBeNull();
   });
+
+  test("who has a report in hand is named; an officer who may take it is told it is for good", async () => {
+    const view = await renderDesk(<DeskReportView report={{ ...REPORT, mayTake: true }} summary={SUMMARY} />, {
+      ...PATH,
+      action: never,
+    });
+    expect(screen.queryByText(/^Ditangani/)).toBeNull();
+    expect(screen.getByText(/Tidak bisa dipindah ke petugas lain/)).toBeTruthy();
+    screen.getByRole("button", { name: "Ambil laporan" }).click();
+    expect(await screen.findByRole("button", { name: "Menyimpan..." })).toBeTruthy();
+    view.unmount();
+    const taker = "Uji Andi, Pusdalops BPBD Kabupaten Uji Satu";
+    const history = [
+      ...REPORT.history,
+      {
+        status: "seen" as const,
+        at: SENT,
+        actor: "BPBD",
+        note: null,
+        forwardedTo: null,
+        event: "take" as const,
+        detail: { taker },
+      },
+    ];
+    await renderDesk(<DeskReportView report={{ ...REPORT, taker, history }} summary={SUMMARY} />, {
+      ...PATH,
+      entry: `${PATH.path}?saved=take`,
+    });
+    expect(screen.getAllByText(`Ditangani: ${taker}`)).toHaveLength(2);
+    expect(screen.getByRole("status").textContent).toBe("Laporan ini sekarang Anda tangani.");
+    expect(screen.queryByRole("button", { name: "Ambil laporan" })).toBeNull();
+  });
 });

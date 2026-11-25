@@ -14,11 +14,19 @@ import { StateMark } from "../cards/SummaryCards";
 import { DeskActions } from "./DeskActions";
 import { Hazard, PhotoFigure } from "./DeskQueue";
 import { DeskShell } from "./DeskShell";
-import { EmergencyChip, Houses, StatusChip, spacedNumber, UnverifiedChip, Victims, when } from "./parts";
+import {
+  ALL_FILTERS,
+  EmergencyChip,
+  Houses,
+  StatusChip,
+  spacedNumber,
+  Taker,
+  UnverifiedChip,
+  Victims,
+  when,
+} from "./parts";
 
-const SAVED = ["status", "replies", "checks", "actions", "proofs"];
-
-const ALL = { view: "map", status: "", hazardType: "", period: "all", ticket: "", has: "", page: 1 } as const;
+const SAVED = ["status", "replies", "checks", "actions", "proofs", "take"];
 
 function Origin({ origin, quote }: { readonly origin: string | null; readonly quote: string | null }) {
   const t = useText();
@@ -74,9 +82,25 @@ function Section({
   );
 }
 
+// "Ambil laporan": this officer has it in hand from now, once and for all.
+function TakeReport() {
+  const t = useText();
+  const busy = useNavigation().formData?.get("action") === "take";
+  return (
+    <Form method="post" replace preventScrollReset className="flex flex-col gap-2">
+      <input type="hidden" name="action" value="take" />
+      <p className="text-meta text-muted">{t("desk.take.hint")}</p>
+      <Button type="submit" variant="secondary" className="self-start" busyLabel={busy ? t("desk.busy") : null}>
+        {t("desk.take")}
+      </Button>
+    </Form>
+  );
+}
+
 // A history row's name: the status it reached, or the work it tells of.
 function historyTitle(t: Text, entry: DeskReport["history"][number]): string {
   if (entry.event === "actions") return t("desk.handling.actions");
+  if (entry.event === "take") return t("desk.taker", { taker: entry.detail?.taker as string });
   if (entry.event === "fieldCheck")
     return t("desk.history.check", { result: `desk.check.result.${entry.detail?.result}` });
   return t(`stage.long.${entry.status}`);
@@ -191,7 +215,7 @@ export function DeskReportView({
   const saved = useSearchParams()[0].get("saved");
   const problem = cardProblem(refusal);
   return (
-    <DeskShell place={{ filters: ALL, current: null, summary }} account={report.account.label}>
+    <DeskShell place={{ filters: ALL_FILTERS, current: null, summary }} account={report.account.label}>
       <Link to="/lapor/meja" className="inline-flex min-h-target-min w-fit items-center gap-2 rounded-control text-ink">
         <Icon name="arrowLeft" className="size-5" />
         {t("desk.refused.back")}
@@ -237,6 +261,8 @@ export function DeskReportView({
             <Houses impact={report.impact} />
           </div>
         </div>
+        {report.taker === null ? null : <Taker taker={report.taker} />}
+        {report.mayTake ? <TakeReport /> : null}
         <MarkSeen report={report} />
         <a href="#desk-actions" className={buttonStyles({ variant: "secondary", className: "self-start xl:hidden" })}>
           <Icon name="wrench" className="size-5" />

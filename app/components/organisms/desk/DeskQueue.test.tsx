@@ -240,6 +240,21 @@ describe("the list", () => {
     expect(screen.getAllByText("Darurat")).toHaveLength(4);
   });
 
+  test("a report in an officer's hand names them, in the table and on the card", async () => {
+    await renderDesk(
+      <DeskQueueView
+        shown={list(queue({ items: [{ ...ITEM, taker: "Uji Andi, Pusdalops BPBD Kabupaten Uji Satu" }], total: 1 }))}
+        summary={{ ...SUMMARY, mayReadResponse: false }}
+        filters={FILTERS}
+        envelope={null}
+      />,
+      { path: "/lapor/meja" },
+    );
+    expect(screen.getAllByText("Ditangani: Uji Andi, Pusdalops BPBD Kabupaten Uji Satu")).toHaveLength(2);
+    // Only an account that may read them is led to the response figures.
+    expect(screen.queryByRole("link", { name: "Respons BPBD" })).toBeNull();
+  });
+
   test("a reporter's name this account must ask for is left out of both", async () => {
     const asked = { ...ITEM, reporter: { name: null, role: "citizen" as const } };
     await renderDesk(

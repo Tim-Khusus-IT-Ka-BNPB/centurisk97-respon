@@ -36,6 +36,7 @@ export const ITEM: DeskQueue["items"][number] = {
   reporter: { name: "Uji Satu", role: "citizen" },
   numberUnverified: true,
   emergency: null,
+  taker: null,
   impact: { dead: 2, missing: null, injured: 0, displaced: null, houses: { count: 3, partial: true } },
 };
 
@@ -121,6 +122,7 @@ export const REPORT: DeskReport = {
     { status: "invalid", note: "reason" },
   ],
   revision: 1,
+  mayTake: false,
   revisable: [
     { fieldId: "dead", unit: "people", max: 100_000, count: 2 },
     { fieldId: "injured", unit: "people", max: 1_000_000, count: null },
@@ -141,4 +143,5 @@ export const SUMMARY: DeskSummary = {
   byHazard: { flood: 7, landslide: 2 },
   byHas: { victims: 3, displaced: 1, houses: 5, photos: 0 },
   emergencies: [],
+  mayReadResponse: true,
 };
