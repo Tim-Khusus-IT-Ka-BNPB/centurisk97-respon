@@ -120,6 +120,7 @@ export const COLUMN_CLASSES: Readonly<Record<string, TableClasses>> = {
       tracking_hash: I,
       emergency: I,
       emergency_victims: I,
+      door: I,
     },
   },
   report_version: {
@@ -284,6 +285,15 @@ export const COLUMN_CLASSES: Readonly<Record<string, TableClasses>> = {
       received_at: I,
       version: I,
     },
+  },
+  gateway_message: {
+    retention: "2 days after received_at, swept",
+    columns: { gateway_id: I, message_id: I, received_at: I },
+  },
+  chat_session: {
+    retention: "24 hours after updated_at, swept",
+    // Before consent the step says only that consent was asked; after it, who the reporter says they are.
+    columns: { number_key: I, step: P, shared_point: P, updated_at: I },
   },
   notice: {
     retention: "with its report",

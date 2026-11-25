@@ -29,6 +29,8 @@ const ERROR_CODES = [
   "ticket.transitionRefused",
   "ticket.changed",
   "ticket.taken",
+  "gateway.refused",
+  "gateway.replayed",
 ] as const;
 
 export type ErrorCode = (typeof ERROR_CODES)[number] | `limit.${LimitId}`;

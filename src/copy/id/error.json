@@ -10,6 +10,8 @@
   "error.draft.nothingToUndo": "Belum ada jawaban yang bisa dibatalkan.",
   "error.draft.backLimit": "Sudah 12 langkah dibatalkan, batas paling banyak. Jawaban yang lebih lama bisa diubah lewat Ubah di ringkasan.",
   "error.turn.keyReused": "Jawaban ini berbeda dari kiriman sebelumnya dengan tombol yang sama. Muat ulang halaman, lalu jawab pertanyaan terbaru.",
+  "error.gateway.refused": "Panggilan ini tidak ditandatangani gateway yang dikenal, atau waktunya sudah lewat.",
+  "error.gateway.replayed": "Pesan ini sudah diterima sebelumnya, jadi tidak diproses lagi.",
   "error.request.refused": "Halaman ini tidak bisa mengirim jawaban Anda. Muat ulang halaman, lalu jawab lagi. Jawaban yang sudah tersimpan tidak hilang.",
   "error.request.tooLarge": "Isian terlalu panjang untuk dikirim sekaligus. Pendekkan teks yang panjang, lalu kirim lagi.",
   "error.request.unavailable": "Layanan sedang terganggu, jadi jawaban Anda belum tersimpan. Isian Anda masih ada. Kirim lagi dalam beberapa menit.",

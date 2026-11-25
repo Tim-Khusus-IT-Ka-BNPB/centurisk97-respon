@@ -18,6 +18,8 @@ export type Settings = {
   readonly faultSend: boolean;
   readonly faultPlace: boolean;
   readonly addressFallback: "loopback" | null;
+  // One secret per WhatsApp gateway, by its id. Empty: that door is shut.
+  readonly gatewaySecrets: ReadonlyMap<string, string>;
   readonly logLevel: LogLevel;
 };
 
@@ -49,6 +51,20 @@ function hostOf(url: string): string | null {
   }
 }
 
+const GATEWAY_ENTRY = /^([a-z0-9-]{2,40})=([^\s=]{32,})$/;
+
+// "id=secret id=secret": one secret per gateway, so one can be taken away alone. Null when an entry
+// cannot be read or an id comes twice.
+function readGatewaySecrets(text: string): ReadonlyMap<string, string> | null {
+  const secrets = new Map<string, string>();
+  for (const entry of text.split(" ").filter(Boolean)) {
+    const match = GATEWAY_ENTRY.exec(entry);
+    if (!match || secrets.has(match[1] as string)) return null;
+    secrets.set(match[1] as string, match[2] as string);
+  }
+  return secrets;
+}
+
 const raw = z.object({
   APP_ENV: z.enum(APP_ENVS),
   APP_ORIGIN: z.url(),
@@ -62,6 +78,10 @@ const raw = z.object({
   FAULT_SEND: z.enum(["", "on"]).default(""),
   FAULT_PLACE: z.enum(["", "on"]).default(""),
   ADDRESS_FALLBACK: z.enum(["", "loopback"]).default(""),
+  GATEWAY_SECRETS: z
+    .string()
+    .refine((value) => readGatewaySecrets(value) !== null)
+    .default(""),
   LOG_LEVEL: z.enum(["debug", "info", "warn", "error"]).default("info"),
 });
 type Raw = z.infer<typeof raw>;
@@ -133,6 +153,7 @@ export function parseSettings(source: Readonly<Record<string, unknown>>, hasData
     faultSend: values.FAULT_SEND === "on",
     faultPlace: values.FAULT_PLACE === "on",
     addressFallback: values.ADDRESS_FALLBACK === "" ? null : "loopback",
+    gatewaySecrets: readGatewaySecrets(values.GATEWAY_SECRETS) as ReadonlyMap<string, string>,
     logLevel: values.LOG_LEVEL,
   };
 }

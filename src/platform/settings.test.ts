@@ -47,8 +47,35 @@ describe("settings read at start", () => {
       faultSend: false,
       faultPlace: false,
       addressFallback: null,
+      gatewaySecrets: new Map(),
       logLevel: "info",
     });
+  });
+
+  test("each WhatsApp gateway has a secret of its own, of 32 characters or more", () => {
+    const secrets = (text: string) => parseSettings({ ...local, GATEWAY_SECRETS: text }, true).gatewaySecrets;
+    expect(secrets("")).toEqual(new Map());
+    const [first, second] = ["a".repeat(32), "b".repeat(40)];
+    expect(secrets(`mini-1=${first}  mini-2=${second}`)).toEqual(
+      new Map([
+        ["mini-1", first],
+        ["mini-2", second],
+      ]),
+    );
+    for (const text of [
+      `mini-1=${"a".repeat(31)}`,
+      `mini-1=${first} mini-1=${second}`,
+      first as string,
+      `m=${first}`,
+      `${"m".repeat(41)}=${first}`,
+      `Mini=${first}`,
+      `x mini-1=${first}`,
+      `mini-1=${first}=x`,
+    ])
+      expect(refusal({ ...local, GATEWAY_SECRETS: text }).problems, text).toEqual([
+        { setting: "GATEWAY_SECRETS", reason: "invalid" },
+      ]);
+    expect(parseSettings({ ...staging, GATEWAY_SECRETS: `mini-1=${first}` }, true).gatewaySecrets.size).toBe(1);
   });
 
   test("a missing setting is named and its value never shown", () => {

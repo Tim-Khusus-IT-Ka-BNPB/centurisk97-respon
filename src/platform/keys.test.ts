@@ -1,5 +1,5 @@
 import { describe, expect, test } from "vitest";
-import { hmacKey, sha256Hex } from "./keys";
+import { hmacKey, isSignatureOf, sha256Hex, signText } from "./keys";
 
 const SECRET = "test-sample-hmac-key-at-least-32-bytes";
 
@@ -15,6 +15,26 @@ describe("keys", () => {
     expect(await hmacKey(SECRET, "address", "x")).not.toBe(number);
     expect(await hmacKey(`${SECRET}!`, "number", "x")).not.toBe(number);
     expect(number).toMatch(/^[0-9a-f]{64}$/);
+  });
+
+  test("a signature holds for its own secret and text alone", async () => {
+    const signature = await signText(SECRET, "pesan");
+    expect(signature).toMatch(/^[0-9a-f]{64}$/);
+    expect(await isSignatureOf(SECRET, "pesan", signature)).toBe(true);
+    expect(await isSignatureOf(SECRET, "pesan ", signature)).toBe(false);
+    expect(await isSignatureOf(`${SECRET}!`, "pesan", signature)).toBe(false);
+    expect(
+      await isSignatureOf(
+        SECRET,
+        "pesan",
+        signature.replace(/^./, (one) => (one === "0" ? "1" : "0")),
+      ),
+    ).toBe(false);
+    expect(await isSignatureOf(SECRET, "pesan", "")).toBe(false);
+  });
+
+  test("bytes have the fingerprint of the text they spell", async () => {
+    expect(await sha256Hex(new TextEncoder().encode("seeded-token"))).toBe(await sha256Hex("seeded-token"));
   });
 
   test("a fingerprint is plain SHA-256", async () => {
