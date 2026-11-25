@@ -242,9 +242,14 @@ export async function actOnDeskReport(ticketNumber: string, form: FormData, api:
   return redirectTo(`/lapor/meja/${ticket}${path === "view" ? "" : `?saved=${path}`}`, response);
 }
 
-// POST /lapor/meja/<ticket>/documents: a version as a file.
+// POST /lapor/meja/<ticket>/documents: a version as a file, or an emergency's pack.
 export async function downloadDeskDocument(ticketNumber: string, form: FormData, api: ApiCall): Promise<Response> {
   const ticket = encodeURIComponent(ticketNumber);
-  const body = { version: formText(form, "version"), format: formText(form, "format") };
-  return documentOrBack(await api("POST", `/desk/reports/${ticket}/documents`, body), `/lapor/meja/${ticket}`);
+  const path = `/desk/reports/${ticket}`;
+  const format = formText(form, "format");
+  const response =
+    format === "pack"
+      ? await api("POST", `${path}/document-pack`)
+      : await api("POST", `${path}/documents`, { version: formText(form, "version"), format });
+  return documentOrBack(response, `/lapor/meja/${ticket}`);
 }

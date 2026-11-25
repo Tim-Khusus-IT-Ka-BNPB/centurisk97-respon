@@ -87,6 +87,9 @@ describe("the reporter's own report page", () => {
     expect(file.calls).toEqual([
       { method: "POST", path: "/desk/reports/LA-1/documents", body: { version: "2", format: "pdf" } },
     ]);
+    const pack = fakeApi(() => new Response("isi"));
+    await downloadDeskDocument("LA-1", form({ format: "pack" }), pack.api);
+    expect(pack.calls).toEqual([{ method: "POST", path: "/desk/reports/LA-1/document-pack", body: undefined }]);
     const refused = fakeApi(() => Response.json(envelope("desk.reportNotFound"), { status: 404 }));
     const back = await downloadDeskDocument("LA-1", form({}), refused.api);
     expect(back.headers.get("location")).toBe("/lapor/meja/LA-1?refused=document");
