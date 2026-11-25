@@ -11,7 +11,7 @@ import type { Tracking } from "../contract/tracking";
 import { checkContactFile, pickContact } from "../domain/contacts";
 import type { EventTimeValue, PlaceValue } from "../domain/fieldState";
 import type { FieldError } from "../domain/identityForm";
-import { ownsDraft } from "../domain/ownership";
+import { ownsDraft, SESSION_SLOT } from "../domain/ownership";
 import { rejectionOf, stagesOf } from "../domain/stages";
 import { run, sqlState } from "../platform/database";
 import { hmacKey, sha256Hex } from "../platform/keys";
@@ -160,14 +160,18 @@ export async function rateOwnReport(
   return { kind: "ok" };
 }
 
-// "Laporan saya": the reports of this number made on this device, or of the session's number,
-// newest first, each with its tracking secret.
+function ownerOf(principal: Principal) {
+  if (principal.kind === "device") return { ownerSlot: principal.deviceId };
+  if (principal.kind === "session") return { reporterId: principal.reporterId };
+  if (principal.kind !== "chat" || principal.reporterId === null) return null;
+  return { reporterId: principal.reporterId, ownerSlot: SESSION_SLOT };
+}
+
+// "Laporan saya": the reports of this number made on this device, of the session's number, or of
+// the chat's, newest first, each with its tracking secret.
 export async function myReports(bindings: ServiceBindings, principal: Principal) {
-  if (principal.kind !== "device" && principal.kind !== "session") return [];
-  const found = await ownReports(
-    bindings.db,
-    principal.kind === "device" ? { ownerSlot: principal.deviceId } : { reporterId: principal.reporterId },
-  );
+  const owner = ownerOf(principal);
+  const found = owner === null ? [] : await ownReports(bindings.db, owner);
   return Promise.all(
     found.map(async (report) => ({
       ticketNumber: report.ticketNumber,

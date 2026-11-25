@@ -1,5 +1,5 @@
 import type { TicketStatus } from "../../domain/stages";
-import { type Database, parsed, type Query, row, rows, sql } from "../../platform/database";
+import { type Database, empty, parsed, type Query, row, rows, sql } from "../../platform/database";
 import { UNREAD } from "./news";
 
 export type ReportRecord = {
@@ -81,7 +81,7 @@ export const reportByTicket = (db: Database, ticketNumber: string) => one(db, sq
 // Reports of one owner, newest first: a device's own, or every report of a session's number.
 export async function ownReports(
   db: Database,
-  owner: { readonly ownerSlot: string } | { readonly reporterId: string },
+  owner: { readonly ownerSlot?: string; readonly reporterId?: string },
 ): Promise<
   {
     id: string;
@@ -93,8 +93,8 @@ export async function ownReports(
     unread: number;
   }[]
 > {
-  const where =
-    "ownerSlot" in owner ? sql`r.owner_slot = ${owner.ownerSlot}` : sql`r.reporter_id = ${owner.reporterId}`;
+  const slot = owner.ownerSlot === undefined ? empty : sql` and r.owner_slot = ${owner.ownerSlot}`;
+  const where = owner.reporterId === undefined ? slot : sql` and r.reporter_id = ${owner.reporterId}${slot}`;
   const found = await rows<{
     id: string;
     ticket_number: string;
@@ -106,7 +106,7 @@ export async function ownReports(
   }>(
     db,
     sql`select r.id, r.ticket_number, r.hazard_type, r.village_code, r.sent_at, t.status, ${UNREAD} as unread
-      from report r join ticket t on t.report_id = r.id left join report_news w on w.report_id = r.id where ${where} order by r.sent_at desc, r.ticket_number desc`,
+      from report r join ticket t on t.report_id = r.id left join report_news w on w.report_id = r.id where 1 = 1${where} order by r.sent_at desc, r.ticket_number desc`,
   );
   return found.map((report) => ({
     id: report.id,

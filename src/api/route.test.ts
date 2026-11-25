@@ -3,7 +3,15 @@ import { describe, expect, test } from "vitest";
 import type { Principal } from "../ports/identity";
 import { fromBrowser, jsonWrite, testBindings } from "../testing/api";
 import { api } from "./app";
-import { addRoute, createApi, jsonResponse, openApiDocument, responsesWithoutSchema, routeList } from "./route";
+import {
+  addRoute,
+  createApi,
+  isGatewayPath,
+  jsonResponse,
+  openApiDocument,
+  responsesWithoutSchema,
+  routeList,
+} from "./route";
 
 describe("route list", () => {
   test("every route of the app declares a policy", () => {
@@ -11,6 +19,7 @@ describe("route list", () => {
     expect(routes).toEqual([
       { key: "DELETE /api/lapor/desk/session", policy: "public" },
       { key: "DELETE /api/lapor/me/profiles/:profileId", policy: "reporter" },
+      { key: "GET /api/lapor/bahasa", policy: "gateway" },
       { key: "GET /api/lapor/desk/emergencies", policy: "staff" },
       { key: "GET /api/lapor/desk/map", policy: "staff" },
       { key: "GET /api/lapor/desk/photos", policy: "staff" },
@@ -49,6 +58,8 @@ describe("route list", () => {
       { key: "POST /api/lapor/drafts/:draftId/send", policy: "reporter" },
       { key: "POST /api/lapor/drafts/:draftId/turns", policy: "reporter" },
       { key: "POST /api/lapor/emergencies", policy: "reporter" },
+      { key: "POST /api/lapor/foto", policy: "gateway" },
+      { key: "POST /api/lapor/pesan", policy: "gateway" },
       { key: "POST /api/lapor/preferences/theme", policy: "public" },
       { key: "POST /api/lapor/reports/:ticketNumber/follow-ups", policy: "reporter" },
       { key: "POST /api/lapor/reports/:ticketNumber/news", policy: "reporter" },
@@ -57,6 +68,15 @@ describe("route list", () => {
       { key: "POST /api/lapor/tracking/photos", policy: "public" },
     ]);
     expect(routes.filter((route) => route.policy === null)).toEqual([]);
+  });
+
+  test("the paths that skip the browser's checks are the gateway's own, and no other", () => {
+    for (const { key, policy } of routeList(api)) {
+      const path = (key.split(" ")[1] as string).replace(/:\w+/g, "x");
+      expect(isGatewayPath(path), key).toBe(policy === "gateway");
+    }
+    expect(isGatewayPath("/api/lapor/pesan/x")).toBe(false);
+    expect(isGatewayPath("/api/lapor/desk/pesan")).toBe(false);
   });
 
   test("a route added without the helper shows up with no policy", () => {
@@ -286,6 +306,7 @@ describe("response schemas and the OpenAPI document", () => {
     expect(document.openapi).toBe("3.1.0");
     const paths = Object.keys(document.paths ?? {}).sort();
     expect(paths).toEqual([
+      "/api/lapor/bahasa",
       "/api/lapor/consent",
       "/api/lapor/desk/emergencies",
       "/api/lapor/desk/map",
@@ -316,9 +337,11 @@ describe("response schemas and the OpenAPI document", () => {
       "/api/lapor/education",
       "/api/lapor/emergencies",
       "/api/lapor/emergencies/start",
+      "/api/lapor/foto",
       "/api/lapor/health",
       "/api/lapor/me",
       "/api/lapor/me/profiles/{profileId}",
+      "/api/lapor/pesan",
       "/api/lapor/places/districts/{code}/villages",
       "/api/lapor/places/regencies/{code}/villages",
       "/api/lapor/places/search",

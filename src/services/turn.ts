@@ -193,12 +193,15 @@ function noticesOf(outcome: Extract<TurnOutcome, { kind: "next" }>, extraLife: b
 
 type Prepared = { readonly input: TurnInput; readonly messages: NewMessage[] } | { readonly errors: FieldError[] };
 
-// A reading the page took: coordinates and accuracy as numbers, accuracy never negative.
-function readingOf(values: Readonly<Record<string, string>>) {
+// A reading the page took: coordinates and accuracy as numbers, accuracy never negative. A location
+// shared in a chat comes with no accuracy at all.
+function readingOf(values: Readonly<Record<string, string>>, inChat: boolean) {
   // An empty box is no number, not 0.
   const [lat, lon, accuracyM] = ["lat", "lon", "accuracy"].map((name) => Number(values[name]?.trim() || Number.NaN));
+  const point = { lat: lat as number, lon: lon as number };
+  if (inChat) return { ...point, accuracyM: null };
   const valid = [lat, lon, accuracyM].every((value) => Number.isFinite(value)) && (accuracyM as number) >= 0;
-  return valid ? { lat: lat as number, lon: lon as number, accuracyM: accuracyM as number } : null;
+  return valid ? { ...point, accuracyM: accuracyM as number } : null;
 }
 
 // The village picked from the nearby list, which carries the reading it came from.
@@ -238,7 +241,7 @@ async function prepare(
     return { input: { kind: "story", message, extraction }, messages };
   }
   if (request.kind === "locate") {
-    const reading = readingOf(request.values);
+    const reading = readingOf(request.values, principal.kind === "chat");
     if (reading === null) return { errors: [{ fieldId: "location", rule: "location.invalid", params: {} }] };
     return { input: { kind: "located", result: await locatePlace(bindings, reading) }, messages: [] };
   }
@@ -278,7 +281,8 @@ async function prepare(
 export async function takeTurn(
   bindings: ServiceBindings,
   principal: Principal,
-  address: string,
+  // Null for a message of the chat, whose door has counted it.
+  address: string | null,
   draftId: string,
   request: TurnRequest,
   requestHash: string,
@@ -290,7 +294,7 @@ export async function takeTurn(
   if (stored) return replayOf(stored, requestHash);
   if (isFinal(draft.state))
     return { kind: "ok", status: 200, body: await viewOf(bindings, draft, [], request.turnKey) };
-  const refusal = await checkMessageLimits(bindings, principal, address, draft);
+  const refusal = address === null ? null : await checkMessageLimits(bindings, principal, address, draft);
   if (refusal) return { kind: "limit", refusal, draft: await viewOf(bindings, draft, [LIFE_LINE], request.turnKey) };
   const changed = async () => ({ kind: "changed" as const, draft: await viewOf(bindings, draft, [], request.turnKey) });
   if (request.revision !== draft.revision) return changed();

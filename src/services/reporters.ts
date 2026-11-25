@@ -19,7 +19,7 @@ import {
 import type { MeResponse } from "../contract/draft";
 import type { Identity } from "../domain/identityForm";
 import { LIMITS } from "../domain/limits";
-import { ownerSlotOf } from "../domain/ownership";
+import { ownerSlotOf, SESSION_SLOT } from "../domain/ownership";
 import { maskNumber } from "../domain/phoneNumber";
 import { PRIVACY } from "../domain/privacy";
 import { EMERGENCY_CONTENT, EMPTY_CONTENT } from "../domain/turn/content";
@@ -97,6 +97,8 @@ export async function giveConsent(
   principal: Principal,
   identity: Identity,
   emergency: boolean,
+  // When they agreed, if that was before this request: a chat asks who they are after its "Setuju".
+  agreedAt: Date | null = null,
 ): Promise<ConsentResult> {
   const at = new Date(bindings.clock.now());
   const deviceKey = principal.kind === "anonymous" ? newDeviceKey() : null;
@@ -117,13 +119,13 @@ export async function giveConsent(
     } else {
       key = numberKey as string;
       if (principal.kind === "device") deviceId = principal.deviceId;
-      else {
+      else if (principal.kind === "anonymous") {
         deviceId = crypto.randomUUID();
         writes.push(createDevice(deviceId, fingerprint as string, at));
       }
       writes.push(upsertReporter(crypto.randomUUID(), identity.number as string, key, at));
     }
-    const slot = deviceId ?? "session";
+    const slot = deviceId ?? SESSION_SLOT;
     const reporterId = principal.kind === "session" ? principal.reporterId : await reporterIdOf(db, key);
     const existing = reporterId === null ? null : await profileBySlot(db, reporterId, slot);
     const max = LIMITS["device.numbers"].max;
@@ -135,7 +137,7 @@ export async function giveConsent(
     writes.push(saveProfile(crypto.randomUUID(), key, slot, deviceId, identity, at));
     // A second number on the same device in the same moment cannot pass the cap either.
     if (deviceId !== null) writes.push(holds(sql`${profileCount(deviceId)} <= ${max}`));
-    writes.push(addConsent(crypto.randomUUID(), profileIdOf, PRIVACY.version, at));
+    writes.push(addConsent(crypto.randomUUID(), profileIdOf, PRIVACY.version, agreedAt ?? at));
     const open = reporterId === null ? null : await openDraftOf(db, reporterId, slot);
     const live = open !== null && isLive(open, at);
     if (open && live && !open.followUp) {
@@ -173,7 +175,7 @@ export async function startDraft(
   return decide(async (): Promise<StartResult | null> => {
     const profile = await profileById(bindings.db, profileId);
     if (!profile || profile.owner_slot !== slot) return { kind: "notFound" };
-    if (principal.kind === "session" && profile.reporter_id !== principal.reporterId) return { kind: "notFound" };
+    if ("reporterId" in principal && profile.reporter_id !== principal.reporterId) return { kind: "notFound" };
     const open = await openDraftOf(bindings.db, profile.reporter_id, profile.owner_slot);
     const live = open !== null && isLive(open, at);
     if (open !== null && live && !replaceOpenDraft) return { kind: "openExists", draftId: open.id };
