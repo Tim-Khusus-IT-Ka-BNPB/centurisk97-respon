@@ -77,7 +77,7 @@ export function StatusDot({ status }: { readonly status: Status }) {
 export function StatusChip({ status }: { readonly status: Status }) {
   const t = useText();
   return (
-    <span className="inline-flex items-center gap-1.5 rounded-chip border border-line bg-surface px-1.5 py-0.5 text-meta font-semibold whitespace-nowrap">
+    <span className="inline-flex items-center gap-1.5 rounded-chip border border-line bg-surface px-2 py-0.5 text-meta font-semibold sm:whitespace-nowrap">
       <StatusDot status={status} />
       {t(`stage.short.${status}`)}
     </span>
@@ -114,91 +114,83 @@ export const hazardLabel = (t: Text, id: Item["hazardType"]) =>
 export function UnverifiedChip() {
   const t = useText();
   return (
-    <span className="inline-flex items-center gap-1 rounded-chip border border-dashed border-control px-1.5 py-0.5 text-meta whitespace-nowrap">
+    <span className="inline-flex items-center gap-1 rounded-chip border border-dashed border-control px-2 py-0.5 text-meta">
       <Icon name="triangleAlert" className="size-4" />
       {t("desk.unverified")}
     </span>
   );
 }
 
-const IMPACT: readonly (readonly [keyof Omit<Item["impact"], "houses">, IconName])[] = [
+const IMPACT = [
   ["dead", "heartCrack"],
   ["missing", "userSearch"],
   ["injured", "bandage"],
   ["displaced", "tent"],
-];
+  ["houses", "house"],
+] as const satisfies readonly (readonly [keyof Item["impact"], IconName])[];
 
-// One figure with its icon. Not known reads as a dash and says so to a screen reader; an
-// explicit none is a quiet 0; a count stands out.
-function Figure({
-  icon,
-  label,
-  count,
-  unit,
-  partial = false,
-}: {
+type ImpactFigure = {
+  readonly field: (typeof IMPACT)[number][0];
   readonly icon: IconName;
-  readonly label: string;
   readonly count: number | null;
-  readonly unit: string;
   // At least this many: part of what makes it up is not known yet.
-  readonly partial?: boolean;
-}) {
-  const t = useText();
-  const counted =
-    count === null
-      ? t("desk.impact.unknown")
-      : count === 0
-        ? t("desk.impact.none")
-        : `${count.toLocaleString("id-ID")} ${unit}`;
-  const said = partial ? `${counted}, ${t("desk.impact.partial")}` : counted;
-  return (
-    <span className="inline-flex items-center gap-1 tabular-nums" title={`${label}: ${said}`}>
-      <Icon name={icon} className={count ? "size-4 text-ink" : "size-4 text-muted"} />
-      <span aria-hidden="true" className={count ? "font-semibold" : "text-muted"}>
-        {count === null ? "–" : count.toLocaleString("id-ID")}
-        {partial ? "+" : ""}
-      </span>
-      <span className="sr-only">{`${label}: ${said}`}</span>
-    </span>
-  );
-}
+  readonly partial: boolean;
+};
 
-export function Victims({
-  impact,
-  className = "flex flex-wrap",
-  onlyAbove = false,
-}: {
-  readonly impact: Item["impact"];
-  readonly className?: string;
-  // Only the figures above zero, for a short row.
-  readonly onlyAbove?: boolean;
-}) {
+const figuresOf = (impact: Item["impact"]): readonly ImpactFigure[] =>
+  IMPACT.map(([field, icon]) =>
+    field === "houses"
+      ? { field, icon, count: impact.houses?.count ?? null, partial: impact.houses?.partial ?? false }
+      : { field, icon, count: impact[field], partial: false },
+  );
+
+const countText = ({ count, partial }: ImpactFigure) => `${count?.toLocaleString("id-ID")}${partial ? "+" : ""}`;
+
+// What a report counts, in words: the figures above zero. With none of them, an explicit none and
+// a figure not known yet are told apart.
+export function Impact({ impact }: { readonly impact: Item["impact"] }) {
   const t = useText();
+  const figures = figuresOf(impact);
+  const above = figures.filter((one) => one.count);
+  if (above.length === 0) {
+    const unknown = figures.filter((one) => one.count === null).length;
+    const told = unknown === 0 ? "none" : unknown === figures.length ? "unknown" : "some";
+    return <span className="text-meta text-muted">{t(`desk.impact.told.${told}`)}</span>;
+  }
   return (
-    <span className={cn("items-center gap-x-3 gap-y-1", className)}>
-      {IMPACT.filter(([field]) => !onlyAbove || impact[field]).map(([field, icon]) => (
-        <Figure
-          key={field}
-          icon={icon}
-          label={t(`desk.impact.${field}`)}
-          count={impact[field]}
-          unit={t("unit.people")}
-        />
+    <span className="flex flex-wrap gap-x-3 gap-y-1 text-meta">
+      {above.map((one) => (
+        <span key={one.field} className="inline-flex items-center gap-1.5 whitespace-nowrap">
+          <Icon name={one.icon} className="size-4 text-muted" />
+          <span>
+            <span className="font-semibold tabular-nums">{countText(one)}</span> {t(`desk.impact.word.${one.field}`)}
+          </span>
+        </span>
       ))}
     </span>
   );
 }
 
-export function Houses({ impact }: { readonly impact: Item["impact"] }) {
+// The same figures on the report itself, every one of them, known or not.
+export function ImpactStrip({ impact }: { readonly impact: Item["impact"] }) {
   const t = useText();
   return (
-    <Figure
-      icon="house"
-      label={t("desk.impact.houses")}
-      count={impact.houses?.count ?? null}
-      unit={t("unit.houses")}
-      partial={impact.houses?.partial ?? false}
-    />
+    <dl className="grid grid-cols-2 gap-px overflow-hidden rounded-card border border-line bg-line sm:grid-cols-3 lg:grid-cols-5">
+      {figuresOf(impact).map((one) => (
+        <div
+          key={one.field}
+          className="flex flex-col-reverse justify-end gap-0.5 bg-surface px-4 py-3 last:col-span-2 sm:last:col-span-1"
+        >
+          <dt className="flex items-center gap-1.5 text-meta text-muted">
+            <Icon name={one.icon} className="size-4" />
+            {t(`desk.impact.${one.field}`)}
+          </dt>
+          <dd className={cn("flex min-h-8 items-end tabular-nums", one.count ? "text-page font-bold" : "text-muted")}>
+            {one.count === null ? t("desk.impact.unknown") : one.count === 0 ? t("desk.impact.none") : countText(one)}
+            {one.partial ? <span className="sr-only">, {t("desk.impact.partial")}</span> : null}
+          </dd>
+        </div>
+      ))}
+    </dl>
   );
 }

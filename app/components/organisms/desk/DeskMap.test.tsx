@@ -54,9 +54,8 @@ describe("the map view", () => {
     expect(first.getByText("Banjir, Sukamaju, Aceh Utara")).toBeTruthy();
     expect(first.getByText("24 Nov 2026, 09.30 WIB")).toBeTruthy();
     // Only figures above zero: two dead and at least three houses, but not "0 luka-luka".
-    expect(first.getByText("Meninggal: 2 orang")).toBeTruthy();
-    expect(first.getByText(/^Rumah rusak: 3 rumah/)).toBeTruthy();
-    expect(first.queryByText(/Luka-luka/)).toBeNull();
+    expect(first.getByRole("link").textContent).toContain("2 meninggal3+ rumah rusak");
+    expect(first.queryByText(/luka-luka/)).toBeNull();
     expect(first.getByText("2 foto")).toBeTruthy();
     expect(panel().queryByText(/di area peta ini/)).toBeNull();
   });

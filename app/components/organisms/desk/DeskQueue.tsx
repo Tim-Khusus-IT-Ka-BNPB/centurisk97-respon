@@ -8,21 +8,21 @@ import { valueLines } from "../../../lib/summary";
 import { useText } from "../../../lib/text";
 import { buttonStyles } from "../../atoms/Button";
 import { Icon } from "../../atoms/Icon";
+import type { IconName } from "../../atoms/icons";
 import { Notice } from "../../molecules/Notice";
-import { FilterBar, ViewTabs } from "./DeskFilters";
+import { ClearFilters, FilterBar, ViewTabs } from "./DeskFilters";
 import { DeskMapView } from "./DeskMap";
 import { DeskShell } from "./DeskShell";
 import {
   deskLink,
   EmergencyChip,
   eventShort,
-  Houses,
   hazardLabel,
+  Impact,
   type Item,
   StatusChip,
   Taker,
   UnverifiedMark,
-  Victims,
   when,
   whenShort,
 } from "./parts";
@@ -30,7 +30,13 @@ import {
 const placeOf = (t: ReturnType<typeof useText>, item: Item) =>
   t("desk.row.placeShort", { village: item.place.villageName, regency: item.place.regencyName });
 
-export function Hazard({ item }: { readonly item: Pick<Item, "hazardType" | "hazardSubtype" | "emergency"> }) {
+export function Hazard({
+  item,
+  place = null,
+}: {
+  readonly item: Pick<Item, "hazardType" | "hazardSubtype" | "emergency">;
+  readonly place?: string | null;
+}) {
   const t = useText();
   const subtype = valueLines(t, "hazardSubtype", {
     kind: "hazardSubtype",
@@ -38,13 +44,16 @@ export function Hazard({ item }: { readonly item: Pick<Item, "hazardType" | "haz
     subtype: item.hazardSubtype,
   })[0];
   return (
-    <span className="flex items-start gap-2">
-      <Icon name={hazardIcon(item.hazardType)} className="mt-0.5 size-5 text-muted" />
+    <span className="flex items-start gap-3">
+      <span className="flex size-10 shrink-0 items-center justify-center rounded-control bg-selected text-primary">
+        <Icon name={hazardIcon(item.hazardType)} />
+      </span>
       <span className="flex min-w-0 flex-col">
         <span className="font-semibold">{hazardLabel(t, item.hazardType)}</span>
         <span className="text-meta text-muted">
           {item.emergency === null ? subtype : t(`desk.emergency.victims.${item.emergency.victims}`)}
         </span>
+        {place === null ? null : <span className="text-meta">{place}</span>}
       </span>
     </span>
   );
@@ -63,29 +72,33 @@ function Filled({ item }: { readonly item: Item }) {
   );
 }
 
-const cell = "border-t border-line px-3 py-3 align-top";
+const cell = "border-t border-line px-4 py-3.5 align-top";
+const head = "px-4 py-3 text-meta font-semibold text-muted";
+
+// The event takes what the others leave.
+const WIDTH = { ticket: "w-40", event: "", impact: "w-40", sent: "w-48", reporter: "w-52" } as const;
 
 // A wide screen reads the queue as a table; the ticket is the row's link.
 function QueueTable({ items }: { readonly items: readonly Item[] }) {
   const t = useText();
   return (
     <div className="hidden overflow-x-auto card-surface xl:block">
-      <table className="w-full border-separate border-spacing-0 text-left">
+      <table className="w-full table-fixed border-separate border-spacing-0 text-left">
         <thead>
-          <tr className="text-meta text-muted">
-            {(["ticket", "event", "victims", "houses", "sent", "reporter"] as const).map((column) => (
-              <th key={column} scope="col" className="px-3 py-2.5 font-semibold">
+          <tr className="bg-sunken/60">
+            {(["ticket", "event", "impact", "sent", "reporter"] as const).map((column) => (
+              <th key={column} scope="col" className={cn(head, WIDTH[column])}>
                 {t(`desk.col.${column}`)}
               </th>
             ))}
-            <th scope="col" className="px-3 py-2.5 text-right font-semibold">
+            <th scope="col" className={cn(head, "w-28 text-right")}>
               {t("desk.col.filled")}
             </th>
           </tr>
         </thead>
         <tbody>
           {items.map((item) => (
-            <tr key={item.ticketNumber} className="relative hover:bg-sunken">
+            <tr key={item.ticketNumber} className="relative hover:bg-sunken/60">
               <td className={cell}>
                 <span className="flex flex-col items-start gap-1.5">
                   <Link
@@ -100,20 +113,14 @@ function QueueTable({ items }: { readonly items: readonly Item[] }) {
                   </span>
                 </span>
               </td>
-              <td className={cn(cell, "min-w-40")}>
-                <span className="flex flex-col gap-1">
-                  <Hazard item={item} />
-                  <span className="text-meta">{placeOf(t, item)}</span>
-                </span>
+              <td className={cell}>
+                <Hazard item={item} place={placeOf(t, item)} />
               </td>
               <td className={cell}>
-                <Victims impact={item.impact} className="grid w-max grid-cols-2" />
-              </td>
-              <td className={cell}>
-                <Houses impact={item.impact} />
+                <Impact impact={item.impact} />
               </td>
               <td className={cn(cell, "text-meta tabular-nums")}>
-                <span className="flex flex-col gap-0.5 whitespace-nowrap">
+                <span className="flex flex-col gap-0.5">
                   <span>{whenShort(t, item.sentAt)}</span>
                   <span className="text-muted">
                     {t("desk.row.eventTime", { value: eventShort(t, item.eventTime) })}
@@ -143,26 +150,22 @@ function QueueTable({ items }: { readonly items: readonly Item[] }) {
 function QueueCards({ items }: { readonly items: readonly Item[] }) {
   const t = useText();
   return (
-    <ul className="grid gap-3 lg:grid-cols-2 xl:hidden">
+    <ul className="grid grid-cols-[minmax(0,1fr)] gap-3 lg:grid-cols-2 xl:hidden">
       {items.map((item) => (
         <li key={item.ticketNumber}>
           <Link
             to={`/lapor/meja/${item.ticketNumber}`}
             className="flex h-full flex-col gap-2.5 card-surface p-4 text-ink no-underline hover:bg-sunken"
           >
-            <span className="flex items-start justify-between gap-3">
+            <span className="flex flex-wrap items-start justify-between gap-x-3 gap-y-2">
               <span className="font-bold whitespace-nowrap tabular-nums">{item.ticketNumber}</span>
               <span className="flex flex-wrap justify-end gap-1.5">
                 {item.emergency === null ? null : <EmergencyChip />}
                 <StatusChip status={item.status} />
               </span>
             </span>
-            <Hazard item={item} />
-            <span className="text-meta">{placeOf(t, item)}</span>
-            <span className="flex flex-wrap items-center gap-x-4 gap-y-1">
-              <Victims impact={item.impact} />
-              <Houses impact={item.impact} />
-            </span>
+            <Hazard item={item} place={placeOf(t, item)} />
+            <Impact impact={item.impact} />
             {item.taker === null ? null : <Taker taker={item.taker} />}
             <span className="flex flex-wrap items-center justify-between gap-2 mt-auto border-t border-line pt-2.5 text-meta">
               <span className="flex flex-wrap items-center gap-2">
@@ -178,14 +181,30 @@ function QueueCards({ items }: { readonly items: readonly Item[] }) {
   );
 }
 
+// Nothing to show, and while something is filtered the way back to everything.
+function Empty({
+  icon,
+  text,
+  filters,
+}: {
+  readonly icon: IconName;
+  readonly text: string;
+  readonly filters: DeskFilters;
+}) {
+  return (
+    <div className="flex flex-col items-center gap-3 card-surface px-6 py-14 text-center">
+      <span className="flex size-14 items-center justify-center rounded-full bg-sunken text-muted">
+        <Icon name={icon} className="size-7" />
+      </span>
+      <p className="max-w-[40ch] text-muted">{text}</p>
+      <ClearFilters filters={filters} />
+    </div>
+  );
+}
+
 function ListView({ queue, filters }: { readonly queue: DeskQueue; readonly filters: DeskFilters }) {
   const t = useText();
-  if (queue.items.length === 0)
-    return (
-      <Notice kind="info">
-        <p>{t("desk.empty")}</p>
-      </Notice>
-    );
+  if (queue.items.length === 0) return <Empty icon="inbox" text={t("desk.empty")} filters={filters} />;
   return (
     <>
       <QueueTable items={queue.items} />
@@ -248,14 +267,9 @@ export function PhotoFigure({ photo }: { readonly photo: Photo }) {
   );
 }
 
-function GalleryView({ gallery }: { readonly gallery: DeskGallery }) {
+function GalleryView({ gallery, filters }: { readonly gallery: DeskGallery; readonly filters: DeskFilters }) {
   const t = useText();
-  if (gallery.photos.length === 0)
-    return (
-      <Notice kind="info">
-        <p>{t("desk.gallery.empty")}</p>
-      </Notice>
-    );
+  if (gallery.photos.length === 0) return <Empty icon="images" text={t("desk.gallery.empty")} filters={filters} />;
   return (
     <>
       {gallery.cut ? (
@@ -321,7 +335,7 @@ export function DeskQueueView({
       </div>
       <FilterBar filters={filters} summary={summary} envelope={envelope} />
       {shown?.view === "list" ? <ListView queue={shown.queue} filters={filters} /> : null}
-      {shown?.view === "gallery" ? <GalleryView gallery={shown.gallery} /> : null}
+      {shown?.view === "gallery" ? <GalleryView gallery={shown.gallery} filters={filters} /> : null}
     </DeskShell>
   );
 }

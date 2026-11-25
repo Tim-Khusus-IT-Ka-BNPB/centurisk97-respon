@@ -194,7 +194,7 @@ describe("the list", () => {
       table()
         .getAllByRole("columnheader")
         .map((cell) => cell.textContent),
-    ).toEqual(["Tiket", "Kejadian", "Korban", "Rumah rusak", "Dilaporkan", "Pelapor", "Isian"]);
+    ).toEqual(["Tiket", "Kejadian", "Dampak", "Dilaporkan", "Pelapor", "Isian"]);
     const [first, second] = table().getAllByRole("row").slice(1) as HTMLElement[];
     const row = within(first as HTMLElement);
     expect(row.getByRole("link", { name: "LA-241126-01" }).getAttribute("href")).toBe("/lapor/meja/LA-241126-01");
@@ -202,11 +202,9 @@ describe("the list", () => {
     expect(row.getByText("Banjir")).toBeTruthy();
     expect(row.getByText("Tidak tahu")).toBeTruthy();
     expect(row.getByText("Sukamaju, Aceh Utara")).toBeTruthy();
-    expect(row.getByText("Meninggal: 2 orang")).toBeTruthy();
-    expect(row.getByText("Hilang: belum didata")).toBeTruthy();
-    expect(row.getByText("Luka-luka: tidak ada")).toBeTruthy();
-    expect(row.getByText("Rumah rusak: 3 rumah, Sebagian jenis kerusakan belum didata")).toBeTruthy();
-    expect(row.getByText("3+")).toBeTruthy();
+    // What is above zero, in words; "at least three" houses reads "3+".
+    const impact = (row.getAllByRole("cell")[2] as HTMLElement).textContent;
+    expect(impact).toBe("2 meninggal3+ rumah rusak");
     expect(row.getByText("24 Nov 2026, 09.30 WIB")).toBeTruthy();
     expect(row.getByText("Kejadian: 24 Nov 2026")).toBeTruthy();
     expect(row.getByText("Nomor belum diverifikasi")).toBeTruthy();
@@ -216,6 +214,25 @@ describe("the list", () => {
     expect(other.getByText("Kejadian: Sudah lebih dari 30 hari")).toBeTruthy();
     expect(other.getByText("Petugas BPBD (belum dikonfirmasi)")).toBeTruthy();
     expect(other.queryByText("Nomor belum diverifikasi")).toBeNull();
+  });
+
+  test("with nothing above zero, an explicit none and a figure not known yet are told apart", async () => {
+    const none = { dead: 0, missing: 0, injured: 0, displaced: 0, houses: { count: 0, partial: false } };
+    const unknown = { dead: null, missing: null, injured: null, displaced: null, houses: null };
+    const items = [none, unknown, { ...none, missing: null }].map((impact, index) => ({
+      ...ITEM,
+      ticketNumber: `LA-241126-0${index + 1}`,
+      impact,
+    }));
+    await renderDesk(
+      <DeskQueueView shown={list(queue({ items }))} summary={SUMMARY} filters={FILTERS} envelope={null} />,
+      { path: "/lapor/meja" },
+    );
+    const told = table()
+      .getAllByRole("row")
+      .slice(1)
+      .map((row) => within(row).getAllByRole("cell")[2]?.textContent);
+    expect(told).toEqual(["Tidak ada dampak", "Dampak belum didata", "Tidak ada, sebagian belum didata"]);
   });
 
   test("an emergency is marked, with what was told of victims; one tap told no hazard", async () => {
@@ -291,7 +308,7 @@ describe("the list", () => {
     expect(cards).toHaveLength(1);
     const card = within(cards[0] as HTMLElement);
     expect(card.getByRole("link").getAttribute("href")).toBe("/lapor/meja/LA-241126-01");
-    expect(card.getByText("Meninggal: 2 orang")).toBeTruthy();
+    expect(card.getByText("3+").parentElement?.textContent).toBe("3+ rumah rusak");
     expect(card.getByText("Nomor belum diverifikasi")).toBeTruthy();
   });
 

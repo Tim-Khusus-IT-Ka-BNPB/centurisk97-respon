@@ -10,12 +10,12 @@ import { buttonStyles } from "../../atoms/Button";
 import { Icon } from "../../atoms/Icon";
 import { DeskMapCanvas } from "../DeskMapCanvas";
 import { ClearFilters, HasTiles, HazardChips, PeriodSegment, TicketSearch, ViewTabs } from "./DeskFilters";
-import { deskLink, EmergencyChip, Houses, hazardLabel, type Item, StatusChip, Victims, whenShort } from "./parts";
+import { deskLink, EmergencyChip, hazardLabel, Impact, type Item, StatusChip, whenShort } from "./parts";
 
 function Legend() {
   const t = useText();
   return (
-    <ul className="flex flex-wrap gap-x-4 gap-y-1 border-y border-line bg-surface px-4 py-2 text-meta lg:absolute lg:bottom-3 lg:left-3 lg:flex-col lg:rounded-control lg:border lg:px-3 lg:shadow-[0_2px_8px_var(--dock-shadow)]">
+    <ul className="flex flex-wrap gap-x-4 gap-y-1 border-y border-line bg-surface px-4 py-2 text-meta lg:absolute lg:bottom-3 lg:left-3 lg:flex-col lg:rounded-control lg:border-0 lg:px-3 lg:shadow-float">
       {GROUPS.map((group) => (
         <li key={group} className="flex items-center gap-2 whitespace-nowrap">
           <span aria-hidden="true" className={`desk-dot desk-dot-${group}`} />
@@ -60,10 +60,9 @@ function PanelItem({ item, onPoint }: { readonly item: Item; readonly onPoint: (
               regency: item.place.regencyName,
             })}
           </span>
+          <Impact impact={item.impact} />
           <span className="flex flex-wrap items-center gap-x-3 gap-y-1 text-meta text-muted">
             <span className="tabular-nums">{whenShort(t, item.sentAt)}</span>
-            <Victims impact={item.impact} onlyAbove />
-            {item.impact.houses?.count ? <Houses impact={item.impact} /> : null}
             {photos ? (
               <span className="inline-flex items-center gap-1">
                 <Icon name="camera" className="size-4" />
@@ -114,9 +113,9 @@ export function DeskMapView({
         </div>
         <section
           aria-label={t("desk.filters")}
-          className="flex flex-col gap-2 p-4 lg:absolute lg:inset-x-3 lg:top-3 lg:z-10 lg:flex-row lg:items-center lg:rounded-card lg:border lg:border-line lg:bg-surface lg:p-2 lg:shadow-[0_4px_16px_var(--dock-shadow)]"
+          className="flex flex-col gap-2 p-4 lg:absolute lg:inset-x-3 lg:top-3 lg:z-10 lg:flex-row lg:items-center lg:rounded-card lg:bg-surface lg:p-2 lg:shadow-float"
         >
-          <HazardChips filters={filters} summary={summary} className="lg:flex-1" />
+          <HazardChips filters={filters} summary={summary} className="fade-x overflow-x-auto lg:flex-1" />
           <PeriodSegment filters={filters} className="lg:shrink-0" />
           <ClearFilters filters={filters} className="self-start lg:shrink-0 lg:self-auto" />
         </section>
@@ -180,7 +179,7 @@ export function DeskMapView({
                   <Link to={`/lapor/meja/${point.ticketNumber}`} className="font-bold tabular-nums">
                     {point.ticketNumber}
                   </Link>
-                  <span>{`${t(`hazard.${point.hazardType}.label`)}, ${t(`stage.short.${point.status}`)}, ${point.villageName}`}</span>
+                  <span>{`${hazardLabel(t, point.hazardType)}, ${t(`stage.short.${point.status}`)}, ${point.villageName}`}</span>
                   <span className="text-meta text-muted tabular-nums">
                     {`${point.lat.toFixed(6)}, ${point.lon.toFixed(6)}, ${t(`desk.map.precision.${point.precision}`)}`}
                   </span>
