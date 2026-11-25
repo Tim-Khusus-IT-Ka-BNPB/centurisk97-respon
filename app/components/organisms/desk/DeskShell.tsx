@@ -48,7 +48,7 @@ function DeskNav({ place, account }: { readonly place: DeskPlace; readonly accou
   const all = summary === null ? undefined : STATUSES.reduce((sum, status) => sum + summary.byStatus[status], 0);
   return (
     <div className="flex flex-1 flex-col gap-6">
-      <div className="flex flex-col gap-2 rounded-control bg-sunken p-2.5">
+      <div className="flex flex-col gap-2 rounded-control border border-line p-2.5">
         <p className="text-meta text-muted">{t("desk.account", { label: account })}</p>
         <div className="flex items-center justify-between gap-2">
           <ThemeSwitch />

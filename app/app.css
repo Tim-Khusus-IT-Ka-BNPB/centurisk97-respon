@@ -125,6 +125,11 @@
 }
 
 @layer base {
+  /* Tailwind 4 leaves buttons with the arrow; a control should show it can be pressed. */
+  button:not(:disabled),
+  summary {
+    cursor: pointer;
+  }
   html {
     scroll-behavior: smooth;
     scrollbar-color: var(--control) transparent;
