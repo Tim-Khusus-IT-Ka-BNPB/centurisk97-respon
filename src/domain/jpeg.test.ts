@@ -1,6 +1,6 @@
 import { describe, expect, test } from "vitest";
 import { cameraJpeg, PHOTO_BASE } from "../testing/photoBase";
-import { isJpeg, readExif, stripJpeg, withExifOf } from "./jpeg";
+import { isJpeg, jpegSize, readExif, stripJpeg, withExifOf } from "./jpeg";
 
 const segmentMarkers = (bytes: Uint8Array): number[] => {
   const markers: number[] = [];
@@ -214,5 +214,64 @@ describe("withExifOf", () => {
     expect(withExifOf(plain, plain)).toBe(plain);
     const png = new Uint8Array([0x89, 0x50]);
     expect(withExifOf(cameraJpeg({ make: "U" }), png)).toBe(png);
+  });
+});
+
+describe("the size of a picture", () => {
+  // A frame header of this kind, in a file with a table before it.
+  const framed = (marker: number, colours: number, height = 600, width = 800, before: number[] = []) =>
+    Uint8Array.from([
+      0xff,
+      0xd8,
+      0xff,
+      0xdb,
+      0,
+      4,
+      1,
+      2,
+      ...before,
+      0xff,
+      marker,
+      0,
+      11,
+      8,
+      height >> 8,
+      height & 0xff,
+      width >> 8,
+      width & 0xff,
+      colours,
+      0,
+      0,
+      0,
+      0xff,
+      0xda,
+      0,
+      2,
+      0xff,
+      0xd9,
+    ]);
+
+  test("is read from the frame header, whatever its kind, past the tables before it", () => {
+    for (const marker of [0xc0, 0xc1, 0xc2, 0xc3, 0xc5, 0xc7, 0xc9, 0xcb, 0xcd, 0xcf])
+      expect(jpegSize(framed(marker, 3)), marker.toString(16)).toEqual({ width: 800, height: 600, colours: 3 });
+    expect(jpegSize(framed(0xc0, 1, 258, 515))).toEqual({ width: 515, height: 258, colours: 1 });
+    // Huffman tables and arithmetic conditioning sit among the frame markers and are none.
+    const tables = [0xff, 0xc4, 0, 11, 8, 0, 1, 0, 1, 3, 0, 0, 0, 0xff, 0xcc, 0, 11, 8, 0, 1, 0, 1, 3, 0, 0, 0];
+    expect(jpegSize(framed(0xc2, 3, 600, 800, tables))).toEqual({ width: 800, height: 600, colours: 3 });
+    expect(jpegSize(PHOTO_BASE)).toEqual({ width: expect.any(Number), height: expect.any(Number), colours: 3 });
+  });
+
+  test("none for a file with no frame before its scan or its end, a broken one, or another number of colours", () => {
+    expect(jpegSize(framed(0xd0, 3))).toBeNull();
+    expect(jpegSize(framed(0xbf, 3))).toBeNull();
+    expect(jpegSize(framed(0xc8, 3))).toBeNull();
+    expect(jpegSize(framed(0xc0, 4))).toBeNull();
+    expect(jpegSize(framed(0xc0, 2))).toBeNull();
+    expect(jpegSize(framed(0xc0, 3, 0, 800))).toBeNull();
+    expect(jpegSize(framed(0xc0, 3, 600, 0))).toBeNull();
+    expect(jpegSize(framed(0xc0, 3).subarray(0, 14))).toBeNull();
+    expect(jpegSize(Uint8Array.from([0xff, 0xd8, 0xff, 0xd9, ...framed(0xc0, 3).subarray(2)]))).toBeNull();
+    expect(jpegSize(Uint8Array.from([0xff, 0xd8, 0xff, 0xda, 0, 2, ...framed(0xc0, 3).subarray(2)]))).toBeNull();
+    expect(jpegSize(Uint8Array.from([1, 2, 3]))).toBeNull();
   });
 });

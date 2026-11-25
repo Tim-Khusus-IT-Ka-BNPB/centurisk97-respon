@@ -270,3 +270,32 @@ function join(parts: readonly Uint8Array[]): Uint8Array {
   }
   return out;
 }
+
+export type JpegSize = { readonly width: number; readonly height: number; readonly colours: 1 | 3 };
+
+// How large the picture is and how many colour parts it has, from its frame header. Null for a
+// broken file, and for one in four colours, which is print artwork and not a photo.
+export function jpegSize(bytes: Uint8Array): JpegSize | null {
+  const reader = new Reader(bytes);
+  if (!isJpeg(bytes)) return null;
+  try {
+    for (let at = 2; ; ) {
+      const segment = segmentAt(reader, at);
+      const { marker, start } = segment;
+      if (marker === EOI || marker === SOS) return null;
+      // Frame headers are C0 to CF, but for the tables among them (C4, C8, CC).
+      if (marker === 0xc0 || (marker > 0xc0 && marker <= 0xcf && marker % 4 !== 0)) return sizeAt(reader, start);
+      at = segment.end;
+    }
+  } catch {
+    return null;
+  }
+}
+
+function sizeAt(reader: Reader, start: number): JpegSize | null {
+  const height = reader.u16(start + 5);
+  const width = reader.u16(start + 7);
+  const colours = reader.byte(start + 9);
+  if (width === 0 || height === 0 || (colours !== 1 && colours !== 3)) return null;
+  return { width, height, colours };
+}
