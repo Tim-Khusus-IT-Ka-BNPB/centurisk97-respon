@@ -23,7 +23,20 @@ export type Settings = {
   readonly app: string;
   readonly id: string;
   readonly secret: string;
+  // The number that may say who is served.
+  readonly owner: string;
 };
+
+type OwnerCommand = { readonly wa: string; readonly peran?: "bpbd"; readonly kab?: string; readonly cabut?: true };
+
+// "lapor izin 0800 ... [bpbd Kab. X]" or "lapor cabut 0800 ...", in upstream's words.
+function ownerCommand(text: string): OwnerCommand | null {
+  const match = /^lapor (izin|cabut) (\+?[\d .-]+\d)(?: bpbd (.+))?$/i.exec(text.trim());
+  const wa = match && numberOf(match[2] as string);
+  if (!wa) return null;
+  if (match[1]?.toLowerCase() === "cabut") return { wa, cabut: true };
+  return match[3] === undefined ? { wa } : { wa, peran: "bpbd", kab: match[3].trim() };
+}
 
 type News = {
   readonly id: string;
@@ -100,9 +113,23 @@ export function createGateway(settings: Settings) {
     }
   }
 
+  // The owner's command, which only their own number may give.
+  async function command(number: string, said: OwnerCommand): Promise<number> {
+    const response = await call("POST", "/api/lapor/izin", said);
+    const done = said.cabut ? "taken away" : "allowed";
+    keep(number, {
+      from: "service",
+      kind: "text",
+      text: response.ok ? `*Number ${done}*` : `*Not saved* (HTTP ${response.status})`,
+    });
+    return response.status;
+  }
+
   const say = (number: string, text: string, messageId?: string) =>
     inTurn(number, () => {
       keep(number, { from: "reporter", kind: "text", text });
+      const said = number === settings.owner ? ownerCommand(text) : null;
+      if (said) return command(number, said);
       return answer(number, "/api/lapor/pesan", { wa: number, saluran: "wa", teks: text }, messageId);
     });
 

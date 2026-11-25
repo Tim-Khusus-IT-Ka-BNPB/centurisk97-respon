@@ -19,6 +19,7 @@ const gateway = createGateway({
   app: process.env.TEST_GATEWAY_APP ?? "http://localhost:5173",
   id: required("TEST_GATEWAY_ID"),
   secret: required("TEST_GATEWAY_SECRET"),
+  owner: numberOf(process.env.TEST_GATEWAY_OWNER ?? "0800 0000 0000") ?? "",
 });
 
 const PAGE = {
