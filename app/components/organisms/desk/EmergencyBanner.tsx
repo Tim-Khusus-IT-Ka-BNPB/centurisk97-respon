@@ -69,7 +69,7 @@ export function EmergencyBanner({ initial }: { readonly initial: readonly DeskEm
       </h2>
       <ul className="flex min-w-0 gap-2 overflow-x-auto lg:flex-1">
         {emergencies.map((one) => (
-          <li key={one.ticketNumber} className="shrink-0">
+          <li key={one.ticketNumber} className="flex max-w-[80vw] shrink-0 lg:max-w-none">
             <Link
               to={`/lapor/meja/${one.ticketNumber}`}
               className="flex min-h-target min-w-56 flex-col justify-center rounded-control bg-surface px-3 py-2 text-ink no-underline hover:bg-sunken"

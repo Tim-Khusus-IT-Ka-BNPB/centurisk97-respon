@@ -150,8 +150,8 @@ function QueueCards({ items }: { readonly items: readonly Item[] }) {
             to={`/lapor/meja/${item.ticketNumber}`}
             className="flex h-full flex-col gap-2.5 card-surface p-4 text-ink no-underline hover:bg-sunken"
           >
-            <span className="flex items-center justify-between gap-3">
-              <span className="font-bold tabular-nums">{item.ticketNumber}</span>
+            <span className="flex items-start justify-between gap-3">
+              <span className="font-bold whitespace-nowrap tabular-nums">{item.ticketNumber}</span>
               <span className="flex flex-wrap justify-end gap-1.5">
                 {item.emergency === null ? null : <EmergencyChip />}
                 <StatusChip status={item.status} />

@@ -149,8 +149,8 @@ function Brand() {
     >
       <Emblem size={32} />
       <span className="flex flex-col leading-tight">
-        <span className="font-bold text-ink">{t("desk.title")}</span>
-        <span className="text-meta text-muted">{t("app.name")}</span>
+        <span className="font-bold whitespace-nowrap text-ink">{t("desk.title")}</span>
+        <span className="text-meta whitespace-nowrap text-muted max-[359px]:hidden">{t("app.name")}</span>
       </span>
     </Link>
   );
@@ -186,7 +186,7 @@ export function DeskShell({
             <details key={`${pathname}${search}`} className="group">
               <summary className="flex min-h-target-min cursor-pointer list-none items-center gap-2 rounded-control px-2.5 font-medium text-ink hover:bg-sunken [&::-webkit-details-marker]:hidden">
                 <Icon name="menu" />
-                {t("desk.nav.menu")}
+                <span className="max-[359px]:sr-only">{t("desk.nav.menu")}</span>
               </summary>
               <div className="absolute inset-x-0 top-full flex max-h-[80dvh] flex-col overflow-y-auto border-b border-line bg-header px-3 py-4 shadow-[0_8px_24px_var(--dock-shadow)]">
                 <DeskNav place={place} account={account} />

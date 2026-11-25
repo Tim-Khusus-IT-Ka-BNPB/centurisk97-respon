@@ -22,7 +22,7 @@ const chip =
   "inline-flex min-h-target-min shrink-0 items-center gap-2 rounded-control border border-line bg-surface px-3 text-ink no-underline hover:bg-sunken aria-[current=true]:border-primary aria-[current=true]:bg-selected aria-[current=true]:font-semibold";
 
 const segment =
-  "inline-flex min-h-target-min items-center justify-center rounded-[6px] px-3 whitespace-nowrap text-ink no-underline hover:bg-sunken aria-[current=true]:bg-primary aria-[current=true]:font-semibold aria-[current=true]:text-on-primary";
+  "inline-flex min-h-target-min items-center justify-center rounded-[6px] px-3 whitespace-nowrap text-ink no-underline max-[359px]:px-2 max-[359px]:text-meta hover:bg-sunken aria-[current=true]:bg-primary aria-[current=true]:font-semibold aria-[current=true]:text-on-primary";
 
 function Tally({ n }: { readonly n: number | undefined }) {
   return n === undefined ? null : (
