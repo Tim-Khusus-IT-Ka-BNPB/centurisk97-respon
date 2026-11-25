@@ -195,7 +195,7 @@ const cell = "border-t border-line px-3 py-3 align-top";
 function QueueTable({ items }: { readonly items: readonly Item[] }) {
   const t = useText();
   return (
-    <div className="hidden overflow-x-auto card-surface lg:block">
+    <div className="hidden overflow-x-auto card-surface xl:block">
       <table className="w-full border-separate border-spacing-0 text-left">
         <thead>
           <tr className="text-meta text-muted">
@@ -223,14 +223,14 @@ function QueueTable({ items }: { readonly items: readonly Item[] }) {
                   <StatusChip status={item.status} />
                 </span>
               </td>
-              <td className={cn(cell, "min-w-56")}>
+              <td className={cn(cell, "min-w-40")}>
                 <span className="flex flex-col gap-1">
                   <Hazard item={item} />
                   <span className="text-meta">{placeOf(t, item)}</span>
                 </span>
               </td>
-              <td className={cn(cell, "min-w-44")}>
-                <Victims impact={item.impact} />
+              <td className={cell}>
+                <Victims impact={item.impact} className="grid w-max grid-cols-2" />
               </td>
               <td className={cell}>
                 <Houses impact={item.impact} />
@@ -261,16 +261,16 @@ function QueueTable({ items }: { readonly items: readonly Item[] }) {
   );
 }
 
-// A phone reads the queue as cards, each one link.
+// Too narrow for the table, the queue reads as cards, each one link.
 function QueueCards({ items }: { readonly items: readonly Item[] }) {
   const t = useText();
   return (
-    <ul className="flex flex-col gap-3 lg:hidden">
+    <ul className="grid gap-3 lg:grid-cols-2 xl:hidden">
       {items.map((item) => (
         <li key={item.ticketNumber}>
           <Link
             to={`/lapor/meja/${item.ticketNumber}`}
-            className="flex flex-col gap-2.5 card-surface p-4 text-ink no-underline hover:bg-sunken"
+            className="flex h-full flex-col gap-2.5 card-surface p-4 text-ink no-underline hover:bg-sunken"
           >
             <span className="flex items-center justify-between gap-3">
               <span className="font-bold tabular-nums">{item.ticketNumber}</span>
@@ -282,7 +282,7 @@ function QueueCards({ items }: { readonly items: readonly Item[] }) {
               <Victims impact={item.impact} />
               <Houses impact={item.impact} />
             </span>
-            <span className="flex flex-wrap items-center justify-between gap-2 border-t border-line pt-2.5 text-meta">
+            <span className="flex flex-wrap items-center justify-between gap-2 mt-auto border-t border-line pt-2.5 text-meta">
               <span className="flex flex-wrap items-center gap-2">
                 <span>{item.reporter.name}</span>
                 {item.numberUnverified ? <UnverifiedMark /> : null}

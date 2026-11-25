@@ -1,4 +1,5 @@
 import type { DeskQueue } from "../../../../src/contract/desk";
+import { cn } from "../../../lib/cn";
 import { STATUS_GROUPS } from "../../../lib/deskMap";
 import type { DeskFilters } from "../../../lib/deskTypes";
 import type { Text } from "../../../lib/text";
@@ -59,8 +60,8 @@ export function StatusChip({ status }: { readonly status: Status }) {
 export function UnverifiedMark() {
   const t = useText();
   return (
-    <span className="inline-flex items-center gap-1 text-meta whitespace-nowrap text-warn-icon">
-      <Icon name="triangleAlert" className="size-4" />
+    <span className="inline-flex items-start gap-1 text-meta text-warn-icon">
+      <Icon name="triangleAlert" className="mt-0.5 size-4" />
       {t("desk.unverifiedShort")}
     </span>
   );
@@ -119,10 +120,16 @@ function Figure({
   );
 }
 
-export function Victims({ impact }: { readonly impact: Item["impact"] }) {
+export function Victims({
+  impact,
+  className = "flex flex-wrap",
+}: {
+  readonly impact: Item["impact"];
+  readonly className?: string;
+}) {
   const t = useText();
   return (
-    <span className="flex flex-wrap items-center gap-x-3 gap-y-1">
+    <span className={cn("items-center gap-x-3 gap-y-1", className)}>
       {IMPACT.map(([field, icon]) => (
         <Figure
           key={field}
