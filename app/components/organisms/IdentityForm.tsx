@@ -8,6 +8,7 @@ import { limitText } from "../../lib/status";
 import { useText } from "../../lib/text";
 import { Button } from "../atoms/Button";
 import { Input } from "../atoms/controls";
+import { Icon } from "../atoms/Icon";
 import { TileCheck } from "../molecules/ChoiceTile";
 import { Field, FieldError } from "../molecules/Field";
 import { ActionRow } from "../molecules/layout";
@@ -129,23 +130,33 @@ export function IdentityForm({ values, envelope, askNumber, profileId, editing, 
           {field("officerRegency", "off")}
           {field("officerPosition", "organization-title")}
         </div>
-        <p>{t("consent.text")}</p>
-        <details className="rounded-control border border-line">
-          <summary className="flex min-h-target cursor-pointer items-center px-4 font-semibold underline">
-            {t("consent.privacyOpen")}
-          </summary>
-          <div className="flex flex-col gap-4 border-t border-line p-4">
-            <PrivacyText headingLevel={3} />
-            <ClosePrivacy />
-          </div>
-        </details>
+        <div className="flex flex-col rounded-control bg-sunken">
+          <p className="px-4 pt-4">{t("consent.text")}</p>
+          <details className="group">
+            <summary className="flex min-h-target list-none items-center gap-1.5 px-4 pb-2 font-semibold text-primary [&::-webkit-details-marker]:hidden">
+              {t("consent.privacyOpen")}
+              <Icon name="chevronRight" className="size-4 rotate-90 group-open:-rotate-90" />
+            </summary>
+            <div className="flex flex-col gap-4 border-t border-line p-4">
+              <PrivacyText headingLevel={3} />
+              <ClosePrivacy />
+            </div>
+          </details>
+        </div>
         <ActionRow>
           {editing ? null : (
-            <Button name="action" value="decline">
+            <Button name="action" value="decline" size="main" className="@actions:px-6">
               {t("consent.decline")}
             </Button>
           )}
-          <Button name="action" value={agree} variant="primary" busyLabel={busy ? t("common.saving") : null}>
+          <Button
+            name="action"
+            value={agree}
+            variant="primary"
+            size="main"
+            className="@actions:flex-1"
+            busyLabel={busy ? t("common.saving") : null}
+          >
             {t("consent.agree")}
           </Button>
         </ActionRow>
