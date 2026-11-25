@@ -31,8 +31,8 @@ describe("where a ticket may go", () => {
   test.each([
     ["seen", "under_review", "optional"],
     ["under_review", "forwarded", "optional"],
-    ["under_review", "in_handling", "required"],
-    ["in_handling", "closed", "required"],
+    ["under_review", "in_handling", "optional"],
+    ["in_handling", "closed", "closing"],
     ["closed", "under_review", "required"],
     ["invalid", "under_review", "required"],
     ["seen", "invalid", "reason"],
@@ -80,10 +80,25 @@ describe("the note", () => {
   test("a reason for the reporter has 5 characters or more", () => {
     expect(checkMove("seen", "invalid", "dup")).toEqual({
       kind: "invalid",
-      error: { fieldId: "note", rule: "staffReason.tooShort", params: { min: 5 } },
+      error: { fieldId: "note", rule: "staffText.tooShort", params: { label: "desk.move.note.reason", min: 5 } },
     });
     expect(checkMove("seen", "invalid", " dupl ")).toMatchObject({ kind: "invalid" });
     expect(checkMove("seen", "invalid", "duplo")).toEqual({ kind: "ok", note: "duplo" });
+  });
+
+  test("a report closes with a photo of the work, or a reason of 5 characters or more", () => {
+    const refused = {
+      kind: "invalid",
+      error: { fieldId: "note", rule: "closing.photoOrReason", params: { min: 5 } },
+    };
+    expect(checkMove("in_handling", "closed", "")).toEqual(refused);
+    expect(checkMove("in_handling", "closed", "suru")).toEqual(refused);
+    expect(checkMove("in_handling", "closed", "surut")).toEqual({ kind: "ok", note: "surut" });
+    expect(checkMove("in_handling", "closed", "", 1)).toEqual({ kind: "ok", note: null });
+    expect(checkMove("in_handling", "closed", "a".repeat(1001))).toMatchObject({ error: { rule: "text.tooLong" } });
+    expect(checkMove("in_handling", "closed", "a".repeat(1001), 1)).toMatchObject({ error: { rule: "text.tooLong" } });
+    // A photo of the work does not stand in for the reason a report is set aside.
+    expect(checkMove("in_handling", "invalid", "", 1)).toMatchObject({ kind: "invalid" });
   });
 
   test("has 1,000 characters at most", () => {

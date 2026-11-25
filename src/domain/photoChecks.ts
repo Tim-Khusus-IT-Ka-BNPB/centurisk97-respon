@@ -59,7 +59,7 @@ export type PhotoInput = {
 const plausible = (point: Point) => point.lat >= -12 && point.lat <= 7 && point.lon >= 94 && point.lon <= 142;
 
 // A device reading counts only when it is a point in the box, 1 km or better, read in the last 10 minutes.
-function usableFix(device: DeviceFix | null, nowMs: number): DeviceFix | null {
+export function usableFix(device: DeviceFix | null, nowMs: number): DeviceFix | null {
   if (device === null || !plausible(device)) return null;
   if (!(device.accuracyM >= 0 && device.accuracyM <= GEO.pointAccuracyM)) return null;
   return Math.abs(nowMs - device.readAtMs) <= GEO.deviceFixMaxAgeMs ? device : null;

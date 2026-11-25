@@ -11,6 +11,8 @@ const RIGHTS: readonly (readonly [DeskCapability, boolean, boolean])[] = [
   ["forwardTicket", true, false],
   ["reopenTicket", true, false],
   ["reply", true, true],
+  ["checkField", true, true],
+  ["addHandling", true, true],
   ["readIdentity", true, false],
   ["revealIdentity", false, true],
 ];

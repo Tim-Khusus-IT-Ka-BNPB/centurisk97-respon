@@ -134,6 +134,10 @@ exports[`limits table > rows as agreed 2`] = `
     "max": 80,
     "min": 3,
   },
+  "otherAction": {
+    "max": 120,
+    "min": 3,
+  },
   "otherNeed": {
     "max": 120,
   },

@@ -59,6 +59,7 @@ export const LENGTHS = {
   // A desk note or reply, and the reason a report is set aside, in characters.
   staffText: { max: 1000 },
   staffReason: { min: 5 },
+  otherAction: { min: 3, max: 120 },
 } as const;
 
 // "kembali" goes back at most this many steps.

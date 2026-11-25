@@ -18,6 +18,6 @@ export const hazardTypeSchema = z.enum(HAZARD_TYPE_IDS as [string, ...string[]])
 
 export const fieldStateSchema = z.enum(["value", "none", "notYetKnown", "confirmedUnknown", "notAsked"]);
 
-export const valueOriginSchema = z.enum(["boxEntry", "tappedOption", "quote", "system"]);
+export const valueOriginSchema = z.enum(["boxEntry", "tappedOption", "quote", "system", "officer"]);
 
 export const reporterRoleSchema = z.enum(["citizen", "claimedOfficer"]);

@@ -15,6 +15,8 @@ export type DeskCapability =
   | "forwardTicket"
   | "reopenTicket"
   | "reply"
+  | "checkField"
+  | "addHandling"
   | "readIdentity"
   | "revealIdentity";
 
@@ -28,6 +30,8 @@ const HOLDERS: Readonly<Record<DeskCapability, readonly StaffRole[]>> = {
   forwardTicket: ["deskOfficer"],
   reopenTicket: ["deskOfficer"],
   reply: ["deskOfficer", "regionalOfficer"],
+  checkField: ["deskOfficer", "regionalOfficer"],
+  addHandling: ["deskOfficer", "regionalOfficer"],
   readIdentity: ["deskOfficer"],
   revealIdentity: ["regionalOfficer"],
 };

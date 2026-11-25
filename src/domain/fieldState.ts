@@ -40,10 +40,11 @@ export type OptionsValue = { readonly optionIds: readonly string[]; readonly oth
 
 type FieldValue = number | string | OptionsValue | EventTimeValue | PlaceValue | NeighbourhoodValue | ChronologyValue;
 
-// Where a value came from. A quote is the reporter's own masked words and is required for that origin.
+// Where a value came from. A quote is the reporter's own masked words and is required for that
+// origin; an officer's correction carries the note of the check it came from.
 type Sourced =
   | { readonly origin: "boxEntry" | "tappedOption" | "system" }
-  | { readonly origin: "quote"; readonly quote: string };
+  | { readonly origin: "quote" | "officer"; readonly quote: string };
 
 // An absent entry is "notAsked". "none" is the only state that stands for zero.
 export type FieldState =
