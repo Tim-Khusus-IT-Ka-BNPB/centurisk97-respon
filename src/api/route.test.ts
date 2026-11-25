@@ -41,6 +41,7 @@ describe("route list", () => {
       { key: "POST /api/lapor/drafts/:draftId/photos", policy: "reporter" },
       { key: "POST /api/lapor/drafts/:draftId/send", policy: "reporter" },
       { key: "POST /api/lapor/drafts/:draftId/turns", policy: "reporter" },
+      { key: "POST /api/lapor/emergencies", policy: "reporter" },
       { key: "POST /api/lapor/preferences/theme", policy: "public" },
       { key: "POST /api/lapor/reports/:ticketNumber/rating", policy: "reporter" },
       { key: "POST /api/lapor/tracking", policy: "public" },
