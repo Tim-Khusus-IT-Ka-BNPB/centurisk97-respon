@@ -1,9 +1,13 @@
 import { createRoute, z } from "@hono/zod-openapi";
 import { oneTapSentSchema, oneTapStartSchema } from "../../contract/emergency";
-import { oneTapEmergency, oneTapStart } from "../../services/emergency";
+import { oneTapEmergency, oneTapStart, type Reporter } from "../../services/emergency";
+import type { ApiContext } from "../context";
 import { refuse } from "../envelope";
 import { type Api, addRoute, jsonBody, jsonResponse, refusal } from "../route";
 import { fieldErrors, limitRefused } from "./shared";
+
+// The policy lets only a reporter's phone or session this far.
+const reporterOf = (c: ApiContext) => c.var.principal as Reporter;
 
 export function addEmergencyRoutes(api: Api): void {
   addRoute(
@@ -18,7 +22,7 @@ export function addEmergencyRoutes(api: Api): void {
       },
     }),
     async (c) => {
-      const start = await oneTapStart(c.env, c.var.principal);
+      const start = await oneTapStart(c.env, reporterOf(c));
       return start === null ? refuse(c, 404, "draft.notFound") : c.json(start, 200);
     },
   );
@@ -46,7 +50,7 @@ export function addEmergencyRoutes(api: Api): void {
       },
     }),
     async (c) => {
-      const answer = await oneTapEmergency(c.env, c.var.principal, c.var.address, c.req.valid("json"));
+      const answer = await oneTapEmergency(c.env, reporterOf(c), c.var.address, c.req.valid("json"));
       if (answer.kind === "unknownReporter") return refuse(c, 404, "draft.notFound");
       if (answer.kind === "limit") return limitRefused(c, answer.refusal, null);
       if (answer.kind === "place")

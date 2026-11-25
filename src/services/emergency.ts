@@ -18,20 +18,16 @@ import { checkLimits, type LimitRefusal } from "./limits";
 import { locatePlace } from "./places";
 import { contactOf, trackingOf, trackingToken } from "./tracking";
 
+export type Reporter = Extract<Principal, { kind: "device" | "session" }>;
+
 // The reporter last used on this phone or in this session. One tap reports under a reporter who
 // has agreed before; nobody else is known here, and nothing is kept of them.
-async function reporterOf(bindings: ServiceBindings, principal: Principal): Promise<ProfileRow | null> {
-  const where =
-    principal.kind === "device"
-      ? { deviceId: principal.deviceId }
-      : principal.kind === "session"
-        ? { reporterId: principal.reporterId }
-        : null;
-  if (where === null) return null;
+async function reporterOf(bindings: ServiceBindings, principal: Reporter): Promise<ProfileRow | null> {
+  const where = principal.kind === "device" ? { deviceId: principal.deviceId } : { reporterId: principal.reporterId };
   return (await knownProfiles(bindings.db, where, new Date(bindings.clock.now())))[0] ?? null;
 }
 
-export async function oneTapStart(bindings: ServiceBindings, principal: Principal): Promise<OneTapStart | null> {
+export async function oneTapStart(bindings: ServiceBindings, principal: Reporter): Promise<OneTapStart | null> {
   const profile = await reporterOf(bindings, principal);
   if (profile === null) return null;
   const [latest] = await ownReports(bindings.db, { ownerSlot: profile.owner_slot });
@@ -52,7 +48,7 @@ export type OneTapAnswer =
 // "Darurat sekali ketuk" (K90, D123, D124): the phone's point goes to the desk as an emergency.
 export async function oneTapEmergency(
   bindings: ServiceBindings,
-  principal: Principal,
+  principal: Reporter,
   address: string,
   reading: PlacePoint,
 ): Promise<OneTapAnswer> {

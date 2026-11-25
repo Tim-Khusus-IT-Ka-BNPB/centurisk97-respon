@@ -72,7 +72,7 @@ function choiceCard(base: CardBase, fieldId: FieldId, content: DraftContent, mul
       ...base,
       kind: "choice",
       titleKey: content.emergency ? "card.emergency.type.title" : "card.choice.hazardType.title",
-      promptKey: "card.choice.hazardType.prompt",
+      promptKey: content.emergency ? null : "card.choice.hazardType.prompt",
       fieldId,
       options: ordered.map((id) =>
         option(id, `hazard.${id}.label`, keyIfAny(`hazard.${id}.note`), {

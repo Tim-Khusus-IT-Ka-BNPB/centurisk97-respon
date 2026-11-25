@@ -9,7 +9,7 @@ import {
   storeTicketReply,
   ticketNumberOf,
 } from "../adapters/d1/send";
-import { emergencyStates } from "../domain/emergency";
+import { emergencyStates, type VictimAnswer } from "../domain/emergency";
 import { applicableFields, completePercent } from "../domain/fields/applicable";
 import type { FieldId } from "../domain/fields/catalogue";
 import { LIMITS, rollingRetryAt } from "../domain/limits";
@@ -101,7 +101,7 @@ async function sendOnce(
         ...content,
         states: Object.fromEntries(applicableFields(states).map((field) => [field.id, states[field.id as FieldId]])),
       },
-      emergency: emergency && { kind: "chat", victims: emergency.victims ?? "unknown" },
+      emergency: emergency && { kind: "chat", victims: emergency.victims as VictimAnswer },
       reporter: {
         name: profile.name,
         number: profile.number,
