@@ -1,7 +1,14 @@
 import { beforeAll, describe, expect, test, vi } from "vitest";
 import { SEEDED_SESSIONS } from "../../../db/synthetic/reporters";
-import { type DeskQueue, type DeskReport, deskQueueSchema, deskReportSchema } from "../../contract/desk";
+import {
+  type DeskQueue,
+  type DeskReport,
+  deskQueueSchema,
+  deskReportSchema,
+  deskSummarySchema,
+} from "../../contract/desk";
 import { trackingSchema } from "../../contract/tracking";
+import { periodStart } from "../../domain/deskQueue";
 import { windowStart } from "../../domain/limits";
 import { hmacKey } from "../../platform/keys";
 import { trackingToken } from "../../services/tracking";
@@ -166,6 +173,35 @@ describe("the queue", () => {
   });
 });
 
+describe("counts for the queues and the chips", () => {
+  test("each status and hazard counts the reports the other filters leave, equal to the database", async () => {
+    const ticket = await typedReport();
+    await deskOfficer().call("POST", `/desk/reports/${ticket}/view`);
+    const answer = await deskOfficer().call("GET", "/desk/summary?status=seen&period=today");
+    expect(answer.status).toBe(200);
+    const summary = deskSummarySchema.parse(answer.json);
+    const since = new Date(periodStart("today", clock.now()) as number).toISOString();
+    const byStatus = await query<{ status: string; total: number }>`
+      select t.status, count(*) as total from report r join ticket t on t.report_id = r.id
+      where r.sent_at >= ${since} group by t.status`;
+    for (const status of ["new", "seen", "under_review", "forwarded", "in_handling", "closed", "invalid"] as const)
+      expect(summary.byStatus[status], status).toBe(byStatus.find((one) => one.status === status)?.total ?? 0);
+    const [flood] = await query<{ total: number }>`
+      select count(*) as total from report r join ticket t on t.report_id = r.id
+      where r.sent_at >= ${since} and t.status = 'seen' and r.hazard_type = 'flood'`;
+    expect(summary.byHazard.flood).toBe(flood?.total);
+    expect(summary.total).toBe(summary.byStatus.seen);
+    const all = deskSummarySchema.parse((await deskOfficer().call("GET", "/desk/summary")).json);
+    const [counted] = await query<{ total: number }>`select count(*) as total from report`;
+    expect(all.total).toBe(counted?.total);
+  });
+
+  test("a regional account and a wrong ticket number are refused", async () => {
+    expect((await regencyOfficer().call("GET", "/desk/summary")).error.error.code).toBe("desk.notAllowed");
+    expect((await deskOfficer().call("GET", "/desk/summary?ticket=0800")).status).toBe(422);
+  });
+});
+
 describe("a report on the desk", () => {
   test("every value shows where it came from, and empty is never zero", async () => {
     const phone = browser(fetchApi);
@@ -193,6 +229,13 @@ describe("a report on the desk", () => {
     expect(row("dead")?.quote).toContain("dua orang meninggal");
     expect(row("hazardType")).toMatchObject({ origin: "tappedOption", quote: null });
     expect(row("missing")).toMatchObject({ state: "confirmedUnknown", value: null });
+    expect(report.impact).toEqual({
+      dead: 2,
+      missing: null,
+      injured: null,
+      displaced: 0,
+      houses: { count: 0, partial: false },
+    });
     expect(report.reporter).toMatchObject({ name: "Uji Satu", role: "citizen", officerRegency: null });
     expect(report.reporter.number).toMatch(/^\+628\d+$/);
     expect(report.numberUnverified).toBe(true);

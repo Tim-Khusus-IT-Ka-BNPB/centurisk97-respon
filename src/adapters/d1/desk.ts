@@ -273,3 +273,27 @@ export async function sentPhoto(db: Database, photoId: string): Promise<DeskPhot
   const found = await row<PhotoRow>(db, sql`${PHOTO_SELECT} where p.id = ${photoId}`);
   return found === null ? null : deskPhoto(found);
 }
+
+// Reports per status under every filter but the status one, and per hazard type under every
+// filter but the hazard one, so each count says what picking it would show.
+export async function facetCounts(
+  db: Database,
+  filters: QueueFilters,
+): Promise<{ byStatus: Record<string, number>; byHazard: Record<string, number> }> {
+  const [statuses, hazards] = await Promise.all([
+    rows<{ status: string; total: number }>(
+      db,
+      sql`select t.status, count(*) as total from report r join ticket t on t.report_id = r.id${where({ ...filters, status: null })}
+        group by t.status`,
+    ),
+    rows<{ hazard_type: string; total: number }>(
+      db,
+      sql`select r.hazard_type, count(*) as total from report r join ticket t on t.report_id = r.id${where({ ...filters, hazardType: null })}
+        group by r.hazard_type`,
+    ),
+  ]);
+  return {
+    byStatus: Object.fromEntries(statuses.map((one) => [one.status, one.total])),
+    byHazard: Object.fromEntries(hazards.map((one) => [one.hazard_type, one.total])),
+  };
+}

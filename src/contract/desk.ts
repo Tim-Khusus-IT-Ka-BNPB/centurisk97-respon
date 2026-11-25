@@ -21,6 +21,14 @@ const queueItemSchema = z.object({
   photoCount: z.number().int().nonnegative(),
   reporter: z.object({ name: z.string(), role: reporterRoleSchema }),
   numberUnverified: z.boolean(),
+  // The report's own figures: a count, 0 for an explicit none, null when not known.
+  impact: z.object({
+    dead: z.number().int().nonnegative().nullable(),
+    missing: z.number().int().nonnegative().nullable(),
+    injured: z.number().int().nonnegative().nullable(),
+    displaced: z.number().int().nonnegative().nullable(),
+    houses: z.object({ count: z.number().int().nonnegative(), partial: z.boolean() }).nullable(),
+  }),
 });
 
 export const deskQueueSchema = z.object({
@@ -32,6 +40,16 @@ export const deskQueueSchema = z.object({
 });
 
 export type DeskQueue = z.infer<typeof deskQueueSchema>;
+
+// How many reports each status queue and each hazard chip would show under the other filters.
+export const deskSummarySchema = z.object({
+  account: accountSchema,
+  total: z.number().int().nonnegative(),
+  byStatus: z.record(ticketStatusSchema, z.number().int().nonnegative()),
+  byHazard: z.partialRecord(hazardTypeSchema, z.number().int().nonnegative()),
+});
+
+export type DeskSummary = z.infer<typeof deskSummarySchema>;
 
 // A summary row with the reporter's own words when the value was read from them.
 const deskGroupSchema = summaryGroupSchema.extend({

@@ -2,7 +2,13 @@ import { createRoute, z } from "@hono/zod-openapi";
 import { deleteCookie, setCookie } from "hono/cookie";
 import { isSeededStaffCode, SESSION_COOKIE } from "../../adapters/identity/seeded";
 import { hazardTypeSchema } from "../../contract/common";
-import { deskGallerySchema, deskMapSchema, deskQueueSchema, deskReportSchema } from "../../contract/desk";
+import {
+  deskGallerySchema,
+  deskMapSchema,
+  deskQueueSchema,
+  deskReportSchema,
+  deskSummarySchema,
+} from "../../contract/desk";
 import { ticketStatusSchema } from "../../contract/tracking";
 import { DESK_PERIODS } from "../../domain/deskQueue";
 import { isTicketNumber } from "../../domain/ticketNumber";
@@ -13,6 +19,7 @@ import {
   deskMap,
   deskPhotoFile,
   deskQueue,
+  deskSummary,
   readDeskReport,
   viewDeskReport,
 } from "../../services/desk";
@@ -119,6 +126,7 @@ export function addDeskRoutes(api: Api): void {
   for (const [path, schema, read, description] of [
     ["/desk/map", deskMapSchema, deskMap, "The filtered reports as points, newest first"],
     ["/desk/photos", deskGallerySchema, deskGallery, "Photos of the filtered reports, newest first"],
+    ["/desk/summary", deskSummarySchema, deskSummary, "Counts per status queue and per hazard chip"],
   ] as const)
     addRoute(
       api,

@@ -1,6 +1,7 @@
 import {
   type DeskPhoto,
   deskReport,
+  facetCounts,
   galleryPhotos,
   mapPoints,
   markViewed,
@@ -10,10 +11,11 @@ import {
   reportPhotos,
   sentPhoto,
 } from "../adapters/d1/desk";
-import type { DeskGallery, DeskMap, DeskQueue, DeskReport } from "../contract/desk";
+import type { DeskGallery, DeskMap, DeskQueue, DeskReport, DeskSummary } from "../contract/desk";
 import { DESK_PAGE_SIZE, type DeskPeriod, GALLERY_PHOTOS, MAP_POINTS, periodStart } from "../domain/deskQueue";
 import { type DeskCapability, mayUse } from "../domain/deskRights";
 import type { EventTimeValue, FieldStates, PlaceValue } from "../domain/fieldState";
+import { impactOf } from "../domain/impact";
 import type { TicketStatus } from "../domain/stages";
 import type { StaffPrincipal } from "../ports/identity";
 import type { ServiceBindings } from "./bindings";
@@ -59,6 +61,7 @@ function queueItem(found: QueueRow): DeskQueue["items"][number] {
     photoCount: found.photoCount,
     reporter: { name: found.reporterName, role: found.reporterRole },
     numberUnverified: found.numberUnverified,
+    impact: impactOf(found.states),
   };
 }
 
@@ -142,6 +145,33 @@ export async function deskPhotoFile(
   const photo = await sentPhoto(bindings.db, photoId);
   const bytes = photo === null ? null : await bindings.photos.get(photo.storeKey);
   return bytes === null ? { kind: "notFound" } : { kind: "file", bytes };
+}
+
+const STATUSES = ["new", "seen", "under_review", "forwarded", "in_handling", "closed", "invalid"] as const;
+
+// The counts behind the status queues and the hazard chips, every status listed even at 0.
+export async function deskSummary(
+  bindings: ServiceBindings,
+  staff: StaffPrincipal,
+  query: Omit<QueueQuery, "page">,
+): Promise<DeskAnswer<DeskSummary>> {
+  const refused = await admitted(bindings, staff, "readQueue", "desk.read");
+  if (refused) return refused;
+  const counts = await facetCounts(bindings.db, filtersOf(bindings, query));
+  const byStatus = Object.fromEntries(STATUSES.map((status) => [status, counts.byStatus[status] ?? 0]));
+  const total =
+    query.status === null
+      ? STATUSES.reduce((sum, status) => sum + (byStatus[status] as number), 0)
+      : (byStatus[query.status] as number);
+  return {
+    kind: "ok",
+    body: {
+      account: { label: staff.label },
+      total,
+      byStatus: byStatus as DeskSummary["byStatus"],
+      byHazard: counts.byHazard as DeskSummary["byHazard"],
+    },
+  };
 }
 
 export async function deskQueue(
