@@ -26,8 +26,11 @@ const form = (entries: Record<string, string>) => {
 describe("the desk queue page", () => {
   test("filters travel from the address to the API, empty ones left out", async () => {
     const { api, calls } = fakeApi(() => Response.json(QUEUE));
-    const load = await loadDeskQueue(new URL("http://x/lapor/meja?status=seen&hazardType=&ticket=LA-1&page=2"), api);
-    expect(calls[0]?.path).toBe("/desk/reports?status=seen&period=all&ticket=LA-1&page=2");
+    const load = await loadDeskQueue(
+      new URL("http://x/lapor/meja?view=list&status=seen&hazardType=&ticket=LA-1&has=victims&page=2"),
+      api,
+    );
+    expect(calls[1]?.path).toBe("/desk/reports?status=seen&period=all&ticket=LA-1&has=victims&page=2");
     expect(load).toMatchObject({
       kind: "queue",
       shown: { view: "list", queue: QUEUE },
@@ -37,7 +40,7 @@ describe("the desk queue page", () => {
     expect(queueQuery(filtersOf(new URLSearchParams("")))).toBe("?period=all");
     expect(filtersOf(new URLSearchParams("page=0")).page).toBe(1);
     expect(filtersOf(new URLSearchParams("page=x")).page).toBe(1);
-    expect(queueQuery({ view: "map", status: "", hazardType: "", period: "", ticket: "", page: 1 })).toBe("");
+    expect(queueQuery({ view: "map", status: "", hazardType: "", period: "", ticket: "", has: "", page: 1 })).toBe("");
   });
 
   test("a refused search keeps the filters and says why; no staff account asks to sign in; others refuse", async () => {
@@ -61,7 +64,7 @@ describe("the desk queue page", () => {
 });
 
 describe("the map and the gallery", () => {
-  test("each view reads its own route with the filters and no page; an unknown view is the list", async () => {
+  test("each view reads its own route with the filters and no page; an unknown view is the map", async () => {
     const { api, calls } = fakeApi(() =>
       Response.json({ account: { label: "Petugas" }, points: [], photos: [], cut: false }),
     );
@@ -72,12 +75,14 @@ describe("the map and the gallery", () => {
     await loadDeskQueue(new URL("http://x/lapor/meja?view=nope"), api);
     // Each view reads its route and the side menu's counts under the same filters.
     expect(calls.map((call) => call.path)).toEqual([
-      "/desk/map?status=new&period=all",
       "/desk/summary?status=new&period=all",
+      "/desk/map?status=new&period=all",
+      "/desk/reports?status=new&period=all",
+      "/desk/summary?period=all",
       "/desk/photos?period=all",
       "/desk/summary?period=all",
+      "/desk/map?period=all",
       "/desk/reports?period=all",
-      "/desk/summary?period=all",
     ]);
   });
 });

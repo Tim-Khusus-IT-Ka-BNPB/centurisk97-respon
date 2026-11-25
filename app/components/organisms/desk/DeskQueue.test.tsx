@@ -45,15 +45,17 @@ describe("the side menu", () => {
     // One menu beside the work, one behind the phone's menu button.
     expect(menus).toHaveLength(2);
     const queues = within(menus[0] as HTMLElement);
-    expect(queues.getByRole("link", { name: "Semua laporan, 9 laporan" }).getAttribute("href")).toBe("/lapor/meja");
+    expect(queues.getByRole("link", { name: "Semua laporan, 9 laporan" }).getAttribute("href")).toBe(
+      "/lapor/meja?view=list",
+    );
     const current = queues.getByRole("link", { name: "Ditelaah, 2 laporan" });
     expect(current.getAttribute("aria-current")).toBe("page");
-    expect(current.getAttribute("href")).toBe("/lapor/meja?status=under_review");
+    expect(current.getAttribute("href")).toBe("/lapor/meja?view=list&status=under_review");
     expect(queues.getByRole("link", { name: "Diteruskan, 0 laporan" })).toBeTruthy();
     const views = within(screen.getAllByRole("navigation", { name: "Tampilan" })[0] as HTMLElement);
     expect(views.getByRole("link", { name: "Daftar laporan" }).getAttribute("aria-current")).toBe("page");
     expect(views.getByRole("link", { name: "Peta laporan" }).getAttribute("href")).toBe(
-      "/lapor/meja?view=map&status=under_review",
+      "/lapor/meja?status=under_review",
     );
     expect(screen.getAllByText("Masuk sebagai Pusdalops BNPB, Petugas Uji")).toHaveLength(2);
     expect(screen.getAllByRole("button", { name: "Keluar" })).toHaveLength(2);
@@ -89,19 +91,21 @@ describe("the filter bar", () => {
     );
     const chips = within(screen.getByRole("navigation", { name: "Jenis bencana" }));
     expect(chips.getByRole("link", { name: "Semua jenis, 9 laporan" }).getAttribute("href")).toBe(
-      "/lapor/meja?period=week",
+      "/lapor/meja?view=list&period=week",
     );
     expect(chips.getByRole("link", { name: "Banjir, 7 laporan" }).getAttribute("href")).toBe(
-      "/lapor/meja?hazardType=flood&period=week",
+      "/lapor/meja?view=list&hazardType=flood&period=week",
     );
     const picked = chips.getByRole("link", { name: "Tanah longsor, 2 laporan" });
     expect(picked.getAttribute("aria-current")).toBe("true");
-    expect(picked.getAttribute("href")).toBe("/lapor/meja?period=week");
+    expect(picked.getAttribute("href")).toBe("/lapor/meja?view=list&period=week");
     // Types with no reports are left out.
     expect(chips.queryByRole("link", { name: /Gempa/ })).toBeNull();
     const period = within(screen.getByRole("navigation", { name: "Periode" }));
     expect(period.getByRole("link", { name: "7 hari" }).getAttribute("aria-current")).toBe("true");
-    expect(period.getByRole("link", { name: "Semua" }).getAttribute("href")).toBe("/lapor/meja?hazardType=landslide");
+    expect(period.getByRole("link", { name: "Semua" }).getAttribute("href")).toBe(
+      "/lapor/meja?view=list&hazardType=landslide",
+    );
     const hidden = [...document.querySelectorAll('form[role="search"] input[type="hidden"]')].map((input) => [
       input.getAttribute("name"),
       input.getAttribute("value"),
@@ -111,7 +115,29 @@ describe("the filter bar", () => {
       ["hazardType", "landslide"],
       ["period", "week"],
     ]);
-    expect(screen.getByRole("link", { name: "Hapus saringan" }).getAttribute("href")).toBe("/lapor/meja");
+    expect(screen.getByRole("link", { name: "Hapus saringan" }).getAttribute("href")).toBe("/lapor/meja?view=list");
+  });
+
+  test("what the reports hold: chips with counts that toggle", async () => {
+    await renderDesk(
+      <DeskQueueView
+        shown={list(queue())}
+        summary={SUMMARY}
+        filters={{ ...FILTERS, has: "victims" }}
+        envelope={null}
+      />,
+      { path: "/lapor/meja" },
+    );
+    const holds = within(screen.getByRole("navigation", { name: "Isi laporan" }));
+    const victims = holds.getByRole("link", { name: "Ada korban, 3 laporan" });
+    expect(victims.getAttribute("aria-current")).toBe("true");
+    expect(victims.getAttribute("href")).toBe("/lapor/meja?view=list");
+    expect(holds.getByRole("link", { name: "Ada foto, 0 laporan" }).getAttribute("href")).toBe(
+      "/lapor/meja?view=list&has=photos",
+    );
+    const kept = [...document.querySelectorAll('form[role="search"] input[name="has"]')];
+    expect(kept.map((input) => input.getAttribute("value"))).toEqual(["victims"]);
+    expect(screen.getByRole("link", { name: "Hapus saringan" })).toBeTruthy();
   });
 
   test("a hazard picked with no reports left still shows, at 0; no filters, no clear link", async () => {
@@ -234,10 +260,10 @@ describe("the list", () => {
       { path: "/lapor/meja" },
     );
     expect(screen.getByRole("link", { name: "Halaman sebelumnya" }).getAttribute("href")).toBe(
-      "/lapor/meja?status=seen",
+      "/lapor/meja?view=list&status=seen",
     );
     expect(screen.getByRole("link", { name: "Halaman berikutnya" }).getAttribute("href")).toBe(
-      "/lapor/meja?status=seen&page=3",
+      "/lapor/meja?view=list&status=seen&page=3",
     );
   });
 
@@ -267,11 +293,14 @@ describe("the list", () => {
 });
 
 describe("the map and the gallery", () => {
-  test("the map with its legend, a notice when cut, and every point listed for a page with no script", async () => {
-    const map = { account: { label: "Petugas Uji" }, points: [POINT], cut: true };
-    await renderDesk(
+  test("the map view fills the window beside the menu; a gallery within its limit carries no notice", async () => {
+    const view = await renderDesk(
       <DeskQueueView
-        shown={{ view: "map", map }}
+        shown={{
+          view: "map",
+          map: { account: { label: "Petugas Uji" }, points: [POINT], cut: false },
+          queue: queue({ account: { label: "Petugas Uji" } }),
+        }}
         summary={null}
         filters={{ ...FILTERS, view: "map" }}
         envelope={null}
@@ -279,29 +308,11 @@ describe("the map and the gallery", () => {
       { path: "/lapor/meja" },
     );
     expect(screen.getByRole("heading", { level: 1, name: "Peta laporan" })).toBeTruthy();
-    expect(screen.getByText("1 titik")).toBeTruthy();
-    expect(screen.getAllByText("Masuk sebagai Petugas Uji")).toHaveLength(2);
     expect(screen.getByRole("region", { name: "Peta laporan" })).toBeTruthy();
-    expect(screen.getByText(/Peta menampilkan 1 laporan terbaru/)).toBeTruthy();
-    expect(screen.getByText("Belum ditangani: diterima, dilihat")).toBeTruthy();
-    expect(screen.getByText("Daftar titik (1)")).toBeTruthy();
-    expect(screen.getByText("Banjir, Dilihat, Sukamaju")).toBeTruthy();
-    expect(screen.getByText("5.100000, 97.123456, perkiraan tingkat desa")).toBeTruthy();
+    expect(screen.getByRole("main").className).toContain("lg:h-dvh");
+    expect(screen.getAllByText("Masuk sebagai Petugas Uji")).toHaveLength(2);
     const tabs = within(screen.getByRole("navigation", { name: "Tampilan laporan" }));
     expect(tabs.getByRole("link", { name: "Peta" }).getAttribute("aria-current")).toBe("true");
-  });
-
-  test("a map and a gallery within their limits carry no notice, and name the account from the view", async () => {
-    const view = await renderDesk(
-      <DeskQueueView
-        shown={{ view: "map", map: { account: { label: "Petugas Uji" }, points: [POINT], cut: false } }}
-        summary={SUMMARY}
-        filters={{ ...FILTERS, view: "map" }}
-        envelope={null}
-      />,
-      { path: "/lapor/meja" },
-    );
-    expect(screen.queryByText(/Peta menampilkan/)).toBeNull();
     view.unmount();
     await renderDesk(
       <DeskQueueView
@@ -316,18 +327,19 @@ describe("the map and the gallery", () => {
     expect(screen.getAllByText("Masuk sebagai Petugas Galeri")).toHaveLength(2);
   });
 
-  test("a map with no points says so and draws no map", async () => {
+  test("a refused search on the map keeps the map and the field, with no list", async () => {
     await renderDesk(
       <DeskQueueView
-        shown={{ view: "map", map: { account: { label: "Petugas Uji" }, points: [], cut: false } }}
-        summary={SUMMARY}
-        filters={{ ...FILTERS, view: "map" }}
+        shown={null}
+        summary={null}
+        filters={{ ...FILTERS, view: "map", ticket: "0800" }}
         envelope={null}
       />,
       { path: "/lapor/meja" },
     );
-    expect(screen.getByText("Belum ada laporan untuk saringan ini.")).toBeTruthy();
-    expect(screen.queryByRole("region", { name: "Peta laporan" })).toBeNull();
+    expect(screen.getByRole("region", { name: "Peta laporan" })).toBeTruthy();
+    expect((screen.getByLabelText("Nomor tiket") as HTMLInputElement).value).toBe("0800");
+    expect(screen.queryByText(/laporan$/, { selector: "p" })).toBeNull();
   });
 
   test("the gallery: each photo with its report, badges and time, and a notice when cut", async () => {

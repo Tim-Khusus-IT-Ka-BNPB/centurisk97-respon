@@ -31,15 +31,21 @@ export function eventShort(t: Text, time: Item["eventTime"]): string {
 // "+6280000000001" as "+62 800-0000-0001": grouped to read aloud on the phone.
 export const spacedNumber = (stored: string) => `+62 ${stored.slice(3, 6)}-${stored.slice(6, 10)}-${stored.slice(10)}`;
 
-// The desk's address for these filters; the list view, an empty filter and the first page are left out.
+// The desk's address for these filters; the map view, an empty filter and the first page are left out.
 export function deskLink(filters: DeskFilters, change: Partial<DeskFilters> = {}): string {
   const search = new URLSearchParams();
   for (const [name, value] of Object.entries({ ...filters, ...change }))
-    if (value !== "" && value !== 1 && value !== "list" && !(name === "period" && value === "all"))
+    if (value !== "" && value !== 1 && value !== "map" && !(name === "period" && value === "all"))
       search.set(name, String(value));
   const text = search.toString();
   return text === "" ? "/lapor/meja" : `/lapor/meja?${text}`;
 }
+
+// The same view with no filter but it.
+export const clearedLink = ({ view }: DeskFilters) =>
+  deskLink({ view, status: "", hazardType: "", period: "all", ticket: "", has: "", page: 1 });
+
+export const isFiltered = (filters: DeskFilters) => clearedLink(filters) !== deskLink(filters, { page: 1 });
 
 // A status's group colour as a dot; the words beside it carry the meaning.
 export function StatusDot({ status }: { readonly status: Status }) {
@@ -123,14 +129,17 @@ function Figure({
 export function Victims({
   impact,
   className = "flex flex-wrap",
+  onlyAbove = false,
 }: {
   readonly impact: Item["impact"];
   readonly className?: string;
+  // Only the figures above zero, for a short row.
+  readonly onlyAbove?: boolean;
 }) {
   const t = useText();
   return (
     <span className={cn("items-center gap-x-3 gap-y-1", className)}>
-      {IMPACT.map(([field, icon]) => (
+      {IMPACT.filter(([field]) => !onlyAbove || impact[field]).map(([field, icon]) => (
         <Figure
           key={field}
           icon={icon}

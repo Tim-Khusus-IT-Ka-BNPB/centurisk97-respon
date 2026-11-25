@@ -4,12 +4,14 @@ import { rowParts } from "../../../lib/summary";
 import { text } from "../../../testing/render";
 import { deskLink, eventShort, spacedNumber } from "./parts";
 
-const FILTERS = { view: "list" as const, status: "", hazardType: "", period: "all", ticket: "", page: 1 };
+const FILTERS = { view: "map" as const, status: "", hazardType: "", period: "all", ticket: "", has: "", page: 1 };
 
 describe("desk helpers", () => {
   test("a desk address carries only the filters in use", () => {
     expect(deskLink(FILTERS)).toBe("/lapor/meja");
-    expect(deskLink(FILTERS, { view: "map", status: "seen", page: 3 })).toBe("/lapor/meja?view=map&status=seen&page=3");
+    expect(deskLink(FILTERS, { view: "list", status: "seen", page: 3 })).toBe(
+      "/lapor/meja?view=list&status=seen&page=3",
+    );
     expect(deskLink({ ...FILTERS, period: "week", ticket: "LA-1" })).toBe("/lapor/meja?period=week&ticket=LA-1");
   });
 

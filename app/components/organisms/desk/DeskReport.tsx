@@ -13,7 +13,7 @@ import { Hazard, PhotoFigure } from "./DeskQueue";
 import { DeskShell } from "./DeskShell";
 import { Houses, StatusChip, spacedNumber, UnverifiedChip, Victims, when } from "./parts";
 
-const LIST = { view: "list", status: "", hazardType: "", period: "all", ticket: "", page: 1 } as const;
+const ALL = { view: "map", status: "", hazardType: "", period: "all", ticket: "", has: "", page: 1 } as const;
 
 function Origin({ origin, quote }: { readonly origin: string | null; readonly quote: string | null }) {
   const t = useText();
@@ -82,7 +82,7 @@ export function DeskReportView({
   const t = useText();
   const hazardType = hazardOf(report.groups);
   return (
-    <DeskShell place={{ filters: LIST, current: null, summary }} account={report.account.label}>
+    <DeskShell place={{ filters: ALL, current: null, summary }} account={report.account.label}>
       <Link to="/lapor/meja" className="inline-flex min-h-target-min w-fit items-center gap-2 rounded-control text-ink">
         <Icon name="arrowLeft" className="size-5" />
         {t("desk.refused.back")}

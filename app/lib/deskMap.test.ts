@@ -1,4 +1,4 @@
-import { describe, expect, test } from "vitest";
+import { describe, expect, test, vi } from "vitest";
 import { text } from "../testing/render";
 import {
   boundsOf,
@@ -6,6 +6,7 @@ import {
   clusterElement,
   clusterIndex,
   clusterList,
+  fitControl,
   itemsIn,
   type MapPoint,
   markerElement,
@@ -57,6 +58,19 @@ describe("desk map pieces", () => {
     expect(markerElement({ ...POINT, status: "closed", hazardType: "earthquake" }, text).className).toContain(
       "desk-marker-done",
     );
+  });
+
+  test("the show-all button is named and leaves with the map", () => {
+    const fit = vi.fn();
+    const control = fitControl(text, fit);
+    const group = control.onAdd();
+    document.body.appendChild(group);
+    const button = group.querySelector("button") as HTMLButtonElement;
+    expect(button.getAttribute("aria-label")).toBe("Tampilkan semua titik");
+    button.click();
+    expect(fit).toHaveBeenCalledTimes(1);
+    control.onRemove();
+    expect(group.isConnected).toBe(false);
   });
 
   test("a popup holds the ticket, type and status, the village with its precision, and the way to the report", () => {

@@ -45,11 +45,12 @@ export function filtersOf(search: URLSearchParams): DeskFilters {
   const page = Number(search.get("page") ?? "1");
   const view = search.get("view") ?? "";
   return {
-    view: (DESK_VIEWS as readonly string[]).includes(view) ? (view as DeskView) : "list",
+    view: (DESK_VIEWS as readonly string[]).includes(view) ? (view as DeskView) : "map",
     status: search.get("status") ?? "",
     hazardType: search.get("hazardType") ?? "",
     period: search.get("period") ?? "all",
     ticket: search.get("ticket") ?? "",
+    has: search.get("has") ?? "",
     page: Number.isInteger(page) && page >= 1 ? page : 1,
   };
 }
@@ -69,23 +70,29 @@ async function refusalOf(response: Response): Promise<DeskRefusal> {
   return { kind: "refused", status: response.status, texts: texts(), envelope };
 }
 
+const VIEW_READS: Readonly<Record<DeskView, readonly string[]>> = {
+  map: ["/desk/map", "/desk/reports"],
+  list: ["/desk/reports"],
+  gallery: ["/desk/photos"],
+};
+
 // GET /lapor/meja: the queue for a staff account, or the sign-in form for anyone else.
 export async function loadDeskQueue(url: URL, api: ApiCall): Promise<DeskQueueLoad> {
   const filters = filtersOf(url.searchParams);
   // The map and the gallery are not paged.
   const query = queueQuery(filters.view === "list" ? filters : { ...filters, page: 1 });
-  const path = { list: "/desk/reports", map: "/desk/map", gallery: "/desk/photos" }[filters.view];
-  const [response, summary] = await Promise.all([
-    api("GET", `${path}${query}`),
+  const [summary, ...responses] = await Promise.all([
     summaryOf(api, queueQuery({ ...filters, page: 1 })),
+    ...VIEW_READS[filters.view].map((path) => api("GET", `${path}${query}`)),
   ]);
-  if (response.ok) {
-    const body = await response.json();
+  const response = responses.find((one) => !one.ok);
+  if (response === undefined) {
+    const [body, queue] = await Promise.all(responses.map((one) => one.json()));
     const shown =
       filters.view === "list"
         ? { view: "list" as const, queue: body as DeskQueue }
         : filters.view === "map"
-          ? { view: "map" as const, map: body as DeskMap }
+          ? { view: "map" as const, map: body as DeskMap, queue: queue as DeskQueue }
           : { view: "gallery" as const, gallery: body as DeskGallery };
     return { kind: "queue", texts: texts(), filters, shown, summary, envelope: null };
   }

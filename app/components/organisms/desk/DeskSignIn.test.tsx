@@ -38,7 +38,7 @@ describe("signing in and refusals", () => {
   test("a refused read says why and leads back to the list; over the limit it names the time", async () => {
     const view = await renderDesk(<DeskRefused envelope={envelope("desk.notAllowed")} />, { path: "/lapor/meja/x" });
     expect(screen.getByText(/belum berhak memakai meja laporan/)).toBeTruthy();
-    expect(screen.getByRole("link", { name: "Kembali ke daftar laporan" }).getAttribute("href")).toBe("/lapor/meja");
+    expect(screen.getByRole("link", { name: "Kembali ke meja laporan" }).getAttribute("href")).toBe("/lapor/meja");
     view.unmount();
     const limited = {
       ...envelope("limit.desk.read", { params: { limit: 600 } }),

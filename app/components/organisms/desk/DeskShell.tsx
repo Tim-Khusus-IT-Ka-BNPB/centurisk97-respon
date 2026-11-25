@@ -13,11 +13,20 @@ import { deskLink, STATUSES, StatusDot } from "./parts";
 const VIEW_ICON: Readonly<Record<DeskView, IconName>> = { list: "list", map: "map", gallery: "images" };
 
 const item =
-  "flex min-h-target-min items-center gap-3 rounded-control px-2.5 text-ink no-underline hover:bg-sunken aria-[current=page]:bg-selected aria-[current=page]:font-semibold";
+  "group/item flex min-h-target-min items-center gap-3 rounded-control px-2.5 text-ink no-underline hover:bg-sunken aria-[current=page]:bg-selected aria-[current=page]:font-semibold";
 
 function Count({ n }: { readonly n: number | undefined }) {
   return n === undefined ? null : (
-    <span className="ms-auto text-meta text-muted tabular-nums">{n.toLocaleString("id-ID")}</span>
+    <span
+      className={cn(
+        "ms-auto min-w-7 rounded-chip px-1.5 py-0.5 text-center text-meta tabular-nums",
+        n === 0
+          ? "text-muted"
+          : "bg-sunken font-semibold group-aria-[current=page]/item:bg-primary group-aria-[current=page]/item:text-on-primary",
+      )}
+    >
+      {n.toLocaleString("id-ID")}
+    </span>
   );
 }
 
@@ -96,7 +105,7 @@ function DeskNav({ place, account }: { readonly place: DeskPlace; readonly accou
               aria-label={counted(t, t(`stage.short.${status}`), summary?.byStatus[status])}
               className={item}
             >
-              <span className="flex size-5 items-center justify-center">
+              <span className="flex size-5 shrink-0 items-center justify-center">
                 <StatusDot status={status} />
               </span>
               {t(`stage.short.${status}`)}
@@ -139,10 +148,13 @@ function Brand() {
 export function DeskShell({
   place,
   account,
+  fill = false,
   children,
 }: {
   readonly place: DeskPlace;
   readonly account: string;
+  // The work takes the whole window beside the menu, edge to edge, as the map does.
+  readonly fill?: boolean;
   readonly children: ReactNode;
 }) {
   const t = useText();
@@ -170,7 +182,14 @@ export function DeskShell({
           </div>
         </div>
       </header>
-      <main className="flex min-w-0 flex-col gap-5 px-4 py-5 md:px-6 lg:px-8 lg:py-7">{children}</main>
+      <main
+        className={cn(
+          "flex min-w-0 flex-col",
+          fill ? "lg:h-dvh lg:overflow-hidden" : "gap-5 px-4 py-5 md:px-6 lg:px-8 lg:py-7",
+        )}
+      >
+        {children}
+      </main>
     </div>
   );
 }

@@ -276,7 +276,7 @@ describe("desk routes", () => {
     const load = async (answer: () => Response) =>
       unwrap(
         await desk.loader({
-          request: new Request("http://x/lapor/meja"),
+          request: new Request("http://x/lapor/meja?view=list"),
           context: { api: api({ "GET /desk/reports": answer, "GET /desk/summary": json(SUMMARY) }) },
         } as Args),
       );

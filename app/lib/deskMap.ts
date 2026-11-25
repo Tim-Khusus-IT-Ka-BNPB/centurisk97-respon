@@ -6,8 +6,10 @@ import type { Text } from "./text";
 
 export type MapPoint = DeskMap["points"][number];
 
-// The base map: OpenFreeMap's light style, as upstream's desk uses. No report data goes to it.
-export const TILE_STYLE = "https://tiles.openfreemap.org/styles/positron";
+// The base map: OpenFreeMap's light style, as upstream's desk uses, and its dark one in the dark
+// theme. No report data goes to it.
+export const tileStyle = () =>
+  `https://tiles.openfreemap.org/styles/${document.documentElement.dataset.theme === "dark" ? "fiord" : "positron"}`;
 export const INDONESIA = { center: [118, -2.5] as [number, number], zoom: 3.6 };
 
 // Seven statuses read as three groups on a map, each by colour and by its ring, with a legend in words.
@@ -71,6 +73,21 @@ export function markerElement(point: MapPoint, t: Text): HTMLButtonElement {
   );
   button.appendChild(iconElement(hazardIcon(point.hazardType)));
   return button;
+}
+
+// The map button that brings every point back into view, beside the zoom buttons.
+export function fitControl(t: Text, fit: () => void): { onAdd(): HTMLElement; onRemove(): void } {
+  const group = document.createElement("div");
+  group.className = "maplibregl-ctrl maplibregl-ctrl-group";
+  const button = document.createElement("button");
+  button.type = "button";
+  button.className = "desk-fit";
+  button.title = t("desk.map.fit");
+  button.setAttribute("aria-label", t("desk.map.fit"));
+  button.appendChild(iconElement("scan"));
+  button.addEventListener("click", fit);
+  group.appendChild(button);
+  return { onAdd: () => group, onRemove: () => group.remove() };
 }
 
 // A point's popup: what it is and the way to the report. Text only, never markup from data.
@@ -203,7 +220,15 @@ export function clusterList(points: readonly MapPoint[], t: Text): HTMLElement {
     const item = document.createElement("li");
     const link = document.createElement("a");
     link.href = `/lapor/meja/${point.ticketNumber}`;
-    link.textContent = `${point.ticketNumber}, ${t(`hazard.${point.hazardType}.label`)}, ${t(`stage.short.${point.status}`)}`;
+    const dot = document.createElement("span");
+    dot.className = `desk-dot desk-dot-${STATUS_GROUPS[point.status]}`;
+    dot.setAttribute("aria-hidden", "true");
+    link.appendChild(dot);
+    link.appendChild(
+      document.createTextNode(
+        `${point.ticketNumber}, ${t(`hazard.${point.hazardType}.label`)}, ${t(`stage.short.${point.status}`)}`,
+      ),
+    );
     item.appendChild(link);
     list.appendChild(item);
   }

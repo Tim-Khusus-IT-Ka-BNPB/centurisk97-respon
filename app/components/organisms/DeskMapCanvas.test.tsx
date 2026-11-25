@@ -26,6 +26,10 @@ class FakeMap {
   idle: (() => void) | null = null;
   load: (() => void) | null = null;
   resized = 0;
+  style: string | null = null;
+  setStyle(style: string) {
+    this.style = style;
+  }
   once(event: "idle" | "load", listener: () => void) {
     this[event] = listener;
   }
@@ -111,12 +115,14 @@ const POINTS: MapPoint[] = [
   },
 ];
 
-const draw = (points: MapPoint[]) =>
-  render(
-    <TextContext.Provider value={makeText(ALL_TEXTS)}>
-      <DeskMapCanvas points={points} label="Peta laporan" />
-    </TextContext.Provider>,
-  );
+const seen = vi.fn<(tickets: ReadonlySet<string>) => void>();
+const TEXT = makeText(ALL_TEXTS);
+const canvas = (points: MapPoint[], pointed: string | null = null) => (
+  <TextContext.Provider value={TEXT}>
+    <DeskMapCanvas points={points} label="Peta laporan" pointed={pointed} onView={seen} />
+  </TextContext.Provider>
+);
+const draw = (points: MapPoint[]) => render(canvas(points));
 
 describe("the desk map canvas", () => {
   test("draws the base map, one marker with a popup per point, and fits them; closing removes it", async () => {
@@ -130,7 +136,7 @@ describe("the desk map canvas", () => {
       center: [118, -2.5],
       attributionControl: { compact: true },
     });
-    expect(map.controls).toHaveLength(1);
+    expect(map.controls).toHaveLength(2);
     expect(made.markers).toEqual([]);
     expect(map.fitted).toEqual([]);
     map.load?.();
@@ -147,7 +153,7 @@ describe("the desk map canvas", () => {
           [97, -8],
           [131, 5],
         ],
-        { padding: 48, maxZoom: 13, duration: 0 },
+        { padding: { top: 96, bottom: 56, left: 48, right: 96 }, maxZoom: 13, duration: 0 },
       ],
     ]);
     const region = view.getByRole("region", { name: "Peta laporan" });
@@ -203,6 +209,52 @@ describe("the desk map canvas", () => {
     await waitFor(() => expect(made.maps).toHaveLength(1));
     (made.maps[0] as FakeMap).load?.();
     expect((made.maps[0] as FakeMap).fitted).toEqual([]);
+    cleanup();
+  });
+
+  test("new points are shown on the same map, and every draw says which tickets are in view", async () => {
+    made.maps.length = 0;
+    made.markers.length = 0;
+    seen.mockClear();
+    const view = draw(POINTS);
+    await waitFor(() => expect(made.maps).toHaveLength(1));
+    const map = made.maps[0] as FakeMap;
+    map.load?.();
+    expect(seen).toHaveBeenLastCalledWith(new Set(["LA-241126-01", "LA-241126-02"]));
+    view.rerender(canvas([POINTS[1] as MapPoint]));
+    expect(made.maps).toHaveLength(1);
+    expect(seen).toHaveBeenLastCalledWith(new Set(["LA-241126-02"]));
+    expect(map.fitted).toHaveLength(2);
+    // The button beside the zoom buttons brings every point back.
+    const fit = (map.controls[1] as { onAdd(): HTMLElement; onRemove(): void }).onAdd();
+    fit.querySelector("button")?.click();
+    expect(map.fitted).toHaveLength(3);
+    cleanup();
+  });
+
+  test("the ticket pointed at stands out, as a marker or as the cluster holding it", async () => {
+    made.maps.length = 0;
+    made.markers.length = 0;
+    const view = draw(POINTS);
+    await waitFor(() => expect(made.maps).toHaveLength(1));
+    (made.maps[0] as FakeMap).load?.();
+    const [first, second] = made.markers.map((marker) => marker.options.element) as [HTMLElement, HTMLElement];
+    view.rerender(canvas(POINTS, "LA-241126-02"));
+    expect(second.className).toContain("desk-pointed");
+    expect(first.className).not.toContain("desk-pointed");
+    view.rerender(canvas(POINTS, "LA-000000-00"));
+    expect(second.className).not.toContain("desk-pointed");
+    cleanup();
+  });
+
+  test("the base map follows the theme", async () => {
+    made.maps.length = 0;
+    draw([]);
+    await waitFor(() => expect(made.maps).toHaveLength(1));
+    document.documentElement.dataset.theme = "dark";
+    await waitFor(() => expect((made.maps[0] as FakeMap).style).toBe("https://tiles.openfreemap.org/styles/fiord"));
+    document.documentElement.removeAttribute("data-theme");
+    await waitFor(() => expect((made.maps[0] as FakeMap).style).toBe("https://tiles.openfreemap.org/styles/positron"));
     cleanup();
   });
 
