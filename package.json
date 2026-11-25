@@ -13,6 +13,7 @@
     "preview": "react-router build && wrangler dev --config build/server/wrangler.json --test-scheduled",
     "deploy:staging": "CLOUDFLARE_ENV=staging react-router build && wrangler deploy --config build/server/wrangler.json",
     "typegen": "wrangler types > /dev/null && react-router typegen",
+    "test-gateway": "tsx --env-file-if-exists=.env tools/test-gateway/server.ts",
     "model-stub": "tsx --env-file-if-exists=.env tools/model-stub/server.ts",
     "sweep:local": "tsx --env-file-if-exists=.env scripts/sweep-local.ts",
     "reference:import": "tsx --env-file-if-exists=.env tools/reference-import/import.ts",
