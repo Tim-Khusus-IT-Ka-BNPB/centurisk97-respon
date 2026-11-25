@@ -215,11 +215,11 @@ export function Impact({ impact }: { readonly impact: Item["impact"] }) {
 export function ImpactStrip({ impact }: { readonly impact: Item["impact"] }) {
   const t = useText();
   return (
-    <dl className="grid grid-cols-2 gap-px overflow-hidden rounded-card border border-line bg-line sm:grid-cols-3 lg:grid-cols-5">
+    <dl className="grid grid-cols-2 gap-px overflow-hidden rounded-card border border-line bg-line sm:grid-cols-6 lg:grid-cols-5">
       {figuresOf(impact).map((one) => (
         <div
           key={one.field}
-          className="flex flex-col-reverse justify-end gap-0.5 bg-surface px-4 py-3 last:col-span-2 sm:last:col-span-1"
+          className="flex flex-col-reverse justify-end gap-0.5 bg-surface px-4 py-3 max-sm:last:col-span-2 sm:max-lg:col-span-2 sm:max-lg:nth-[n+4]:col-span-3"
         >
           <dt className="flex items-center gap-1.5 text-meta text-muted">
             <Icon name={one.icon} className="size-4" />
