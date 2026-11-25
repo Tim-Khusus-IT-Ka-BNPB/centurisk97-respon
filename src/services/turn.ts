@@ -83,7 +83,8 @@ export async function ownedDraft(bindings: ServiceBindings, principal: Principal
   const draft = await loadDraft(bindings.db, draftId);
   if (!draft || !ownsDraft(principal, draft)) return { kind: "notFound" };
   const nowMs = bindings.clock.now();
-  if (draft.state === "expired") return { kind: "expired" };
+  // News that expired leaves its report as it was, so its owner is led back there, not told it is gone.
+  if (draft.state === "expired") return draft.followUpOf === null ? { kind: "expired" } : { kind: "owned", draft };
   if (!isFinal(draft.state) && nowMs > draft.lastActedAt.getTime() + DRAFT_LIFE_MS) {
     await expireDraft(bindings.db, draft, new Date(nowMs));
     // Read again: it is expired now, unless a tap landed first and keeps it.

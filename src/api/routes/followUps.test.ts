@@ -359,6 +359,16 @@ describe("when news is taken", () => {
     expect((await startDraft(phone, number)).draftId).toBe(draft.draftId);
   });
 
+  test("news that expired leads back to its report, which is as it was", async () => {
+    const { phone, ticket } = await sentReport();
+    const draft = await say(phone, await opened(phone, ticket), "dua orang meninggal");
+    clock.advance(25 * HOUR);
+    const after = await phone.call("GET", `/drafts/${draft.draftId}`);
+    expect(after.draft.card).toMatchObject({ kind: "followUpEnded", outcome: "cancelled", ticketNumber: ticket });
+    expect((await send(phone, draft)).status).toBe(409);
+    expect(await versions(ticket)).toHaveLength(1);
+  });
+
   test("not for a number removed from the phone", async () => {
     const { phone, ticket } = await sentReport();
     const me = (await phone.call("GET", "/me")).json as { knownReporters: { profileId: string }[] };
