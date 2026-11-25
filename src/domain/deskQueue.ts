@@ -14,6 +14,11 @@ export function periodStart(period: DeskPeriod, nowMs: number): number | null {
   return wibMidnight - (PERIOD_DAYS[period] - 1) * DAY_MS;
 }
 
+// What a report must hold to be shown: someone dead, missing or hurt; someone displaced; a damaged
+// house; or a photo.
+export const DESK_HAS = ["victims", "displaced", "houses", "photos"] as const;
+export type DeskHas = (typeof DESK_HAS)[number];
+
 export const DESK_PAGE_SIZE = 50;
 
 // The map draws at most this many points, the gallery this many photos, newest first.

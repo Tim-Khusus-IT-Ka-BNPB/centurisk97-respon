@@ -1,3 +1,4 @@
+import { DESK_HAS, type DeskHas } from "../../domain/deskQueue";
 import type { TicketStatus } from "../../domain/stages";
 import { atomically, type Database, empty, parsed, type Query, row, rows, sql } from "../../platform/database";
 import type { StaffPrincipal } from "../../ports/identity";
@@ -7,6 +8,7 @@ export type QueueFilters = {
   readonly hazardType: string | null;
   readonly sentFromMs: number | null;
   readonly ticketNumber: string | null;
+  readonly has: DeskHas | null;
 };
 
 export type QueueRow = {
@@ -45,6 +47,27 @@ const SELECT = sql`select r.ticket_number, t.status, r.hazard_type, r.village_co
   join ticket t on t.report_id = r.id
   join report_version v on v.report_id = r.id and v.version = 1`;
 
+// A count above zero in the first version's values: not known and none are both left out (HF2).
+const anyAbove = (...paths: Query[]): Query =>
+  sql`exists (select 1 from report_version h where h.report_id = r.id and h.version = 1 and (${paths.reduce(
+    (joined, path) => sql`${joined} or ${path}`,
+  )}))`;
+
+const HAS: Readonly<Record<DeskHas, Query>> = {
+  victims: anyAbove(
+    sql`json_extract(h.fields, '$.dead.value') > 0`,
+    sql`json_extract(h.fields, '$.missing.value') > 0`,
+    sql`json_extract(h.fields, '$.injured.value') > 0`,
+  ),
+  displaced: anyAbove(sql`json_extract(h.fields, '$.displacedPeople.value') > 0`),
+  houses: anyAbove(
+    sql`json_extract(h.fields, '$.housesHeavy.value') > 0`,
+    sql`json_extract(h.fields, '$.housesModerate.value') > 0`,
+    sql`json_extract(h.fields, '$.housesLight.value') > 0`,
+  ),
+  photos: sql`exists (select 1 from draft_photo h where h.draft_id = r.draft_id)`,
+};
+
 // The filters as a where clause, with any further conditions a query needs.
 function where(filters: QueueFilters, ...more: Query[]): Query {
   const parts: Query[] = [...more];
@@ -52,6 +75,7 @@ function where(filters: QueueFilters, ...more: Query[]): Query {
   if (filters.hazardType !== null) parts.push(sql`r.hazard_type = ${filters.hazardType}`);
   if (filters.sentFromMs !== null) parts.push(sql`r.sent_at >= ${new Date(filters.sentFromMs)}`);
   if (filters.ticketNumber !== null) parts.push(sql`r.ticket_number = ${filters.ticketNumber}`);
+  if (filters.has !== null) parts.push(HAS[filters.has]);
   return parts.reduce((joined, part, index) => (index === 0 ? sql` where ${part}` : sql`${joined} and ${part}`), empty);
 }
 
@@ -274,13 +298,20 @@ export async function sentPhoto(db: Database, photoId: string): Promise<DeskPhot
   return found === null ? null : deskPhoto(found);
 }
 
-// Reports per status under every filter but the status one, and per hazard type under every
-// filter but the hazard one, so each count says what picking it would show.
+// Reports per status, per hazard type and per holding, each under every filter but its own, so
+// each count says what picking it would show.
 export async function facetCounts(
   db: Database,
   filters: QueueFilters,
-): Promise<{ byStatus: Record<string, number>; byHazard: Record<string, number> }> {
-  const [statuses, hazards] = await Promise.all([
+): Promise<{ byStatus: Record<string, number>; byHazard: Record<string, number>; byHas: Record<DeskHas, number> }> {
+  const holding = async (has: DeskHas) => {
+    const counted = await row<{ total: number }>(
+      db,
+      sql`select count(*) as total from report r join ticket t on t.report_id = r.id${where({ ...filters, has })}`,
+    );
+    return [has, (counted as { total: number }).total] as const;
+  };
+  const [statuses, hazards, ...held] = await Promise.all([
     rows<{ status: string; total: number }>(
       db,
       sql`select t.status, count(*) as total from report r join ticket t on t.report_id = r.id${where({ ...filters, status: null })}
@@ -291,9 +322,11 @@ export async function facetCounts(
       sql`select r.hazard_type, count(*) as total from report r join ticket t on t.report_id = r.id${where({ ...filters, hazardType: null })}
         group by r.hazard_type`,
     ),
+    ...DESK_HAS.map(holding),
   ]);
   return {
     byStatus: Object.fromEntries(statuses.map((one) => [one.status, one.total])),
     byHazard: Object.fromEntries(hazards.map((one) => [one.hazard_type, one.total])),
+    byHas: Object.fromEntries(held) as Record<DeskHas, number>,
   };
 }

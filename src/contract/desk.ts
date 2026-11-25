@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { DESK_HAS } from "../domain/deskQueue";
 import { summaryGroupSchema } from "./card";
 import { hazardTypeSchema, reporterRoleSchema, timeSchema } from "./common";
 import { eventTimeSchema, ticketStatusSchema } from "./tracking";
@@ -41,12 +42,14 @@ export const deskQueueSchema = z.object({
 
 export type DeskQueue = z.infer<typeof deskQueueSchema>;
 
-// How many reports each status queue and each hazard chip would show under the other filters.
+// How many reports each status queue, hazard chip and holding (victims, photos...) would show
+// under the other filters.
 export const deskSummarySchema = z.object({
   account: accountSchema,
   total: z.number().int().nonnegative(),
   byStatus: z.record(ticketStatusSchema, z.number().int().nonnegative()),
   byHazard: z.partialRecord(hazardTypeSchema, z.number().int().nonnegative()),
+  byHas: z.record(z.enum(DESK_HAS), z.number().int().nonnegative()),
 });
 
 export type DeskSummary = z.infer<typeof deskSummarySchema>;

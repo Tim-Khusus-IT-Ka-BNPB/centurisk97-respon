@@ -10,7 +10,7 @@ import {
   deskSummarySchema,
 } from "../../contract/desk";
 import { ticketStatusSchema } from "../../contract/tracking";
-import { DESK_PERIODS } from "../../domain/deskQueue";
+import { DESK_HAS, DESK_PERIODS } from "../../domain/deskQueue";
 import { isTicketNumber } from "../../domain/ticketNumber";
 import type { StaffPrincipal } from "../../ports/identity";
 import {
@@ -35,6 +35,7 @@ const queueQuery = z.object({
   period: z.enum(DESK_PERIODS).default("all"),
   // Any text, so a wrong number is answered on its field, not as a malformed request.
   ticket: z.string().max(40).optional(),
+  has: z.enum(DESK_HAS).optional(),
   page: z.coerce.number().int().min(1).max(10_000).default(1),
 });
 
@@ -86,6 +87,7 @@ export function addDeskRoutes(api: Api): void {
         hazardType: query.hazardType ?? null,
         period: query.period,
         ticketNumber,
+        has: query.has ?? null,
         page: query.page,
       });
       c.header("x-robots-tag", "noindex");
@@ -126,7 +128,7 @@ export function addDeskRoutes(api: Api): void {
   for (const [path, schema, read, description] of [
     ["/desk/map", deskMapSchema, deskMap, "The filtered reports as points, newest first"],
     ["/desk/photos", deskGallerySchema, deskGallery, "Photos of the filtered reports, newest first"],
-    ["/desk/summary", deskSummarySchema, deskSummary, "Counts per status queue and per hazard chip"],
+    ["/desk/summary", deskSummarySchema, deskSummary, "Counts per status queue, hazard chip and holding"],
   ] as const)
     addRoute(
       api,
@@ -152,6 +154,7 @@ export function addDeskRoutes(api: Api): void {
             hazardType: query.hazardType ?? null,
             period: query.period,
             ticketNumber,
+            has: query.has ?? null,
           }),
         );
       },

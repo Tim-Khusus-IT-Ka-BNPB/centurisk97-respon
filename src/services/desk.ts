@@ -12,7 +12,14 @@ import {
   sentPhoto,
 } from "../adapters/d1/desk";
 import type { DeskGallery, DeskMap, DeskQueue, DeskReport, DeskSummary } from "../contract/desk";
-import { DESK_PAGE_SIZE, type DeskPeriod, GALLERY_PHOTOS, MAP_POINTS, periodStart } from "../domain/deskQueue";
+import {
+  DESK_PAGE_SIZE,
+  type DeskHas,
+  type DeskPeriod,
+  GALLERY_PHOTOS,
+  MAP_POINTS,
+  periodStart,
+} from "../domain/deskQueue";
 import { type DeskCapability, mayUse } from "../domain/deskRights";
 import type { EventTimeValue, FieldStates, PlaceValue } from "../domain/fieldState";
 import { impactOf } from "../domain/impact";
@@ -70,6 +77,7 @@ export type QueueQuery = {
   readonly hazardType: string | null;
   readonly period: DeskPeriod;
   readonly ticketNumber: string | null;
+  readonly has: DeskHas | null;
   readonly page: number;
 };
 
@@ -78,6 +86,7 @@ const filtersOf = (bindings: ServiceBindings, query: Omit<QueueQuery, "page">): 
   hazardType: query.hazardType,
   sentFromMs: periodStart(query.period, bindings.clock.now()),
   ticketNumber: query.ticketNumber,
+  has: query.has,
 });
 
 const photoView = (photo: DeskPhoto): DeskGallery["photos"][number] => {
@@ -170,6 +179,7 @@ export async function deskSummary(
       total,
       byStatus: byStatus as DeskSummary["byStatus"],
       byHazard: counts.byHazard as DeskSummary["byHazard"],
+      byHas: counts.byHas,
     },
   };
 }

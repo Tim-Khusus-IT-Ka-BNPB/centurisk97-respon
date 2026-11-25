@@ -32,7 +32,7 @@ export const LIMITS = {
   "model.draft": { subject: "draft", window: "draftLife", max: 30, effect: "templatesOnly" },
   "model.day": { subject: "number", window: "wibDay", max: 150, effect: "templatesOnly" },
   "address.staffSignIn": { subject: "address", window: "clockHour", max: 30, effect: "refuse" },
-  "desk.read": { subject: "staff", window: "clockHour", max: 600, effect: "refuse" },
+  "desk.read": { subject: "staff", window: "clockHour", max: 1200, effect: "refuse" },
   "desk.write": { subject: "staff", window: "clockHour", max: 120, effect: "refuse" },
 } as const satisfies Record<string, LimitRow>;
 

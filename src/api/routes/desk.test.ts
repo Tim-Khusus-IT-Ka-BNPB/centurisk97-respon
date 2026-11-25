@@ -3,6 +3,7 @@ import { SEEDED_SESSIONS } from "../../../db/synthetic/reporters";
 import {
   type DeskQueue,
   type DeskReport,
+  deskMapSchema,
   deskQueueSchema,
   deskReportSchema,
   deskSummarySchema,
@@ -194,6 +195,39 @@ describe("counts for the queues and the chips", () => {
     const all = deskSummarySchema.parse((await deskOfficer().call("GET", "/desk/summary")).json);
     const [counted] = await query<{ total: number }>`select count(*) as total from report`;
     expect(all.total).toBe(counted?.total);
+  });
+
+  test("a holding counts the reports with a figure above zero, and filters every view the same", async () => {
+    const before = deskSummarySchema.parse((await deskOfficer().call("GET", "/desk/summary")).json).byHas;
+    const phone = browser(fetchApi);
+    const started = await startDraft(phone, freshNumber().typed);
+    const told = await phone.call(
+      "POST",
+      `/drafts/${started.draftId}/turns`,
+      turn(started, { kind: "freeText", text: "banjir, dua orang meninggal" }),
+    );
+    // Two dead; missing, hurt and houses left empty; nobody displaced: only the dead count.
+    const ticket = await sendDraft(phone, told.draft, village, {
+      tick,
+      overrides: {
+        numberForm: (card) =>
+          "groupId" in card && card.groupId === "victims"
+            ? { values: { missing: "", injured: "", housesHeavy: "" } }
+            : { optionIds: ["allNone"] },
+      },
+    });
+    const after = deskSummarySchema.parse((await deskOfficer().call("GET", "/desk/summary")).json).byHas;
+    expect(after).toEqual({ ...before, victims: before.victims + 1 });
+    const shows = async (has: string) => {
+      const answer = await deskOfficer().call("GET", `/desk/reports?has=${has}&ticket=${ticket}`);
+      return deskQueueSchema.parse(answer.json).total;
+    };
+    expect([await shows("victims"), await shows("displaced"), await shows("houses"), await shows("photos")]).toEqual([
+      1, 0, 0, 0,
+    ]);
+    const map = deskMapSchema.parse((await deskOfficer().call("GET", `/desk/map?has=victims&ticket=${ticket}`)).json);
+    expect(map.points).toHaveLength(1);
+    expect((await deskOfficer().call("GET", "/desk/reports?has=everything")).status).toBe(400);
   });
 
   test("a regional account and a wrong ticket number are refused", async () => {
