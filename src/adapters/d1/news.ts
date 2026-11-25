@@ -34,14 +34,14 @@ export const UNREAD: Query = sql`(select count(*) from notice n where n.ticket_n
 export type NewsState = { readonly readAtMs: number | null; readonly stopped: boolean };
 
 export async function newsState(db: Database, ticketNumber: string): Promise<NewsState> {
-  const found = await row<{ read_at: string | null; stopped: number }>(
+  const found = await row<{ read_at: string; stopped: number }>(
     db,
     sql`select w.read_at, w.stopped from report_news w join report r on r.id = w.report_id
       where r.ticket_number = ${ticketNumber}`,
   );
   return found === null
     ? { readAtMs: null, stopped: false }
-    : { readAtMs: found.read_at === null ? null : Date.parse(found.read_at), stopped: found.stopped === 1 };
+    : { readAtMs: Date.parse(found.read_at), stopped: found.stopped === 1 };
 }
 
 // What was written about a report that its news is made from, oldest first.

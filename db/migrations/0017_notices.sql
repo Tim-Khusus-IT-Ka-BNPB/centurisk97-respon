@@ -22,7 +22,7 @@ BEGIN SELECT RAISE(ABORT, 'notice is append-only'); END;
 -- notice is written.
 CREATE TABLE report_news (
   report_id text PRIMARY KEY REFERENCES report (id),
-  read_at text,
+  read_at text NOT NULL,
   stopped integer NOT NULL DEFAULT 0 CHECK (stopped IN (0, 1)),
   changed_at text NOT NULL
 );
