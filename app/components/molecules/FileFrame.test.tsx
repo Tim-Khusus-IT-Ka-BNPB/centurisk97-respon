@@ -1,4 +1,5 @@
 import { fireEvent, screen } from "@testing-library/react";
+import { renderToString } from "react-dom/server";
 import { useLocation } from "react-router";
 import { describe, expect, test, vi } from "vitest";
 import { renderPage } from "../../testing/render";
@@ -18,6 +19,8 @@ function Page() {
   );
 }
 
+const Target = () => <p>{useFileTarget() ?? "none"}</p>;
+
 async function frame(contentWindow?: unknown) {
   renderPage(<Page />, { path: PATH });
   const found = (await screen.findByTitle("Unduhan berkas")) as HTMLIFrameElement;
@@ -30,6 +33,10 @@ describe("the frame files come into", () => {
     const found = await frame();
     expect(found.hidden).toBe(true);
     expect(screen.getByRole("link", { name: "Unduh" }).getAttribute("target")).toBe(found.name);
+  });
+
+  test("with no script it comes as it always did", () => {
+    expect(renderToString(<Target />)).toBe("<p>none</p>");
   });
 
   test.each([
