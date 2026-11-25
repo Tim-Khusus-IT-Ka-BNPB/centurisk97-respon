@@ -21,6 +21,7 @@ exports[`draft states > the state map as agreed 1`] = `
   "guided_chronology": [
     "asking",
     "photos",
+    "summary",
     "cancelled",
     "expired",
   ],
@@ -52,6 +53,8 @@ exports[`draft states > the state map as agreed 1`] = `
   "summary": [
     "sent",
     "asking",
+    "guided_chronology",
+    "photos",
     "cancelled",
     "expired",
   ],

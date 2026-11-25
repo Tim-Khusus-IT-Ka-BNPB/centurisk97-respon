@@ -3,6 +3,7 @@ import type { VictimAnswer } from "../emergency";
 import type { FieldStates, PlaceValue } from "../fieldState";
 import type { FieldId, GroupId } from "../fields/catalogue";
 import type { HazardTypeId } from "../hazards";
+import { PHOTO } from "../photoChecks";
 
 // A card shown over the question: the cancel confirm, or a group reopened from the summary.
 type Overlay =
@@ -20,6 +21,14 @@ export type PlaceReading = {
 // How the photo step ended: photos taken, or the reporter said they cannot send any.
 type PhotosDone = "continued" | "cannotSend";
 
+// News for a report already sent: what its newest version held when the follow-up was opened, and
+// how many photos it may still add.
+export type FollowUpOf = {
+  readonly ticketNumber: string;
+  readonly base: FieldStates;
+  readonly photosLeft: number;
+};
+
 // Everything a draft holds while it is being filled. All of it is removed when the draft ends.
 export type DraftContent = {
   readonly states: FieldStates;
@@ -35,6 +44,7 @@ export type DraftContent = {
   readonly photosDone?: PhotosDone | null;
   // An emergency report: whether anyone is hurt, missing or trapped, null until asked.
   readonly emergency?: { readonly victims: VictimAnswer | null } | null;
+  readonly followUp?: FollowUpOf | null;
 };
 
 // How many times each field was answered while still empty. A second empty answer settles it.
@@ -43,6 +53,17 @@ export type AskedCounts = Readonly<Partial<Record<FieldId, number>>>;
 export const EMPTY_CONTENT: DraftContent = { states: {}, chronology: null, guesses: [], overlay: null, danger: null };
 
 export const EMERGENCY_CONTENT: DraftContent = { ...EMPTY_CONTENT, emergency: { victims: null } };
+
+// A follow-up starts on its review: what the report holds, and nothing new yet.
+export const followUpContent = (followUp: FollowUpOf): DraftContent => ({
+  ...EMPTY_CONTENT,
+  states: followUp.base,
+  photosDone: "continued",
+  followUp,
+});
+
+// How many photos this draft may hold.
+export const photoMax = (content: DraftContent): number => content.followUp?.photosLeft ?? PHOTO.maxPerDraft;
 
 export type Question =
   | { readonly kind: "place" }

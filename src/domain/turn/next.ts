@@ -4,8 +4,9 @@ import type { VictimAnswer } from "../emergency";
 import type { FieldState } from "../fieldState";
 import { applicableFields, chosenHazardType } from "../fields/applicable";
 import type { FieldDefinition, FieldId } from "../fields/catalogue";
+import { isLocked, openedBy } from "../followUp";
 import type { HazardTypeId } from "../hazards";
-import type { AskedCounts, DraftContent, Question } from "./content";
+import type { AskedCounts, DraftContent, FollowUpOf, Question } from "./content";
 
 // Second empty answer settles a field, so a field is asked again at most once.
 export const MAX_ASKS = 2;
@@ -56,10 +57,28 @@ function emergencyQuestion(content: DraftContent, victims: VictimAnswer | null):
   return content.photosDone ? { kind: "summary" } : { kind: "photos" };
 }
 
+// News for a sent report asks only the group picked and what the news opens; what the report is
+// about is never asked again.
+function followUpQuestion(content: DraftContent, { base }: FollowUpOf): Question {
+  const { overlay, states } = content;
+  const fields = applicableFields(states).filter((field) => !isLocked(base, field.id as FieldId));
+  if (overlay?.kind === "edit") {
+    const open = fields.filter(
+      (field) => field.group === overlay.groupId && !overlay.done.includes(field.id as FieldId),
+    );
+    if (open[0]) return questionFor(open[0], open, content, false);
+  }
+  const ids = openedBy(base, states);
+  const opened = fields.filter((field) => ids.includes(field.id as FieldId));
+  if (opened[0]) return questionFor(opened[0], opened, content, false);
+  return content.photosDone ? { kind: "summary" } : { kind: "photos" };
+}
+
 // What the reporter is asked next. Code decides this from the field table alone: first every
 // applicable field never asked, in table order, then each field left empty once more, then the summary.
 export function nextQuestion(_state: DraftState, content: DraftContent, asked: AskedCounts): Question {
   if (content.overlay?.kind === "cancelConfirm") return { kind: "cancelConfirm" };
+  if (content.followUp) return followUpQuestion(content, content.followUp);
   if (content.states.place === undefined) return content.placeReading ? { kind: "placeConfirm" } : { kind: "place" };
   if (content.emergency) return emergencyQuestion(content, content.emergency.victims);
   if (content.states.neighbourhood === undefined) return { kind: "neighbourhood" };

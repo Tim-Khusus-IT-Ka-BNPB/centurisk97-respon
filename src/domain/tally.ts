@@ -11,7 +11,7 @@ export type Tally = {
 export function tallyOf(states: FieldStates, fieldIds: readonly FieldId[]): Tally {
   const counted = fieldIds.map((fieldId) => ({ fieldId, count: countOf(states[fieldId]) }));
   return {
-    counts: counted.flatMap(({ fieldId, count }) => (count !== null && count > 0 ? [{ fieldId, count }] : [])),
+    counts: counted.flatMap(({ fieldId, count }) => (count ? [{ fieldId, count }] : [])),
     none: counted.flatMap(({ fieldId, count }) => (count === 0 ? [fieldId] : [])),
     unknown: counted.flatMap(({ fieldId, count }) => (count === null ? [fieldId] : [])),
   };

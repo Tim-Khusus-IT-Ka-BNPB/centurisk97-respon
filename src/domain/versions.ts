@@ -5,12 +5,11 @@ import { FIELDS, type FieldId } from "./fields/catalogue";
 // is what a value says, never where it came from.
 
 // What a field says: nothing known reads the same however it came to be so.
-function told(state: FieldState | undefined): string {
-  if (state?.state === "none") return "none";
-  if (state?.state !== "value") return "";
+function told(state: FieldState | undefined): string | 0 | null {
+  if (state?.state === "none") return 0;
+  if (state?.state !== "value") return null;
   // A chronology is its sentences; how it was answered is not shown.
-  const value = state.value as number | string | { readonly text?: string };
-  return JSON.stringify(typeof value === "object" && value.text !== undefined ? value.text : value);
+  return JSON.stringify((state.value as { readonly text?: string }).text ?? state.value);
 }
 
 export type VersionChange = {

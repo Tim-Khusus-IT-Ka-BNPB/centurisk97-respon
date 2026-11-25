@@ -7,10 +7,11 @@ export const DRAFT_MOVES = {
   place_confirm: ["neighbourhood", "asking", "place", "cancelled", "expired"],
   neighbourhood: ["asking", "cancelled", "expired"],
   asking: ["guided_chronology", "free_story", "photos", "summary", "cancelled", "expired"],
-  guided_chronology: ["asking", "photos", "cancelled", "expired"],
+  // News added to a sent report tells its chronology and its photos straight from the summary.
+  guided_chronology: ["asking", "photos", "summary", "cancelled", "expired"],
   free_story: ["asking", "photos", "cancelled", "expired"],
   photos: ["summary", "cancelled", "expired"],
-  summary: ["sent", "asking", "cancelled", "expired"],
+  summary: ["sent", "asking", "guided_chronology", "photos", "cancelled", "expired"],
   sent: [],
   cancelled: [],
   expired: [],

@@ -38,7 +38,8 @@ export type TurnInput =
   | { readonly kind: "status"; readonly tickets: readonly string[] }
   | { readonly kind: "refused"; readonly topic: TopicVerdict }
   | { readonly kind: "back" }
-  | { readonly kind: "editGroup"; readonly groupId: GroupId }
+  // A group of the summary, or the photos of news for a sent report.
+  | { readonly kind: "editGroup"; readonly groupId: GroupId | "photos" }
   | { readonly kind: "cancel" }
   | { readonly kind: "confirm" }
   | { readonly kind: "dismiss" };
@@ -113,6 +114,10 @@ export function runTurn(draft: TurnDraft, input: TurnInput, context: AnswerConte
       return draft.content.overlay ? goBack(draft) : { kind: "stale" };
     case "editGroup":
       if (question.kind !== "summary") return { kind: "stale" };
+      if (input.groupId === "photos")
+        return draft.content.followUp
+          ? settle(remembered(draft, { ...draft.content, photosDone: null }, draft.asked), [])
+          : { kind: "stale" };
       return settle(
         { ...draft, content: { ...draft.content, overlay: { kind: "edit", groupId: input.groupId, done: [] } } },
         [],

@@ -284,7 +284,7 @@ export function jpegSize(bytes: Uint8Array): JpegSize | null {
       const { marker, start } = segment;
       if (marker === EOI || marker === SOS) return null;
       // Frame headers are C0 to CF, but for the tables among them (C4, C8, CC).
-      if (marker === 0xc0 || (marker > 0xc0 && marker <= 0xcf && marker % 4 !== 0)) return sizeAt(reader, start);
+      if (marker >= 0xc0 && marker <= 0xcf && (marker === 0xc0 || marker % 4 !== 0)) return sizeAt(reader, start);
       at = segment.end;
     }
   } catch {

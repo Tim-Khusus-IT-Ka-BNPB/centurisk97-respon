@@ -3,7 +3,7 @@ import { type Extraction, validateExtraction } from "../extraction";
 import type { FieldState, FieldStates } from "../fieldState";
 import { type MaskedText, maskText } from "../masking";
 import type { AnswerContext } from "./answer";
-import { type DraftContent, EMPTY_CONTENT } from "./content";
+import { type DraftContent, EMPTY_CONTENT, followUpContent } from "./content";
 import { runTurn, type TurnDraft, type TurnInput } from "./engine";
 import { applyStory, classifyFreeText } from "./freeText";
 
@@ -481,5 +481,45 @@ describe("a GPS reading", () => {
       expect(refused.notices).toEqual([{ kind: "refusal", copyKey: `refusal.place.${kind}` }]);
       expect(refused.draft.backStack).toEqual([]);
     }
+  });
+});
+
+describe("news for a sent report", () => {
+  const base: FieldStates = { ...placed, hazardType: tapped("flood"), hazardSubtype: tapped("riverOverflow") };
+  const followUp: TurnDraft = {
+    ...draft(base, { state: "summary" }),
+    content: followUpContent({ ticketNumber: "LA-251126-01", base, photosLeft: 4 }),
+  };
+
+  test("its photos are opened from the review and can be gone back from; another draft's are not", () => {
+    const opened = next(followUp, { kind: "editGroup", groupId: "photos" });
+    expect(opened.question).toEqual({ kind: "photos" });
+    expect(opened.draft.state).toBe("photos");
+    expect(next(opened.draft, { kind: "back" }).question).toEqual({ kind: "summary" });
+    expect(opened.notices).toEqual([]);
+    // The review of a report of its own has no such step.
+    const review: TurnDraft = {
+      ...followUp,
+      content: { ...followUp.content, followUp: null, emergency: { victims: "no" } },
+    };
+    expect(run(review, { kind: "editGroup", groupId: "photos" })).toEqual({ kind: "stale" });
+  });
+
+  test("a chronology told again goes from the review through its steps and back", () => {
+    const opened = next(followUp, { kind: "editGroup", groupId: "event" });
+    expect(opened.question).toEqual({ kind: "chronologyStep", step: 0 });
+    expect(opened.draft.state).toBe("guided_chronology");
+  });
+
+  test("words on the review change a value the report already held", () => {
+    const told = next(
+      {
+        ...followUp,
+        content: { ...followUp.content, states: { ...base, dead: { state: "none", origin: "boxEntry" } } },
+      },
+      story("dua orang meninggal", { fields: { dead: { kind: "count", count: 2, quote: "dua orang meninggal" } } }),
+    );
+    expect(told.question).toEqual({ kind: "summary" });
+    expect(told.draft.content.states.dead).toMatchObject({ state: "value", value: 2, quote: "dua orang meninggal" });
   });
 });

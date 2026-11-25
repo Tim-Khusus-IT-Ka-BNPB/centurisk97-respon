@@ -1,6 +1,14 @@
 import { describe, expect, test } from "vitest";
 import type { FieldState, FieldStates } from "../fieldState";
-import { type DraftContent, EMERGENCY_CONTENT, EMPTY_CONTENT, type Question, questionFields } from "./content";
+import {
+  type DraftContent,
+  EMERGENCY_CONTENT,
+  EMPTY_CONTENT,
+  followUpContent,
+  photoMax,
+  type Question,
+  questionFields,
+} from "./content";
 import { nextQuestion, stateFor } from "./next";
 import { choiceOptions, isExclusiveOption } from "./options";
 
@@ -323,5 +331,69 @@ describe("an emergency", () => {
 
   test("a draft that is not one is asked as before", () => {
     expect(next({ place }, {}, { emergency: null })).toEqual({ kind: "neighbourhood" });
+  });
+});
+
+describe("news for a sent report", () => {
+  const base: FieldStates = { ...event, dead: count(1), injured: none };
+  const followUp = (states: FieldStates = base, extra: Partial<DraftContent> = {}): DraftContent => ({
+    ...followUpContent({ ticketNumber: "LA-251126-01", base, photosLeft: 4 }),
+    states,
+    ...extra,
+  });
+  const asks = (content: DraftContent) => nextQuestion("summary", content, {});
+  const edit = (groupId: "event" | "victims", done: ("chronology" | "dead")[] = []) =>
+    ({ overlay: { kind: "edit", groupId, done } }) as const;
+
+  test("starts on its review, with what the report holds and the photos it may add", () => {
+    const content = followUpContent({ ticketNumber: "LA-251126-01", base, photosLeft: 4 });
+    expect(content).toEqual({
+      ...EMPTY_CONTENT,
+      states: base,
+      photosDone: "continued",
+      followUp: { ticketNumber: "LA-251126-01", base, photosLeft: 4 },
+    });
+    expect(asks(content)).toEqual({ kind: "summary" });
+    expect(photoMax(content)).toBe(4);
+    expect(photoMax(EMPTY_CONTENT)).toBe(10);
+  });
+
+  test("asks nothing the report left open, only the group picked", () => {
+    expect(asks(followUp(base, edit("victims")))).toEqual({
+      kind: "numberForm",
+      groupId: "victims",
+      fieldIds: ["dead", "missing", "injured"],
+      askedBefore: false,
+    });
+    expect(asks(followUp(base, edit("victims", ["dead"])))).toMatchObject({ fieldIds: ["missing", "injured"] });
+  });
+
+  test("what the report is about is not asked again: its event group asks the chronology alone", () => {
+    expect(asks(followUp(base, edit("event")))).toEqual({ kind: "chronologyStep", step: 0 });
+    expect(asks(followUp(base, edit("event", ["chronology"])))).toEqual({ kind: "summary" });
+  });
+
+  test("a report whose hazard was not known may be told it", () => {
+    const tap: FieldStates = { ...placed, hazardType: empty, eventTime: event.eventTime };
+    const content = {
+      ...followUpContent({ ticketNumber: "LA-251126-01", base: tap, photosLeft: 4 }),
+      ...edit("event"),
+    };
+    expect(asks(content)).toEqual({ kind: "choice", fieldId: "hazardType" });
+  });
+
+  test("a field the news opens is asked before the review", () => {
+    expect(asks(followUp({ ...base, injured: count(3) }))).toEqual({
+      kind: "numberForm",
+      groupId: "victims",
+      fieldIds: ["injuredInpatient"],
+      askedBefore: false,
+    });
+    expect(asks(followUp({ ...base, injured: count(3), injuredInpatient: none }))).toEqual({ kind: "summary" });
+  });
+
+  test("photos reopened come before the review; a cancel is confirmed first", () => {
+    expect(asks(followUp(base, { photosDone: null }))).toEqual({ kind: "photos" });
+    expect(asks(followUp(base, { overlay: { kind: "cancelConfirm" } }))).toEqual({ kind: "cancelConfirm" });
   });
 });

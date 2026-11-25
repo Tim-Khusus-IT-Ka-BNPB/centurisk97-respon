@@ -273,5 +273,7 @@ describe("the size of a picture", () => {
     expect(jpegSize(Uint8Array.from([0xff, 0xd8, 0xff, 0xd9, ...framed(0xc0, 3).subarray(2)]))).toBeNull();
     expect(jpegSize(Uint8Array.from([0xff, 0xd8, 0xff, 0xda, 0, 2, ...framed(0xc0, 3).subarray(2)]))).toBeNull();
     expect(jpegSize(Uint8Array.from([1, 2, 3]))).toBeNull();
+    // The same picture under other first bytes is no JPEG.
+    expect(jpegSize(Uint8Array.from([0, 0, ...framed(0xc0, 3).subarray(2)]))).toBeNull();
   });
 });
