@@ -1,7 +1,19 @@
 import type { ReactNode } from "react";
-import { Links, Meta, Outlet, Scripts, ScrollRestoration, useFetchers, useRouteLoaderData } from "react-router";
+import {
+  Links,
+  Meta,
+  Outlet,
+  Scripts,
+  ScrollRestoration,
+  type ShouldRevalidateFunctionArgs,
+  useFetchers,
+  useRouteLoaderData,
+} from "react-router";
+import { makeText } from "../src/copy/text";
 import type { Route } from "./+types/root";
 import { NavProgress } from "./components/atoms/NavProgress";
+import { FailedScreen } from "./components/organisms/FailedScreen";
+import { FAILED_TEXTS } from "./lib/failedTexts";
 import { type Theme, themeFromCookie } from "./lib/theme";
 import "./app.css";
 
@@ -16,6 +28,16 @@ export const loader = ({ request, context }: Route.LoaderArgs) => ({
   origin: context.origin,
   theme: themeFromCookie(request.headers.get("cookie")),
 });
+
+// Only a theme picked changes them. Left out of every other refresh, they stay when it fails, and so
+// does the theme.
+export const shouldRevalidate = ({ formAction }: ShouldRevalidateFunctionArgs) => formAction === "/lapor/theme";
+
+// Every page has its own; this is what is left when the page cannot be shown.
+export const meta: Route.MetaFunction = () => [
+  { title: makeText(FAILED_TEXTS)("failed.page", { appName: "app.name" }) },
+  { name: "robots", content: "noindex, nofollow" },
+];
 
 const BAR = { light: "#e9eff7", dark: "#142235" } as const;
 
@@ -58,3 +80,5 @@ export default function App() {
     </>
   );
 }
+
+export const ErrorBoundary = FailedScreen;

@@ -1,5 +1,5 @@
 import { cleanup, type RenderResult, render } from "@testing-library/react";
-import type { ReactNode } from "react";
+import type { ComponentType, ReactNode } from "react";
 import { type ActionFunction, createRoutesStub, type LoaderFunction } from "react-router";
 import { afterEach } from "vitest";
 import type { DraftBody } from "../../src/contract/draft";
@@ -23,6 +23,8 @@ type Options = {
   readonly entry?: string;
   readonly action?: ActionFunction;
   readonly loader?: LoaderFunction;
+  // What stands in for the page when it cannot be shown.
+  readonly errorBoundary?: ComponentType;
 };
 
 // An answer that never comes, to look at a page while its form is on the way.
@@ -36,11 +38,18 @@ const Nothing = () => null;
 // Draws a component inside a router and the copy, as a page would.
 export function renderPage(
   ui: ReactNode,
-  { path = "/lapor/report/d", entry, action, loader }: Options = {},
+  { path = "/lapor/report/d", entry, action, loader, errorBoundary }: Options = {},
 ): RenderResult {
   current = ui;
   const Stub = createRoutesStub([
-    { path, Component: Host, action: action ?? Nothing, loader: loader ?? Nothing, HydrateFallback: Nothing },
+    {
+      path,
+      Component: Host,
+      action: action ?? Nothing,
+      loader: loader ?? Nothing,
+      HydrateFallback: Nothing,
+      ErrorBoundary: errorBoundary,
+    },
     { path: "*", Component: Nothing },
   ]);
   return render(<Stub initialEntries={[entry ?? path]} />);

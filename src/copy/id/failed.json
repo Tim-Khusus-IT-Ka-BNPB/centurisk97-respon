@@ -1,0 +1,9 @@
+{
+  "failed.page": "Halaman belum bisa dibuka, {appName}",
+  "failed.title": "Halaman belum bisa dibuka",
+  "failed.lead": "Sambungan internet mungkin terputus, atau layanan sedang terganggu. Laporan dan kabar yang sudah terkirim tetap tersimpan.",
+  "failed.reload": "Muat ulang",
+  "failed.busy": "Memuat ulang...",
+  "failed.still": "Masih belum bisa dibuka. Periksa sambungan internet, lalu muat ulang lagi.",
+  "failed.home": "Ke halaman awal"
+}
