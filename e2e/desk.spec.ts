@@ -149,11 +149,11 @@ test("a desk officer finds a new report, reads where each value came from, and o
   const heading = page.getByRole("heading", { level: 1, name: ticketNumber });
   await expect(heading).toBeVisible();
   const header = page.locator("header").filter({ has: heading });
-  if (script) await expect(header.getByText("Dilihat")).toBeVisible();
+  if (script) await expect(header.getByText("Dilihat", { exact: true })).toBeVisible();
   else {
-    await expect(header.getByText("Diterima")).toBeVisible();
+    await expect(header.getByText("Diterima", { exact: true })).toBeVisible();
     await page.getByRole("button", { name: "Tandai sudah dilihat" }).click();
-    await expect(header.getByText("Dilihat")).toBeVisible();
+    await expect(header.getByText("Dilihat", { exact: true })).toBeVisible();
   }
   const values = page.getByRole("region", { name: "Isian laporan" });
   await expect(
