@@ -44,7 +44,7 @@ function Figure({ spread, missing }: { readonly spread: Spread; readonly missing
   );
 }
 
-const cell = "border-t border-line px-3 py-3 align-top";
+const cell = "border-t border-line px-4 py-3.5 align-top";
 
 function AgencyRow({ agency }: { readonly agency: Agency }) {
   const t = useText();
@@ -90,11 +90,14 @@ export function DeskResponseView({
           <h1 className="text-page font-bold">{t("desk.response.title")}</h1>
           <p className="max-w-[65ch] text-muted">{t("desk.response.lead")}</p>
         </div>
-        <nav aria-label={t("desk.response.months")} className="flex items-center gap-2">
+        <nav
+          aria-label={t("desk.response.months")}
+          className="flex items-center gap-1 rounded-control border border-line bg-surface p-0.5"
+        >
           <Link
             to={`/lapor/meja/respons?month=${monthStep(month, -1)}`}
             aria-label={t("desk.response.before")}
-            className={buttonStyles({ variant: "secondary", size: "min", className: "px-3" })}
+            className={buttonStyles({ variant: "link", size: "min", className: "px-3" })}
           >
             <Icon name="chevronRight" className="size-5 rotate-180" />
           </Link>
@@ -102,7 +105,7 @@ export function DeskResponseView({
           <Link
             to={`/lapor/meja/respons?month=${monthStep(month, 1)}`}
             aria-label={t("desk.response.after")}
-            className={buttonStyles({ variant: "secondary", size: "min", className: "px-3" })}
+            className={buttonStyles({ variant: "link", size: "min", className: "px-3" })}
           >
             <Icon name="chevronRight" className="size-5" />
           </Link>
@@ -116,9 +119,9 @@ export function DeskResponseView({
         <div className="overflow-x-auto card-surface">
           <table className="w-full min-w-[34rem] border-separate border-spacing-0 text-start">
             <thead>
-              <tr className="text-meta text-muted">
+              <tr className="bg-sunken/60 text-meta text-muted">
                 {(["agency", "reports", "seen", "taken"] as const).map((column) => (
-                  <th key={column} scope="col" className="px-3 py-2.5 text-start font-semibold">
+                  <th key={column} scope="col" className="px-4 py-3 text-start font-semibold">
                     {t(`desk.response.col.${column}`)}
                   </th>
                 ))}

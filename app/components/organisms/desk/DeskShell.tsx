@@ -17,16 +17,16 @@ const RESPONSE = "/lapor/meja/respons";
 const VIEW_ICON: Readonly<Record<DeskView, IconName>> = { list: "list", map: "map", gallery: "images" };
 
 const item =
-  "group/item flex min-h-target-min items-center gap-3 rounded-control px-2.5 text-ink no-underline hover:bg-sunken aria-[current=page]:bg-selected aria-[current=page]:font-semibold";
+  "group/item flex min-h-target-min items-center gap-3 rounded-control px-3 text-ink no-underline hover:bg-sunken lg:min-h-10 lg:text-[0.9375rem] aria-[current=page]:bg-selected aria-[current=page]:font-semibold aria-[current=page]:text-primary";
+
+const navIcon = "text-muted group-aria-[current=page]/item:text-primary";
 
 function Count({ n }: { readonly n: number | undefined }) {
   return n === undefined ? null : (
     <span
       className={cn(
-        "ms-auto min-w-7 rounded-chip px-1.5 py-0.5 text-center text-meta tabular-nums",
-        n === 0
-          ? "text-muted"
-          : "bg-sunken font-semibold group-aria-[current=page]/item:bg-primary group-aria-[current=page]/item:text-on-primary",
+        "ms-auto text-meta tabular-nums group-aria-[current=page]/item:text-primary",
+        n === 0 ? "text-muted" : "font-semibold",
       )}
     >
       {n.toLocaleString("id-ID")}
@@ -41,7 +41,7 @@ export const counted = (t: Text, label: string, n: number | undefined) =>
 function Group({ label, children }: { readonly label: string; readonly children: ReactNode }) {
   return (
     <nav aria-label={label} className="flex flex-col gap-1">
-      <p className="px-2.5 pb-1 text-meta font-semibold text-muted">{label}</p>
+      <p className="px-3 pb-1 text-meta text-muted">{label}</p>
       <ul className="flex flex-col gap-0.5">{children}</ul>
     </nav>
   );
@@ -55,26 +55,41 @@ export type DeskPlace = {
   readonly summary: DeskSummary | null;
 };
 
-function DeskNav({ place, account }: { readonly place: DeskPlace; readonly account: string }) {
+// Who is signed in, the theme and the way out.
+function Account({ account, className }: { readonly account: string; readonly className?: string }) {
+  const t = useText();
+  return (
+    <div className={cn("flex flex-col gap-1", className)}>
+      <p className="flex items-center gap-3 px-3 py-1 text-meta">
+        <span
+          aria-hidden="true"
+          className="flex size-9 shrink-0 items-center justify-center rounded-full bg-primary font-bold text-on-primary uppercase"
+        >
+          {account.slice(0, 1)}
+        </span>
+        <span className="min-w-0 text-muted">{t("desk.account", { label: account })}</span>
+      </p>
+      <div className="flex items-center justify-between gap-2">
+        <Form method="post" action="/lapor/meja" className="flex-1">
+          <input type="hidden" name="action" value="signOut" />
+          <button type="submit" className={cn(item, "w-full")}>
+            <Icon name="logOut" className="text-muted" />
+            {t("desk.signOut")}
+          </button>
+        </Form>
+        <ThemeSwitch />
+      </div>
+    </div>
+  );
+}
+
+function DeskNav({ place }: { readonly place: DeskPlace }) {
   const t = useText();
   const { pathname } = useLocation();
   const { filters, current, summary } = place;
   const all = summary === null ? undefined : STATUSES.reduce((sum, status) => sum + summary.byStatus[status], 0);
   return (
-    <div className="flex flex-1 flex-col gap-6">
-      <div className="flex flex-col gap-2 rounded-control border border-line p-2.5">
-        <p className="text-meta text-muted">{t("desk.account", { label: account })}</p>
-        <div className="flex items-center justify-between gap-2">
-          <ThemeSwitch />
-          <Form method="post" action="/lapor/meja">
-            <input type="hidden" name="action" value="signOut" />
-            <button type="submit" className={cn(item, "font-medium")}>
-              <Icon name="logOut" />
-              {t("desk.signOut")}
-            </button>
-          </Form>
-        </div>
-      </div>
+    <div className="flex flex-col gap-5">
       <Group label={t("desk.nav.views")}>
         {DESK_VIEWS.map((view) => (
           <li key={view}>
@@ -83,7 +98,7 @@ function DeskNav({ place, account }: { readonly place: DeskPlace; readonly accou
               aria-current={current?.view === view ? "page" : undefined}
               className={item}
             >
-              <Icon name={VIEW_ICON[view]} />
+              <Icon name={VIEW_ICON[view]} className={navIcon} />
               {t(`desk.nav.view.${view}`)}
             </Link>
           </li>
@@ -97,7 +112,7 @@ function DeskNav({ place, account }: { readonly place: DeskPlace; readonly accou
             aria-label={counted(t, t("desk.nav.all"), all)}
             className={item}
           >
-            <Icon name="inbox" />
+            <Icon name="inbox" className={navIcon} />
             {t("desk.nav.all")}
             <Count n={all} />
           </Link>
@@ -123,14 +138,14 @@ function DeskNav({ place, account }: { readonly place: DeskPlace; readonly accou
         {summary?.mayReadResponse ? (
           <li>
             <Link to={RESPONSE} aria-current={pathname === RESPONSE ? "page" : undefined} className={item}>
-              <Icon name="clock" />
+              <Icon name="clock" className={navIcon} />
               {t("desk.response.title")}
             </Link>
           </li>
         ) : null}
         <li>
           <Link to="/lapor" className={item}>
-            <Icon name="send" />
+            <Icon name="send" className={navIcon} />
             {t("desk.nav.reportForm")}
           </Link>
         </li>
@@ -145,7 +160,7 @@ function Brand() {
     <Link
       to="/lapor/meja"
       aria-label={`${t("desk.title")}, ${t("app.name")}`}
-      className="flex min-h-target-min items-center gap-3 rounded-control px-1 no-underline"
+      className="flex min-h-target-min w-fit items-center gap-3 rounded-control px-1 no-underline"
     >
       <Emblem size={32} />
       <span className="flex flex-col leading-tight">
@@ -173,23 +188,28 @@ export function DeskShell({
   const t = useText();
   const { pathname, search } = useLocation();
   return (
-    <div className="min-h-dvh bg-bg lg:grid lg:grid-cols-[17rem_minmax(0,1fr)]">
-      <aside className="hidden border-e border-line bg-header lg:sticky lg:top-0 lg:flex lg:h-dvh lg:flex-col lg:gap-6 lg:overflow-y-auto lg:px-3 lg:py-4">
-        <Brand />
-        <DeskNav place={place} account={account} />
+    <div className="min-h-dvh bg-bg lg:grid lg:grid-cols-[16.5rem_minmax(0,1fr)]">
+      <aside className="hidden border-e border-line bg-header lg:sticky lg:top-0 lg:flex lg:h-dvh lg:flex-col">
+        <div className="px-4 py-3">
+          <Brand />
+        </div>
+        <div className="min-h-0 flex-1 overflow-y-auto px-3 py-2">
+          <DeskNav place={place} />
+        </div>
+        <Account account={account} className="border-t border-line p-3" />
       </aside>
       <header className="sticky top-0 z-30 border-b border-line bg-header lg:hidden">
         <div className="flex min-h-14 items-center justify-between gap-2 px-3">
           <Brand />
           <div className="flex items-center gap-1">
-            <ThemeSwitch />
             <details key={`${pathname}${search}`} className="group">
               <summary className="flex min-h-target-min cursor-pointer list-none items-center gap-2 rounded-control px-2.5 font-medium text-ink hover:bg-sunken [&::-webkit-details-marker]:hidden">
                 <Icon name="menu" />
                 <span className="max-[359px]:sr-only">{t("desk.nav.menu")}</span>
               </summary>
-              <div className="absolute inset-x-0 top-full flex max-h-[80dvh] flex-col overflow-y-auto border-b border-line bg-header px-3 py-4 shadow-[0_8px_24px_var(--dock-shadow)]">
-                <DeskNav place={place} account={account} />
+              <div className="absolute inset-x-0 top-full flex max-h-[85dvh] flex-col gap-4 overflow-y-auto border-b border-line bg-header px-3 py-4 shadow-float">
+                <DeskNav place={place} />
+                <Account account={account} className="border-t border-line pt-3" />
               </div>
             </details>
           </div>

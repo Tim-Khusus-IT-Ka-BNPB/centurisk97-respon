@@ -16,33 +16,35 @@ export function DeskSignIn({ envelope }: { readonly envelope: ErrorEnvelope | nu
   const problem = problemOf(envelope, "code");
   useFocusOnChange(problem === null ? null : "code", envelope);
   return (
-    <Panel
-      id="desk-sign-in"
-      title={t("desk.signIn.title")}
-      lead={t("desk.signIn.lead")}
-      focusHeading={problem === null}
-    >
-      {envelope !== null && problem === null ? (
-        <Notice kind={envelope.error.code.startsWith("limit.") ? "limit" : "error"}>
-          <p>{limitText(t, envelope, Date.now())}</p>
-        </Notice>
-      ) : null}
-      <Form method="post" action="/lapor/meja" className="flex flex-col gap-4">
-        <input type="hidden" name="action" value="signIn" />
-        <Field
-          id="code"
-          label={t("desk.signIn.code")}
-          hint={t("desk.signIn.codeHint")}
-          problem={problem}
-          focus={problem !== null}
-        >
-          {(control) => <Input {...control} type="password" autoComplete="off" required />}
-        </Field>
-        <Button variant="primary" size="main" busyLabel={busy ? t("desk.signIn.busy") : null}>
-          {t("desk.signIn.submit")}
-        </Button>
-      </Form>
-    </Panel>
+    <div className="mx-auto w-full max-w-[28rem] md:pt-10">
+      <Panel
+        id="desk-sign-in"
+        title={t("desk.signIn.title")}
+        lead={t("desk.signIn.lead")}
+        focusHeading={problem === null}
+      >
+        {envelope !== null && problem === null ? (
+          <Notice kind={envelope.error.code.startsWith("limit.") ? "limit" : "error"}>
+            <p>{limitText(t, envelope, Date.now())}</p>
+          </Notice>
+        ) : null}
+        <Form method="post" action="/lapor/meja" className="flex flex-col gap-4">
+          <input type="hidden" name="action" value="signIn" />
+          <Field
+            id="code"
+            label={t("desk.signIn.code")}
+            hint={t("desk.signIn.codeHint")}
+            problem={problem}
+            focus={problem !== null}
+          >
+            {(control) => <Input {...control} type="password" autoComplete="off" required />}
+          </Field>
+          <Button variant="primary" size="main" busyLabel={busy ? t("desk.signIn.busy") : null}>
+            {t("desk.signIn.submit")}
+          </Button>
+        </Form>
+      </Panel>
+    </div>
   );
 }
 

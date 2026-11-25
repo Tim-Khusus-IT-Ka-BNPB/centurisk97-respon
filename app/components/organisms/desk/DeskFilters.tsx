@@ -19,14 +19,16 @@ import { counted } from "./DeskShell";
 import { clearedLink, deskLink, hazardLabel, isFiltered } from "./parts";
 
 const chip =
-  "inline-flex min-h-target-min shrink-0 items-center gap-2 rounded-control border border-line bg-surface px-3 text-ink no-underline hover:bg-sunken aria-[current=true]:border-primary aria-[current=true]:bg-selected aria-[current=true]:font-semibold";
+  "inline-flex min-h-target-min shrink-0 items-center gap-2 rounded-control border border-line bg-surface px-3 text-ink no-underline hover:border-control lg:min-h-10 lg:text-[0.9375rem] aria-[current=true]:border-primary aria-[current=true]:bg-selected aria-[current=true]:font-semibold aria-[current=true]:text-primary";
+
+const switcher = "inline-flex w-fit max-w-full flex-wrap rounded-control bg-sunken p-1";
 
 const segment =
-  "inline-flex min-h-target-min items-center justify-center rounded-[6px] px-3 whitespace-nowrap text-ink no-underline max-[359px]:px-2 max-[359px]:text-meta hover:bg-sunken aria-[current=true]:bg-primary aria-[current=true]:font-semibold aria-[current=true]:text-on-primary";
+  "inline-flex min-h-10 items-center justify-center rounded-[6px] px-3 whitespace-nowrap text-muted no-underline hover:text-ink lg:min-h-8 lg:text-[0.9375rem] max-[359px]:px-2 max-[359px]:text-meta aria-[current=true]:bg-thumb aria-[current=true]:font-semibold aria-[current=true]:text-ink aria-[current=true]:shadow-card";
 
 function Tally({ n }: { readonly n: number | undefined }) {
   return n === undefined ? null : (
-    <span className="rounded-chip bg-sunken px-1.5 text-meta tabular-nums">{n.toLocaleString("id-ID")}</span>
+    <span className="text-meta text-muted tabular-nums">{n.toLocaleString("id-ID")}</span>
   );
 }
 
@@ -45,7 +47,7 @@ export function HazardChips({ filters, summary, className }: Counted & { readonl
     byHazard === undefined ? undefined : Object.values(byHazard).reduce((sum: number, n) => sum + (n as number), 0);
   const countOf = (id: (typeof hazards)[number]) => (byHazard === undefined ? undefined : (byHazard[id] ?? 0));
   return (
-    <nav aria-label={t("desk.filter.hazard")} className={cn("flex min-w-0 gap-2 overflow-x-auto", className)}>
+    <nav aria-label={t("desk.filter.hazard")} className={cn("flex min-w-0 gap-2", className)}>
       <Link
         to={deskLink(filters, { hazardType: "", page: 1 })}
         aria-current={filters.hazardType === "" ? "true" : undefined}
@@ -75,10 +77,7 @@ export function HazardChips({ filters, summary, className }: Counted & { readonl
 export function PeriodSegment({ filters, className }: Pick<Counted, "filters"> & { readonly className?: string }) {
   const t = useText();
   return (
-    <nav
-      aria-label={t("desk.filter.period")}
-      className={cn("inline-flex w-fit max-w-full rounded-control border border-line bg-surface p-0.5", className)}
-    >
+    <nav aria-label={t("desk.filter.period")} className={cn(switcher, className)}>
       {DESK_PERIODS.map((period) => (
         <Link
           key={period}
@@ -124,7 +123,7 @@ function HasLink({
 function HasChips({ filters, summary }: Counted) {
   const t = useText();
   return (
-    <nav aria-label={t("desk.filter.has")} className="flex min-w-0 gap-2 overflow-x-auto">
+    <nav aria-label={t("desk.filter.has")} className="flex shrink-0 gap-2">
       {DESK_HAS.map((has) => (
         <HasLink key={has} has={has} filters={filters} summary={summary} className={chip}>
           <Icon name={HAS_ICON[has]} className="size-4" />
@@ -194,9 +193,9 @@ export function TicketSearch({
           aria-invalid={problem ? true : undefined}
           aria-describedby={problem ? "ticket-error" : undefined}
           autoFocus={problem !== null}
-          className="w-44 flex-1 md:w-52"
+          className="min-w-0 flex-1 lg:min-h-10 lg:py-1.5"
         />
-        <button type="submit" className={buttonStyles({ variant: "primary" })}>
+        <button type="submit" className={buttonStyles({ variant: "secondary", className: "lg:min-h-10 lg:py-1.5" })}>
           <Icon name="search" className="size-4" />
           {t("desk.filter.search")}
         </button>
@@ -210,25 +209,28 @@ export function TicketSearch({
 export function ClearFilters({ filters, className }: Pick<Counted, "filters"> & { readonly className?: string }) {
   const t = useText();
   return isFiltered(filters) ? (
-    <Link to={clearedLink(filters)} className={cn(buttonStyles({ variant: "quiet", size: "min" }), className)}>
+    <Link to={clearedLink(filters)} className={cn(buttonStyles({ variant: "link", size: "min" }), className)}>
       {t("desk.filter.clear")}
     </Link>
   ) : null;
 }
 
-// Every filter in one bar, above the list and the gallery.
+// Every filter above the list and the gallery: the search and the period, then one row of chips.
 export function FilterBar({ filters, summary, envelope }: Counted & { readonly envelope: ErrorEnvelope | null }) {
   const t = useText();
   return (
-    <section aria-label={t("desk.filters")} className="flex flex-col gap-3 card-surface p-3 md:p-4">
-      <HazardChips filters={filters} summary={summary} />
-      <HasChips filters={filters} summary={summary} />
-      <div className="flex flex-col gap-3 md:flex-row md:flex-wrap md:items-start md:justify-between">
-        <span className="flex flex-wrap items-center gap-2">
-          <PeriodSegment filters={filters} className="flex-wrap" />
+    <section aria-label={t("desk.filters")} className="flex flex-col gap-3">
+      <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
+        <TicketSearch filters={filters} envelope={envelope} className="md:w-80" />
+        <span className="flex flex-wrap items-center gap-2 md:flex-row-reverse">
+          <PeriodSegment filters={filters} />
           <ClearFilters filters={filters} />
         </span>
-        <TicketSearch filters={filters} envelope={envelope} />
+      </div>
+      <div className="fade-x -mx-4 flex gap-2 overflow-x-auto px-4 md:mx-0 md:px-0">
+        <HazardChips filters={filters} summary={summary} className="shrink-0" />
+        <span aria-hidden="true" className="mx-1 my-2 w-px shrink-0 bg-line" />
+        <HasChips filters={filters} summary={summary} />
       </div>
     </section>
   );
@@ -238,10 +240,7 @@ export function FilterBar({ filters, summary, envelope }: Counted & { readonly e
 export function ViewTabs({ filters }: { readonly filters: DeskFilters }) {
   const t = useText();
   return (
-    <nav
-      aria-label={t("desk.views")}
-      className="inline-flex w-fit rounded-control border border-line bg-surface p-0.5 lg:hidden"
-    >
+    <nav aria-label={t("desk.views")} className={cn(switcher, "lg:hidden")}>
       {DESK_VIEWS.map((view) => (
         <Link
           key={view}

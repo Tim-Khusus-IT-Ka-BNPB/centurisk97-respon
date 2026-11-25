@@ -61,7 +61,7 @@ describe("the desk's emergencies", () => {
     expect(within(tap).getByText(/Jenis belum diketahui, Cot Seumiyong, Aceh Utara/)).toBeTruthy();
     expect(tap.textContent).toContain("korban belum diketahui");
     expect(within(chat).getByText(/Banjir, Cot Seumiyong, Aceh Utara/)).toBeTruthy();
-    expect(chat.textContent).toContain("24 Nov 2026, 09.30 WIB, ada korban");
+    expect(chat.textContent).toContain("ada korban, 24 Nov 2026, 09.30 WIB");
     // What was there when the page opened was not news.
     expect(alarm.sound).not.toHaveBeenCalled();
   });

@@ -61,26 +61,30 @@ export function EmergencyBanner({ initial }: { readonly initial: readonly DeskEm
   return (
     <section
       aria-labelledby="desk-emergency"
-      className="sticky top-14 z-20 flex flex-col gap-2 bg-signal px-4 py-3 text-on-signal md:px-6 lg:top-0 lg:flex-row lg:items-center lg:gap-4"
+      className="sticky top-14 z-20 flex flex-wrap items-center gap-x-5 gap-y-2 bg-signal px-4 py-2.5 text-on-signal md:px-6 lg:top-0 lg:flex-nowrap lg:py-2"
     >
-      <h2 id="desk-emergency" className="inline-flex shrink-0 items-center gap-2 font-bold lg:max-w-44" role="alert">
+      <h2
+        id="desk-emergency"
+        className="inline-flex min-w-0 flex-1 items-center gap-2 font-bold lg:flex-none"
+        role="alert"
+      >
         <Icon name="triangleAlert" className="size-5" />
         {t("desk.emergency.title", { count: emergencies.length })}
       </h2>
-      <ul className="flex min-w-0 gap-2 overflow-x-auto lg:flex-1">
+      <ul className="fade-x order-last flex w-full min-w-0 gap-2 overflow-x-auto lg:order-none lg:w-auto lg:flex-1">
         {emergencies.map((one) => (
-          <li key={one.ticketNumber} className="flex max-w-[80vw] shrink-0 lg:max-w-none">
+          <li key={one.ticketNumber} className="flex max-w-[78vw] shrink-0 lg:max-w-none">
             <Link
               to={`/lapor/meja/${one.ticketNumber}`}
-              className="flex min-h-target min-w-56 flex-col justify-center rounded-control bg-surface px-3 py-2 text-ink no-underline hover:bg-sunken"
+              className="flex min-h-target-min min-w-0 flex-col justify-center rounded-control bg-signal-deep px-3 py-1.5 text-meta leading-snug text-on-signal no-underline hover:bg-[color-mix(in_oklab,var(--signal-deep),var(--on-signal)_14%)]"
             >
-              <span className="font-bold">
+              <span className="truncate font-bold">
                 {hazardLabel(t, one.hazardType)}
                 {", "}
                 {t("desk.emergency.place", { village: one.villageName, regency: one.regencyName })}
               </span>
-              <span className="text-meta text-muted tabular-nums">
-                {one.ticketNumber}, {whenShort(t, one.sentAt)}, {t(`desk.emergency.victims.${one.victims}`)}
+              <span className="truncate tabular-nums first-letter:uppercase">
+                {t(`desk.emergency.victims.${one.victims}`)}, {whenShort(t, one.sentAt)}, {one.ticketNumber}
               </span>
             </Link>
           </li>
@@ -89,11 +93,12 @@ export function EmergencyBanner({ initial }: { readonly initial: readonly DeskEm
       {hydrated && !ready ? (
         <button
           type="button"
-          className="inline-flex min-h-target-min shrink-0 items-center gap-2 self-start rounded-control border border-on-signal px-3 text-meta font-semibold hover:bg-[color-mix(in_oklch,var(--signal),var(--on-signal)_14%)] lg:self-auto"
+          title={t("desk.emergency.turnOn")}
+          className="ms-auto inline-flex min-h-target-min min-w-target-min shrink-0 items-center justify-center gap-2 rounded-control px-3 text-meta font-semibold hover:bg-signal-deep lg:ms-0"
           onClick={async () => setReady(await askForAlarm())}
         >
-          <Icon name="bell" className="size-4" />
-          {t("desk.emergency.turnOn")}
+          <Icon name="bell" className="size-5" />
+          <span className="max-2xl:sr-only">{t("desk.emergency.turnOn")}</span>
         </button>
       ) : null}
     </section>
