@@ -2,7 +2,16 @@ import { describe, expect, test } from "vitest";
 import { exifDateTime } from "../testing/jpegs";
 import { cameraJpeg } from "../testing/photoBase";
 import { readExif } from "./jpeg";
-import { checkPhoto, type DeviceFix, PHOTO, type PhotoInput } from "./photoChecks";
+import {
+  CHAT_PHOTO,
+  type ChatPhotoInput,
+  chatPhotoPlace,
+  checkChatPhoto,
+  checkPhoto,
+  type DeviceFix,
+  PHOTO,
+  type PhotoInput,
+} from "./photoChecks";
 
 const NOW = Date.parse("2026-11-23T03:00:00.000Z");
 const WIB = 420;
@@ -186,5 +195,79 @@ describe("photo checks", () => {
       takenAtMs: NOW + PHOTO.clockAheadMs,
     });
     expect(at(NOW + PHOTO.clockAheadMs + 1)).toMatchObject({ timeSource: "upload" });
+  });
+});
+
+describe("a photo sent in a chat", () => {
+  const MINUTE = 60_000;
+  const HOUR = 60 * MINUTE;
+  const sent = (extra: Partial<ChatPhotoInput> = {}) =>
+    checkChatPhoto({
+      bytes: cameraJpeg({}),
+      sentAtMs: NOW - MINUTE,
+      nowMs: NOW,
+      shared: null,
+      placePoint: HERE,
+      count: 0,
+      ...extra,
+    });
+
+  test("with no location near it, it is kept without one, at its message's time", () => {
+    expect(sent()).toEqual({
+      kind: "kept",
+      badge: "none",
+      point: null,
+      accuracyM: null,
+      takenAtMs: NOW - MINUTE,
+      timeSource: "chatMessage",
+      far: false,
+    });
+  });
+
+  test("a location shared up to 30 minutes before is its place", () => {
+    expect(CHAT_PHOTO.locationMs).toBe(30 * MINUTE);
+    expect(sent({ shared: { ...HERE, atMs: NOW - 30 * MINUTE } })).toMatchObject({
+      badge: "chatLocation",
+      point: HERE,
+      accuracyM: null,
+      far: false,
+    });
+    expect(sent({ shared: { ...HERE, atMs: NOW - 30 * MINUTE - 1 } })).toMatchObject({ badge: "none", point: null });
+    expect(sent({ shared: { ...TWELVE_KM, atMs: NOW } })).toMatchObject({ badge: "chatLocation", far: true });
+    expect(sent({ shared: { ...SIX_KM, atMs: NOW } })).toMatchObject({ badge: "chatLocation", far: false });
+    expect(sent({ shared: { ...TWELVE_KM, atMs: NOW }, placePoint: null })).toMatchObject({ far: false });
+  });
+
+  test("a location shared after it places it the same way, and only the point is kept of it", () => {
+    expect(chatPhotoPlace({ ...TWELVE_KM, atMs: NOW } as typeof TWELVE_KM, HERE)).toEqual({
+      badge: "chatLocation",
+      point: TWELVE_KM,
+      far: true,
+    });
+  });
+
+  test("a message time of the last 48 hours, up to five minutes ahead, is trusted", () => {
+    const at = (sentAtMs: number) => sent({ sentAtMs });
+    expect(at(NOW - 48 * HOUR + 1)).toMatchObject({ takenAtMs: NOW - 48 * HOUR + 1, timeSource: "chatMessage" });
+    expect(at(NOW - 48 * HOUR)).toMatchObject({ takenAtMs: NOW, timeSource: "upload" });
+    expect(at(NOW + 5 * MINUTE)).toMatchObject({ takenAtMs: NOW + 5 * MINUTE, timeSource: "chatMessage" });
+    expect(at(NOW + 5 * MINUTE + 1)).toMatchObject({ takenAtMs: NOW, timeSource: "upload" });
+  });
+
+  test("not a JPEG, too small, too big, or one too many is refused", () => {
+    const jpegOf = (length: number) => {
+      const bytes = new Uint8Array(length);
+      bytes.set(cameraJpeg({}).subarray(0, 900));
+      return bytes;
+    };
+    const format = { kind: "refused", rule: "format" };
+    expect(sent({ bytes: new Uint8Array(5000) })).toEqual(format);
+    expect(sent({ bytes: jpegOf(PHOTO.minBytes - 1) })).toEqual(format);
+    expect(sent({ bytes: jpegOf(PHOTO.minBytes) }).kind).toBe("kept");
+    expect(CHAT_PHOTO.maxBytes).toBe(5 * 1024 * 1024);
+    expect(sent({ bytes: jpegOf(CHAT_PHOTO.maxBytes) }).kind).toBe("kept");
+    expect(sent({ bytes: jpegOf(CHAT_PHOTO.maxBytes + 1) })).toEqual(format);
+    expect(sent({ count: PHOTO.maxPerDraft - 1 }).kind).toBe("kept");
+    expect(sent({ count: PHOTO.maxPerDraft })).toEqual({ kind: "refused", rule: "tooMany" });
   });
 });

@@ -5,6 +5,8 @@ export type Principal =
   | { readonly kind: "anonymous" }
   | { readonly kind: "device"; readonly deviceId: string }
   | { readonly kind: "session"; readonly reporterId: string }
+  // The person writing from a number in a chat, which the gateway vouches for. Null until consent.
+  | { readonly kind: "chat"; readonly reporterId: string | null }
   | StaffPrincipal;
 
 // A staff account: who it is, the label the desk and the history show, and where it may work.

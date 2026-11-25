@@ -195,7 +195,7 @@ function placeConfirmCard(base: CardBase, reading: PlaceReading): Card {
     promptKey: reading.showNearby ? "card.placeConfirm.nearbyPrompt" : "card.placeConfirm.prompt",
     village: readVillage(reading.village),
     point,
-    precision: reading.village.precision === "gpsPoint" ? "gpsPoint" : "estimate",
+    precision: reading.village.precision as Exclude<PlaceReading["village"]["precision"], "villageLevel">,
     options: reading.showNearby
       ? []
       : [option("confirm", "card.placeConfirm.confirm", null), option("other", "card.placeConfirm.other", null)],

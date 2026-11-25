@@ -82,7 +82,10 @@ export function nearestCentres(
     .slice(0, count);
 }
 
-export type GpsPrecision = "gpsPoint" | "estimate";
+export type PointPrecision = "gpsPoint" | "estimate" | "chatLocation";
 
-export const precisionOf = (accuracyM: number): GpsPrecision =>
-  accuracyM <= GEO.pointAccuracyM ? "gpsPoint" : "estimate";
+// A point with no accuracy was shared in a chat.
+export function precisionOf(accuracyM: number | null): PointPrecision {
+  if (accuracyM === null) return "chatLocation";
+  return accuracyM <= GEO.pointAccuracyM ? "gpsPoint" : "estimate";
+}

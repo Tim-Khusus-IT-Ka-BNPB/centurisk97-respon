@@ -3,6 +3,8 @@ import type { StaffScope } from "../../domain/deskRights";
 import type { EmergencyKind, VictimAnswer } from "../../domain/emergency";
 import type { Change, CheckResult } from "../../domain/fieldCheck";
 import type { TakenAction } from "../../domain/handling";
+import type { Door } from "../../domain/ownership";
+import type { KeptPhoto } from "../../domain/photoChecks";
 import type { TicketStatus } from "../../domain/stages";
 import {
   atomically,
@@ -43,6 +45,7 @@ export type QueueRow = {
   readonly reporterName: string;
   readonly reporterRole: "citizen" | "claimedOfficer";
   readonly numberUnverified: boolean;
+  readonly door: Door;
   readonly emergency: { readonly kind: EmergencyKind; readonly victims: VictimAnswer } | null;
   readonly taker: string | null;
   // The reporter added news that no officer has acted on yet.
@@ -61,6 +64,7 @@ type QueueRecord = {
   reporter_name: string;
   reporter_role: "citizen" | "claimedOfficer";
   number_unverified: number;
+  door: Door;
   emergency: EmergencyKind | null;
   emergency_victims: VictimAnswer | null;
   taker: string | null;
@@ -77,7 +81,7 @@ const NEWS = sql`exists (select 1 from ticket_history n where n.ticket_number = 
       and a.action not in ('view', 'identityView', 'document', 'documentPack')))`;
 
 const SELECT = sql`select r.ticket_number, t.status, r.hazard_type, r.village_code, r.sent_at, v.fields,
-    v.complete_percent, v.reporter_name, v.reporter_role, r.number_unverified, r.emergency, r.emergency_victims,
+    v.complete_percent, v.reporter_name, v.reporter_role, r.number_unverified, r.door, r.emergency, r.emergency_victims,
     (select k.label from report_taker k where k.ticket_number = r.ticket_number) as taker, ${NEWS} as news,
     (select count(*) from draft_photo p where p.draft_id = r.draft_id) as photo_count
   from report r
@@ -132,6 +136,7 @@ const queueRow = (found: QueueRecord): QueueRow => ({
   reporterName: found.reporter_name,
   reporterRole: found.reporter_role,
   numberUnverified: found.number_unverified === 1,
+  door: found.door,
   taker: found.taker,
   news: found.news === 1,
   emergency:
@@ -372,7 +377,7 @@ export type MapPoint = {
   readonly status: TicketStatus;
   readonly hazardType: string;
   readonly villageName: string;
-  readonly precision: "gpsPoint" | "estimate" | "villageLevel";
+  readonly precision: "gpsPoint" | "estimate" | "villageLevel" | "chatLocation";
   readonly emergency: boolean;
   readonly lat: number;
   readonly lon: number;
@@ -423,7 +428,7 @@ export type DeskPhoto = {
   readonly ticketNumber: string;
   readonly storeKey: string;
   readonly villageCode: string;
-  readonly badge: "deviceGps" | "photoData" | "none";
+  readonly badge: KeptPhoto["badge"];
   readonly far: boolean;
   readonly takenAt: Date;
   readonly receivedAt: Date;

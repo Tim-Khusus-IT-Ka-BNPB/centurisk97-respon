@@ -74,6 +74,7 @@
   "desk.map.precision.gpsPoint": "titik GPS",
   "desk.map.precision.estimate": "perkiraan dari GPS",
   "desk.map.precision.villageLevel": "perkiraan tingkat desa",
+  "desk.map.precision.chatLocation": "lokasi dibagikan lewat WhatsApp",
   "desk.map.group.open": "Belum ditangani",
   "desk.map.group.working": "Sedang ditangani",
   "desk.map.group.done": "Ditutup",

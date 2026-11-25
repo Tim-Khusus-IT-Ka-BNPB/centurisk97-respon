@@ -7,11 +7,12 @@ export type EventTimeValue =
   | { readonly kind: "olderThan30Days" };
 
 // Names are kept with the code so the summary and the sent version read the same snapshot.
-// How the place is known: a village picked by search, or a GPS reading (D10).
-type PlacePrecision = "villageLevel" | "gpsPoint" | "estimate";
+// How the place is known: a village picked by search, a GPS reading (D10), or a location shared in a chat.
+type PlacePrecision = "villageLevel" | "gpsPoint" | "estimate" | "chatLocation";
 
-// The device's reading when the place came from GPS. Coordinates are kept as read.
-export type PlacePoint = { readonly lat: number; readonly lon: number; readonly accuracyM: number };
+// The device's reading when the place came from GPS. Coordinates are kept as read. A location shared
+// in a chat says nothing of how well it is known.
+export type PlacePoint = { readonly lat: number; readonly lon: number; readonly accuracyM: number | null };
 
 export type PlaceValue = {
   readonly villageCode: string;

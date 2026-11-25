@@ -86,6 +86,7 @@ export async function oneTapEmergency(
       numberKey: profile.number_key,
       ownerSlot: profile.owner_slot,
       numberUnverified: principal.kind !== "session",
+      door: "web",
       // Its kind is not known yet; "other" is never offered, so it stands for that alone.
       hazardType: "other",
       villageCode: place.villageCode,

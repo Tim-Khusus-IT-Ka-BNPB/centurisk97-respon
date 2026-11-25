@@ -2,7 +2,7 @@ import { z } from "zod";
 import { DESK_HAS } from "../domain/deskQueue";
 import { VICTIM_ANSWERS } from "../domain/emergency";
 import { CHECK_RESULTS } from "../domain/fieldCheck";
-import { summaryGroupSchema } from "./card";
+import { photoBadgeSchema, summaryGroupSchema } from "./card";
 import { hazardTypeSchema, reporterRoleSchema, timeSchema } from "./common";
 import { reportVersionSchema } from "./ownReport";
 import { eventTimeSchema, ticketStatusSchema } from "./tracking";
@@ -28,6 +28,8 @@ const queueItemSchema = z.object({
   // The name is null for an account that must ask for identity on the report.
   reporter: z.object({ name: z.string().nullable(), role: reporterRoleSchema }),
   numberUnverified: z.boolean(),
+  // Which door it came through; a chat proves its number.
+  door: z.enum(["web", "chat"]),
   // Raised as an emergency, and what the reporter said of victims. One tap's kind is not known.
   emergency: emergencySchema.nullable(),
   // The officer who has it in hand, as the desk names them. Never on the tracking page.
@@ -93,7 +95,7 @@ const deskGroupSchema = summaryGroupSchema.extend({
 const deskPhotoSchema = z.object({
   photoId: z.string(),
   ticketNumber: z.string(),
-  badge: z.enum(["deviceGps", "photoData", "none"]),
+  badge: photoBadgeSchema,
   far: z.boolean(),
   takenAt: timeSchema,
   receivedAt: timeSchema,
@@ -105,7 +107,7 @@ const mapPointSchema = z.object({
   hazardType: hazardTypeSchema,
   villageName: z.string(),
   // A village picked by search sits at the village's centre, never at a made-up point.
-  precision: z.enum(["gpsPoint", "estimate", "villageLevel"]),
+  precision: z.enum(["gpsPoint", "estimate", "villageLevel", "chatLocation"]),
   emergency: z.boolean(),
   lat: z.number(),
   lon: z.number(),

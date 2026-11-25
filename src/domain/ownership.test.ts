@@ -25,9 +25,19 @@ describe("who owns a draft", () => {
     expect(ownsDraft({ kind: "anonymous" }, draft)).toBe(false);
   });
 
+  test("a chat owns what its number made there or in the main site's session, not on a phone", () => {
+    const own = { reporterId: "r1", ownerSlot: "session" };
+    expect(ownsDraft({ kind: "chat", reporterId: "r1" }, own)).toBe(true);
+    expect(ownsDraft({ kind: "chat", reporterId: "r2" }, own)).toBe(false);
+    expect(ownsDraft({ kind: "chat", reporterId: null }, own)).toBe(false);
+    expect(ownsDraft({ kind: "chat", reporterId: "r1" }, draft)).toBe(false);
+    expect(ownsDraft({ kind: "session", reporterId: "r1" }, own)).toBe(true);
+  });
+
   test("the slot of a principal's own drafts", () => {
     expect(ownerSlotOf({ kind: "device", deviceId: "d1" })).toBe("d1");
     expect(ownerSlotOf({ kind: "session", reporterId: "r1" })).toBe("session");
+    expect(ownerSlotOf({ kind: "chat", reporterId: "r1" })).toBe("session");
     expect(
       ownerSlotOf({
         kind: "staff",

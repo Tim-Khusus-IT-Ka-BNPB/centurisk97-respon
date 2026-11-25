@@ -11,6 +11,7 @@ import { applicableFields, chosenHazardType } from "../domain/fields/applicable"
 import { type FieldId, fieldById } from "../domain/fields/catalogue";
 import type { ReporterRole } from "../domain/identityForm";
 import { jpegSize } from "../domain/jpeg";
+import type { KeptPhoto } from "../domain/photoChecks";
 import { tallyOf } from "../domain/tally";
 import { versionChanges } from "../domain/versions";
 import { type SummaryRow, summaryGroups, summaryRow } from "./summary";
@@ -22,7 +23,7 @@ const t = textFrom(copy);
 
 export type DocumentPhoto = {
   readonly picture: Picture;
-  readonly badge: "deviceGps" | "photoData" | "none";
+  readonly badge: KeptPhoto["badge"];
   readonly far: boolean;
   readonly takenAt: Instant;
 };

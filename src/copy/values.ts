@@ -62,8 +62,7 @@ export function valueLines(t: Text, fieldId: string, value: RowValue): readonly 
       ];
       // A place read from GPS says how well it is known; a village picked by search is a village.
       if (value.point === null || value.precision === "villageLevel") return lines;
-      const metres = t("card.placeConfirm.accuracy", { metres: Math.round(value.point.accuracyM) });
-      return [...lines, `${t(`card.placeConfirm.precision.${value.precision}`)}, ${metres}`];
+      return [...lines, precisionText(t, value.precision, value.point.accuracyM)];
     }
     default: {
       const parts = [
@@ -73,6 +72,13 @@ export function valueLines(t: Text, fieldId: string, value: RowValue): readonly 
       return [list.format(parts)];
     }
   }
+}
+
+// How well a point is known. A location shared in a chat tells no accuracy.
+export function precisionText(t: Text, precision: string, accuracyM: number | null): string {
+  const named = t(`card.placeConfirm.precision.${precision}`);
+  if (accuracyM === null) return named;
+  return `${named}, ${t("card.placeConfirm.accuracy", { metres: Math.round(accuracyM) })}`;
 }
 
 export type RowView =

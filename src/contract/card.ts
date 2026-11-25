@@ -62,9 +62,9 @@ const cardOptionSchema = z.object({
   freeTextMaxLength: z.number().int().positive().nullable(),
 });
 
-const placePrecisionSchema = z.enum(["villageLevel", "gpsPoint", "estimate"]);
-// The device's reading; coordinates as read, accuracy in metres.
-const placePointSchema = z.object({ lat: z.number(), lon: z.number(), accuracyM: z.number() });
+const placePrecisionSchema = z.enum(["villageLevel", "gpsPoint", "estimate", "chatLocation"]);
+// The device's reading; coordinates as read, accuracy in metres, null for a location shared in a chat.
+const placePointSchema = z.object({ lat: z.number(), lon: z.number(), accuracyM: z.number().nullable() });
 const readVillageSchema = z.object({
   code: z.string(),
   villageName: z.string(),
@@ -73,13 +73,15 @@ const readVillageSchema = z.object({
   provinceName: z.string(),
 });
 
+export const photoBadgeSchema = z.enum(["deviceGps", "photoData", "chatLocation", "none"]);
+
 const photoSchema = z.object({
   photoId: z.string(),
-  badge: z.enum(["deviceGps", "photoData", "none"]),
+  badge: photoBadgeSchema,
   // More than 10 km from the report's place (A4).
   far: z.boolean(),
   takenAt: timeSchema,
-  timeSource: z.enum(["photoData", "deviceGps", "upload"]),
+  timeSource: z.enum(["photoData", "deviceGps", "upload", "chatMessage"]),
   point: z.object({ lat: z.number(), lon: z.number() }).nullable(),
   accuracyM: z.number().nullable(),
 });

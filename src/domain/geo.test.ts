@@ -105,4 +105,9 @@ describe("geo", () => {
     expect(precisionOf(1000)).toBe("gpsPoint");
     expect(precisionOf(1001)).toBe("estimate");
   });
+
+  test("a point with no accuracy was shared in a chat", () => {
+    expect(precisionOf(null)).toBe("chatLocation");
+    expect(precisionOf(0)).toBe("gpsPoint");
+  });
 });

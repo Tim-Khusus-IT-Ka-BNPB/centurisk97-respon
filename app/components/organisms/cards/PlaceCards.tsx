@@ -2,6 +2,7 @@ import { type ReactNode, useState } from "react";
 import { Form, Link, useNavigation, useSubmit } from "react-router";
 import type { Card } from "../../../../src/contract/card";
 import { localDateText } from "../../../../src/copy/time";
+import { precisionText } from "../../../../src/copy/values";
 import { readPosition } from "../../../lib/device";
 import { problemOf } from "../../../lib/envelope";
 import { useBusy, useHydrated } from "../../../lib/hooks";
@@ -111,10 +112,7 @@ export function PlaceConfirmCard({ card }: { readonly card: ConfirmCard }) {
             <p className="text-meta tabular-nums">
               {t("card.placeConfirm.coordinates", { lat: coordinate(point.lat), lon: coordinate(point.lon) })}
             </p>
-            <p className="text-meta">
-              {t(`card.placeConfirm.precision.${card.precision}`)},{" "}
-              {t("card.placeConfirm.accuracy", { metres: Math.round(point.accuracyM) })}
-            </p>
+            <p className="text-meta">{precisionText(t, card.precision, point.accuracyM)}</p>
           </div>
           <TurnForm className="flex flex-col gap-2 @actions:flex-row">
             {card.options.map((option) => (

@@ -91,6 +91,7 @@ function queueItem(staff: StaffPrincipal, found: QueueRow): DeskQueue["items"][n
     photoCount: found.photoCount,
     reporter: { name: mayUse(staff.role, "readIdentity") ? found.reporterName : null, role: found.reporterRole },
     numberUnverified: found.numberUnverified,
+    door: found.door,
     emergency: found.emergency,
     taker: found.taker,
     news: found.news,

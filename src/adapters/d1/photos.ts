@@ -1,5 +1,6 @@
+import type { Point } from "../../domain/geo";
 import type { KeptPhoto } from "../../domain/photoChecks";
-import { type Database, type Query, row, rows, sql } from "../../platform/database";
+import { type Database, type Query, row, rows, run, sql } from "../../platform/database";
 
 export type PhotoRecord = KeptPhoto & {
   readonly id: string;
@@ -65,6 +66,19 @@ export const insertPhoto = (
     values (${photo.id}, ${draftId}, ${photo.storeKey}, ${photo.bytes}, ${photo.point?.lat ?? null},
       ${photo.point?.lon ?? null}, ${photo.accuracyM}, ${photo.badge}, ${photo.far ? 1 : 0},
       ${new Date(photo.takenAtMs)}, ${photo.timeSource}, ${at})`;
+
+// Photos of the chat kept without a place since then, placed now.
+export const placeChatPhotos = (
+  db: Database,
+  draftId: string,
+  place: { readonly badge: KeptPhoto["badge"]; readonly point: Point; readonly far: boolean },
+  since: Date,
+): Promise<number> =>
+  run(
+    db,
+    sql`update draft_photo set badge = ${place.badge}, lat = ${place.point.lat}, lon = ${place.point.lon}, far = ${place.far}
+      where draft_id = ${draftId} and badge = 'none' and time_source = 'chatMessage' and received_at >= ${since}`,
+  );
 
 // Files whose rows are gone, oldest first.
 export async function queuedRemovals(db: Database, batch: number): Promise<string[]> {

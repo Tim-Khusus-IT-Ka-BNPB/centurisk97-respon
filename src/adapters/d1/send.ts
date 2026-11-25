@@ -1,4 +1,5 @@
 import type { EmergencyKind, VictimAnswer } from "../../domain/emergency";
+import type { Door } from "../../domain/ownership";
 import type { DraftContent } from "../../domain/turn/content";
 import { type Database, type Query, row, sql } from "../../platform/database";
 
@@ -53,6 +54,7 @@ export type NewReport = {
   readonly numberKey: string;
   readonly ownerSlot: string;
   readonly numberUnverified: boolean;
+  readonly door: Door;
   readonly hazardType: string;
   readonly villageCode: string;
   readonly sentAt: Date;
@@ -77,11 +79,12 @@ export function insertReport(report: NewReport): Query[] {
   const who = report.reporter;
   return [
     sql`insert into report (id, ticket_number, draft_id, reporter_id, number_key, owner_slot, number_unverified, hazard_type,
-        village_code, district_code, regency_code, province_code, sent_at, tracking_hash, emergency, emergency_victims)
+        village_code, district_code, regency_code, province_code, sent_at, tracking_hash, emergency, emergency_victims,
+        door)
       values (${reportId}, ${report.ticketNumber}, ${report.draftId}, ${report.reporterId}, ${report.numberKey},
         ${report.ownerSlot}, ${report.numberUnverified}, ${report.hazardType}, ${code}, ${code.slice(0, 8)},
         ${code.slice(0, 5)}, ${code.slice(0, 2)}, ${report.sentAt}, ${report.trackingHash},
-        ${report.emergency?.kind ?? null}, ${report.emergency?.victims ?? null})
+        ${report.emergency?.kind ?? null}, ${report.emergency?.victims ?? null}, ${report.door})
       returning ticket_number`,
     sql`insert into report_version (report_id, version, fields, reporter_name, reporter_number, reporter_role,
         officer_regency, officer_position, privacy_version, consent_agreed_at, complete_percent, created_at)
