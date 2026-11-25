@@ -16,5 +16,6 @@
   "version.download.docx": "Word",
   "version.download.pdfLabel": "Unduh PDF versi {version}",
   "version.download.docxLabel": "Unduh Word versi {version}",
+  "version.frame": "Unduhan berkas",
   "version.refused": "Dokumen belum bisa diunduh. Tunggu beberapa menit, lalu unduh lagi."
 }

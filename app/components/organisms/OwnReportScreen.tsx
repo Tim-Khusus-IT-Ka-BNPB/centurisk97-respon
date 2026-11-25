@@ -9,6 +9,7 @@ import { limitText } from "../../lib/status";
 import { useText } from "../../lib/text";
 import { Button, buttonStyles } from "../atoms/Button";
 import { Icon } from "../atoms/Icon";
+import { FileFrame, useFileTarget } from "../molecules/FileFrame";
 import { Notice } from "../molecules/Notice";
 import { ContactBlock, trackingPath } from "./cards/TicketCards";
 import { OwnNews } from "./OwnNews";
@@ -30,6 +31,7 @@ const isFollowUp = (envelope: ErrorEnvelope) => envelope.error.code.startsWith("
 function Documents({ report }: { readonly report: OwnReportDetail }) {
   const t = useText();
   const { ticketNumber, hazardType } = report.tracking;
+  const target = useFileTarget();
   return (
     <section aria-labelledby="own-documents" className="flex flex-col gap-4 card-surface p-4 md:p-5">
       <div className="flex flex-col gap-1">
@@ -48,6 +50,7 @@ function Documents({ report }: { readonly report: OwnReportDetail }) {
             button={(format, look, children) => (
               <a
                 href={`/lapor/reports/${ticketNumber}/v${version}.${format}`}
+                target={target}
                 aria-label={look.label}
                 className={look.className}
               >
@@ -57,6 +60,7 @@ function Documents({ report }: { readonly report: OwnReportDetail }) {
           />
         )}
       />
+      <FileFrame />
     </section>
   );
 }

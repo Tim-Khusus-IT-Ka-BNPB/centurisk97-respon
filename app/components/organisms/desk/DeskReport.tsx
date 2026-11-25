@@ -9,6 +9,7 @@ import { limitText } from "../../../lib/status";
 import { useText } from "../../../lib/text";
 import { Button, buttonStyles } from "../../atoms/Button";
 import { Icon } from "../../atoms/Icon";
+import { FileFrame, useFileTarget } from "../../molecules/FileFrame";
 import { Notice } from "../../molecules/Notice";
 import { DeskMapCanvas, SMALL } from "../DeskMapCanvas";
 import { ChangeList, FileButtons, VersionList } from "../VersionList";
@@ -140,6 +141,7 @@ function Handling({ report }: { readonly report: DeskReport }) {
 // so the page stays.
 function Documents({ report }: { readonly report: DeskReport }) {
   const t = useText();
+  const target = useFileTarget();
   return (
     <Section id="desk-documents" title={t("version.title")}>
       <p className="text-meta text-muted">{t("version.desk.lead")}</p>
@@ -148,7 +150,7 @@ function Documents({ report }: { readonly report: DeskReport }) {
         hazardType={report.hazardType}
         voice="desk"
         files={(version) => (
-          <Form reloadDocument method="post" action={`/lapor/meja/${report.ticketNumber}/documents`}>
+          <Form reloadDocument method="post" action={`/lapor/meja/${report.ticketNumber}/documents`} target={target}>
             <input type="hidden" name="version" value={version} />
             <FileButtons
               version={version}
@@ -161,6 +163,7 @@ function Documents({ report }: { readonly report: DeskReport }) {
           </Form>
         )}
       />
+      <FileFrame />
     </Section>
   );
 }
@@ -168,11 +171,13 @@ function Documents({ report }: { readonly report: DeskReport }) {
 // An emergency's documents and photos in one file, one tap.
 function EmergencyPack({ report }: { readonly report: DeskReport }) {
   const t = useText();
+  const target = useFileTarget();
   return (
     <Form
       reloadDocument
       method="post"
       action={`/lapor/meja/${report.ticketNumber}/documents`}
+      target={target}
       className="flex flex-col gap-2"
     >
       <Button name="format" value="pack" variant="signal" aria-describedby="desk-pack">
