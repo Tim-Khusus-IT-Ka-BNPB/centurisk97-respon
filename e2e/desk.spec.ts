@@ -4,6 +4,8 @@ import { exifDateTime, withExif } from "../src/testing/jpegs.ts";
 import { noSidewaysScroll, ownAddress, syntheticNumber } from "./support.ts";
 
 const DESK_CODE = "seeded-session-desk-officer-local-only";
+const REGENCY_CODE = "seeded-session-bpbd-regency-local-only";
+const PROVINCE_CODE = "seeded-session-bpbd-province-local-only";
 const PACE_MS = 3100;
 // Inside the seed outline of Desa Cot Seumiyong, Aceh Utara (WIB).
 const HERE = { lat: 5.14705, lon: 97.0482 };
@@ -102,12 +104,12 @@ async function sendReport(
   return { ticketNumber: sent.ticketNumber, token: card.trackingToken };
 }
 
-async function signIn(page: Page): Promise<void> {
+async function signIn(page: Page, code = DESK_CODE): Promise<void> {
   // Typing before the page has hydrated can lose the code on a slow machine, so wait for it to settle.
   await page.goto("/lapor/meja", { waitUntil: "networkidle" });
   await expect(page.getByRole("heading", { name: "Masuk meja laporan" })).toBeVisible();
-  await page.getByLabel("Kode masuk").fill(DESK_CODE);
-  await expect(page.getByLabel("Kode masuk")).toHaveValue(DESK_CODE);
+  await page.getByLabel("Kode masuk").fill(code);
+  await expect(page.getByLabel("Kode masuk")).toHaveValue(code);
   await page.getByRole("button", { name: "Masuk", exact: true }).click();
   // The desk opens on the map.
   await expect(page.getByRole("heading", { level: 1, name: "Peta laporan" })).toBeVisible();
@@ -303,4 +305,34 @@ test("an officer answers the reporter, moves the ticket to its end, and the trac
     for (const text of ["Petugas Uji", "Tim berangkat", "kami cek"])
       await expect(reporterPage.getByText(text)).toHaveCount(0);
   }
+});
+
+test("a BPBD account works only its region, and asks for the reporter's identity each time", async ({
+  page,
+  browser,
+  baseURL,
+}, info) => {
+  test.setTimeout(240_000);
+  const { ticketNumber } = await sendReport(browser, baseURL as string);
+  // The report is in this regency; the other account's province holds it not.
+  await signIn(page, REGENCY_CODE);
+  await searchTicket(page, ticketNumber);
+  const panel = page.getByRole("region", { name: "Laporan di peta" });
+  await expect(panel.getByText("1 laporan", { exact: true })).toBeVisible();
+  await page.goto(`/lapor/meja/${ticketNumber}`, { waitUntil: "networkidle" });
+  const reporter = page.getByRole("region", { name: "Pelapor", exact: true });
+  await expect(reporter.getByText("Uji Satu")).toHaveCount(0);
+  await expect(reporter.getByRole("link")).toHaveCount(0);
+  await reporter.getByRole("button", { name: "Tampilkan identitas pelapor" }).click();
+  await expect(reporter.getByText("Uji Satu")).toBeVisible();
+  await expect(reporter.getByRole("link", { name: /^Telepon \+62 800-/ })).toBeVisible();
+  await noSidewaysScroll(page);
+  await page.screenshot({ path: info.outputPath("regional.png"), fullPage: true });
+
+  const other = await (await browser.newContext({ baseURL, javaScriptEnabled: true })).newPage();
+  await ownAddress(other.context());
+  await signIn(other, PROVINCE_CODE);
+  await other.goto(`/lapor/meja/${ticketNumber}`);
+  await expect(other.getByRole("heading", { name: "Meja laporan belum bisa dibuka" })).toBeVisible();
+  await expect(other.getByText("Uji Satu")).toHaveCount(0);
 });
