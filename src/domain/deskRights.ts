@@ -7,15 +7,29 @@ export type StaffScope =
   | { readonly level: "national" }
   | { readonly level: "province" | "regency"; readonly code: string };
 
-export type DeskCapability = "readQueue" | "readReport" | "markSeen" | "moveTicket" | "reply";
+export type DeskCapability =
+  | "readQueue"
+  | "readReport"
+  | "markSeen"
+  | "moveTicket"
+  | "forwardTicket"
+  | "reopenTicket"
+  | "reply"
+  | "readIdentity"
+  | "revealIdentity";
 
-// The roles holding each capability. Regional officers wait on region scope (M02 TASK-004).
+// The roles holding each capability. A regional officer works only its own region (StaffScope),
+// asks for a reporter's identity each time, and neither forwards nor reopens.
 const HOLDERS: Readonly<Record<DeskCapability, readonly StaffRole[]>> = {
-  readQueue: ["deskOfficer"],
-  readReport: ["deskOfficer"],
-  markSeen: ["deskOfficer"],
-  moveTicket: ["deskOfficer"],
-  reply: ["deskOfficer"],
+  readQueue: ["deskOfficer", "regionalOfficer"],
+  readReport: ["deskOfficer", "regionalOfficer"],
+  markSeen: ["deskOfficer", "regionalOfficer"],
+  moveTicket: ["deskOfficer", "regionalOfficer"],
+  forwardTicket: ["deskOfficer"],
+  reopenTicket: ["deskOfficer"],
+  reply: ["deskOfficer", "regionalOfficer"],
+  readIdentity: ["deskOfficer"],
+  revealIdentity: ["regionalOfficer"],
 };
 
 export const mayUse = (role: StaffRole, capability: DeskCapability): boolean => HOLDERS[capability].includes(role);

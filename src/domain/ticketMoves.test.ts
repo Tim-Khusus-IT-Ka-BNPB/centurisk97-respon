@@ -1,6 +1,6 @@
 import { describe, expect, test } from "vitest";
 import type { TicketStatus } from "./stages";
-import { checkMove, checkReply, NEXT_STATUSES, noteRule } from "./ticketMoves";
+import { checkMove, checkReply, moveCapability, NEXT_STATUSES, noteRule, offeredStatuses } from "./ticketMoves";
 
 const ALL: readonly TicketStatus[] = ["new", "seen", "under_review", "forwarded", "in_handling", "closed", "invalid"];
 
@@ -39,6 +39,27 @@ describe("where a ticket may go", () => {
     ["in_handling", "invalid", "reason"],
   ] as const)("%s to %s needs a note that is %s", (from, to, rule) => {
     expect(noteRule(from, to)).toBe(rule);
+  });
+});
+
+describe("what a move asks of the role", () => {
+  test.each([
+    ["seen", "under_review", "moveTicket"],
+    ["seen", "invalid", "moveTicket"],
+    ["under_review", "forwarded", "forwardTicket"],
+    ["closed", "forwarded", "forwardTicket"],
+    ["closed", "under_review", "reopenTicket"],
+    ["invalid", "under_review", "reopenTicket"],
+  ] as const)("%s to %s needs %s", (from, to, capability) => {
+    expect(moveCapability(from, to)).toBe(capability);
+  });
+
+  test("a desk officer is offered every move, a regional officer neither forwarding nor reopening", () => {
+    for (const from of ALL) expect(offeredStatuses("deskOfficer", from)).toEqual(ALLOWED[from]);
+    expect(offeredStatuses("regionalOfficer", "seen")).toEqual(["under_review", "invalid"]);
+    expect(offeredStatuses("regionalOfficer", "under_review")).toEqual(["in_handling", "invalid"]);
+    expect(offeredStatuses("regionalOfficer", "closed")).toEqual([]);
+    expect(offeredStatuses("regionalOfficer", "invalid")).toEqual([]);
   });
 });
 

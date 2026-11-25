@@ -1,3 +1,4 @@
+import { type DeskCapability, mayUse, type StaffRole } from "./deskRights";
 import type { FieldError } from "./identityForm";
 import { LENGTHS } from "./limits";
 import type { TicketStatus } from "./stages";
@@ -19,6 +20,16 @@ export const NEXT_STATUSES: Readonly<Record<TicketStatus, readonly TicketStatus[
 export type NoteRule = "optional" | "required" | "reason";
 
 const REOPENED: readonly TicketStatus[] = ["closed", "invalid"];
+// What a move asks of the officer's role beyond working the ticket.
+export function moveCapability(from: TicketStatus, to: TicketStatus): DeskCapability {
+  if (to === "forwarded") return "forwardTicket";
+  return REOPENED.includes(from) ? "reopenTicket" : "moveTicket";
+}
+
+// The moves offered to this role from here.
+export const offeredStatuses = (role: StaffRole, from: TicketStatus): TicketStatus[] =>
+  NEXT_STATUSES[from].filter((to) => mayUse(role, moveCapability(from, to)));
+
 const NEEDS_NOTE: readonly TicketStatus[] = ["in_handling", "closed"];
 
 export function noteRule(from: TicketStatus, to: TicketStatus): NoteRule {
