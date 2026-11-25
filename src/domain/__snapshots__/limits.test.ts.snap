@@ -110,6 +110,12 @@ exports[`limits table > rows as agreed 1`] = `
     "subject": "draft",
     "window": "draftLife",
   },
+  "news.hour": {
+    "effect": "refuse",
+    "max": 120,
+    "subject": "numberSlot",
+    "window": "clockHour",
+  },
   "oneTap.device": {
     "effect": "refuse",
     "max": 1,

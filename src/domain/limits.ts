@@ -30,6 +30,7 @@ export const LIMITS = {
   "address.tracking": { subject: "address", window: "clockHour", max: 300, effect: "refuse" },
   "rating.hour": { subject: "numberSlot", window: "clockHour", max: 30, effect: "refuse" },
   "document.hour": { subject: "numberSlot", window: "clockHour", max: 120, effect: "refuse" },
+  "news.hour": { subject: "numberSlot", window: "clockHour", max: 120, effect: "refuse" },
   "model.draft": { subject: "draft", window: "draftLife", max: 30, effect: "templatesOnly" },
   "model.day": { subject: "number", window: "wibDay", max: 150, effect: "templatesOnly" },
   "address.staffSignIn": { subject: "address", window: "clockHour", max: 30, effect: "refuse" },
