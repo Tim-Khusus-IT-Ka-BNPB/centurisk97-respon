@@ -4,6 +4,7 @@ import { isSeededStaffCode, SESSION_COOKIE } from "../../adapters/identity/seede
 import { hazardTypeSchema } from "../../contract/common";
 import {
   deskGallerySchema,
+  deskIdentitySchema,
   deskMapSchema,
   deskQueueSchema,
   deskReportSchema,
@@ -24,6 +25,7 @@ import {
   moveDeskTicket,
   readDeskReport,
   replyToReporter,
+  revealIdentity,
   viewDeskReport,
 } from "../../services/desk";
 import { checkLimits } from "../../services/limits";
@@ -138,6 +140,22 @@ export function addDeskRoutes(api: Api): void {
     async (c) => {
       c.header("x-robots-tag", "noindex");
       return answered(c, await viewDeskReport(c.env, staffOf(c), c.req.valid("param").ticketNumber));
+    },
+  );
+
+  addRoute(
+    api,
+    "staff",
+    createRoute({
+      method: "post",
+      path: "/desk/reports/{ticketNumber}/identity",
+      request: { params: ticketParams },
+      responses: { 200: jsonResponse("Logged; who reported", deskIdentitySchema) },
+    }),
+    async (c) => {
+      c.header("x-robots-tag", "noindex");
+      c.header("cache-control", "no-store");
+      return answered(c, await revealIdentity(c.env, staffOf(c), c.req.valid("param").ticketNumber));
     },
   );
 

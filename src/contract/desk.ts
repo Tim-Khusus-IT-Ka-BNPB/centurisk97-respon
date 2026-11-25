@@ -20,7 +20,8 @@ const queueItemSchema = z.object({
   sentAt: timeSchema,
   completePercent: z.number().int().min(0).max(100),
   photoCount: z.number().int().nonnegative(),
-  reporter: z.object({ name: z.string(), role: reporterRoleSchema }),
+  // The name is null for an account that must ask for identity on the report.
+  reporter: z.object({ name: z.string().nullable(), role: reporterRoleSchema }),
   numberUnverified: z.boolean(),
   // The report's own figures: a count, 0 for an explicit none, null when not known.
   impact: z.object({
@@ -97,18 +98,30 @@ export const deskGallerySchema = z.object({
 
 export type DeskGallery = z.infer<typeof deskGallerySchema>;
 
+// Who reported, as staff see it.
+export const deskIdentitySchema = z.object({
+  name: z.string(),
+  number: z.string(),
+  officerRegency: z.string().nullable(),
+  officerPosition: z.string().nullable(),
+});
+
+export type DeskIdentity = z.infer<typeof deskIdentitySchema>;
+
 export const deskReportSchema = queueItemSchema.extend({
   account: accountSchema,
-  reporter: z.object({
-    name: z.string(),
-    role: reporterRoleSchema,
-    number: z.string(),
-    officerRegency: z.string().nullable(),
-    officerPosition: z.string().nullable(),
-  }),
+  // Null when the account must ask for it, each time logged.
+  reporter: z.object({ role: reporterRoleSchema, identity: deskIdentitySchema.nullable() }),
   groups: z.array(deskGroupSchema),
   history: z.array(
-    z.object({ status: ticketStatusSchema, at: timeSchema, actor: z.string().nullable(), note: z.string().nullable() }),
+    z.object({
+      status: ticketStatusSchema,
+      at: timeSchema,
+      actor: z.string().nullable(),
+      note: z.string().nullable(),
+      // The regency whose desk it went to.
+      forwardedTo: z.string().nullable(),
+    }),
   ),
   reporterWords: z.array(z.object({ text: z.string(), at: timeSchema })),
   // Where the ticket may go from here, and what the note must hold for each.

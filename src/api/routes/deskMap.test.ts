@@ -106,11 +106,7 @@ describe("the desk map", () => {
     expect((await deskOfficer().call("GET", "/desk/photos?ticket=0800")).status).toBe(422);
   });
 
-  test("a regional account may not use the map, the gallery or a photo before region scope; nor past the limit", async () => {
-    const regional = browser(fetchApi);
-    regional.cookies.set("seeded_session", (SEEDED_SESSIONS[3] as { token: string }).token);
-    for (const path of ["/desk/map", "/desk/photos", `/desk/photos/${crypto.randomUUID()}`])
-      expect((await regional.call("GET", path)).error.error.code).toBe("desk.notAllowed");
+  test("past the hourly limit the map, the gallery and a photo are refused", async () => {
     const key = await hmacKey(bindings.settings.keyHmacSecret, "subject", "staff:staff-desk-1");
     const window = new Date(windowStart("clockHour", clock.now())).toISOString();
     await query`insert into rate_counter (limit_id, subject_key, window_start, count) values ('desk.read', ${key}, ${window}, 1200)

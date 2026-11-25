@@ -1,4 +1,5 @@
 import { DESK_HAS, type DeskHas } from "../../domain/deskQueue";
+import type { StaffScope } from "../../domain/deskRights";
 import type { TicketStatus } from "../../domain/stages";
 import {
   atomically,
@@ -9,11 +10,14 @@ import {
   type Query,
   row,
   rows,
+  run,
   sql,
 } from "../../platform/database";
 import type { StaffPrincipal } from "../../ports/identity";
 
+// Every read names the region it may read: a report outside it is as if it were not there (D95).
 export type QueueFilters = {
+  readonly scope: StaffScope;
   readonly status: TicketStatus | null;
   readonly hazardType: string | null;
   readonly sentFromMs: number | null;
@@ -78,15 +82,24 @@ const HAS: Readonly<Record<DeskHas, Query>> = {
   photos: sql`exists (select 1 from draft_photo h where h.draft_id = r.draft_id)`,
 };
 
+// The region's condition, by the codes of the report's place; none for a national account.
+function regionParts(scope: StaffScope): Query[] {
+  if (scope.level === "national") return [];
+  return scope.level === "regency" ? [sql`r.regency_code = ${scope.code}`] : [sql`r.province_code = ${scope.code}`];
+}
+
+const whereAll = (parts: readonly Query[]): Query =>
+  parts.reduce((joined, part, index) => (index === 0 ? sql` where ${part}` : sql`${joined} and ${part}`), empty);
+
 // The filters as a where clause, with any further conditions a query needs.
 function where(filters: QueueFilters, ...more: Query[]): Query {
-  const parts: Query[] = [...more];
+  const parts: Query[] = [...regionParts(filters.scope), ...more];
   if (filters.status !== null) parts.push(sql`t.status = ${filters.status}`);
   if (filters.hazardType !== null) parts.push(sql`r.hazard_type = ${filters.hazardType}`);
   if (filters.sentFromMs !== null) parts.push(sql`r.sent_at >= ${new Date(filters.sentFromMs)}`);
   if (filters.ticketNumber !== null) parts.push(sql`r.ticket_number = ${filters.ticketNumber}`);
   if (filters.has !== null) parts.push(HAS[filters.has]);
-  return parts.reduce((joined, part, index) => (index === 0 ? sql` where ${part}` : sql`${joined} and ${part}`), empty);
+  return whereAll(parts);
 }
 
 const queueRow = (found: QueueRecord): QueueRow => ({
@@ -140,7 +153,11 @@ export type DeskReportRecord = QueueRow & {
   readonly revision: number;
 };
 
-export async function deskReport(db: Database, ticketNumber: string): Promise<DeskReportRecord | null> {
+export async function deskReport(
+  db: Database,
+  scope: StaffScope,
+  ticketNumber: string,
+): Promise<DeskReportRecord | null> {
   const found = await row<
     QueueRecord & {
       draft_id: string;
@@ -158,7 +175,7 @@ export async function deskReport(db: Database, ticketNumber: string): Promise<De
       from report r
       join ticket t on t.report_id = r.id
       join report_version v on v.report_id = r.id and v.version = 1
-      where r.ticket_number = ${ticketNumber}`,
+      ${whereAll([sql`r.ticket_number = ${ticketNumber}`, ...regionParts(scope)])}`,
   );
   if (found === null) return null;
   const [history, words, replies] = await Promise.all([
@@ -193,7 +210,7 @@ export async function deskReport(db: Database, ticketNumber: string): Promise<De
   };
 }
 
-type LoggedAction = "view" | "status" | "reply";
+type LoggedAction = "view" | "identityView" | "status" | "reply";
 
 const actionRow = (staff: StaffPrincipal, ticketNumber: string, action: LoggedAction, at: Date): Query =>
   sql`insert into staff_action (ticket_number, staff_id, staff_label, staff_kind, action, at)
@@ -222,6 +239,16 @@ export async function markViewed(db: Database, staff: StaffPrincipal, ticketNumb
     historyRow(staff, ticketNumber, SEEN, at),
     actionRow(staff, ticketNumber, "view", at),
   ]);
+}
+
+// A regional officer asked for the reporter's identity: who, when and which report.
+export async function logIdentityView(
+  db: Database,
+  staff: StaffPrincipal,
+  ticketNumber: string,
+  at: Date,
+): Promise<void> {
+  await run(db, actionRow(staff, ticketNumber, "identityView", at));
 }
 
 // The ticket, its history row and the log together, or nothing: false when another officer
@@ -367,8 +394,11 @@ export async function reportPhotos(db: Database, ticketNumber: string): Promise<
 }
 
 // A photo of a sent report; a draft's photo is not on the desk.
-export async function sentPhoto(db: Database, photoId: string): Promise<DeskPhoto | null> {
-  const found = await row<PhotoRow>(db, sql`${PHOTO_SELECT} where p.id = ${photoId}`);
+export async function sentPhoto(db: Database, scope: StaffScope, photoId: string): Promise<DeskPhoto | null> {
+  const found = await row<PhotoRow>(
+    db,
+    sql`${PHOTO_SELECT}${whereAll([sql`p.id = ${photoId}`, ...regionParts(scope)])}`,
+  );
   return found === null ? null : deskPhoto(found);
 }
 

@@ -233,12 +233,11 @@ describe("who may change a ticket", () => {
       [`/desk/reports/${ticket}/replies`, { text: "Kami cek" }],
     ] as const;
 
-  test("signed out, a reporter, and a regional account before region scope may not", async () => {
+  test("signed out or as a reporter, no one", async () => {
     const ticket = await seenReport();
     for (const [path, body] of paths(ticket)) {
       expect((await browser(fetchApi).call("POST", path, body)).status).toBe(401);
       expect((await signedIn(0).call("POST", path, body)).status).toBe(401);
-      expect((await signedIn(3).call("POST", path, body)).error.error.code).toBe("desk.notAllowed");
     }
     expect(await actions(ticket)).toEqual(["view"]);
   });

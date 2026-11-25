@@ -1,9 +1,11 @@
 import {
   addReply,
   type DeskPhoto,
+  type DeskReportRecord,
   deskReport,
   facetCounts,
   galleryPhotos,
+  logIdentityView,
   mapPoints,
   markViewed,
   moveTicket,
@@ -13,7 +15,7 @@ import {
   reportPhotos,
   sentPhoto,
 } from "../adapters/d1/desk";
-import type { DeskGallery, DeskMap, DeskQueue, DeskReport, DeskSummary } from "../contract/desk";
+import type { DeskGallery, DeskIdentity, DeskMap, DeskQueue, DeskReport, DeskSummary } from "../contract/desk";
 import {
   DESK_PAGE_SIZE,
   type DeskHas,
@@ -27,7 +29,7 @@ import type { EventTimeValue, FieldStates, PlaceValue } from "../domain/fieldSta
 import type { FieldError } from "../domain/identityForm";
 import { impactOf } from "../domain/impact";
 import type { TicketStatus } from "../domain/stages";
-import { checkMove, checkReply, NEXT_STATUSES, noteRule } from "../domain/ticketMoves";
+import { checkMove, checkReply, moveCapability, noteRule, offeredStatuses } from "../domain/ticketMoves";
 import type { StaffPrincipal } from "../ports/identity";
 import type { ServiceBindings } from "./bindings";
 import { at, draftZone } from "./draftView";
@@ -57,7 +59,8 @@ async function admitted(
 const fieldValue = <T>(states: QueueRow["states"], field: string): T =>
   (states[field] as { readonly value: unknown }).value as T;
 
-function queueItem(found: QueueRow): DeskQueue["items"][number] {
+// A reporter's name, number and post are for those who may read identity; others ask each time.
+function queueItem(staff: StaffPrincipal, found: QueueRow): DeskQueue["items"][number] {
   const zone = draftZone(found.villageCode);
   const place = fieldValue<PlaceValue>(found.states, "place");
   return {
@@ -70,7 +73,7 @@ function queueItem(found: QueueRow): DeskQueue["items"][number] {
     sentAt: at(found.sentAt, zone),
     completePercent: found.completePercent,
     photoCount: found.photoCount,
-    reporter: { name: found.reporterName, role: found.reporterRole },
+    reporter: { name: mayUse(staff.role, "readIdentity") ? found.reporterName : null, role: found.reporterRole },
     numberUnverified: found.numberUnverified,
     impact: impactOf(found.states),
   };
@@ -85,7 +88,12 @@ export type QueueQuery = {
   readonly page: number;
 };
 
-const filtersOf = (bindings: ServiceBindings, query: Omit<QueueQuery, "page">): QueueFilters => ({
+const filtersOf = (
+  bindings: ServiceBindings,
+  staff: StaffPrincipal,
+  query: Omit<QueueQuery, "page">,
+): QueueFilters => ({
+  scope: staff.scope,
   status: query.status,
   hazardType: query.hazardType,
   sentFromMs: periodStart(query.period, bindings.clock.now()),
@@ -113,7 +121,7 @@ export async function deskMap(
 ): Promise<DeskAnswer<DeskMap>> {
   const refused = await admitted(bindings, staff, "readQueue", "desk.read");
   if (refused) return refused;
-  const found = await mapPoints(bindings.db, filtersOf(bindings, query), MAP_POINTS + 1);
+  const found = await mapPoints(bindings.db, filtersOf(bindings, staff, query), MAP_POINTS + 1);
   return {
     kind: "ok",
     body: {
@@ -134,7 +142,7 @@ export async function deskGallery(
 ): Promise<DeskAnswer<DeskGallery>> {
   const refused = await admitted(bindings, staff, "readQueue", "desk.read");
   if (refused) return refused;
-  const found = await galleryPhotos(bindings.db, filtersOf(bindings, query), GALLERY_PHOTOS + 1);
+  const found = await galleryPhotos(bindings.db, filtersOf(bindings, staff, query), GALLERY_PHOTOS + 1);
   return {
     kind: "ok",
     body: {
@@ -155,7 +163,7 @@ export async function deskPhotoFile(
 ): Promise<DeskPhotoFile> {
   const refused = await admitted(bindings, staff, "readReport", "desk.read");
   if (refused) return refused;
-  const photo = await sentPhoto(bindings.db, photoId);
+  const photo = await sentPhoto(bindings.db, staff.scope, photoId);
   const bytes = photo === null ? null : await bindings.photos.get(photo.storeKey);
   return bytes === null ? { kind: "notFound" } : { kind: "file", bytes };
 }
@@ -170,7 +178,7 @@ export async function deskSummary(
 ): Promise<DeskAnswer<DeskSummary>> {
   const refused = await admitted(bindings, staff, "readQueue", "desk.read");
   if (refused) return refused;
-  const counts = await facetCounts(bindings.db, filtersOf(bindings, query));
+  const counts = await facetCounts(bindings.db, filtersOf(bindings, staff, query));
   const byStatus = Object.fromEntries(STATUSES.map((status) => [status, counts.byStatus[status] ?? 0]));
   const total =
     query.status === null
@@ -195,13 +203,13 @@ export async function deskQueue(
 ): Promise<DeskAnswer<DeskQueue>> {
   const refused = await admitted(bindings, staff, "readQueue", "desk.read");
   if (refused) return refused;
-  const filters = filtersOf(bindings, query);
+  const filters = filtersOf(bindings, staff, query);
   const found = await queuePage(bindings.db, filters, (query.page - 1) * DESK_PAGE_SIZE, DESK_PAGE_SIZE);
   return {
     kind: "ok",
     body: {
       account: { label: staff.label },
-      items: found.rows.map(queueItem),
+      items: found.rows.map((row) => queueItem(staff, row)),
       total: found.total,
       page: query.page,
       pageCount: Math.ceil(found.total / DESK_PAGE_SIZE),
@@ -209,20 +217,25 @@ export async function deskQueue(
   };
 }
 
+const identityOf = (found: DeskReportRecord): DeskIdentity => ({
+  name: found.reporterName,
+  number: found.reporterNumber,
+  officerRegency: found.officerRegency,
+  officerPosition: found.officerPosition,
+});
+
 async function reportBody(bindings: ServiceBindings, staff: StaffPrincipal, ticketNumber: string) {
-  const found = await deskReport(bindings.db, ticketNumber);
+  const found = await deskReport(bindings.db, staff.scope, ticketNumber);
   if (found === null) return null;
   const zone = draftZone(found.villageCode);
   const states = found.states as FieldStates;
+  const place = fieldValue<PlaceValue>(found.states, "place");
   const body: DeskReport = {
-    ...queueItem(found),
+    ...queueItem(staff, found),
     account: { label: staff.label },
     reporter: {
-      name: found.reporterName,
       role: found.reporterRole,
-      number: found.reporterNumber,
-      officerRegency: found.officerRegency,
-      officerPosition: found.officerPosition,
+      identity: mayUse(staff.role, "readIdentity") ? identityOf(found) : null,
     },
     groups: summaryGroups(states).map((group) => ({
       ...group,
@@ -236,10 +249,15 @@ async function reportBody(bindings: ServiceBindings, staff: StaffPrincipal, tick
       at: at(one.atMs, zone),
       actor: one.actorLabel,
       note: one.note,
+      // Forwarding sends a report to the desk of its own place.
+      forwardedTo: one.toStatus === "forwarded" ? place.regencyName : null,
     })),
     reporterWords: found.reporterWords.map((one) => ({ text: one.text, at: at(one.atMs, zone) })),
     photos: (await reportPhotos(bindings.db, ticketNumber)).map(photoView),
-    nextStatuses: NEXT_STATUSES[found.status].map((status) => ({ status, note: noteRule(found.status, status) })),
+    nextStatuses: offeredStatuses(staff.role, found.status).map((status) => ({
+      status,
+      note: noteRule(found.status, status),
+    })),
     revision: found.revision,
     replies: found.replies.map((one) => ({ text: one.text, at: at(one.atMs, zone), actor: one.staffLabel })),
   };
@@ -266,9 +284,23 @@ export async function viewDeskReport(
 ): Promise<DeskAnswer<DeskReport>> {
   const refused = await admitted(bindings, staff, "markSeen", "desk.write");
   if (refused) return refused;
-  if ((await deskReport(bindings.db, ticketNumber)) === null) return { kind: "notFound" };
+  if ((await deskReport(bindings.db, staff.scope, ticketNumber)) === null) return { kind: "notFound" };
   await markViewed(bindings.db, staff, ticketNumber, new Date(bindings.clock.now()));
   return { kind: "ok", body: (await reportBody(bindings, staff, ticketNumber)) as DeskReport };
+}
+
+// A regional officer asked who reported: logged, then shown this once.
+export async function revealIdentity(
+  bindings: ServiceBindings,
+  staff: StaffPrincipal,
+  ticketNumber: string,
+): Promise<DeskAnswer<DeskIdentity>> {
+  const refused = await admitted(bindings, staff, "revealIdentity", "desk.write");
+  if (refused) return refused;
+  const found = await deskReport(bindings.db, staff.scope, ticketNumber);
+  if (found === null) return { kind: "notFound" };
+  await logIdentityView(bindings.db, staff, ticketNumber, new Date(bindings.clock.now()));
+  return { kind: "ok", body: identityOf(found) };
 }
 
 export type DeskChange =
@@ -291,8 +323,9 @@ export async function moveDeskTicket(
 ): Promise<DeskChange> {
   const refused = await admitted(bindings, staff, "moveTicket", "desk.write");
   if (refused) return refused;
-  const found = await deskReport(bindings.db, ticketNumber);
+  const found = await deskReport(bindings.db, staff.scope, ticketNumber);
   if (found === null) return { kind: "notFound" };
+  if (!mayUse(staff.role, moveCapability(found.status, change.to))) return { kind: "notAllowed" };
   if (found.revision !== change.revision) return { kind: "changed", status: found.status };
   const check = checkMove(found.status, change.to, change.note);
   if (check.kind === "refused") return { kind: "transitionRefused" };
@@ -300,7 +333,7 @@ export async function moveDeskTicket(
   const move = { from: found.status, to: change.to, note: check.note, revision: change.revision };
   if (await moveTicket(bindings.db, staff, ticketNumber, move, new Date(bindings.clock.now())))
     return after(bindings, staff, ticketNumber);
-  const now = (await deskReport(bindings.db, ticketNumber)) as { readonly status: TicketStatus };
+  const now = (await deskReport(bindings.db, staff.scope, ticketNumber)) as { readonly status: TicketStatus };
   return { kind: "changed", status: now.status };
 }
 
@@ -312,7 +345,7 @@ export async function replyToReporter(
 ): Promise<DeskChange> {
   const refused = await admitted(bindings, staff, "reply", "desk.write");
   if (refused) return refused;
-  if ((await deskReport(bindings.db, ticketNumber)) === null) return { kind: "notFound" };
+  if ((await deskReport(bindings.db, staff.scope, ticketNumber)) === null) return { kind: "notFound" };
   const check = checkReply(typed);
   if (check.kind === "invalid") return check;
   await addReply(bindings.db, staff, ticketNumber, check.text, new Date(bindings.clock.now()));

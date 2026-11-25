@@ -34,7 +34,6 @@ const signedIn = (index: number): Phone => {
   return phone;
 };
 const deskOfficer = () => signedIn(2);
-const regencyOfficer = () => signedIn(3);
 
 let village = "";
 beforeAll(async () => {
@@ -80,20 +79,6 @@ describe("who reaches the desk", () => {
         expect(JSON.stringify(answer.json)).not.toContain(ticket);
       }
     }
-  });
-
-  test("a regional account may not use the desk until region scope exists", async () => {
-    const ticket = await typedReport();
-    for (const [method, path] of [
-      ["GET", "/desk/reports"],
-      ["GET", `/desk/reports/${ticket}`],
-      ["POST", `/desk/reports/${ticket}/view`],
-    ] as const) {
-      const answer = await regencyOfficer().call(method, path);
-      expect(answer.status).toBe(403);
-      expect(answer.error.error.code).toBe("desk.notAllowed");
-    }
-    expect(await query`select 1 from staff_action where ticket_number = ${ticket}`).toEqual([]);
   });
 
   test("a write without the client header is refused before anything is written", async () => {
@@ -230,8 +215,7 @@ describe("counts for the queues and the chips", () => {
     expect((await deskOfficer().call("GET", "/desk/reports?has=everything")).status).toBe(400);
   });
 
-  test("a regional account and a wrong ticket number are refused", async () => {
-    expect((await regencyOfficer().call("GET", "/desk/summary")).error.error.code).toBe("desk.notAllowed");
+  test("a wrong ticket number is refused", async () => {
     expect((await deskOfficer().call("GET", "/desk/summary?ticket=0800")).status).toBe(422);
   });
 });
@@ -270,12 +254,12 @@ describe("a report on the desk", () => {
       displaced: 0,
       houses: { count: 0, partial: false },
     });
-    expect(report.reporter).toMatchObject({ name: "Uji Satu", role: "citizen", officerRegency: null });
-    expect(report.reporter.number).toMatch(/^\+628\d+$/);
+    expect(report.reporter).toMatchObject({ role: "citizen", identity: { name: "Uji Satu", officerRegency: null } });
+    expect(report.reporter.identity?.number).toMatch(/^\+628\d+$/);
     expect(report.numberUnverified).toBe(true);
     expect(report.reporterWords.map((word) => word.text)).toContain("banjir, dua orang meninggal");
     expect(report.history).toEqual([
-      { status: "new", at: expect.objectContaining({ zone: "WIB" }), actor: null, note: null },
+      { status: "new", at: expect.objectContaining({ zone: "WIB" }), actor: null, note: null, forwardedTo: null },
     ]);
   });
 
@@ -345,6 +329,8 @@ describe("a report on the desk", () => {
       error: { code: "limit.desk.read", params: { limit: 1200 } },
       retryAt: { zone: "WIB" },
     });
+    for (const path of ["/desk/summary", `/desk/reports/${ticket}`])
+      expect((await deskOfficer().call("GET", path)).status, path).toBe(429);
     const write = await deskOfficer().call("POST", `/desk/reports/${ticket}/view`);
     expect(write.error.error.code).toBe("limit.desk.write");
     await query`delete from rate_counter where subject_key = ${key}`;
