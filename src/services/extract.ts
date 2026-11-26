@@ -2,6 +2,7 @@ import type { DraftRecord } from "../adapters/d1/drafts";
 import { claimModelCall } from "../adapters/d1/limits";
 import type { Card } from "../contract/card";
 import { copy } from "../copy";
+import { localClockText, localDateText } from "../copy/time";
 import { type Extraction, validateExtraction } from "../domain/extraction";
 import { chosenHazardType } from "../domain/fields/applicable";
 import { LIMITS } from "../domain/limits";
@@ -55,6 +56,13 @@ export async function extractFrom(
 
 const textOf = (key: string) => (copy.has(key) ? copy.text(key) : null);
 
+// The browser's time and date boxes send 21:31 and 2026-11-20; the line says them as the app does.
+const timeText = (id: string, typed: string) => {
+  if (id === "hour" && /^\d{2}:\d{2}$/.test(typed)) return localClockText(typed);
+  if (id === "date" && /^\d{4}-\d{2}-\d{2}$/.test(typed)) return localDateText(typed);
+  return typed;
+};
+
 // The reporter's side of a card answer as one line of the conversation: the labels they picked
 // and what they typed, masked.
 export function answerLine(
@@ -74,7 +82,8 @@ export function answerLine(
     const typed = raw.trim();
     if (typed === "") continue;
     const label = textOf(fields.find((field) => field.id === id)?.labelKey ?? "");
-    parts.push(label ? `${label}: ${typed}` : typed);
+    const shown = card.kind === "timeCard" ? timeText(id, typed) : typed;
+    parts.push(label ? `${label}: ${shown}` : shown);
   }
   return maskText(parts.join(", "), reporter);
 }

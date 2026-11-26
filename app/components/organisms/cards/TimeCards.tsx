@@ -84,15 +84,17 @@ export function TimeCardView({ card }: { readonly card: TimeCard }) {
             label={t("card.timeCard.hour")}
             problem={problemOf(envelope, "hour")}
             focus={focus === "hour"}
+            className="dim-when-hour-unknown flex min-w-0 flex-col gap-1.5 transition-opacity duration-150 motion-reduce:transition-none"
           >
             {(control) => (
               <div className="flex items-center gap-2">
+                {/* The browser's own time box: digits only, 2131 reads as 21:31, a picker on a phone. */}
                 <Input
                   {...control}
-                  inputMode="decimal"
+                  type="time"
                   autoComplete="off"
                   defaultValue={hourValue}
-                  className="w-[max(6ch,5.5rem)] tabular-nums"
+                  className="w-auto min-w-[8.5rem] tabular-nums"
                 />
                 <span className="text-body text-muted">{card.zone}</span>
               </div>

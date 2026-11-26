@@ -120,6 +120,15 @@ describe("the reporter's line for a card answer", () => {
     ).toBe("Tidak ada semua, Meninggal: 2, [nama pelapor]");
     expect(answerLine(card, ["nonsense"], {}, { name: null, number: null })).toBe("");
   });
+
+  test("the browser's time and date boxes are said as the app writes them", () => {
+    const time = cardFor({ kind: "eventTime" }, EMPTY_CONTENT, context);
+    const nobody = { name: null, number: null };
+    expect(answerLine(time, ["yesterday"], { hour: "21:31" }, nobody)).toBe("Kemarin, Jam: 21.31");
+    expect(answerLine(time, ["otherDate"], { date: "2026-11-20" }, nobody)).toBe(
+      "Tanggal lain, Tanggal: 20 November 2026",
+    );
+  });
 });
 
 describe("ports chosen by the settings", () => {

@@ -58,7 +58,7 @@
   "card.chronologyReview.done": "Tidak ada, lanjut",
   "card.chronologyReview.noteHint": "Paling banyak 300 huruf. Jangan tulis nama orang lain.",
   "card.timeCard.title": "Waktu kejadian",
-  "card.timeCard.prompt": "Kapan kejadian mulai? Jam memakai waktu {zone} sesuai provinsi lokasi, format 24 jam, misalnya 14.30.",
+  "card.timeCard.prompt": "Kapan kejadian mulai? Jam memakai waktu {zone} sesuai provinsi lokasi.",
   "card.timeCard.today": "Hari ini",
   "card.timeCard.yesterday": "Kemarin",
   "card.timeCard.otherDate": "Tanggal lain",
