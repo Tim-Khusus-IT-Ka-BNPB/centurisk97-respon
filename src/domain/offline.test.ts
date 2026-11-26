@@ -1,5 +1,5 @@
 import { describe, expect, test } from "vitest";
-import { LATE_MS, offlineMark } from "./offline";
+import { LATE_MS, OFFLINE_PHOTOS, offlineMark, offlinePhotoClock } from "./offline";
 import { DAY_MS, MINUTE_MS } from "./time";
 
 const NOW = Date.UTC(2026, 10, 26, 3);
@@ -21,5 +21,11 @@ describe("a report kept on a phone with no signal", () => {
     expect(offlineMark(NOW - 14 * DAY_MS - 1, NOW, NOW)).toEqual({ savedAt: null, late: false });
     expect(offlineMark(undefined, NOW, NOW)).toEqual({ savedAt: null, late: false });
     expect(LATE_MS).toBe(7_200_000);
+  });
+
+  test("its photos, at most 3, are checked at the phone's save time and 2 minutes, or now with none", () => {
+    expect(OFFLINE_PHOTOS).toBe(3);
+    expect(offlinePhotoClock(NOW - LATE_MS, NOW)).toBe(NOW - LATE_MS + 2 * MINUTE_MS);
+    expect(offlinePhotoClock(null, NOW)).toBe(NOW);
   });
 });

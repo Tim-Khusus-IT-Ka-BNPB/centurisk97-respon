@@ -1,17 +1,23 @@
 import { lastOneTap, offlineTicket, oneTapsOfDay, openEmergencies, sendOneTap } from "../adapters/d1/emergency";
+import { draftPhotos, insertPhoto } from "../adapters/d1/photos";
 import { knownProfiles, latestConsent, type ProfileRow } from "../adapters/d1/reporters";
 import { ownReports, reportByTicket } from "../adapters/d1/reports";
 import { ticketNumberOf } from "../adapters/d1/send";
 import type { DeskEmergency } from "../contract/desk";
 import type { OneTapSent, OneTapStart } from "../contract/emergency";
 import { emergencyStates, oneTapDayOpensAt, oneTapOpensAt, type VictimAnswer } from "../domain/emergency";
+import { zoneOffsetMs } from "../domain/eventTime";
 import type { FieldStates, PlacePoint, PlaceValue } from "../domain/fieldState";
 import { completePercent } from "../domain/fields/applicable";
 import type { HazardTypeId } from "../domain/hazards";
-import { offlineMark } from "../domain/offline";
+import { readExif, stripJpeg } from "../domain/jpeg";
+import { OFFLINE_PHOTOS, offlineMark, offlinePhotoClock } from "../domain/offline";
 import { maskNumber } from "../domain/phoneNumber";
+import { checkPhoto, type DeviceFix } from "../domain/photoChecks";
 import { formatTicketNumber, ticketDay } from "../domain/ticketNumber";
+import { MINUTE_MS } from "../domain/time";
 import { EMPTY_CONTENT } from "../domain/turn/content";
+import { run } from "../platform/database";
 import { sha256Hex } from "../platform/keys";
 import type { Principal, StaffPrincipal } from "../ports/identity";
 import type { ServiceBindings } from "./bindings";
@@ -150,6 +156,71 @@ export async function oneTapEmergency(
   if (ticketNumber === null)
     return { kind: "limit", refusal: { limitId: "oneTap.device", retryAtMs: await deviceOpens() } };
   return { kind: "sent", ticketNumber, trackingToken: token, contact: await contactOf(bindings, place) };
+}
+
+export type OfflinePhoto = {
+  // Which of the report's kept photos this is, from 0, so a send repeated after a lost answer
+  // keeps it once.
+  readonly index: number;
+  readonly bytes: Uint8Array;
+  readonly device: DeviceFix | null;
+  readonly offsetMinutes: number | null;
+};
+
+export type OfflinePhotoAnswer =
+  | { readonly kind: "kept"; readonly photos: number }
+  | { readonly kind: "notFound" }
+  | { readonly kind: "refused"; readonly rule: string }
+  | { readonly kind: "limit"; readonly refusal: LimitRefusal };
+
+// The id of a kept photo, the same each time the phone sends it.
+async function keptPhotoId(clientId: string, index: number): Promise<string> {
+  const hex = (await sha256Hex(`${clientId}:${index}`)).slice(0, 32);
+  return `${hex.slice(0, 8)}-${hex.slice(8, 12)}-${hex.slice(12, 16)}-${hex.slice(16, 20)}-${hex.slice(20)}`;
+}
+
+// A photo kept with a report made with no signal, sent after the report (LR-06). Only the phone or
+// session that sent the report adds to it. The photo is checked against when the phone saved the
+// report, not when it arrived; a refused photo leaves the report as it is.
+export async function addOfflinePhoto(
+  bindings: ServiceBindings,
+  principal: Reporter,
+  address: string,
+  clientId: string,
+  photo: OfflinePhoto,
+): Promise<OfflinePhotoAnswer> {
+  const [profile, ticket] = await Promise.all([reporterOf(bindings, principal), offlineTicket(bindings.db, clientId)]);
+  if (profile === null || ticket === null || ticket.ownerSlot !== profile.owner_slot) return { kind: "notFound" };
+  const refusal = await checkLimits(bindings, [["address.messages", { kind: "address", bucket: address }]]);
+  if (refusal) return { kind: "limit", refusal };
+  const id = await keptPhotoId(clientId, photo.index);
+  const kept = await draftPhotos(bindings.db, ticket.draftId);
+  if (kept.some((one) => one.id === id)) return { kind: "kept", photos: kept.length };
+  if (photo.index >= OFFLINE_PHOTOS || kept.length >= OFFLINE_PHOTOS) return { kind: "refused", rule: "tooMany" };
+  const report = (await reportByTicket(bindings.db, ticket.ticketNumber)) as NonNullable<
+    Awaited<ReturnType<typeof reportByTicket>>
+  >;
+  const place = (report.states.place as { readonly value: PlaceValue }).value;
+  const nowMs = bindings.clock.now();
+  const checked = checkPhoto({
+    bytes: photo.bytes,
+    nowMs: offlinePhotoClock(ticket.savedAt, nowMs),
+    placePoint: place.point ?? null,
+    count: kept.length,
+    exif: readExif(photo.bytes),
+    device: photo.device,
+    fallbackOffsetMinutes: photo.offsetMinutes ?? zoneOffsetMs(draftZone(ticket.villageCode)) / MINUTE_MS,
+  });
+  if (checked.kind === "refused") return checked;
+  const clean = stripJpeg(photo.bytes);
+  if (clean === null) return { kind: "refused", rule: "broken" };
+  const storeKey = `photos/${ticket.draftId}/${id}.jpg`;
+  await bindings.photos.put(storeKey, clean);
+  await run(
+    bindings.db,
+    insertPhoto(ticket.draftId, { ...checked, id, storeKey, bytes: clean.length, doubts: [] }, new Date(nowMs)),
+  );
+  return { kind: "kept", photos: kept.length + 1 };
 }
 
 const SHOWN = 20;

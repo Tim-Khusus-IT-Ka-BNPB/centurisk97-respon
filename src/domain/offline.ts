@@ -29,3 +29,13 @@ export function offlineMark(
   const late = believable(sentByPhoneMs, nowMs) && sentByPhoneMs - savedMs > LATE_MS;
   return { savedAt: savedMs, late };
 }
+
+// Photos kept with a report made with no signal (LR-06): from the camera, at most 3, judged against
+// when the phone saved the report, with 2 minutes' leeway, as the camera's clock is the phone's too.
+export const OFFLINE_PHOTOS = 3;
+const PHOTO_LEEWAY_MS = 2 * MINUTE_MS;
+
+// The time a kept photo is checked at: the phone's save time and its leeway, or now when the save
+// time could not be believed.
+export const offlinePhotoClock = (savedAt: number | null, nowMs: number): number =>
+  savedAt === null ? nowMs : savedAt + PHOTO_LEEWAY_MS;

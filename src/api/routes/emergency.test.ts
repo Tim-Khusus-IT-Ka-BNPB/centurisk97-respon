@@ -14,6 +14,8 @@ import { windowStart } from "../../domain/limits";
 import { addressBucket } from "../../platform/address";
 import { hmacKey } from "../../platform/keys";
 import { browser, freshNumber, manualClock, query, testBindings, testDatabase } from "../../testing/api";
+import { exifDateTime } from "../../testing/jpegs";
+import { cameraJpeg } from "../../testing/photoBase";
 import { startDraft, turn } from "../../testing/walk";
 import { api } from "../app";
 import type { ApiBindings } from "../context";
@@ -218,6 +220,60 @@ describe("one tap", () => {
     expect([again.status, (again.json as { ticketNumber: string }).ticketNumber]).toEqual([201, body.ticketNumber]);
     expect((again.json as { trackingToken: string }).trackingToken).toBe(body.trackingToken);
     expect(await query`select count(*) as n from offline_send where client_id = ${clientId}`).toEqual([{ n: 1 }]);
+  });
+
+  test("its camera photos follow it, checked against when the phone saved it, at most 3, each kept once", async () => {
+    clock.advance(31 * 60_000);
+    const phone = await boundPhone();
+    const clientId = crypto.randomUUID();
+    const savedAt = clock.now() - 40 * 60_000;
+    const sent = await tap(phone, { ...HERE, victims: "no", takenAtMs: savedAt, sentAtMs: clock.now(), clientId });
+    const ticket = (sent.json as { ticketNumber: string }).ticketNumber;
+    const jpeg = (takenMs: number) =>
+      cameraJpeg({ make: "Uji", model: "Kamera", dateTime: exifDateTime(takenMs, 420) });
+    const photo = (
+      index: number,
+      bytes: Uint8Array,
+      extra: Record<string, string> = {},
+      from = phone,
+      id = clientId,
+    ) => {
+      const form = new FormData();
+      form.set("photo", new File([new Uint8Array(bytes)], "foto.jpg", { type: "image/jpeg" }));
+      form.set("index", String(index));
+      for (const [name, value] of Object.entries(extra)) form.set(name, value);
+      return from.upload(`/emergencies/${id}/photos`, form);
+    };
+    // Taken a minute before the save, forty minutes ago, with the phone's GPS read then: kept.
+    const gps = { lat: "5.14705", lon: "97.0482", accuracy: "15", readAt: String(savedAt - 60_000), offset: "420" };
+    const first = await photo(0, jpeg(savedAt - 60_000), gps);
+    expect([first.status, first.json]).toEqual([201, { photos: 1 }]);
+    // Sent again after a lost answer: kept once.
+    expect((await photo(0, jpeg(savedAt - 60_000))).json).toEqual({ photos: 1 });
+    // Taken 10 minutes before the save, or cut short: refused, and the report stays as it is.
+    expect((await photo(1, jpeg(savedAt - 10 * 60_000))).error.fields[0]?.copyKey).toBe("fieldError.photo.notFresh");
+    const whole = jpeg(savedAt);
+    expect((await photo(1, whole.subarray(0, whole.length - 4000))).error.fields[0]?.copyKey).toBe(
+      "fieldError.photo.broken",
+    );
+    expect((await photo(1, jpeg(savedAt + 60_000))).json).toEqual({ photos: 2 });
+    expect((await photo(2, jpeg(savedAt))).json).toEqual({ photos: 3 });
+    expect((await photo(3, jpeg(savedAt))).status).toBe(400);
+    const report = deskReportSchema.parse((await desk().call("GET", `/desk/reports/${ticket}`)).json);
+    expect(report.photos.map((one) => one.badge).sort()).toEqual(["deviceGps", "none", "none"]);
+    // A photo the report got some other way still counts toward the 3.
+    await query`update draft_photo set id = lower(hex(randomblob(16)))
+      where draft_id = (select draft_id from report where ticket_number = ${ticket})`;
+    expect((await photo(0, jpeg(savedAt))).error.fields[0]?.copyKey).toBe("fieldError.photo.tooMany");
+    // Another phone, a phone nobody agreed on, or an id never sent: no such report.
+    expect((await photo(0, jpeg(savedAt), {}, await boundPhone())).status).toBe(404);
+    expect((await photo(0, jpeg(savedAt), {}, signedIn(1))).status).toBe(404);
+    expect((await photo(0, jpeg(savedAt), {}, phone, crypto.randomUUID())).status).toBe(404);
+    const key = await hmacKey(bindings.settings.keyHmacSecret, "address", addressBucket(phone.address) as string);
+    const window = new Date(windowStart("clockHour", clock.now())).toISOString();
+    await query`insert into rate_counter (limit_id, subject_key, window_start, count) values ('address.messages', ${key}, ${window}, 2000)
+      on conflict do update set count = 2000`;
+    expect((await photo(0, jpeg(savedAt))).error.error.code).toBe("limit.address.messages");
   });
 
   test("sent more than 2 hours after it was saved, by the phone's clock: marked late, and it does not ring", async () => {

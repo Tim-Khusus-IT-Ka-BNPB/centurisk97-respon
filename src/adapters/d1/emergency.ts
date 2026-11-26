@@ -108,17 +108,40 @@ export async function openEmergencies(db: Database, scope: StaffScope, limit: nu
   }));
 }
 
-// A report sent before under this id made on the phone, or null.
-export const offlineTicket = async (
-  db: Database,
-  clientId: string,
-): Promise<{ ticketNumber: string; reportId: string; villageCode: string } | null> => {
-  const found = await row<{ ticket_number: string; report_id: string; village_code: string }>(
+// A report sent before under this id made on the phone, with the draft its photos go under, whose
+// phone it is, and when that phone saved it; or null.
+export type OfflineTicket = {
+  readonly ticketNumber: string;
+  readonly reportId: string;
+  readonly villageCode: string;
+  readonly draftId: string;
+  readonly ownerSlot: string;
+  readonly savedAt: number | null;
+};
+
+export const offlineTicket = async (db: Database, clientId: string): Promise<OfflineTicket | null> => {
+  const found = await row<{
+    ticket_number: string;
+    report_id: string;
+    village_code: string;
+    draft_id: string;
+    owner_slot: string;
+    saved_at: string | null;
+  }>(
     db,
-    sql`select o.ticket_number, r.id as report_id, r.village_code from offline_send o
-      join report r on r.ticket_number = o.ticket_number where o.client_id = ${clientId}`,
+    sql`select o.ticket_number, o.saved_at, r.id as report_id, r.village_code, r.draft_id, d.owner_slot
+      from offline_send o join report r on r.ticket_number = o.ticket_number
+        join report_draft d on d.id = r.draft_id
+      where o.client_id = ${clientId}`,
   );
   return found === null
     ? null
-    : { ticketNumber: found.ticket_number, reportId: found.report_id, villageCode: found.village_code };
+    : {
+        ticketNumber: found.ticket_number,
+        reportId: found.report_id,
+        villageCode: found.village_code,
+        draftId: found.draft_id,
+        ownerSlot: found.owner_slot,
+        savedAt: found.saved_at === null ? null : Date.parse(found.saved_at),
+      };
 };
