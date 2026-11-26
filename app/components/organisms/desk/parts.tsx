@@ -119,6 +119,23 @@ export function EmergencyChip() {
   );
 }
 
+// A report kept on the reporter's phone with no signal: from offline, or more than 2 hours late, with
+// when the phone saved it as a note (LR-09).
+export function OfflineChip({ offline }: { readonly offline: NonNullable<Item["offline"]> }) {
+  const t = useText();
+  const saved = offline.savedAt === null ? t("desk.offline.noClock") : when(t, "desk.offline.saved", offline.savedAt);
+  return (
+    <span
+      title={saved}
+      className="inline-flex items-center gap-1 rounded-chip border border-line bg-surface px-2 py-0.5 text-meta whitespace-nowrap"
+    >
+      <Icon name="clock" className="size-4" />
+      {t(offline.late ? "desk.offline.late" : "desk.offline.chip")}
+      <span className="sr-only">, {saved}</span>
+    </span>
+  );
+}
+
 // The reporter added something no officer has acted on yet.
 export function NewsChip() {
   const t = useText();

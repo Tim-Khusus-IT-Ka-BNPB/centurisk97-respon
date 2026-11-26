@@ -49,6 +49,9 @@ export type QueueRow = {
   // The pilot list names its number as an officer's.
   readonly officerConfirmed: boolean;
   readonly emergency: { readonly kind: EmergencyKind; readonly victims: VictimAnswer } | null;
+  // Kept on the reporter's phone with no signal: when it was saved there (null when the phone's clock
+  // could not be believed), and whether it came more than 2 hours late (LR-09).
+  readonly offline: { readonly savedAt: Date | null; readonly late: boolean } | null;
   readonly taker: string | null;
   // The reporter added news that no officer has acted on yet.
   readonly news: boolean;
@@ -70,9 +73,17 @@ type QueueRecord = {
   officer_confirmed: number;
   emergency: EmergencyKind | null;
   emergency_victims: VictimAnswer | null;
+  offline_kept: number | null;
+  offline_saved_at: string | null;
+  offline_late: number | null;
   taker: string | null;
   news: number;
 };
+
+// What the desk is told of a report kept on a phone with no signal.
+const OFFLINE = sql`(select o.kept from offline_send o where o.ticket_number = r.ticket_number) as offline_kept,
+    (select o.saved_at from offline_send o where o.ticket_number = r.ticket_number) as offline_saved_at,
+    (select o.late from offline_send o where o.ticket_number = r.ticket_number) as offline_late`;
 
 // The values shown are the newest version's: a field check's corrections make one.
 const LATEST = sql`(select max(m.version) from report_version m where m.report_id = r.id)`;
@@ -88,7 +99,7 @@ const CONFIRMED = sql`(v.reporter_role = 'claimedOfficer' and r.number_unverifie
     select 1 from pilot_number a where a.number_key = r.number_key and a.officer_regency is not null))`;
 
 const SELECT = sql`select r.ticket_number, t.status, r.hazard_type, r.village_code, r.sent_at, v.fields,
-    v.complete_percent, v.reporter_name, v.reporter_role, r.number_unverified, r.door, ${CONFIRMED} as officer_confirmed, r.emergency, r.emergency_victims,
+    v.complete_percent, v.reporter_name, v.reporter_role, r.number_unverified, r.door, ${CONFIRMED} as officer_confirmed, r.emergency, r.emergency_victims, ${OFFLINE},
     (select k.label from report_taker k where k.ticket_number = r.ticket_number) as taker, ${NEWS} as news,
     (select count(*) from draft_photo p where p.draft_id = r.draft_id) as photo_count
   from report r
@@ -149,6 +160,13 @@ const queueRow = (found: QueueRecord): QueueRow => ({
   news: found.news === 1,
   emergency:
     found.emergency === null ? null : { kind: found.emergency, victims: found.emergency_victims as VictimAnswer },
+  offline:
+    found.offline_kept === 1
+      ? {
+          savedAt: found.offline_saved_at === null ? null : new Date(found.offline_saved_at),
+          late: found.offline_late === 1,
+        }
+      : null,
 });
 
 // One page of sent reports, newest first, and how many match in all.
@@ -224,7 +242,7 @@ export async function deskReport(
   >(
     db,
     sql`select r.ticket_number, t.status, r.hazard_type, r.village_code, r.sent_at, v.fields,
-        v.complete_percent, v.reporter_name, v.reporter_role, r.number_unverified, r.door, ${CONFIRMED} as officer_confirmed, r.emergency, r.emergency_victims,
+        v.complete_percent, v.reporter_name, v.reporter_role, r.number_unverified, r.door, ${CONFIRMED} as officer_confirmed, r.emergency, r.emergency_victims, ${OFFLINE},
     (select k.label from report_taker k where k.ticket_number = r.ticket_number) as taker, ${NEWS} as news, r.draft_id, r.id as report_id, t.revision,
         v.reporter_number, v.officer_regency, v.officer_position,
         (select count(*) from draft_photo p where p.draft_id = r.draft_id) as photo_count

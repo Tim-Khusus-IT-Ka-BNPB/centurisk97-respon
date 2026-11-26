@@ -1,11 +1,4 @@
-import {
-  keepOfflineSend,
-  lastOneTap,
-  offlineTicket,
-  oneTapsOfDay,
-  openEmergencies,
-  sendOneTap,
-} from "../adapters/d1/emergency";
+import { lastOneTap, offlineTicket, oneTapsOfDay, openEmergencies, sendOneTap } from "../adapters/d1/emergency";
 import { knownProfiles, latestConsent, type ProfileRow } from "../adapters/d1/reporters";
 import { ownReports, reportByTicket } from "../adapters/d1/reports";
 import { ticketNumberOf } from "../adapters/d1/send";
@@ -15,9 +8,9 @@ import { emergencyStates, oneTapDayOpensAt, oneTapOpensAt, type VictimAnswer } f
 import type { FieldStates, PlacePoint, PlaceValue } from "../domain/fieldState";
 import { completePercent } from "../domain/fields/applicable";
 import type { HazardTypeId } from "../domain/hazards";
+import { offlineMark } from "../domain/offline";
 import { maskNumber } from "../domain/phoneNumber";
 import { formatTicketNumber, ticketDay } from "../domain/ticketNumber";
-import { DAY_MS } from "../domain/time";
 import { EMPTY_CONTENT } from "../domain/turn/content";
 import { sha256Hex } from "../platform/keys";
 import type { Principal, StaffPrincipal } from "../ports/identity";
@@ -60,12 +53,12 @@ export type OneTapAnswer =
 export type OfflineDetails = {
   readonly hazardType?: HazardTypeId;
   readonly victims?: VictimAnswer;
+  // When the phone saved it and when the phone sent it, by the phone's clock: present only for a
+  // report kept there with no signal.
   readonly takenAtMs?: number;
+  readonly sentAtMs?: number;
   readonly clientId?: string;
 };
-
-// A report kept on a phone this long is still sent, with the time it was made.
-const OFFLINE_KEPT_MS = 14 * DAY_MS;
 
 async function sentBefore(bindings: ServiceBindings, clientId: string): Promise<OneTapAnswer | null> {
   const before = await offlineTicket(bindings.db, clientId);
@@ -97,10 +90,8 @@ export async function oneTapEmergency(
     if (replayed) return replayed;
   }
   const nowMs = bindings.clock.now();
-  const takenMs =
-    reading.takenAtMs !== undefined && reading.takenAtMs <= nowMs && reading.takenAtMs >= nowMs - OFFLINE_KEPT_MS
-      ? reading.takenAtMs
-      : nowMs;
+  // The phone's clock is a note only: the event is placed at the time it reached the desk (LR-09).
+  const mark = reading.takenAtMs === undefined ? null : offlineMark(reading.takenAtMs, reading.sentAtMs, nowMs);
   const deviceOpens = async () => oneTapOpensAt(await lastOneTap(db, profile.number_key, profile.owner_slot), nowMs);
   const tooSoon = await deviceOpens();
   if (tooSoon !== null) return { kind: "limit", refusal: { limitId: "oneTap.device", retryAtMs: tooSoon } };
@@ -118,7 +109,7 @@ export async function oneTapEmergency(
         ? { state: "value", value: reading.hazardType, origin: "tappedOption" }
         : { state: "notYetKnown" },
     },
-    takenMs,
+    nowMs,
     draftZone(place.villageCode),
   );
   const day = ticketDay(nowMs);
@@ -154,10 +145,10 @@ export async function oneTapEmergency(
     },
     profile.id,
     day,
+    reading.clientId ? { clientId: reading.clientId, mark } : null,
   );
   if (ticketNumber === null)
     return { kind: "limit", refusal: { limitId: "oneTap.device", retryAtMs: await deviceOpens() } };
-  if (reading.clientId) await keepOfflineSend(db, reading.clientId, ticketNumber, new Date(nowMs));
   return { kind: "sent", ticketNumber, trackingToken: token, contact: await contactOf(bindings, place) };
 }
 

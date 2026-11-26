@@ -1,8 +1,9 @@
 import type { StaffScope } from "../../domain/deskRights";
 import type { EmergencyKind, VictimAnswer } from "../../domain/emergency";
 import { ONE_TAP } from "../../domain/emergency";
+import type { OfflineMark } from "../../domain/offline";
 import { DAY_MS } from "../../domain/time";
-import { atomically, type Database, holds, row, rows, run, sql } from "../../platform/database";
+import { atomically, type Database, holds, row, rows, sql } from "../../platform/database";
 import { regionCondition } from "./deskShared";
 import { insertReport, type NewReport, nextSequence } from "./send";
 
@@ -33,6 +34,9 @@ export async function sendOneTap(
   report: NewReport,
   profileId: string,
   wibDate: string,
+  // Its id from the phone, so a send repeated gives the same ticket; with what the desk is told of a
+  // report kept there with no signal.
+  offline: { readonly clientId: string; readonly mark: OfflineMark | null } | null = null,
 ): Promise<string | null> {
   const since = new Date(report.sentAt.getTime() - ONE_TAP.deviceEveryMs);
   const done = await atomically(db, [
@@ -44,6 +48,14 @@ export async function sendOneTap(
         ${report.villageCode}, ${report.sentAt}, ${report.sentAt}, ${report.sentAt}, 'sent')`,
     nextSequence(wibDate),
     ...insertReport(report),
+    ...(offline === null
+      ? []
+      : [
+          sql`insert into offline_send (client_id, ticket_number, at, kept, saved_at, late)
+            select ${offline.clientId}, ticket_number, ${report.sentAt}, ${offline.mark !== null},
+              ${offline.mark?.savedAt == null ? null : new Date(offline.mark.savedAt)}, ${offline.mark?.late ?? false}
+            from report where id = ${report.reportId}`,
+        ]),
   ]);
   if (done === null) return null;
   const [sent] = done[3] as { ticket_number: string }[];
@@ -81,6 +93,7 @@ export async function openEmergencies(db: Database, scope: StaffScope, limit: nu
       join ticket t on t.report_id = r.id
       join report_version v on v.report_id = r.id and v.version = 1
       where r.emergency is not null and t.status = 'new'${regionCondition(scope)}
+        and not exists (select 1 from offline_send o where o.ticket_number = r.ticket_number and o.late = 1)
       order by r.sent_at desc, r.ticket_number desc limit ${limit}`,
   );
   return found.map((one) => ({
@@ -109,9 +122,3 @@ export const offlineTicket = async (
     ? null
     : { ticketNumber: found.ticket_number, reportId: found.report_id, villageCode: found.village_code };
 };
-
-export const keepOfflineSend = (db: Database, clientId: string, ticketNumber: string, at: Date) =>
-  run(
-    db,
-    sql`insert or ignore into offline_send (client_id, ticket_number, at) values (${clientId}, ${ticketNumber}, ${at})`,
-  );

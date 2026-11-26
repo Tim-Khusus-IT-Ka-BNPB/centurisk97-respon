@@ -43,6 +43,9 @@ const queueItemSchema = z.object({
   door: z.enum(["web", "chat"]),
   // Raised as an emergency, and what the reporter said of victims. One tap's kind is not known.
   emergency: emergencySchema.nullable(),
+  // Kept on the reporter's phone with no signal (LR-09): when the phone saved it, null when its clock
+  // could not be believed, and whether it came more than 2 hours late, so it does not ring.
+  offline: z.object({ savedAt: timeSchema.nullable(), late: z.boolean() }).nullable(),
   // The officer who has it in hand, as the desk names them. Never on the tracking page.
   taker: z.string().nullable(),
   // The reporter added news that no officer has acted on yet.

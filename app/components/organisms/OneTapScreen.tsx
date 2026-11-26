@@ -25,7 +25,9 @@ type Step =
 
 const BUSY: readonly Step["kind"][] = ["reading", "sending"];
 
-const post = (report: OfflineReport) => postJson<OneTapSent>("/emergencies", report);
+// A report kept on the phone goes with when it was saved and when it is sent, both by the phone's
+// clock: the desk marks one more than 2 hours late and does not ring for it (LR-09).
+const post = (report: OfflineReport) => postJson<OneTapSent>("/emergencies", { ...report, sentAtMs: Date.now() });
 
 // The phone's point to the desk. Nothing is sent without one. With no signal it is kept on the
 // phone, with the moment it was made and an id of its own, and sent when signal returns.
@@ -40,7 +42,9 @@ async function sendPoint(onSending: () => void): Promise<Step> {
   };
   if (navigator.onLine === false) return kept();
   onSending();
-  const answer = await post(report);
+  // Sent at once it is no kept report: only its id goes with the point, so a repeat gives one ticket.
+  const { takenAtMs: _saved, ...live } = report;
+  const answer = await postJson<OneTapSent>("/emergencies", live);
   if (answer.kind === "ok") return { kind: "sent", sent: answer.body };
   if (answer.kind === "unreachable") return kept();
   return { kind: "refused", envelope: answer.envelope };

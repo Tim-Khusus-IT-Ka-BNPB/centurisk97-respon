@@ -59,7 +59,8 @@ describe("one tap", () => {
     expect(calls).toEqual([
       {
         url: "/api/lapor/emergencies",
-        body: { lat: 5.1, lon: 97, accuracyM: 12, clientId: expect.any(String), takenAtMs: expect.any(Number) },
+        // Sent at once, it carries its id but no phone time: it is no kept report.
+        body: { lat: 5.1, lon: 97, accuracyM: 12, clientId: expect.any(String) },
       },
     ]);
     expect(screen.getByRole("link", { name: "Lihat dan lengkapi laporan" }).getAttribute("href")).toBe(
@@ -193,5 +194,7 @@ describe("with no signal", () => {
     answer(() => Response.json(SENT, { status: 201 }));
     draw();
     await waitFor(() => expect(screen.getByText("Terkirim ke meja BNPB dengan nomor LA-241126-01.")).toBeTruthy());
+    // It goes with when it was saved and when it is sent, both by the phone's clock (LR-09).
+    expect(calls[0]?.body).toMatchObject({ takenAtMs: 1, sentAtMs: expect.any(Number) });
   });
 });

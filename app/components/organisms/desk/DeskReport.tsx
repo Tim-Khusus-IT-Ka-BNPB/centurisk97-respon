@@ -26,6 +26,7 @@ import {
   EmergencyChip,
   ImpactStrip,
   NewsChip,
+  OfflineChip,
   roleText,
   StatusChip,
   spacedNumber,
@@ -407,7 +408,8 @@ export function DeskReportView({
             <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
               <h1 className="text-ticket font-bold tabular-nums">{report.ticketNumber}</h1>
               <StatusChip status={report.status} />
-              {report.emergency === null ? null : <EmergencyChip />}
+              {report.emergency === null || report.offline?.late ? null : <EmergencyChip />}
+              {report.offline === null ? null : <OfflineChip offline={report.offline} />}
               {report.news ? <NewsChip /> : null}
               {report.numberUnverified ? <UnverifiedChip /> : null}
               {report.door === "chat" ? <ChatChip /> : null}

@@ -197,7 +197,7 @@ export const COLUMN_CLASSES: Readonly<Record<string, TableClasses>> = {
   },
   offline_send: {
     retention: "with the report",
-    columns: { client_id: I, ticket_number: I, at: I },
+    columns: { client_id: I, ticket_number: I, at: I, kept: I, saved_at: I, late: I },
   },
   report_event: {
     retention: "with the report",

@@ -192,21 +192,27 @@ describe("one tap", () => {
     expect(me.knownReporters[0]?.openDraft).not.toBeNull();
   });
 
-  test("made with no signal: its kind, victims and time kept, and its id sends it once", async () => {
+  test("made with no signal: its kind and victims kept, its saved time a note only, and its id sends it once", async () => {
     const phone = await boundPhone();
     const clientId = crypto.randomUUID();
-    const takenAtMs = clock.now() - 2 * 3_600_000;
-    const offline = { ...HERE, hazardType: "flood", victims: "yes", takenAtMs, clientId };
+    const takenAtMs = clock.now() - 90 * 60_000;
+    const offline = { ...HERE, hazardType: "flood", victims: "yes", takenAtMs, sentAtMs: clock.now(), clientId };
     const sent = await tap(phone, offline);
     expect(sent.status, JSON.stringify(sent.json)).toBe(201);
     const body = sent.json as { ticketNumber: string; trackingToken: string };
+    // Within 2 hours it still rings, marked as from offline.
     expect((await emergencies()).find((one) => one.ticketNumber === body.ticketNumber)).toMatchObject({
       kind: "oneTap",
       victims: "yes",
       hazardType: "flood",
     });
     const report = deskReportSchema.parse((await desk().call("GET", `/desk/reports/${body.ticketNumber}`)).json);
-    expect(report.eventTime).toMatchObject({ kind: "dateTime", localTime: localClock(takenAtMs, "WIB") });
+    // The event is placed when it reached the desk; the phone's time is a note (LR-09).
+    expect(report.eventTime).toMatchObject({ kind: "dateTime", localTime: localClock(clock.now(), "WIB") });
+    expect(report.offline).toEqual({
+      savedAt: { utc: new Date(takenAtMs).toISOString(), zone: "WIB" },
+      late: false,
+    });
     // The answer was lost and it is sent again: the same ticket, no second report.
     const again = await tap(phone, offline);
     expect([again.status, (again.json as { ticketNumber: string }).ticketNumber]).toEqual([201, body.ticketNumber]);
@@ -214,13 +220,45 @@ describe("one tap", () => {
     expect(await query`select count(*) as n from offline_send where client_id = ${clientId}`).toEqual([{ n: 1 }]);
   });
 
-  test("a time from before the phone could have kept it is read as now", async () => {
+  test("sent more than 2 hours after it was saved, by the phone's clock: marked late, and it does not ring", async () => {
     clock.advance(31 * 60_000);
     const phone = await boundPhone();
-    const sent = await tap(phone, { ...HERE, takenAtMs: clock.now() - 15 * 86_400_000 });
+    // The phone's clock runs an hour slow; only the gap between its two times counts.
+    const sentAtMs = clock.now() - 60 * 60_000;
+    const late = await tap(phone, {
+      ...HERE,
+      victims: "yes",
+      takenAtMs: sentAtMs - 2 * 3_600_000 - 1,
+      sentAtMs,
+      clientId: crypto.randomUUID(),
+    });
+    const ticket = (late.json as { ticketNumber: string }).ticketNumber;
+    expect((await emergencies()).some((one) => one.ticketNumber === ticket)).toBe(false);
+    const report = deskReportSchema.parse((await desk().call("GET", `/desk/reports/${ticket}`)).json);
+    expect(report.offline).toMatchObject({ late: true });
+    expect(report.emergency).toMatchObject({ kind: "oneTap" });
+  });
+
+  test("a phone time that cannot be believed is no note and keeps the alarm; one sent at once is no kept report", async () => {
+    clock.advance(31 * 60_000);
+    const phone = await boundPhone();
+    const sent = await tap(phone, {
+      ...HERE,
+      takenAtMs: clock.now() - 15 * 86_400_000,
+      sentAtMs: clock.now(),
+      clientId: crypto.randomUUID(),
+    });
     const ticket = (sent.json as { ticketNumber: string }).ticketNumber;
     const report = deskReportSchema.parse((await desk().call("GET", `/desk/reports/${ticket}`)).json);
     expect(report.eventTime).toMatchObject({ localTime: localClock(clock.now(), "WIB") });
+    expect(report.offline).toEqual({ savedAt: null, late: false });
+    expect((await emergencies()).some((one) => one.ticketNumber === ticket)).toBe(true);
+    clock.advance(31 * 60_000);
+    const live = await tap(phone, { ...HERE, clientId: crypto.randomUUID() });
+    const liveReport = (
+      await desk().call("GET", `/desk/reports/${(live.json as { ticketNumber: string }).ticketNumber}`)
+    ).json as { offline: unknown };
+    expect(liveReport.offline).toBeNull();
     expect((await tap(phone, { ...HERE, hazardType: "other" })).status).toBe(400);
   });
 

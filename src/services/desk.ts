@@ -103,6 +103,13 @@ function queueItem(
     door: found.door,
     officerConfirmed: found.officerConfirmed,
     emergency: found.emergency,
+    offline:
+      found.offline === null
+        ? null
+        : {
+            savedAt: found.offline.savedAt === null ? null : at(found.offline.savedAt, zone),
+            late: found.offline.late,
+          },
     taker: found.taker,
     news: found.news,
     impact: impactOf(found.states),

@@ -315,5 +315,9 @@
   "desk.history.released": "Dilepas dari kejadian {code}",
   "desk.saved.released": "Laporan ini dilepas dari kejadiannya.",
   "desk.videos.title": "Video dari pelapor",
-  "desk.videos.caption": "Video {n}, {seconds} detik, tanpa keterangan lokasi"
+  "desk.videos.caption": "Video {n}, {seconds} detik, tanpa keterangan lokasi",
+  "desk.offline.chip": "Dari luring",
+  "desk.offline.late": "Dikirim terlambat",
+  "desk.offline.saved": "Disimpan di HP {date}, pukul {time} {zone}",
+  "desk.offline.noClock": "Jam HP pelapor tidak bisa dipercaya"
 }

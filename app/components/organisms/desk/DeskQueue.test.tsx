@@ -89,6 +89,30 @@ test("one row per event: the event's other reports on the page fold under its fi
   expect(screen.getAllByText("1 laporan lain dari kejadian ini di halaman ini")).toHaveLength(2);
 });
 
+test("a report kept on a phone is marked from offline; more than 2 hours late it is marked late and not as an emergency", async () => {
+  const [item] = queue().items as [ReturnType<typeof queue>["items"][number]];
+  const emergency = { kind: "oneTap" as const, victims: "yes" as const };
+  const saved = { utc: "2026-11-24T01:00:00.000Z", zone: "WIB" as const };
+  const fresh = { ...item, emergency, offline: { savedAt: saved, late: false } };
+  const late = { ...item, ticketNumber: "LA-241126-08", emergency, offline: { savedAt: null, late: true } };
+  await renderDesk(
+    <DeskQueueView
+      shown={list(queue({ items: [fresh, late], total: 2 }))}
+      summary={SUMMARY}
+      filters={FILTERS}
+      envelope={null}
+    />,
+    { path: "/lapor/meja" },
+  );
+  const [first, second] = table().getAllByRole("row").slice(1) as HTMLElement[];
+  expect(within(first as HTMLElement).getByText("Dari luring")).toBeTruthy();
+  expect(within(first as HTMLElement).getByText(/Disimpan di HP 24 November 2026, pukul 08\.00 WIB/)).toBeTruthy();
+  expect(within(first as HTMLElement).getByText("Darurat")).toBeTruthy();
+  expect(within(second as HTMLElement).getByText("Dikirim terlambat")).toBeTruthy();
+  expect(within(second as HTMLElement).getByText(/Jam HP pelapor tidak bisa dipercaya/)).toBeTruthy();
+  expect(within(second as HTMLElement).queryByText("Darurat")).toBeNull();
+});
+
 test("a report with news no officer has acted on is marked in the table and the cards", async () => {
   const [item] = queue().items as [ReturnType<typeof queue>["items"][number]];
   await renderDesk(

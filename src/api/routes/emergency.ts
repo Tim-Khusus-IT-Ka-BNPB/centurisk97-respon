@@ -45,6 +45,7 @@ export function addEmergencyRoutes(api: Api): void {
             hazardType: z.enum(SELECTABLE_HAZARD_TYPES as [HazardTypeId, ...HazardTypeId[]]).optional(),
             victims: z.enum(VICTIM_ANSWERS).optional(),
             takenAtMs: z.number().int().nonnegative().optional(),
+            sentAtMs: z.number().int().nonnegative().optional(),
             clientId: z.uuid().optional(),
           }),
         ),

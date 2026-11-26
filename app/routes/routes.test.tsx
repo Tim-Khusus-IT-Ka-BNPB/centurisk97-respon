@@ -746,6 +746,7 @@ describe("desk routes", () => {
       photoCount: 0,
       numberUnverified: false,
       emergency: null,
+      offline: null,
       taker: null,
       account: { label: "Petugas Uji" },
       reporter: {

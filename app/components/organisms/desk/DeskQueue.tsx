@@ -27,6 +27,7 @@ import {
   type Item,
   isFiltered,
   NewsChip,
+  OfflineChip,
   roleText,
   StatusChip,
   Taker,
@@ -150,7 +151,8 @@ function QueueTable({ items }: { readonly items: readonly Item[] }) {
                     </Link>
                     <span className="flex flex-wrap gap-1.5">
                       <StatusChip status={item.status} />
-                      {item.emergency === null ? null : <EmergencyChip />}
+                      {item.emergency === null || item.offline?.late ? null : <EmergencyChip />}
+                      {item.offline === null ? null : <OfflineChip offline={item.offline} />}
                       {item.news ? <NewsChip /> : null}
                       {item.cluster === null ? null : <ClusterChip cluster={item.cluster} />}
                     </span>
@@ -212,7 +214,8 @@ function QueueCards({ items }: { readonly items: readonly Item[] }) {
             <span className="flex flex-wrap items-start justify-between gap-x-3 gap-y-2">
               <span className="font-bold whitespace-nowrap tabular-nums">{item.ticketNumber}</span>
               <span className="flex flex-wrap justify-end gap-1.5">
-                {item.emergency === null ? null : <EmergencyChip />}
+                {item.emergency === null || item.offline?.late ? null : <EmergencyChip />}
+                {item.offline === null ? null : <OfflineChip offline={item.offline} />}
                 {item.news ? <NewsChip /> : null}
                 {item.cluster === null ? null : <ClusterChip cluster={item.cluster} />}
                 <StatusChip status={item.status} />

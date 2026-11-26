@@ -38,6 +38,7 @@ export const ITEM: DeskQueue["items"][number] = {
   officerConfirmed: false,
   numberUnverified: true,
   emergency: null,
+  offline: null,
   taker: null,
   news: false,
   impact: { dead: 2, missing: null, injured: 0, displaced: null, houses: { count: 3, partial: true } },
