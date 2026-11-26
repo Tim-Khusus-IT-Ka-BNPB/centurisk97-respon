@@ -70,6 +70,20 @@ test("an emergency takes a place, what happened, victims and a send, and the des
   await noSidewaysScroll(page);
   await paced(() => liveCard(page).getByRole("button", { name: "Ya, ada" }).click());
   cardId = await nextCard(page, cardId);
+  // With victims, who is still trapped and who needs medical help (K94, K98).
+  await expect(liveCard(page).getByText(/terjebak atau terseret air/)).toBeVisible();
+  await paced(() =>
+    liveCard(page)
+      .getByRole("button", { name: /^Ya, ada yang terlihat/ })
+      .click(),
+  );
+  cardId = await nextCard(page, cardId);
+  await paced(() =>
+    liveCard(page)
+      .getByRole("button", { name: /^Ada luka berat/ })
+      .click(),
+  );
+  cardId = await nextCard(page, cardId);
   await expect(liveCard(page)).toHaveAttribute("data-card-kind", "photos");
   await paced(() => answerCard(liveCard(page), "photos"));
   cardId = await nextCard(page, cardId);
