@@ -138,6 +138,44 @@ describe("warnings to this phone", () => {
     expect(screen.getByRole("button", { name: "Nyalakan peringatan" })).toBeTruthy();
   });
 
+  test("a phone subscribed but warned of nothing picks again; one whose subscription went stops at once", async () => {
+    answer({
+      "GET /api/lapor/warnings/key": { status: 200, body: { publicKey: KEY } },
+      "POST /api/lapor/warnings/status": { status: 200, body: { districts: [], hazards: null, threshold: null } },
+    });
+    const view = draw(fakePush({ subscribed: true }));
+    expect(await screen.findByRole("button", { name: "Nyalakan peringatan" })).toBeTruthy();
+    view.unmount();
+    answer({
+      "GET /api/lapor/warnings/key": { status: 200, body: { publicKey: KEY } },
+      "POST /api/lapor/warnings/status": { status: 200, body: ON },
+    });
+    let gone = false;
+    draw(fakePush({ subscribed: true, current: async () => (gone ? null : { phone: PHONE, stop }) }));
+    await screen.findByText("Peringatan menyala untuk Baktiya, mulai tingkat Siaga.");
+    gone = true;
+    calls.length = 0;
+    fireEvent.click(screen.getByRole("button", { name: "Matikan peringatan" }));
+    expect(await screen.findByText("Peringatan dimatikan untuk ponsel ini.")).toBeTruthy();
+    expect(calls.some((call) => call.url.endsWith("/warnings/stop"))).toBe(false);
+  });
+
+  test("warnings shut between opening and saving: not saved, and said so", async () => {
+    let keyed = 0;
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async (url: string) => {
+        keyed += url.endsWith("/warnings/key") ? 1 : 0;
+        const body = url.endsWith("/warnings/key") ? { publicKey: keyed === 1 ? KEY : null } : ON;
+        return new Response(JSON.stringify(body), { status: 200 });
+      }),
+    );
+    draw(fakePush({ subscribed: true }));
+    fireEvent.click(await screen.findByRole("button", { name: "Ubah" }));
+    fireEvent.click(screen.getByRole("button", { name: "Simpan perubahan" }));
+    expect(await screen.findByText(/^Belum tersimpan/)).toBeTruthy();
+  });
+
   test("three districts at most", async () => {
     answer({
       "GET /api/lapor/warnings/key": { status: 200, body: { publicKey: KEY } },
@@ -180,6 +218,7 @@ describe("warnings to this phone", () => {
       }),
     );
     fireEvent.change(await screen.findByRole("searchbox"), { target: { value: "ab" } });
+    fireEvent.keyDown(screen.getByRole("searchbox"), { key: "a" });
     fireEvent.keyDown(screen.getByRole("searchbox"), { key: "Enter" });
     expect(calls.some((call) => call.url.startsWith("/api/lapor/places"))).toBe(false);
     answer({

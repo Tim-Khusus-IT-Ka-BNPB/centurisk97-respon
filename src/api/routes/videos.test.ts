@@ -275,6 +275,12 @@ describe("whose and when", () => {
   });
 });
 
+describe("the store's ranges", () => {
+  test("a key with no file has no range", async () => {
+    expect(await bindings.photos.range(`videos/none/${crypto.randomUUID()}`, 0, 10)).toBeNull();
+  });
+});
+
 describe("a range a player asks for", () => {
   test("a start and an end, a start alone, the last bytes, or none", () => {
     expect(rangeOf("bytes=0-99", 1000)).toEqual({ start: 0, end: 99 });
