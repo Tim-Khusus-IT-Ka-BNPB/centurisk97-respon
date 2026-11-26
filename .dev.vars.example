@@ -26,3 +26,9 @@ ADDRESS_FALLBACK=
 GATEWAY_SECRETS=test-gateway=local-sample-gateway-secret-32-bytes-long
 
 LOG_LEVEL=info
+
+# Warnings to phones (M07): a VAPID pair and a contact the push services accept. All three or none;
+# empty keeps warnings shut.
+PUSH_PUBLIC_KEY=
+PUSH_PRIVATE_KEY=
+PUSH_SUBJECT=

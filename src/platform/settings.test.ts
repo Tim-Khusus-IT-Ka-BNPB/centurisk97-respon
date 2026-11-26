@@ -48,8 +48,43 @@ describe("settings read at start", () => {
       faultPlace: false,
       addressFallback: null,
       gatewaySecrets: new Map(),
+      push: null,
       logLevel: "info",
     });
+  });
+
+  test("the three push settings come together, each of its shape, or warnings stay shut", () => {
+    const push = {
+      PUSH_PUBLIC_KEY: `B${"A".repeat(86)}`,
+      PUSH_PRIVATE_KEY: "a".repeat(43),
+      PUSH_SUBJECT: "mailto:peringatan@example.test",
+    };
+    expect(parseSettings({ ...staging, ...push }, true).push).toEqual({
+      publicKey: push.PUSH_PUBLIC_KEY,
+      privateKey: push.PUSH_PRIVATE_KEY,
+      subject: push.PUSH_SUBJECT,
+    });
+    expect(parseSettings({ ...local, ...push, PUSH_SUBJECT: "https://example.test" }, true).push?.subject).toBe(
+      "https://example.test",
+    );
+    expect(refusal({ ...local, PUSH_PUBLIC_KEY: push.PUSH_PUBLIC_KEY }).problems).toEqual([
+      { setting: "PUSH_PRIVATE_KEY", reason: "missing" },
+      { setting: "PUSH_SUBJECT", reason: "missing" },
+    ]);
+    expect(refusal({ ...local, ...push, PUSH_PUBLIC_KEY: "" }).problems).toEqual([
+      { setting: "PUSH_PUBLIC_KEY", reason: "missing" },
+    ]);
+    for (const [setting, value] of [
+      ["PUSH_PUBLIC_KEY", `A${"A".repeat(86)}`],
+      ["PUSH_PUBLIC_KEY", `B${"A".repeat(85)}`],
+      ["PUSH_PRIVATE_KEY", "a".repeat(42)],
+      ["PUSH_PRIVATE_KEY", `${"a".repeat(42)}=`],
+      ["PUSH_SUBJECT", "peringatan@example.test"],
+      ["PUSH_SUBJECT", "http://example.test"],
+    ] as const)
+      expect(refusal({ ...local, ...push, [setting]: value }).problems, value).toEqual([
+        { setting, reason: "invalid" },
+      ]);
   });
 
   test("each WhatsApp gateway has a secret of its own, of 32 characters or more", () => {

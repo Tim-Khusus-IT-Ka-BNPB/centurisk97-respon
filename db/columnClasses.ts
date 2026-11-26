@@ -343,6 +343,20 @@ export const COLUMN_CLASSES: Readonly<Record<string, TableClasses>> = {
     retention: "replaced by the next import of the same file",
     columns: { name: I, data_date: PUB, source: PUB, body: PUB, checksum: I, imported_at: I },
   },
+  warning_subscription: {
+    retention: "until the phone stops it, or the push service no longer knows it",
+    columns: {
+      endpoint: P,
+      p256dh: P,
+      auth: P,
+      district_code: I,
+      regency_code: I,
+      district_name: I,
+      hazards: I,
+      threshold: I,
+      created_at: I,
+    },
+  },
   photo_removal: {
     retention: "until the sweep has deleted the file from the photo store",
     columns: { store_key: I, queued_at: I },

@@ -50,6 +50,12 @@ exports[`limits table > rows as agreed 1`] = `
     "subject": "address",
     "window": "clockHour",
   },
+  "address.warnings": {
+    "effect": "refuse",
+    "max": 30,
+    "subject": "address",
+    "window": "clockHour",
+  },
   "desk.alarm": {
     "effect": "refuse",
     "max": 400,

@@ -20,6 +20,9 @@ export type Settings = {
   readonly addressFallback: "loopback" | null;
   // One secret per WhatsApp gateway, by its id. Empty: that door is shut.
   readonly gatewaySecrets: ReadonlyMap<string, string>;
+  // The VAPID pair the warnings are signed with, and who the push services may write to. Null:
+  // warnings are shut.
+  readonly push: { readonly publicKey: string; readonly privateKey: string; readonly subject: string } | null;
   readonly logLevel: LogLevel;
 };
 
@@ -82,6 +85,10 @@ const raw = z.object({
     .string()
     .refine((value) => readGatewaySecrets(value) !== null)
     .default(""),
+  // base64url: an uncompressed P-256 point, its private scalar, and a contact the push services accept.
+  PUSH_PUBLIC_KEY: z.union([z.literal(""), z.string().regex(/^B[A-Za-z0-9_-]{86}$/)]).default(""),
+  PUSH_PRIVATE_KEY: z.union([z.literal(""), z.string().regex(/^[A-Za-z0-9_-]{43}$/)]).default(""),
+  PUSH_SUBJECT: z.union([z.literal(""), z.string().regex(/^(mailto:|https:\/\/)\S+$/)]).default(""),
   LOG_LEVEL: z.enum(["debug", "info", "warn", "error"]).default("info"),
 });
 type Raw = z.infer<typeof raw>;
@@ -114,6 +121,11 @@ function environmentProblems(values: Raw, hasDatabase: boolean): SettingProblem[
   // The local dev server sets cf-connecting-ip itself, so only the test runner may fall back.
   if (env !== "test" && values.ADDRESS_FALLBACK !== "") refuse("ADDRESS_FALLBACK");
   if (!development && values.LOG_LEVEL !== "info") refuse("LOG_LEVEL");
+  // The three push settings come together or not at all.
+  const push = [values.PUSH_PUBLIC_KEY, values.PUSH_PRIVATE_KEY, values.PUSH_SUBJECT];
+  if (push.some((value) => value !== "") && push.some((value) => value === ""))
+    for (const setting of ["PUSH_PUBLIC_KEY", "PUSH_PRIVATE_KEY", "PUSH_SUBJECT"] as const)
+      if (values[setting] === "") refuse(setting, "missing");
   // Each environment's D1 database is named in its own wrangler environment. Production has no
   // database in this release, so it cannot start.
   if (!hasDatabase) refuse("DB", "missing");
@@ -154,6 +166,10 @@ export function parseSettings(source: Readonly<Record<string, unknown>>, hasData
     faultPlace: values.FAULT_PLACE === "on",
     addressFallback: values.ADDRESS_FALLBACK === "" ? null : "loopback",
     gatewaySecrets: readGatewaySecrets(values.GATEWAY_SECRETS) as ReadonlyMap<string, string>,
+    push:
+      values.PUSH_PUBLIC_KEY === ""
+        ? null
+        : { publicKey: values.PUSH_PUBLIC_KEY, privateKey: values.PUSH_PRIVATE_KEY, subject: values.PUSH_SUBJECT },
     logLevel: values.LOG_LEVEL,
   };
 }

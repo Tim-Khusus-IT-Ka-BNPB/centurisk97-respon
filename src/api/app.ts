@@ -18,6 +18,7 @@ import { addPreferenceRoutes } from "./routes/preferences";
 import { addPublicFeedRoutes } from "./routes/publicFeed";
 import { addReporterRoutes } from "./routes/reporters";
 import { addTrackingRoutes } from "./routes/tracking";
+import { addWarningRoutes } from "./routes/warnings";
 
 export const api = createApi();
 
@@ -65,3 +66,4 @@ addPreferenceRoutes(api);
 addGatewayRoutes(api);
 addPublicFeedRoutes(api);
 addOutlookRoutes(api);
+addWarningRoutes(api);

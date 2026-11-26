@@ -50,6 +50,7 @@ describe("route list", () => {
       { key: "GET /api/lapor/reports/:ticketNumber", policy: "reporter" },
       { key: "GET /api/lapor/reports/:ticketNumber/documents/:version/:format", policy: "public" },
       { key: "GET /api/lapor/reports/:ticketNumber/proofs/:proofId", policy: "public" },
+      { key: "GET /api/lapor/warnings/key", policy: "public" },
       { key: "POST /api/lapor/consent", policy: "public" },
       { key: "POST /api/lapor/desk/aggregates", policy: "staff" },
       { key: "POST /api/lapor/desk/pilot", policy: "staff" },
@@ -79,6 +80,9 @@ describe("route list", () => {
       { key: "POST /api/lapor/reports/:ticketNumber/rating", policy: "reporter" },
       { key: "POST /api/lapor/tracking", policy: "public" },
       { key: "POST /api/lapor/tracking/photos", policy: "public" },
+      { key: "POST /api/lapor/warnings/status", policy: "public" },
+      { key: "POST /api/lapor/warnings/stop", policy: "public" },
+      { key: "PUT /api/lapor/warnings", policy: "public" },
     ]);
     expect(routes.filter((route) => route.policy === null)).toEqual([]);
   });
@@ -377,6 +381,10 @@ describe("response schemas and the OpenAPI document", () => {
       "/api/lapor/reports/{ticketNumber}/rating",
       "/api/lapor/tracking",
       "/api/lapor/tracking/photos",
+      "/api/lapor/warnings",
+      "/api/lapor/warnings/key",
+      "/api/lapor/warnings/status",
+      "/api/lapor/warnings/stop",
     ]);
     const turns = document.paths?.["/api/lapor/drafts/{draftId}/turns"]?.post?.responses ?? {};
     expect(Object.keys(turns).sort()).toEqual([
