@@ -67,7 +67,7 @@ test("the start step and its views", async ({ page }) => {
   await page.getByLabel("Jabatan").fill("Staf");
   await page.getByRole("button", { name: "Setuju", exact: true }).click();
   await shoot(page, "start-readback");
-  await page.getByRole("button", { name: "Ganti" }).click();
+  await page.getByRole("button", { name: "Ganti", exact: true }).click();
   await page.getByRole("button", { name: "Tidak setuju" }).click();
   await shoot(page, "start-decline-confirm");
   await page.getByRole("button", { name: "Ya, tidak setuju" }).click();

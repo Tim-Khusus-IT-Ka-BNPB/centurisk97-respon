@@ -31,7 +31,7 @@ test("the number is read back as stored, and Ganti returns to the form with ever
   await page.getByRole("button", { name: "Setuju", exact: true }).click();
   await expect(page.getByText("Nomor ini yang akan dicatat. Benar?")).toBeVisible();
   await expect(page.getByText("+62 800 0000 0001", { exact: true })).toBeVisible();
-  await page.getByRole("button", { name: "Ganti" }).click();
+  await page.getByRole("button", { name: "Ganti", exact: true }).click();
   await expect(page.getByLabel("WhatsApp")).toHaveValue("6280000000001");
   await expect(page.getByLabel("WhatsApp")).toBeFocused();
   await expect(page.getByLabel("Warga")).toBeChecked();
