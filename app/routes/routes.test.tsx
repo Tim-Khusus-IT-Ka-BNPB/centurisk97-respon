@@ -625,7 +625,13 @@ describe("desk routes", () => {
       unwrap(
         await deskResponse.loader({
           request: new Request("http://x/lapor/meja/respons?month=2026-11"),
-          context: { api: api({ "GET /desk/response": answer, "GET /desk/summary": json(SUMMARY) }) },
+          context: {
+            api: api({
+              "GET /desk/response": answer,
+              "GET /desk/summary": json(SUMMARY),
+              "GET /desk/warnings": json({ open: true, paused: false, by: null, at: null, phones: 3 }),
+            }),
+          },
         } as Args),
       );
     const show = (loaderData: unknown) =>
@@ -647,6 +653,23 @@ describe("desk routes", () => {
       context: { api: api({ "POST /desk/aggregates": json(notAllowed, 403) }) },
     } as Args);
     expect([barred.status, barred.headers.get("location")]).toEqual([303, "/lapor/meja/respons?refused=aggregates"]);
+    const pause = async (answer: () => Response, url: string) => {
+      const body = new FormData();
+      body.set("paused", "1");
+      const done = (await deskResponse.action({
+        request: new Request(url, { method: "POST", body }),
+        context: { api: api({ "POST /desk/warnings": answer }) },
+      } as Args)) as Response;
+      return [done.status, done.headers.get("location")];
+    };
+    expect(await pause(json({}), "http://x/lapor/meja/respons?month=2026-10&refused=warnings")).toEqual([
+      303,
+      "/lapor/meja/respons?month=2026-10",
+    ]);
+    expect(await pause(json(notAllowed, 403), "http://x/lapor/meja/respons")).toEqual([
+      303,
+      "/lapor/meja/respons?refused=warnings",
+    ]);
   });
 
   test("the pilot's numbers: the page, the sign-in form, a refusal, and its forms", async () => {
