@@ -6,6 +6,7 @@
   "feed.count": "{count} kejadian",
   "feed.map.label": "Peta kejadian yang ditangani",
   "feed.map.marker": "{hazard} di Desa/Kel. {village}, {status}",
+  "feed.map.failed": "Peta tidak bisa ditampilkan di peramban ini. Daftar kejadian tetap lengkap.",
   "feed.status.in_handling": "Sedang ditangani",
   "feed.status.closed": "Selesai ditangani",
   "feed.event": "Kejadian {when}",

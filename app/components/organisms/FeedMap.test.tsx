@@ -6,7 +6,7 @@ import { FEED_ALONE, FEED_ENTRY } from "../../testing/feed";
 import { ALL_TEXTS } from "../../testing/render";
 import { FeedMap } from "./FeedMap";
 
-const made = vi.hoisted(() => ({ maps: [] as FakeMap[], markers: [] as FakeMarker[] }));
+const made = vi.hoisted(() => ({ maps: [] as FakeMap[], markers: [] as FakeMarker[], noWebGl: false }));
 
 class FakeMap {
   fitted: unknown[] = [];
@@ -15,6 +15,7 @@ class FakeMap {
   idle: (() => void) | null = null;
   load: (() => void) | null = null;
   constructor(readonly options: Record<string, unknown>) {
+    if (made.noWebGl) throw new Error("WebGL2 is required to display this map");
     made.maps.push(this);
   }
   addControl() {}
@@ -114,6 +115,21 @@ describe("the feed map", () => {
     (made.maps[0] as FakeMap).load?.();
     expect((made.maps[0] as FakeMap).fitted).toEqual([]);
     none.unmount();
+  });
+
+  test("a browser with no WebGL2 is told the list still holds every entry", async () => {
+    made.maps.length = 0;
+    made.noWebGl = true;
+    try {
+      const view = draw();
+      expect(
+        await view.findByText("Peta tidak bisa ditampilkan di peramban ini. Daftar kejadian tetap lengkap."),
+      ).toBeTruthy();
+      expect(made.maps).toEqual([]);
+      view.unmount();
+    } finally {
+      made.noWebGl = false;
+    }
   });
 
   test("closed before the map arrives: nothing is made", async () => {

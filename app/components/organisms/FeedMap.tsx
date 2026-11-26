@@ -1,6 +1,6 @@
 import "maplibre-gl/dist/maplibre-gl.css";
 import workerUrl from "maplibre-gl/dist/maplibre-gl-worker.mjs?url";
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import type { FeedEntry } from "../../../src/contract/publicFeed";
 import { hazardKey } from "../../../src/copy/hazardKey";
 import { boundsOf, INDONESIA, iconElement, localStyle, STATUS_GROUPS, tileStyle } from "../../lib/deskMap";
@@ -16,6 +16,8 @@ export function FeedMap({ entries }: { readonly entries: readonly FeedEntry[] })
   const container = useRef<HTMLElement>(null);
   const latest = useRef({ entries, t });
   latest.current = { entries, t };
+  // A browser with no WebGL2 cannot draw it: the list beside it still holds every entry.
+  const [failed, setFailed] = useState(false);
   useEffect(() => {
     let closed = false;
     let remove = () => {};
@@ -23,7 +25,13 @@ export function FeedMap({ entries }: { readonly entries: readonly FeedEntry[] })
       if (closed) return;
       maplibre.setWorkerUrl(workerUrl);
       const element = container.current as HTMLElement;
-      const map = new maplibre.Map({ container: element, ...INDONESIA, attributionControl: { compact: true } });
+      let map: InstanceType<typeof maplibre.Map>;
+      try {
+        map = new maplibre.Map({ container: element, ...INDONESIA, attributionControl: { compact: true } });
+      } catch {
+        setFailed(true);
+        return;
+      }
       const paint = () => map.setStyle(tileStyle(), { transformStyle: (_previous, next) => localStyle(next) });
       paint();
       map.addControl(new maplibre.NavigationControl({ showCompass: false }), "bottom-right");
@@ -71,7 +79,13 @@ export function FeedMap({ entries }: { readonly entries: readonly FeedEntry[] })
   }, []);
   return (
     <div className="absolute inset-0">
-      <section ref={container} aria-label={t("feed.map.label")} className="size-full" />
+      <section ref={container} aria-label={t("feed.map.label")} className="size-full">
+        {failed ? (
+          <p className="flex size-full items-center justify-center bg-sunken p-6 text-center text-muted">
+            {t("feed.map.failed")}
+          </p>
+        ) : null}
+      </section>
     </div>
   );
 }
