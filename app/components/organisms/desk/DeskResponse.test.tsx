@@ -113,6 +113,7 @@ describe("how fast each agency answers", () => {
     const shut = await draw(RESPONSE, { ...RUNNING, open: false, phones: 0 }, "/lapor/meja/respons?refused=warnings");
     expect(section().getByText(/^Peringatan belum dibuka/)).toBeTruthy();
     expect(section().getByText(/^Belum tersimpan/)).toBeTruthy();
+    expect(section().queryByRole("button")).toBeNull();
     shut.unmount();
     await draw(RESPONSE, null);
     expect(section().getByText(/^Keadaan peringatan belum bisa dibaca/)).toBeTruthy();

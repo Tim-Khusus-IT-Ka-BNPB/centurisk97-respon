@@ -135,13 +135,15 @@ function Warnings({ warnings }: { readonly warnings: WarningControl | null }) {
                 : t("desk.warnings.running")}{" "}
             {t("desk.warnings.phones", { count: warnings.phones })}
           </p>
-          <Form method="post">
-            <input type="hidden" name="paused" value={warnings.paused ? "0" : "1"} />
-            <button type="submit" className={buttonStyles({ variant: "secondary", size: "min", className: "px-4" })}>
-              <Icon name={warnings.paused ? "bell" : "bellOff"} className="size-5" />
-              {warnings.paused ? t("desk.warnings.resume") : t("desk.warnings.pause")}
-            </button>
-          </Form>
+          {warnings.open ? (
+            <Form method="post">
+              <input type="hidden" name="paused" value={warnings.paused ? "0" : "1"} />
+              <button type="submit" className={buttonStyles({ variant: "secondary", size: "min", className: "px-4" })}>
+                <Icon name={warnings.paused ? "bell" : "bellOff"} className="size-5" />
+                {warnings.paused ? t("desk.warnings.resume") : t("desk.warnings.pause")}
+              </button>
+            </Form>
+          ) : null}
         </>
       )}
     </section>
