@@ -25,5 +25,6 @@
   "emergency.offline.kept": "Tidak ada sinyal. Laporan tersimpan di ponsel ini dan terkirim otomatis begitu ada sinyal. Bila nyawa terancam, telepon 112.",
   "emergency.offline.hazard": "Kejadian apa? Boleh dilewati",
   "emergency.offline.hazardUnknown": "Belum dipilih",
-  "emergency.offline.sendNow": "Kirim sekarang"
+  "emergency.offline.sendNow": "Kirim sekarang",
+  "emergency.position.timeout": "Lokasi terlalu lama terbaca. Pindah ke tempat terbuka atau dekat jendela, lalu coba lagi. Bila nyawa terancam, telepon 112 sekarang."
 }

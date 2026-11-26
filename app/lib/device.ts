@@ -13,7 +13,14 @@ export type Position = {
 
 export type PositionResult =
   | { readonly kind: "read"; readonly position: Position }
-  | { readonly kind: "denied" | "unavailable" | "unsupported" };
+  | { readonly kind: "denied" | "unavailable" | "timeout" | "unsupported" };
+
+// The site was refused (1), the phone could not read a place, as when its location is off (2), or it
+// took too long (3): three different fixes for the reporter (upstream engine tweaks).
+const failureOf = (error: unknown): "denied" | "unavailable" | "timeout" => {
+  const code = (error as GeolocationPositionError).code;
+  return code === 1 ? "denied" : code === 3 ? "timeout" : "unavailable";
+};
 
 type Geolocation = Pick<globalThis.Geolocation, "getCurrentPosition">;
 
@@ -47,7 +54,7 @@ export async function readPosition(
       position: positionOf(await once(geo, { enableHighAccuracy: false, maximumAge: 300_000, timeout: 15_000 })),
     };
   } catch (error) {
-    return { kind: (error as GeolocationPositionError).code === 1 ? "denied" : "unavailable" };
+    return { kind: failureOf(error) };
   }
 }
 

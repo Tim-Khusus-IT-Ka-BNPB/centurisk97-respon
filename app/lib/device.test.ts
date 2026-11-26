@@ -36,6 +36,8 @@ describe("position", () => {
     expect(await readPosition(geo({ code: 1 }))).toEqual({ kind: "denied" });
     expect(await readPosition(geo({ code: 2 }, { code: 2 }))).toEqual({ kind: "unavailable" });
     expect(await readPosition(geo({ code: 2 }, { code: 1 }))).toEqual({ kind: "denied" });
+    // Too slow twice is its own reason: the reporter moves somewhere open.
+    expect(await readPosition(geo({ code: 3 }, { code: 3 }))).toEqual({ kind: "timeout" });
     expect(await readPosition(undefined)).toEqual({ kind: "unsupported" });
   });
 

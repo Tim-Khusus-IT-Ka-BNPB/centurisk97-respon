@@ -19,7 +19,7 @@ type Step =
   | { readonly kind: "ready" | "reading" | "sending" }
   // No signal: the report waits on this phone and goes when signal returns.
   | { readonly kind: "kept"; readonly report: OfflineReport }
-  | { readonly kind: "noPosition"; readonly reason: "denied" | "unavailable" | "unsupported" }
+  | { readonly kind: "noPosition"; readonly reason: "denied" | "unavailable" | "timeout" | "unsupported" }
   | { readonly kind: "refused"; readonly envelope: ErrorEnvelope }
   | { readonly kind: "sent"; readonly sent: OneTapSent };
 

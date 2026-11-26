@@ -24,7 +24,7 @@ type ConfirmCard = Extract<Card, { kind: "placeConfirm" }>;
 
 type Locating =
   | { readonly kind: "idle" | "reading" }
-  | { readonly kind: "failed"; readonly reason: "denied" | "unavailable" | "unsupported" };
+  | { readonly kind: "failed"; readonly reason: "denied" | "unavailable" | "timeout" | "unsupported" };
 
 // Reads the phone's position and sends it as a turn. It needs script, so a page without script
 // never shows it: search below stays the way to give the place.

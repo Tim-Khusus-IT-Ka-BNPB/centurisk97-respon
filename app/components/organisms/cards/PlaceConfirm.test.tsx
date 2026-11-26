@@ -91,10 +91,15 @@ describe("place from GPS", () => {
     expect(screen.getByRole("button", { name: "Coba lagi" })).toBeTruthy();
     expect(screen.getByLabelText("Cari tempat")).toBeTruthy();
 
-    stubGeolocation({ code: 2 }, { code: 3 });
+    stubGeolocation({ code: 2 }, { code: 2 });
     fireEvent.click(screen.getByRole("button", { name: "Coba lagi" }));
     await screen.findByText(/Lokasi belum terbaca/);
     expect(screen.getByRole("button", { name: "Pakai lokasi saat ini" })).toBeTruthy();
+
+    // Too slow is told apart: the reporter moves somewhere open.
+    stubGeolocation({ code: 2 }, { code: 3 });
+    fireEvent.click(screen.getByRole("button", { name: "Pakai lokasi saat ini" }));
+    await screen.findByText(/Lokasi terlalu lama terbaca/);
 
     vi.stubGlobal("navigator", { ...navigator, geolocation: undefined });
     fireEvent.click(screen.getByRole("button", { name: "Pakai lokasi saat ini" }));
