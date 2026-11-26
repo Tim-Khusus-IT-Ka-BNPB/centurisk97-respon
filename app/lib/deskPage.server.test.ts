@@ -334,8 +334,15 @@ describe("signing in and out", () => {
     expect(signed.calls[0]).toEqual({ method: "POST", path: "/desk/session", body: { code: "abc" } });
     expect(acted.kind === "redirect" && acted.headers.get("set-cookie")).toBe("seeded_session=a; Path=/");
     const out = fakeApi(() => new Response(null, { status: 204 }));
-    await actOnDesk(form({ action: "signOut" }), out.api);
+    expect(await actOnDesk(form({ action: "signOut" }), out.api)).toMatchObject({ location: "/lapor/meja" });
     expect(out.calls[0]?.method).toBe("DELETE");
+    // From the report start the way out leads back to it, and to no other place.
+    expect(await actOnDesk(form({ action: "signOut", next: "/lapor/report" }), out.api)).toMatchObject({
+      location: "/lapor/report",
+    });
+    expect(await actOnDesk(form({ action: "signOut", next: "https://elsewhere.test" }), out.api)).toMatchObject({
+      location: "/lapor/meja",
+    });
     const refused = await actOnDesk(
       new FormData(),
       fakeApi(() => Response.json(envelope("request.invalidFields"), { status: 422 })).api,

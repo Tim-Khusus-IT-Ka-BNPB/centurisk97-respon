@@ -186,6 +186,16 @@ describe("identity and consent", () => {
     expect(screen.getByRole("button", { name: "Setuju" }).getAttribute("value")).toBe("consent");
   });
 
+  test("a desk session is told it cannot report and given the way out back here", async () => {
+    draw(page({ me: { ...SAMPLE_ME, knownReporters: [], session: { kind: "staff" } }, view: "form" }));
+    expect(await screen.findByRole("heading", { name: "Anda masuk sebagai petugas meja" })).toBeTruthy();
+    expect(screen.queryByRole("button", { name: "Setuju" })).toBeNull();
+    const out = screen.getByRole("button", { name: "Keluar dari meja dan lapor" }).closest("form") as HTMLFormElement;
+    expect(out.getAttribute("action")).toBe("/lapor/meja");
+    expect((out.querySelector('input[name="next"]') as HTMLInputElement).value).toBe("/lapor/report");
+    expect(screen.getByRole("link", { name: "Kembali ke meja" }).getAttribute("href")).toBe("/lapor/meja");
+  });
+
   test("changing a known profile keeps its name and role and posts the change", async () => {
     draw(page({ view: "form", profileId: profile.profileId, editing: true }));
     expect(((await screen.findByLabelText("Nama")) as HTMLInputElement).value).toBe("Uji Satu");

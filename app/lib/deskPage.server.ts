@@ -178,13 +178,15 @@ const redirectTo = (location: string, response: Response): Extract<DeskActed, { 
   return { kind: "redirect", location, headers };
 };
 
-// POST /lapor/meja: sign in with a code, or sign out.
+// POST /lapor/meja: sign in with a code, or sign out. Signing out from the report start goes
+// back there; no other place is taken, so the field cannot send anyone off the site.
 export async function actOnDesk(form: FormData, api: ApiCall): Promise<DeskActed> {
   const response =
     formText(form, "action") === "signOut"
       ? await api("DELETE", "/desk/session")
       : await api("POST", "/desk/session", { code: formText(form, "code") });
-  if (response.ok) return redirectTo("/lapor/meja", response);
+  const next = formText(form, "next") === "/lapor/report" ? "/lapor/report" : "/lapor/meja";
+  if (response.ok) return redirectTo(next, response);
   return { kind: "render", status: response.status, envelope: (await response.json()) as ErrorEnvelope };
 }
 

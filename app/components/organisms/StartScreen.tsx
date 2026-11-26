@@ -184,6 +184,27 @@ function ReadBack({ number, children }: { readonly number: string; readonly chil
   );
 }
 
+// A desk session cannot report, so it is told so before anything is typed, with the way out.
+function StaffSession() {
+  const t = useText();
+  return (
+    <Panel id="staff-heading" title={t("start.staff.title")} lead={t("start.staff.body")}>
+      <ActionRow>
+        <Link to="/lapor/meja" className={cn(buttonStyles({ size: "main" }), "@actions:px-6")}>
+          {t("start.staff.desk")}
+        </Link>
+        <Form method="post" action="/lapor/meja" className="flex flex-col @actions:flex-1">
+          <input type="hidden" name="next" value="/lapor/report" />
+          <Button name="action" value="signOut" variant="primary" size="main">
+            <Icon name="logOut" />
+            {t("start.staff.signOut")}
+          </Button>
+        </Form>
+      </ActionRow>
+    </Panel>
+  );
+}
+
 // The page's name for a screen reader; its panel says the step.
 export function StartHeading() {
   const t = useText();
@@ -201,6 +222,7 @@ export function StartScreen({ page, acted }: { readonly page: StartPageData; rea
   const askNumber = page.me?.session == null && !(acted?.editing ?? page.editing);
   const editing = acted?.editing ?? page.editing;
   const hidden = <HiddenValues values={values} withNumber={askNumber} profileId={profileId} editing={editing} />;
+  if (page.me?.session?.kind === "staff") return <StaffSession />;
   if (view === "list" && page.me) return <KnownList me={page.me} acted={acted} />;
   if (view === "confirm" && profile)
     return (
