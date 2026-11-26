@@ -10,6 +10,7 @@ import {
   losesOnce,
   manualClock,
   query,
+  TEST_ORIGIN,
   testBindings,
   testBucket,
   testDatabase,
@@ -157,6 +158,46 @@ describe("photos", () => {
     const { phone, draft } = await atPhotos();
     const far = await send(phone, draft, camera, fix(TWELVE_KM_NORTH));
     expect(photosOf(far.draft)[0]).toMatchObject({ badge: "deviceGps", far: true });
+  });
+
+  test("a phone clock in another zone, a network abroad, or a jump is marked on the photo, never refused (D11)", async () => {
+    const { phone, draft } = await atPhotos();
+    const first = photoForm(draft, cameraJpeg(camera), fix());
+    first.set("zone", "Asia/Makassar");
+    const kept = await phone.upload(`/drafts/${draft.draftId}/photos`, first);
+    expect(kept.status, JSON.stringify(kept.json)).toBe(200);
+    tick();
+    // About 111 km north a minute later, from a network the edge reads as Singapore.
+    const second = photoForm(kept.draft, cameraJpeg(camera), fix({ lat: HERE.lat + 1, lon: HERE.lon }, 30, 0));
+    second.set("zone", "Asia/Jakarta");
+    const headers = {
+      "cf-connecting-ip": phone.address,
+      origin: TEST_ORIGIN,
+      "x-lapor-client": "1",
+      "cf-ipcountry": "SG",
+      cookie: [...phone.cookies].map(([name, value]) => `${name}=${value}`).join("; "),
+    };
+    const jumped = await fetchApi(
+      new Request(`http://localhost/api/lapor/drafts/${draft.draftId}/photos`, {
+        method: "POST",
+        headers,
+        body: second,
+      }),
+    );
+    expect(jumped.status).toBe(200);
+    tick();
+    // A photo with a phone in the place's own zone, near the last one, raises no doubt.
+    const calm = photoForm(
+      (await jumped.json()) as DraftBody,
+      cameraJpeg(camera),
+      fix({ lat: HERE.lat + 1, lon: HERE.lon }),
+    );
+    calm.set("zone", "Asia/Jakarta");
+    expect((await phone.upload(`/drafts/${draft.draftId}/photos`, calm)).status).toBe(200);
+    expect(
+      await query`select gps_doubts from draft_photo where draft_id = (select id from report_draft where id = ${draft.draftId})
+        order by received_at, id`,
+    ).toEqual([{ gps_doubts: '["zone"]' }, { gps_doubts: '["abroad","jump"]' }, { gps_doubts: null }]);
   });
 
   test("the 10th photo is kept, an 11th is refused, and the two step endings need photos or none", async () => {

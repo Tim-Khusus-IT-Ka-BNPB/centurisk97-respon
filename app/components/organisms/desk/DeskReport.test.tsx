@@ -62,7 +62,14 @@ describe("a report on the desk", () => {
     const view = await renderDesk(<DeskReportView report={REPORT} summary={SUMMARY} />, PATH);
     expect(drawn.points).toEqual([REPORT.point]);
     view.unmount();
-    const photo = { ticketNumber: "LA-241126-01", badge: "none" as const, far: false, takenAt: SENT, receivedAt: SENT };
+    const photo = {
+      ticketNumber: "LA-241126-01",
+      badge: "none" as const,
+      far: false,
+      takenAt: SENT,
+      receivedAt: SENT,
+      doubts: [],
+    };
     const photos = ["1", "2"].map((n) => ({ ...photo, photoId: `${n}1111111-1111-4111-8111-111111111111` }));
     const many = await renderDesk(<DeskReportView report={{ ...REPORT, photos }} summary={SUMMARY} />, PATH);
     const shown = within(screen.getByRole("region", { name: "Foto pelapor" }));
@@ -133,6 +140,7 @@ describe("a report on the desk", () => {
       far: false,
       takenAt: SENT,
       receivedAt: SENT,
+      doubts: [],
     };
     await renderDesk(
       <DeskReportView

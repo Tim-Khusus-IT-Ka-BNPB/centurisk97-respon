@@ -15,6 +15,8 @@ const uploadBody = photoForm.extend({
   revision: z.coerce.number().int().nonnegative(),
   turnKey: z.uuid(),
   offset: optionalBox(z.coerce.number().int().min(-840).max(840)),
+  // The phone's own time zone, as its browser names it ("Asia/Jakarta").
+  zone: optionalBox(z.string().max(60)),
 });
 
 export function addPhotoRoutes(api: Api): void {
@@ -53,6 +55,9 @@ export function addPhotoRoutes(api: Api): void {
           bytes,
           device: deviceFix(form),
           offsetMinutes: isSet(form.offset) ? form.offset : null,
+          phoneZone: isSet(form.zone) ? form.zone : null,
+          // The edge's reading of the network's country; absent where no edge stands in front.
+          country: c.req.header("cf-ipcountry") ?? null,
         },
         await requestHash({ ...rest, fingerprint }),
       );

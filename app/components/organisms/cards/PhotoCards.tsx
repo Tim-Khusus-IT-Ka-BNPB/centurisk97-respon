@@ -133,6 +133,8 @@ function PhotoForm({ card }: { readonly card: PhotosCard }) {
       accuracy: reading?.accuracy,
       readAt: reading?.readAt,
       offset: -new Date().getTimezoneOffset(),
+      // The phone's own zone: a fake location app moves the point, not the clock (D11).
+      zone: Intl.DateTimeFormat().resolvedOptions().timeZone,
     }))
       form.set(name, value === undefined ? "" : String(value));
     setPreparing({ kind: "idle" });

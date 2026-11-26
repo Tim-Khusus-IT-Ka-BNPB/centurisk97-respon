@@ -2,6 +2,7 @@ import { z } from "zod";
 import { DESK_HAS } from "../domain/deskQueue";
 import { VICTIM_ANSWERS } from "../domain/emergency";
 import { CHECK_RESULTS } from "../domain/fieldCheck";
+import { GPS_DOUBTS } from "../domain/gpsDoubts";
 import { photoBadgeSchema, summaryGroupSchema } from "./card";
 import { hazardTypeSchema, reporterRoleSchema, timeSchema } from "./common";
 import { reportVersionSchema } from "./ownReport";
@@ -121,6 +122,8 @@ const deskPhotoSchema = z.object({
   far: z.boolean(),
   takenAt: timeSchema,
   receivedAt: timeSchema,
+  // Why its GPS may not be where the phone was (D11): marked, never refused.
+  doubts: z.array(z.enum(GPS_DOUBTS)),
 });
 
 const mapPointSchema = z.object({

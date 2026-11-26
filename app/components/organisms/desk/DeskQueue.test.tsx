@@ -16,6 +16,7 @@ const PHOTO = {
   far: true,
   takenAt: SENT,
   receivedAt: SENT,
+  doubts: ["zone" as const, "jump" as const],
 };
 
 const POINT = {
@@ -539,7 +540,7 @@ describe("the map and the gallery", () => {
   test("the gallery: each photo with its report, badges and time, and a notice when cut", async () => {
     const gallery = {
       account: { label: "Petugas Uji" },
-      photos: [PHOTO, { ...PHOTO, photoId: "2", badge: "none" as const, far: false }],
+      photos: [PHOTO, { ...PHOTO, photoId: "2", badge: "none" as const, far: false, doubts: [] }],
       cut: true,
     };
     await renderDesk(
@@ -559,6 +560,10 @@ describe("the map and the gallery", () => {
     expect(screen.getByText("Lokasi GPS perangkat")).toBeTruthy();
     expect(screen.getByText("Tanpa lokasi")).toBeTruthy();
     expect(screen.getAllByText("Jauh dari lokasi kejadian")).toHaveLength(1);
+    // A doubted GPS is marked, with the reasons on the mark.
+    expect(screen.getByText("GPS janggal").closest("span")?.getAttribute("title")).toMatch(
+      /^Jam HP memakai zona waktu lain.+melompat/,
+    );
   });
 
   test("an empty gallery says so", async () => {

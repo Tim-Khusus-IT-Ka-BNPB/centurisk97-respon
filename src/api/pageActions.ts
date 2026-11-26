@@ -167,7 +167,7 @@ export async function startStepAction(
 // POST /lapor/report/<draftId>: a turn or a send from a form. Box values travel as "value.<fieldId>".
 // The photo route's form: the file and the turn controls, and the device reading the page put in
 // its boxes (value.<name>, as every box of a turn form travels).
-const READING_FIELDS = ["lat", "lon", "accuracy", "readAt", "offset"] as const;
+const READING_FIELDS = ["lat", "lon", "accuracy", "readAt", "offset", "zone"] as const;
 
 function photoForm(form: Form): FormData {
   const photo = new FormData();

@@ -10,7 +10,8 @@ describe("language preference", () => {
     const phone = browser(fetchApi);
     expect((await phone.call("POST", "/preferences/language", { language: "id" })).status).toBe(204);
     expect(phone.cookies.get("bahasa")).toBe("id");
-    expect((await phone.call("POST", "/preferences/language", { language: "en" })).status).toBe(400);
+    expect((await phone.call("POST", "/preferences/language", { language: "en" })).status).toBe(204);
+    expect((await phone.call("POST", "/preferences/language", { language: "fr" })).status).toBe(400);
     expect((await phone.call("POST", "/preferences/language", { language: "klingon" })).status).toBe(400);
   });
 });

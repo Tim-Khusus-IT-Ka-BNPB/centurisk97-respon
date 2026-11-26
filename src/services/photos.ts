@@ -4,6 +4,7 @@ import { villageCentre } from "../adapters/d1/places";
 import { zoneOffsetMs } from "../domain/eventTime";
 import type { PlaceValue } from "../domain/fieldState";
 import type { Point } from "../domain/geo";
+import { gpsDoubts } from "../domain/gpsDoubts";
 import { readExif, stripJpeg } from "../domain/jpeg";
 import {
   CHAT_PHOTO,
@@ -30,6 +31,10 @@ export type PhotoUpload = {
   readonly offsetMinutes: number | null;
   // A photo of the chat: when its message was sent, and the location last shared there.
   readonly chat?: { readonly sentAtMs: number; readonly shared: SharedPoint | null };
+  // The phone's own time zone and the network's country, for the GPS doubts (D11). Absent with no
+  // script, and for a photo of the chat.
+  readonly phoneZone?: string | null;
+  readonly country?: string | null;
 };
 
 // Where the report says it happened: the GPS reading, else the picked village's centre.
@@ -90,6 +95,17 @@ export async function addPhoto(
     return refused(bindings, draft, "tooMany", upload.turnKey);
   const clean = stripJpeg(upload.bytes);
   if (clean === null) return refused(bindings, draft, "broken", upload.turnKey);
+  const before = kept.filter((one) => one.point !== null).at(-1);
+  const doubts = upload.chat
+    ? []
+    : gpsDoubts({
+        point: checked.point,
+        atMs: checked.takenAtMs,
+        phoneZone: upload.phoneZone ?? null,
+        placeZone: zone,
+        country: upload.country ?? null,
+        previous: before ? { point: before.point as Point, atMs: before.takenAtMs } : null,
+      });
   const id = crypto.randomUUID();
   const storeKey = `photos/${draft.id}/${id}.jpg`;
   await bindings.photos.put(storeKey, clean);
@@ -97,13 +113,13 @@ export async function addPhoto(
   const after = { ...draft, revision: draft.revision + 1, lastActedAt: at };
   const photos = [
     ...(await draftPhotos(bindings.db, draft.id)),
-    { ...checked, id, storeKey, receivedAt: at, version: 1 },
+    { ...checked, id, storeKey, receivedAt: at, version: 1, doubts },
   ];
   const body = await viewOf(bindings, after, [], upload.turnKey, photos);
   const done = await atomically(bindings.db, [
     photosChanged(draft.id, draft.revision, at),
     changedOne,
-    insertPhoto(draft.id, { ...checked, id, storeKey, bytes: clean.length }, at),
+    insertPhoto(draft.id, { ...checked, id, storeKey, bytes: clean.length, doubts }, at),
     storeReply(draft.id, upload.turnKey, { requestHash, status: 200, body }, at),
   ]);
   if (done === null) {

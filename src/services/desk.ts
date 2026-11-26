@@ -167,6 +167,7 @@ const photoView = (photo: DeskPhoto): DeskGallery["photos"][number] => {
     far: photo.far,
     takenAt: at(photo.takenAt, zone),
     receivedAt: at(photo.receivedAt, zone),
+    doubts: [...photo.doubts],
   };
 };
 

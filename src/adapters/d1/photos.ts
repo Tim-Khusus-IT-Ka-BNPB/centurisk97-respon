@@ -1,4 +1,5 @@
 import type { Point } from "../../domain/geo";
+import type { GpsDoubt } from "../../domain/gpsDoubts";
 import type { KeptPhoto } from "../../domain/photoChecks";
 import { type Database, type Query, row, rows, run, sql } from "../../platform/database";
 
@@ -8,6 +9,8 @@ export type PhotoRecord = KeptPhoto & {
   readonly receivedAt: Date;
   // The report's version it came with; 1 until news brings more.
   readonly version: number;
+  // Why its GPS may not be where the phone was (D11).
+  readonly doubts: readonly GpsDoubt[];
 };
 
 type PhotoRow = {
@@ -22,6 +25,7 @@ type PhotoRow = {
   time_source: KeptPhoto["timeSource"];
   received_at: string;
   version: number | null;
+  gps_doubts: string | null;
 };
 
 const recordOf = (one: PhotoRow): PhotoRecord => ({
@@ -35,9 +39,11 @@ const recordOf = (one: PhotoRow): PhotoRecord => ({
   far: one.far === 1,
   receivedAt: new Date(one.received_at),
   version: one.version ?? 1,
+  doubts: one.gps_doubts === null ? [] : (JSON.parse(one.gps_doubts) as GpsDoubt[]),
 });
 
-const COLUMNS = sql`id, store_key, lat, lon, accuracy_m, badge, far, taken_at, time_source, received_at, version`;
+const COLUMNS = sql`id, store_key, lat, lon, accuracy_m, badge, far, taken_at, time_source, received_at, version,
+  gps_doubts`;
 
 // The photos of a draft in the order they arrived.
 export async function draftPhotos(db: Database, draftId: string): Promise<PhotoRecord[]> {
@@ -58,14 +64,20 @@ export async function photoOf(db: Database, draftId: string, photoId: string): P
 
 export const insertPhoto = (
   draftId: string,
-  photo: KeptPhoto & { readonly id: string; readonly storeKey: string; readonly bytes: number },
+  photo: KeptPhoto & {
+    readonly id: string;
+    readonly storeKey: string;
+    readonly bytes: number;
+    readonly doubts: readonly GpsDoubt[];
+  },
   at: Date,
 ): Query =>
   sql`insert into draft_photo (id, draft_id, store_key, bytes, lat, lon, accuracy_m, badge, far, taken_at, time_source,
-      received_at)
+      received_at, gps_doubts)
     values (${photo.id}, ${draftId}, ${photo.storeKey}, ${photo.bytes}, ${photo.point?.lat ?? null},
       ${photo.point?.lon ?? null}, ${photo.accuracyM}, ${photo.badge}, ${photo.far ? 1 : 0},
-      ${new Date(photo.takenAtMs)}, ${photo.timeSource}, ${at})`;
+      ${new Date(photo.takenAtMs)}, ${photo.timeSource}, ${at},
+      ${photo.doubts.length === 0 ? null : JSON.stringify(photo.doubts)})`;
 
 // Its file is queued to go with its row.
 export const deletePhoto = (draftId: string, photoId: string): Query =>

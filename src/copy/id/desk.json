@@ -335,5 +335,9 @@
   "desk.officers.national": "Call center BNPB",
   "desk.officers.officialNone": "Nomor BPBD ini belum ada di daftar kontak",
   "desk.overdue": "Lewat seminggu",
-  "desk.overdue.hint": "Sudah lebih dari seminggu di status ini"
+  "desk.overdue.hint": "Sudah lebih dari seminggu di status ini",
+  "desk.gps.doubt": "GPS janggal",
+  "desk.gps.zone": "Jam HP memakai zona waktu lain dari tempat kejadian, ciri aplikasi lokasi palsu.",
+  "desk.gps.abroad": "Jaringan terbaca dari luar Indonesia.",
+  "desk.gps.jump": "Titik foto melompat terlalu jauh dari foto sebelumnya dalam waktu singkat."
 }

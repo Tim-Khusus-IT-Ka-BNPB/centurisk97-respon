@@ -306,6 +306,7 @@ export const COLUMN_CLASSES: Readonly<Record<string, TableClasses>> = {
       time_source: I,
       received_at: I,
       version: I,
+      gps_doubts: I,
     },
   },
   video_upload: {

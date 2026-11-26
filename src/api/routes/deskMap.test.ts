@@ -147,6 +147,7 @@ describe("the gallery", () => {
         far: false,
         takenAt: { utc: expect.any(String), zone: "WIB" },
         receivedAt: { utc: expect.any(String), zone: "WIB" },
+        doubts: [],
       },
     ]);
     const photoId = gallery.photos[0]?.photoId as string;

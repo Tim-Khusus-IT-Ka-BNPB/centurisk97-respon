@@ -341,6 +341,15 @@ export function PhotoFigure({
             {t("card.photos.badge.far")}
           </span>
         ) : null}
+        {photo.doubts.length > 0 ? (
+          <span
+            title={photo.doubts.map((doubt) => t(`desk.gps.${doubt}`)).join(" ")}
+            className="inline-flex w-fit items-center gap-1 rounded-chip bg-warn-tint px-1.5 py-0.5 font-semibold text-ink"
+          >
+            <Icon name="triangleAlert" className="size-4 text-warn-icon" />
+            {t("desk.gps.doubt")}
+          </span>
+        ) : null}
         <span className="text-muted tabular-nums">{whenShort(t, photo.receivedAt)}</span>
       </figcaption>
     </figure>

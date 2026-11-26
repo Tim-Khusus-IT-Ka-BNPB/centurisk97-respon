@@ -2,6 +2,7 @@ import { DESK_HAS, type DeskHas } from "../../domain/deskQueue";
 import type { StaffScope } from "../../domain/deskRights";
 import type { EmergencyKind, VictimAnswer } from "../../domain/emergency";
 import type { Change, CheckResult } from "../../domain/fieldCheck";
+import type { GpsDoubt } from "../../domain/gpsDoubts";
 import type { TakenAction } from "../../domain/handling";
 import type { Door } from "../../domain/ownership";
 import type { KeptPhoto } from "../../domain/photoChecks";
@@ -461,6 +462,7 @@ export type DeskPhoto = {
   readonly far: boolean;
   readonly takenAt: Date;
   readonly receivedAt: Date;
+  readonly doubts: readonly GpsDoubt[];
 };
 
 type PhotoRow = {
@@ -472,9 +474,11 @@ type PhotoRow = {
   far: number;
   taken_at: string;
   received_at: string;
+  gps_doubts: string | null;
 };
 
-const PHOTO_SELECT = sql`select p.id, r.ticket_number, p.store_key, r.village_code, p.badge, p.far, p.taken_at, p.received_at
+const PHOTO_SELECT = sql`select p.id, r.ticket_number, p.store_key, r.village_code, p.badge, p.far, p.taken_at, p.received_at,
+    p.gps_doubts
   from draft_photo p
   join report r on r.draft_id = p.draft_id
   join ticket t on t.report_id = r.id`;
@@ -489,6 +493,7 @@ const deskPhoto = (one: PhotoRow): DeskPhoto => ({
   // Every kept photo has a time: the camera's, the device reading's, or its upload.
   takenAt: new Date(one.taken_at),
   receivedAt: new Date(one.received_at),
+  doubts: one.gps_doubts === null ? [] : (JSON.parse(one.gps_doubts) as GpsDoubt[]),
 });
 
 // Photos of the filtered sent reports, newest first.
