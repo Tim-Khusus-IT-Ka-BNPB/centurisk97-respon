@@ -67,7 +67,7 @@ describe("send", () => {
       where r.draft_id = ${draft.draftId}`;
     expect(version).toEqual({
       reporter_name: "Uji Satu",
-      privacy_version: 1,
+      privacy_version: 2,
       complete_percent: 100,
       number_unverified: 1,
     });
