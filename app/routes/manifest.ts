@@ -7,8 +7,8 @@ export const loader = () =>
   Response.json(
     {
       name: copy.text("app.name"),
-      short_name: copy.text("app.shortName"),
-      description: copy.text("app.install.description"),
+      short_name: copy.text("install.shortName"),
+      description: copy.text("install.description"),
       lang: "id",
       id: "/lapor",
       start_url: "/lapor",
@@ -22,9 +22,9 @@ export const loader = () =>
         { src: "/icons/maskable-512.png", sizes: "512x512", type: "image/png", purpose: "maskable" },
       ],
       shortcuts: [
-        { name: copy.text("app.install.report"), url: "/lapor/report" },
-        { name: copy.text("app.install.emergency"), url: "/lapor/report?darurat=1" },
-        { name: copy.text("app.install.feed"), url: "/lapor/feed" },
+        { name: copy.text("install.report"), url: "/lapor/report" },
+        { name: copy.text("install.emergency"), url: "/lapor/report?darurat=1" },
+        { name: copy.text("install.feed"), url: "/lapor/feed" },
       ].map((shortcut) => ({ ...shortcut, icons: [{ src: "/icons/192.png", sizes: "192x192" }] })),
     },
     { headers: { "content-type": "application/manifest+json", "cache-control": "public, max-age=3600" } },

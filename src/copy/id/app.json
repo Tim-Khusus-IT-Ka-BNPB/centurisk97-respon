@@ -1,9 +1,4 @@
 {
   "app.name": "Pantau Bencana BNPB",
-  "home.contact.organisation": "Badan Nasional Penanggulangan Bencana",
-  "app.shortName": "Pantau Bencana",
-  "app.install.description": "Lapor kejadian bencana dari ponsel, lacak penanganannya, dan lihat laporan warga yang sedang ditangani BNPB dan BPBD.",
-  "app.install.report": "Lapor kejadian",
-  "app.install.emergency": "Lapor darurat",
-  "app.install.feed": "Alun-alun"
+  "home.contact.organisation": "Badan Nasional Penanggulangan Bencana"
 }
