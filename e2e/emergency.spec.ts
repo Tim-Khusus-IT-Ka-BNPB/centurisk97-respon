@@ -1,4 +1,6 @@
+import { readFileSync } from "node:fs";
 import { type Browser, expect, type Page, test } from "@playwright/test";
+import { exifDateTime, withExif } from "../src/testing/jpegs.ts";
 import {
   answerCard,
   closeOthers,
@@ -146,4 +148,40 @@ test("one tap shows who to call before the phone is read, and is for a reporter 
   await expect(own.locator(`a[href="/lapor/meja/${ticket}"]`).first()).toBeVisible();
   const other = await deskPage(browser, PROVINCE_CODE, baseURL as string);
   await expect(other.locator(`a[href="/lapor/meja/${ticket}"]`)).toHaveCount(0);
+});
+
+test("with no signal one tap is kept on the phone with a camera photo, and both reach the desk when signal returns", async ({
+  page,
+  browser,
+  baseURL,
+  context,
+}, info) => {
+  test.setTimeout(120_000);
+  test.skip(info.project.name.includes("no-script"), "one tap needs script");
+  await startEmergency(page);
+  await context.grantPermissions(["geolocation"]);
+  await context.setGeolocation(HERE);
+  await page.goto("/lapor/darurat");
+  await context.setOffline(true);
+  await page.getByRole("button", { name: "Kirim titik lokasi sekarang" }).click();
+  await expect(page.getByText(/^Tidak ada sinyal\./)).toBeVisible();
+  const base = new Uint8Array(readFileSync("db/synthetic/photo-base.jpg"));
+  const photo = withExif(base, { make: "Uji", model: "Kamera", dateTime: exifDateTime(Date.now() - 10_000, 420) });
+  await page
+    .getByLabel("Ambil foto")
+    .setInputFiles({ name: "foto.jpg", mimeType: "image/jpeg", buffer: Buffer.from(photo) });
+  await expect(page.getByRole("button", { name: "Hapus foto 1" })).toBeVisible();
+  await noSidewaysScroll(page);
+  await page.screenshot({ path: info.outputPath("kept-photo.png"), fullPage: true });
+
+  // Signal returns; the button sends at once where the browser does not say so itself.
+  await context.setOffline(false);
+  const sendNow = page.getByRole("button", { name: "Kirim sekarang" });
+  if (await sendNow.isVisible()) await sendNow.click().catch(() => undefined);
+  await expect(page.getByText(/Terkirim ke meja BNPB dengan nomor LA-/)).toBeVisible({ timeout: 40_000 });
+  const ticket = /LA-\d{6}-\d{2,}/.exec((await page.getByRole("status").textContent()) ?? "")?.[0] as string;
+  const desk = await deskPage(browser, DESK_CODE, baseURL as string);
+  await desk.goto(`/lapor/meja/${ticket}`);
+  const photos = desk.getByRole("region", { name: "Foto pelapor" });
+  await expect(photos.getByRole("img")).toHaveCount(1);
 });

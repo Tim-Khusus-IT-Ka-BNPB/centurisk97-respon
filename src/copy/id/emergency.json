@@ -26,5 +26,13 @@
   "emergency.offline.hazard": "Kejadian apa? Boleh dilewati",
   "emergency.offline.hazardUnknown": "Belum dipilih",
   "emergency.offline.sendNow": "Kirim sekarang",
-  "emergency.position.timeout": "Lokasi terlalu lama terbaca. Pindah ke tempat terbuka atau dekat jendela, lalu coba lagi. Bila nyawa terancam, telepon 112 sekarang."
+  "emergency.position.timeout": "Lokasi terlalu lama terbaca. Pindah ke tempat terbuka atau dekat jendela, lalu coba lagi. Bila nyawa terancam, telepon 112 sekarang.",
+  "emergency.offline.photos": "Foto kejadian, boleh dilewati",
+  "emergency.offline.photosHint": "Paling banyak 3 foto, langsung dari kamera. Foto ikut terkirim bersama laporan.",
+  "emergency.offline.takePhoto": "Ambil foto",
+  "emergency.offline.removePhoto": "Hapus foto {number}",
+  "emergency.offline.photoOld": "Foto ini bukan rekaman baru. Ambil foto langsung dengan kamera.",
+  "emergency.offline.photoBroken": "Foto tidak terbaca. Ambil ulang dengan kamera.",
+  "emergency.offline.photoFull": "Penyimpanan ponsel penuh, jadi foto ini tidak disimpan. Laporan tetap tersimpan.",
+  "emergency.offline.photosRefused": "{count} foto tidak diterima karena diambil lebih dari 5 menit sebelum laporan disimpan, atau rusak."
 }

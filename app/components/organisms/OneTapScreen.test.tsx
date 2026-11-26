@@ -7,8 +7,18 @@ import type { PositionResult } from "../../lib/device";
 import { TextContext } from "../../lib/text";
 import { renderPage, text } from "../../testing/render";
 
-const device = vi.hoisted(() => ({ read: null as unknown }));
-vi.mock("../../lib/device", () => ({ readPosition: () => device.read }));
+const device = vi.hoisted(() => ({
+  read: null as unknown,
+  recent: true,
+  prepared: null as Uint8Array | null,
+  fix: null as unknown,
+}));
+vi.mock("../../lib/device", () => ({
+  readPosition: () => device.read,
+  isRecentFile: () => device.recent,
+  preparePhoto: async () => device.prepared,
+  photoFix: async () => device.fix,
+}));
 
 import { OneTapScreen } from "./OneTapScreen";
 
@@ -24,7 +34,8 @@ const answer = (response: () => Response) =>
   vi.stubGlobal(
     "fetch",
     vi.fn(async (url: string, init: RequestInit) => {
-      calls.push({ url, body: JSON.parse(String(init.body)) });
+      const body = init.body instanceof FormData ? Object.fromEntries(init.body) : JSON.parse(String(init.body));
+      calls.push({ url, body });
       return response();
     }),
   );
@@ -39,6 +50,9 @@ const phones = () =>
 beforeEach(() => {
   calls.length = 0;
   device.read = Promise.resolve(READ);
+  device.recent = true;
+  device.prepared = Uint8Array.of(0xff, 0xd8, 1);
+  device.fix = { lat: 5.1, lon: 97, accuracy: 9, readAt: 5 };
 });
 afterEach(() => {
   vi.unstubAllGlobals();
@@ -196,5 +210,80 @@ describe("with no signal", () => {
     await waitFor(() => expect(screen.getByText("Terkirim ke meja BNPB dengan nomor LA-241126-01.")).toBeTruthy());
     // It goes with when it was saved and when it is sent, both by the phone's clock (LR-09).
     expect(calls[0]?.body).toMatchObject({ takenAtMs: 1, sentAtMs: expect.any(Number) });
+  });
+
+  test("camera photos are kept with it, up to 3, and go after it; one refused is said", async () => {
+    vi.stubGlobal("navigator", { ...navigator, onLine: false });
+    draw();
+    fireEvent.click(await screen.findByRole("button", { name: "Kirim titik lokasi sekarang" }));
+    await screen.findByText(/^Tidak ada sinyal/);
+    const take = async () => {
+      fireEvent.change(screen.getByLabelText("Ambil foto"), {
+        target: { files: [new File([new Uint8Array(4)], "a.jpg", { type: "image/jpeg" })] },
+      });
+      await act(async () => {});
+    };
+    // The camera closed with no photo: nothing changes.
+    fireEvent.change(screen.getByLabelText("Ambil foto"), { target: { files: [] } });
+    await act(async () => {});
+    expect(screen.queryByRole("alert")).toBeNull();
+    // An old file, or one the phone cannot read, is named and left out.
+    device.recent = false;
+    await take();
+    expect(screen.getByRole("alert").textContent).toBe(
+      "Foto ini bukan rekaman baru. Ambil foto langsung dengan kamera.",
+    );
+    device.recent = true;
+    device.prepared = null;
+    await take();
+    expect(screen.getByRole("alert").textContent).toBe("Foto tidak terbaca. Ambil ulang dengan kamera.");
+    device.prepared = Uint8Array.of(0xff, 0xd8, 1);
+    await take();
+    expect(screen.queryByRole("alert")).toBeNull();
+    await take();
+    fireEvent.click(screen.getByRole("button", { name: "Hapus foto 1" }));
+    expect(screen.queryByRole("button", { name: "Hapus foto 2" })).toBeNull();
+    // A phone whose storage is full keeps the report without the new photo.
+    const full = vi.spyOn(Storage.prototype, "setItem").mockImplementation(() => {
+      throw new Error("full");
+    });
+    await take();
+    expect(screen.getByRole("alert").textContent).toMatch(/^Penyimpanan ponsel penuh/);
+    expect(screen.queryByRole("button", { name: "Hapus foto 2" })).toBeNull();
+    full.mockRestore();
+    await take();
+    await take();
+    expect(screen.queryByLabelText("Ambil foto")).toBeNull();
+    const kept = JSON.parse(localStorage.getItem("lapor-offline-reports") as string);
+    expect(kept[0].photos).toHaveLength(3);
+    expect(kept[0].photos[0]).toEqual({ jpeg: "/9gB", fix: { lat: 5.1, lon: 97, accuracy: 9, readAt: 5 } });
+
+    // Signal returns: the report, then its photos one by one; the desk refuses the second.
+    vi.stubGlobal("navigator", { ...navigator, onLine: true });
+    let photoCalls = 0;
+    answer(() => {
+      const last = calls.at(-1)?.url ?? "";
+      if (!last.endsWith("/photos")) return Response.json(SENT, { status: 201 });
+      photoCalls += 1;
+      return photoCalls === 2
+        ? Response.json(envelope("request.invalidFields"), { status: 422 })
+        : Response.json({ photos: photoCalls }, { status: 201 });
+    });
+    await act(async () => {
+      dispatchEvent(new Event("online"));
+    });
+    expect(
+      await screen.findByText(
+        "1 foto tidak diterima karena diambil lebih dari 5 menit sebelum laporan disimpan, atau rusak.",
+      ),
+    ).toBeTruthy();
+    expect(calls.map((one) => one.url)).toEqual([
+      "/api/lapor/emergencies",
+      `/api/lapor/emergencies/${kept[0].clientId}/photos`,
+      `/api/lapor/emergencies/${kept[0].clientId}/photos`,
+      `/api/lapor/emergencies/${kept[0].clientId}/photos`,
+    ]);
+    expect(calls[0]?.body).not.toHaveProperty("photos");
+    expect(calls[1]?.body).toMatchObject({ index: "0", lat: "5.1", readAt: "5" });
   });
 });

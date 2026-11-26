@@ -4,10 +4,11 @@ import type { OneTapSent, OneTapStart } from "../../../src/contract/emergency";
 import type { ErrorEnvelope } from "../../../src/contract/errors";
 import { hazardKey } from "../../../src/copy/hazardKey";
 import { SELECTABLE_HAZARD_TYPES } from "../../../src/domain/hazards";
-import { postJson } from "../../lib/clientApi";
-import { readPosition } from "../../lib/device";
+import { OFFLINE_PHOTOS } from "../../../src/domain/offline";
+import { postForm, postJson } from "../../lib/clientApi";
+import { isRecentFile, photoFix, preparePhoto, readPosition } from "../../lib/device";
 import { useHydrated } from "../../lib/hooks";
-import { keepReport, type OfflineReport, sendKept } from "../../lib/offline";
+import { type KeptPhoto, keepReport, keptPhotoForm, type OfflineReport, photoText, sendKept } from "../../lib/offline";
 import { limitText } from "../../lib/status";
 import { useText } from "../../lib/text";
 import { Button, buttonStyles } from "../atoms/Button";
@@ -27,7 +28,10 @@ const BUSY: readonly Step["kind"][] = ["reading", "sending"];
 
 // A report kept on the phone goes with when it was saved and when it is sent, both by the phone's
 // clock: the desk marks one more than 2 hours late and does not ring for it (LR-09).
-const post = (report: OfflineReport) => postJson<OneTapSent>("/emergencies", { ...report, sentAtMs: Date.now() });
+const post = ({ photos: _photos, ...report }: OfflineReport) =>
+  postJson<OneTapSent>("/emergencies", { ...report, sentAtMs: Date.now() });
+const postPhoto = (clientId: string, index: number, photo: KeptPhoto) =>
+  postForm(`/emergencies/${clientId}/photos`, keptPhotoForm(index, photo, -new Date().getTimezoneOffset()));
 
 // The phone's point to the desk. Nothing is sent without one. With no signal it is kept on the
 // phone, with the moment it was made and an id of its own, and sent when signal returns.
@@ -50,13 +54,82 @@ async function sendPoint(onSending: () => void): Promise<Step> {
   return { kind: "refused", envelope: answer.envelope };
 }
 
-// What a kept report may still tell before it goes: its kind and whether anyone is hurt.
+// Up to 3 photos straight from the camera, kept with the report and sent after it (LR-06). A file
+// that is not a new one, or one the phone cannot read or keep, is named and left out.
+function KeptPhotos({
+  report,
+  onChange,
+}: {
+  readonly report: OfflineReport;
+  readonly onChange: (next: OfflineReport) => boolean;
+}) {
+  const t = useText();
+  const [note, setNote] = useState<string | null>(null);
+  const photos = report.photos ?? [];
+  const take = async (file: File | undefined) => {
+    if (file === undefined) return;
+    if (!isRecentFile(file, Date.now())) return setNote("emergency.offline.photoOld");
+    const [bytes, fix] = await Promise.all([preparePhoto(file), photoFix()]);
+    if (bytes === null) return setNote("emergency.offline.photoBroken");
+    const kept = onChange({ ...report, photos: [...photos, { jpeg: photoText(bytes), fix }] });
+    setNote(kept ? null : "emergency.offline.photoFull");
+  };
+  return (
+    <fieldset className="flex flex-col gap-2">
+      <legend className="mb-1.5 font-semibold">{t("emergency.offline.photos")}</legend>
+      <p className="text-meta text-muted">{t("emergency.offline.photosHint")}</p>
+      {photos.length > 0 ? (
+        <ul className="grid grid-cols-3 gap-2">
+          {photos.map((photo, index) => (
+            <li key={photo.jpeg.slice(-24)}>
+              <button
+                type="button"
+                aria-label={t("emergency.offline.removePhoto", { number: index + 1 })}
+                onClick={() => onChange({ ...report, photos: photos.filter((_, at) => at !== index) })}
+                className="relative block aspect-square w-full overflow-hidden rounded-control bg-sunken"
+              >
+                <img src={`data:image/jpeg;base64,${photo.jpeg}`} alt="" className="size-full object-cover" />
+                <span className="absolute end-1 top-1 rounded-full bg-surface p-1 text-ink">
+                  <Icon name="x" className="size-4" />
+                </span>
+              </button>
+            </li>
+          ))}
+        </ul>
+      ) : null}
+      {photos.length < OFFLINE_PHOTOS ? (
+        <label className={buttonStyles({ variant: "secondary", size: "main", className: "cursor-pointer" })}>
+          <Icon name="camera" className="size-5" />
+          {t("emergency.offline.takePhoto")}
+          <input
+            type="file"
+            accept="image/jpeg"
+            capture="environment"
+            className="sr-only"
+            onChange={(event) => {
+              const file = event.target.files?.[0];
+              event.target.value = "";
+              void take(file);
+            }}
+          />
+        </label>
+      ) : null}
+      {note === null ? null : (
+        <p role="alert" className="text-meta text-danger">
+          {t(note)}
+        </p>
+      )}
+    </fieldset>
+  );
+}
+
+// What a kept report may still tell before it goes: its kind, whether anyone is hurt, its photos.
 function KeptDetails({
   report,
   onChange,
 }: {
   readonly report: OfflineReport;
-  readonly onChange: (next: OfflineReport) => void;
+  readonly onChange: (next: OfflineReport) => boolean;
 }) {
   const t = useText();
   return (
@@ -92,6 +165,7 @@ function KeptDetails({
           </label>
         ))}
       </fieldset>
+      <KeptPhotos report={report} onChange={onChange} />
     </div>
   );
 }
@@ -108,9 +182,11 @@ export function OneTapScreen({ start }: { readonly start: OneTapStart }) {
     setStep({ kind: "reading" });
     setStep(await sendPoint(() => setStep({ kind: "sending" })));
   }, []);
+  const [photosRefused, setPhotosRefused] = useState(0);
   const flush = useCallback(async () => {
-    const { sent } = await sendKept(post);
+    const { sent, photosRefused: refused } = await sendKept(post, postPhoto);
     if (sent[0]) setStep({ kind: "sent", sent: sent[0] });
+    setPhotosRefused(refused);
   }, []);
   // What waits on this phone goes as soon as there is signal: on arrival, and when it comes back.
   useEffect(() => {
@@ -118,9 +194,11 @@ export function OneTapScreen({ start }: { readonly start: OneTapStart }) {
     addEventListener("online", flush);
     return () => removeEventListener("online", flush);
   }, [flush]);
+  // What the phone could not keep is not shown as kept.
   const details = (report: OfflineReport) => {
-    keepReport(report);
-    setStep({ kind: "kept", report });
+    const kept = keepReport(report);
+    if (kept) setStep({ kind: "kept", report });
+    return kept;
   };
   // The tap was on the home: it is taken once, and a page opened again does not send.
   useEffect(() => {
@@ -167,6 +245,7 @@ export function OneTapScreen({ start }: { readonly start: OneTapStart }) {
                 {t("emergency.sent", { ticketNumber: step.sent.ticketNumber })}
               </p>
               <p>{t("emergency.sentNext")}</p>
+              {photosRefused > 0 ? <p>{t("emergency.offline.photosRefused", { count: photosRefused })}</p> : null}
             </>
           ) : null}
         </div>
