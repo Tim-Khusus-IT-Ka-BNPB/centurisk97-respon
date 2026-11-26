@@ -3,7 +3,7 @@ import { EmergencyStart } from "../components/organisms/EmergencyPanel";
 import { StartAside, StartHeading, StartScreen } from "../components/organisms/StartScreen";
 import { Page } from "../components/templates/Page";
 import { pageMeta } from "../lib/meta";
-import { actOnStart, isEmergency, loadStartPage } from "../lib/startPage.server";
+import { actOnStart, isEmergency, loadStartPage, posterVillageCode } from "../lib/startPage.server";
 import type { Route } from "./+types/start";
 
 export const headers = () => ({ "cache-control": "private, no-store" });
@@ -16,7 +16,8 @@ export async function loader({ request, context }: Route.LoaderArgs) {
 }
 
 export async function action({ request, context }: Route.ActionArgs) {
-  const acted = await actOnStart(await request.formData(), context.api, isEmergency(new URL(request.url)));
+  const url = new URL(request.url);
+  const acted = await actOnStart(await request.formData(), context.api, isEmergency(url), posterVillageCode(url));
   if (acted.kind === "redirect") return redirect(acted.location, { status: 303, headers: acted.headers });
   return data(acted.data, { status: acted.status });
 }

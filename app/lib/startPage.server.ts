@@ -43,6 +43,12 @@ export async function loadStartPage(url: URL, api: ApiCall): Promise<StartPageDa
 // "Lapor darurat" opens the start page with this, and every step of it keeps it.
 export const isEmergency = (url: URL) => url.searchParams.has("darurat");
 
+// A poster's code opens the start page with its village's ten digits (D131), as "11.08.01.2001".
+export function posterVillageCode(url: URL): string | null {
+  const digits = /^(\d{2})(\d{2})(\d{2})(\d{4})$/.exec(url.searchParams.get("desa") ?? "");
+  return digits ? digits.slice(1).join(".") : null;
+}
+
 export type StartActed =
   | { readonly kind: "redirect"; readonly location: string; readonly headers: Headers }
   | { readonly kind: "render"; readonly status: number; readonly data: StartActionData };
@@ -53,13 +59,18 @@ const text = (form: FormData, name: string) => {
 };
 
 // POST /lapor/report. A redirect carries the new device cookie on to the browser.
-export async function actOnStart(form: FormData, api: ApiCall, emergency = false): Promise<StartActed> {
+export async function actOnStart(
+  form: FormData,
+  api: ApiCall,
+  emergency = false,
+  villageCode: string | null = null,
+): Promise<StartActed> {
   const action = text(form, "action");
   const masked = text(form, "maskedNumber");
   if (action === "discardOpenDraft") return discardOpenDraft(text(form, "draftId"), form, api);
   // "Ganti" on the read-back is the way back to the form, with focus on the number.
   if (action === "changeNumber") form.set("action", "declineBack");
-  const result = await startStepAction(form, api, emergency);
+  const result = await startStepAction(form, api, emergency, villageCode);
   if (result.kind === "redirect" && action === "removeProfile")
     return { kind: "render", status: 200, data: rendered("list", form, null, { removed: masked }) };
   if (result.kind === "redirect") return result;

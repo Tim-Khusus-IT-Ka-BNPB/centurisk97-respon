@@ -98,7 +98,13 @@ function identityBody(values: IdentityValues, withNumber: boolean) {
 }
 
 // POST /lapor/report. The session path has no number box, so a form without one consents without it.
-export async function startStepAction(form: Form, api: ApiCall, emergency = false): Promise<PageResult> {
+export async function startStepAction(
+  form: Form,
+  api: ApiCall,
+  emergency = false,
+  villageCode: string | null = null,
+): Promise<PageResult> {
+  const poster = villageCode === null ? {} : { villageCode };
   const action = field(form, "action") as StartAction;
   const values = valuesOf(form);
   const withNumber = form.get("number") !== null;
@@ -127,6 +133,7 @@ export async function startStepAction(form: Form, api: ApiCall, emergency = fals
         privacyVersion: PRIVACY.version,
         agree: true,
         emergency,
+        ...poster,
       });
       return created(response, form, "form");
     }
@@ -137,6 +144,7 @@ export async function startStepAction(form: Form, api: ApiCall, emergency = fals
         profileId: field(form, "profileId"),
         replaceOpenDraft: action === "replaceOpenDraft",
         emergency,
+        ...poster,
         ...(editing ? { profileEdit: identityBody(values, false) } : {}),
       };
       return created(await api("POST", "/drafts", body), form, "form");

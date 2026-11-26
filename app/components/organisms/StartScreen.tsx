@@ -36,14 +36,20 @@ function replaceBody(t: Text, draft: NonNullable<Profile["openDraft"]>): string 
   return t("card.confirm.replaceDraft.body", { hazardType });
 }
 
-// The start page at another step, still an emergency when it is one.
+// The start page at another step, still an emergency when it is one, and still for a poster's village.
 function useStep() {
-  const emergency = useSearchParams()[0].has("darurat");
+  const [params] = useSearchParams();
+  const kept = [
+    ...(params.has("darurat") ? ["darurat=1"] : []),
+    ...(POSTER_DESA.test(params.get("desa") ?? "") ? [`desa=${params.get("desa")}`] : []),
+  ];
   return (step: string) => {
-    const search = [step, ...(emergency ? ["darurat=1"] : [])].filter(Boolean).join("&");
+    const search = [step, ...kept].filter(Boolean).join("&");
     return search === "" ? "/lapor/report" : `/lapor/report?${search}`;
   };
 }
+
+const POSTER_DESA = /^\d{10}$/;
 
 function KnownRow({ profile }: { readonly profile: Profile }) {
   const t = useText();

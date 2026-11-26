@@ -2,7 +2,7 @@ import { describe, expect, test } from "vitest";
 import type { ApiCall } from "../../src/api/bridge";
 import { SAMPLE_DRAFTS, SAMPLE_FIELD_ERROR, SAMPLE_ME } from "../../src/testing/samples";
 import { actOnDraft, loadDraftPage } from "./draftPage.server";
-import { actOnStart, loadStartPage } from "./startPage.server";
+import { actOnStart, loadStartPage, posterVillageCode } from "./startPage.server";
 import { PAGE_TEXTS, pickTexts } from "./texts.server";
 
 type Call = { method: string; path: string; body: unknown };
@@ -158,6 +158,40 @@ describe("the start step", () => {
       true,
     );
     expect(calls.map((call) => (call.body as { emergency: boolean }).emergency)).toEqual([true, true]);
+  });
+
+  test("a poster's village goes with the consent and a known reporter's start, and only then", async () => {
+    const { api, calls } = fakeApi({
+      "POST /consent": json({ draftId: DRAFT }, 201),
+      "POST /drafts": json({ draftId: DRAFT }, 201),
+    });
+    await actOnStart(form([["action", "consent"]]), api, false, "11.08.01.2005");
+    await actOnStart(
+      form([
+        ["action", "useProfile"],
+        ["profileId", "p-1"],
+      ]),
+      api,
+      false,
+      "11.08.01.2005",
+    );
+    await actOnStart(form([["action", "consent"]]), api);
+    expect(calls.map((call) => (call.body as { villageCode?: string }).villageCode)).toEqual([
+      "11.08.01.2005",
+      "11.08.01.2005",
+      undefined,
+    ]);
+  });
+
+  test("the poster's ten digits read as a village code; anything else is no village", () => {
+    const read = (search: string) => posterVillageCode(new URL(`http://x/lapor/report${search}`));
+    expect(read("?desa=1108012005")).toBe("11.08.01.2005");
+    expect([read(""), read("?desa=110801200"), read("?desa=11080120051"), read("?desa=11.08.01.2005")]).toEqual([
+      null,
+      null,
+      null,
+      null,
+    ]);
   });
 
   test("a read-back is drawn with the values typed", async () => {

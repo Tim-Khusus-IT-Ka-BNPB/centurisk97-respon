@@ -466,7 +466,7 @@ describe("route modules", () => {
     const loaded = await start.loader({ request: new Request("http://x/lapor/report"), context } as Args);
     expect(loaded.view).toBe("list");
     const moved = (await start.action({
-      request: post("http://x/lapor/report", [
+      request: post("http://x/lapor/report?desa=1108012005", [
         ["action", "consent"],
         ["role", "citizen"],
         ["name", "Uji"],

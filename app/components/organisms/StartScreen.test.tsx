@@ -68,6 +68,25 @@ describe("numbers known on this device", () => {
     expect(hrefs).toContain("/lapor/report?new=1&darurat=1");
   });
 
+  test("a poster's village stays through every step; a desa of the wrong shape is dropped", async () => {
+    const view = renderPage(<StartScreen page={page()} acted={null} />, {
+      path: "/lapor/report",
+      entry: "/lapor/report?desa=1108012005",
+      action: never,
+    });
+    const hrefs = (await screen.findAllByRole("link")).map((link) => link.getAttribute("href"));
+    expect(hrefs).toContain(`/lapor/report?profile=${profile.profileId}&desa=1108012005`);
+    expect(hrefs).toContain("/lapor/report?new=1&desa=1108012005");
+    view.unmount();
+    renderPage(<StartScreen page={page()} acted={null} />, {
+      path: "/lapor/report",
+      entry: "/lapor/report?desa=11.08",
+      action: never,
+    });
+    const plain = (await screen.findAllByRole("link")).map((link) => link.getAttribute("href"));
+    expect(plain).toContain("/lapor/report?new=1");
+  });
+
   test("after a removal the number removed is named; a failed removal says so", async () => {
     draw(page(), acted({ view: "list", removed: "0800****0009" }));
     expect(await screen.findByText(/0800\*\*\*\*0009 sudah dihapus/)).toBeTruthy();
