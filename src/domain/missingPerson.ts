@@ -53,14 +53,14 @@ export function readMissing(input: MissingInput, nowMs: number, zone: Zone): Mis
   const name = input.name.trim();
   if (!NAME.test(name)) refuse("name", "missing.name");
   const nickname = text(input.nickname, 40);
-  if (nickname !== null && !NAME.test(nickname)) refuse("nickname", "missing.name");
+  if (nickname?.match(NAME) === null) refuse("nickname", "missing.name");
   const relation = RELATIONS.find((one) => one === input.relation);
   if (relation === undefined) refuse("relation", "missing.choose");
   const sex = SEXES.find((one) => one === input.sex);
   if (sex === undefined) refuse("sex", "missing.choose");
   const ageText = input.age.trim();
-  const age = ageText === "" ? null : /^\d{1,3}$/.test(ageText) ? Number(ageText) : Number.NaN;
-  if (age !== null && !(age <= 120)) refuse("age", "missing.age");
+  const age = ageText === "" ? null : Number(ageText);
+  if (age !== null && !(/^\d{1,3}$/.test(ageText) && age <= 120)) refuse("age", "missing.age");
   const today = localDate(nowMs, zone);
   const yearAgo = localDate(nowMs - 366 * DAY_MS, zone);
   const date = input.lastSeenDate.trim();
@@ -69,9 +69,9 @@ export function readMissing(input: MissingInput, nowMs: number, zone: Zone): Mis
   else if (date < yearAgo) refuse("lastSeenDate", "missing.tooOld");
   const time = input.lastSeenTime.trim() === "" ? null : input.lastSeenTime.trim();
   if (time !== null && !TIME.test(time)) refuse("lastSeenTime", "missing.time");
-  else if (time !== null && date === today && time > localClock(nowMs + 10 * MINUTE_MS, zone))
+  else if (date === today && (time ?? "") > localClock(nowMs + 10 * MINUTE_MS, zone))
     refuse("lastSeenTime", "missing.future");
-  const personNumber = input.personNumber.trim() === "" ? null : normaliseNumber(input.personNumber);
+  const personNumber = normaliseNumber(input.personNumber);
   if (personNumber === null && input.personNumber.trim() !== "") refuse("personNumber", "missing.number");
   const contactNumber = normaliseNumber(input.contactNumber);
   if (contactNumber === null) refuse("contactNumber", "missing.number");

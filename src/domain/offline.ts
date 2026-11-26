@@ -9,8 +9,10 @@ const AHEAD_MS = 5 * MINUTE_MS;
 export const LATE_MS = 2 * HOUR_MS;
 
 // A phone's time the service can believe: no more than 5 minutes ahead, no more than 14 days old.
-const believable = (ms: number | undefined, nowMs: number): ms is number =>
-  ms !== undefined && ms <= nowMs + AHEAD_MS && ms >= nowMs - KEPT_MS;
+function believable(ms: number | undefined, nowMs: number): ms is number {
+  const at = ms ?? Number.NaN;
+  return at <= nowMs + AHEAD_MS && at >= nowMs - KEPT_MS;
+}
 
 export type OfflineMark = {
   // When the phone saved it, or null when its clock could not be believed.

@@ -21,9 +21,10 @@ const FORM: MissingInput = {
 };
 
 const read = (change: Partial<MissingInput>) => readMissing({ ...FORM, ...change }, NOW, "WIB");
+// Each refusal as field and rule.
 const refused = (change: Partial<MissingInput>) => {
   const answer = read(change);
-  return Array.isArray(answer) ? answer.map((one) => one.rule) : [];
+  return Array.isArray(answer) ? answer.map((one) => `${one.field} ${one.rule}`) : [];
 };
 
 describe("a missing person as typed", () => {
@@ -47,66 +48,69 @@ describe("a missing person as typed", () => {
       clothes: null,
     });
     expect(read({ personNumber: " 0813 1111 2222 " })).toMatchObject({ personNumber: "+6281311112222" });
+    expect(read({ personNumber: "   " })).toMatchObject({ personNumber: null });
   });
 
   test("a name has no digits and 2 to 80 letters; a nickname the same as the name is not kept", () => {
-    expect(refused({ name: "A" })).toEqual(["missing.name"]);
-    expect(refused({ name: "Siti 2" })).toEqual(["missing.name"]);
-    expect(refused({ name: "1Siti" })).toEqual(["missing.name"]);
-    expect(refused({ name: "Siti1" })).toEqual(["missing.name"]);
-    expect(refused({ name: "a".repeat(81) })).toEqual(["missing.name"]);
+    expect(refused({ name: "A" })).toEqual(["name missing.name"]);
+    expect(refused({ name: "Siti 2" })).toEqual(["name missing.name"]);
+    expect(refused({ name: "1Siti" })).toEqual(["name missing.name"]);
+    expect(refused({ name: "Siti1" })).toEqual(["name missing.name"]);
+    expect(refused({ name: "a".repeat(81) })).toEqual(["name missing.name"]);
     expect(read({ name: "a".repeat(80) })).toMatchObject({ name: "a".repeat(80) });
     expect(read({ name: "Al" })).toMatchObject({ name: "Al" });
     expect(read({ nickname: " Ani " })).toMatchObject({ nickname: "Ani" });
     expect(read({ nickname: "SITI AMINAH" })).toMatchObject({ nickname: null });
     expect(read({ nickname: "siti aminah" })).toMatchObject({ nickname: null });
     expect(read({ nickname: "b".repeat(50) })).toMatchObject({ nickname: "b".repeat(40) });
-    expect(refused({ nickname: "A1" })).toEqual(["missing.name"]);
+    expect(refused({ nickname: "A1" })).toEqual(["nickname missing.name"]);
   });
 
   test("relation and sex are one of the choices", () => {
-    expect(refused({ relation: "cousin" })).toEqual(["missing.choose"]);
-    expect(refused({ sex: "" })).toEqual(["missing.choose"]);
+    expect(refused({ relation: "cousin" })).toEqual(["relation missing.choose"]);
+    expect(refused({ sex: "" })).toEqual(["sex missing.choose"]);
     expect(read({ relation: "other", sex: "unknown" })).toMatchObject({ relation: "other", sex: "unknown" });
   });
 
   test("an age is up to 120 in digits, or left out", () => {
     expect(read({ age: "0" })).toMatchObject({ age: 0 });
     expect(read({ age: "120" })).toMatchObject({ age: 120 });
-    expect(refused({ age: "121" })).toEqual(["missing.age"]);
-    expect(refused({ age: "1000" })).toEqual(["missing.age"]);
-    expect(refused({ age: "dua" })).toEqual(["missing.age"]);
-    expect(refused({ age: "1.5" })).toEqual(["missing.age"]);
+    expect(refused({ age: "121" })).toEqual(["age missing.age"]);
+    expect(refused({ age: "1000" })).toEqual(["age missing.age"]);
+    expect(refused({ age: "dua" })).toEqual(["age missing.age"]);
+    expect(refused({ age: "1.5" })).toEqual(["age missing.age"]);
+    expect(refused({ age: "0120" })).toEqual(["age missing.age"]);
   });
 
   test("the last seen day is a real date, not ahead of today and not more than a year back", () => {
     expect(read({ lastSeenDate: "2026-11-26", lastSeenTime: "" })).toMatchObject({ lastSeen: { date: "2026-11-26" } });
     expect(read({ lastSeenDate: " 2025-11-25 " })).toMatchObject({ lastSeen: { date: "2025-11-25" } });
-    expect(refused({ lastSeenDate: "2025-11-24" })).toEqual(["missing.tooOld"]);
-    expect(refused({ lastSeenDate: "2026-11-27" })).toEqual(["missing.future"]);
-    expect(refused({ lastSeenDate: "2026-02-30" })).toEqual(["missing.date"]);
-    expect(refused({ lastSeenDate: "25-11-2026" })).toEqual(["missing.date"]);
-    expect(refused({ lastSeenDate: "" })).toEqual(["missing.date"]);
+    expect(refused({ lastSeenDate: "2025-11-24" })).toEqual(["lastSeenDate missing.tooOld"]);
+    expect(refused({ lastSeenDate: "2026-11-27" })).toEqual(["lastSeenDate missing.future"]);
+    expect(refused({ lastSeenDate: "2026-02-30" })).toEqual(["lastSeenDate missing.date"]);
+    expect(refused({ lastSeenDate: "25-11-2026" })).toEqual(["lastSeenDate missing.date"]);
+    expect(refused({ lastSeenDate: "" })).toEqual(["lastSeenDate missing.date"]);
   });
 
   test("the time is HH:MM, and today no later than ten minutes from now", () => {
     for (const time of ["00:00", "09:05", "19:59", "20:00", "23:59"])
       expect(read({ lastSeenTime: time })).toMatchObject({ lastSeen: { time } });
     for (const time of ["24:00", "14:60", "9:30", "1430", "x14:30", "114:30", "14:30x", "14:301", "1a:30", "14:3a"])
-      expect(refused({ lastSeenTime: time }), time).toEqual(["missing.time"]);
+      expect(refused({ lastSeenTime: time }), time).toEqual(["lastSeenTime missing.time"]);
     expect(read({ lastSeenDate: "2026-11-26", lastSeenTime: "17:10" })).toMatchObject({ lastSeen: { time: "17:10" } });
-    expect(refused({ lastSeenDate: "2026-11-26", lastSeenTime: "17:11" })).toEqual(["missing.future"]);
+    expect(refused({ lastSeenDate: "2026-11-26", lastSeenTime: "17:11" })).toEqual(["lastSeenTime missing.future"]);
+    expect(read({ lastSeenTime: " 14:30 " })).toMatchObject({ lastSeen: { time: "14:30" } });
     // A bad date with a time is refused for its date alone.
-    expect(refused({ lastSeenDate: "2026-11-27", lastSeenTime: "08:00" })).toEqual(["missing.future"]);
+    expect(refused({ lastSeenDate: "2026-11-27", lastSeenTime: "08:00" })).toEqual(["lastSeenDate missing.future"]);
   });
 
   test("numbers are Indonesian numbers; the place to wait is 5 to 200 letters", () => {
-    expect(refused({ personNumber: "0812" })).toEqual(["missing.number"]);
-    expect(refused({ contactNumber: "" })).toEqual(["missing.number"]);
-    expect(refused({ waitPlace: " Pos " })).toEqual(["missing.waitPlace"]);
+    expect(refused({ personNumber: "0812" })).toEqual(["personNumber missing.number"]);
+    expect(refused({ contactNumber: "" })).toEqual(["contactNumber missing.number"]);
+    expect(refused({ waitPlace: " Pos " })).toEqual(["waitPlace missing.waitPlace"]);
     expect(read({ waitPlace: "Posko" })).toMatchObject({ waitPlace: "Posko" });
     expect(read({ waitPlace: "p".repeat(200) })).toMatchObject({ waitPlace: "p".repeat(200) });
-    expect(refused({ waitPlace: "p".repeat(201) })).toEqual(["missing.waitPlace"]);
+    expect(refused({ waitPlace: "p".repeat(201) })).toEqual(["waitPlace missing.waitPlace"]);
     expect(read({ clothes: "c".repeat(130), marks: " Tahi lalat di pipi " })).toMatchObject({
       clothes: "c".repeat(120),
       marks: "Tahi lalat di pipi",

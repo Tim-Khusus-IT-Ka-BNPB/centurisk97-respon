@@ -20,5 +20,6 @@ describe("a report kept on a phone with no signal", () => {
     expect(offlineMark(NOW + 5 * MINUTE_MS + 1, NOW, NOW)).toEqual({ savedAt: null, late: false });
     expect(offlineMark(NOW - 14 * DAY_MS - 1, NOW, NOW)).toEqual({ savedAt: null, late: false });
     expect(offlineMark(undefined, NOW, NOW)).toEqual({ savedAt: null, late: false });
+    expect(LATE_MS).toBe(7_200_000);
   });
 });
