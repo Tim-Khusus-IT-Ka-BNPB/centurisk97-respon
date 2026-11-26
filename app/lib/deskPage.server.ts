@@ -10,6 +10,7 @@ import type {
   DeskSummary,
 } from "../../src/contract/desk";
 import type { ErrorEnvelope } from "../../src/contract/errors";
+import type { WarningControl } from "../../src/contract/warnings";
 import type { Texts } from "../../src/copy/text";
 import { DESK_VIEWS, type DeskFilters, type DeskShown, type DeskTyped, type DeskView } from "./deskTypes";
 import { documentOrBack } from "./ownReportPage.server";
@@ -136,14 +137,31 @@ export type DeskResponseLoad =
       readonly texts: Texts;
       readonly response: DeskResponse;
       readonly summary: DeskSummary | null;
+      // Null when it cannot be read: the rest of the page still shows.
+      readonly warnings: WarningControl | null;
     };
 
 // GET /lapor/meja/respons: how fast each agency answered a month's reports.
 export async function loadDeskResponse(month: string | null, api: ApiCall): Promise<DeskResponseLoad> {
   const query = month === null ? "" : `?month=${encodeURIComponent(month)}`;
-  const [response, summary] = await Promise.all([api("GET", `/desk/response${query}`), summaryOf(api, "")]);
+  const [response, summary, warnings] = await Promise.all([
+    api("GET", `/desk/response${query}`),
+    summaryOf(api, ""),
+    api("GET", "/desk/warnings"),
+  ]);
   if (!response.ok) return refusalOf(response);
-  return { kind: "response", texts: texts(), response: (await response.json()) as DeskResponse, summary };
+  return {
+    kind: "response",
+    texts: texts(),
+    response: (await response.json()) as DeskResponse,
+    summary,
+    warnings: warnings.ok ? ((await warnings.json()) as WarningControl) : null,
+  };
+}
+
+// POST /lapor/meja/respons: pause or resume the warnings, then the page again, as it was.
+export async function pauseWarnings(form: FormData, api: ApiCall): Promise<boolean> {
+  return (await api("POST", "/desk/warnings", { paused: formText(form, "paused") === "1" })).ok;
 }
 
 export type DeskPilotLoad =

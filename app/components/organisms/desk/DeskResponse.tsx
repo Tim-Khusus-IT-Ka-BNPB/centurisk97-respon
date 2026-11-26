@@ -1,5 +1,6 @@
 import { Form, Link, useSearchParams } from "react-router";
 import type { DeskResponse, DeskSummary } from "../../../../src/contract/desk";
+import type { WarningControl } from "../../../../src/contract/warnings";
 import type { Text } from "../../../../src/copy/text";
 import { monthText } from "../../../../src/copy/time";
 import { useText } from "../../../lib/text";
@@ -103,13 +104,59 @@ function Aggregates() {
   );
 }
 
+const pausedAt = new Intl.DateTimeFormat("id-ID", { dateStyle: "long", timeStyle: "short", timeZone: "Asia/Jakarta" });
+
+// The warnings to phones (M07): staff pause them, and the next run sends nothing.
+function Warnings({ warnings }: { readonly warnings: WarningControl | null }) {
+  const t = useText();
+  const [search] = useSearchParams();
+  return (
+    <section aria-labelledby="desk-warnings" className="flex flex-col gap-3 card-surface p-5 md:p-6">
+      <h2 id="desk-warnings" className="text-section font-bold tracking-[-0.015em]">
+        {t("desk.warnings.title")}
+      </h2>
+      {search.get("refused") === "warnings" ? (
+        <Notice kind="error">
+          <p>{t("desk.warnings.refused")}</p>
+        </Notice>
+      ) : null}
+      {warnings === null ? (
+        <p className="text-muted">{t("desk.warnings.unavailable")}</p>
+      ) : (
+        <>
+          <p className="max-w-[65ch]">
+            {!warnings.open
+              ? t("desk.warnings.shut")
+              : warnings.paused
+                ? t("desk.warnings.paused", {
+                    by: warnings.by as string,
+                    at: pausedAt.format(Date.parse(warnings.at as string)),
+                  })
+                : t("desk.warnings.running")}{" "}
+            {t("desk.warnings.phones", { count: warnings.phones })}
+          </p>
+          <Form method="post">
+            <input type="hidden" name="paused" value={warnings.paused ? "0" : "1"} />
+            <button type="submit" className={buttonStyles({ variant: "secondary", size: "min", className: "px-4" })}>
+              <Icon name={warnings.paused ? "bell" : "bellOff"} className="size-5" />
+              {warnings.paused ? t("desk.warnings.resume") : t("desk.warnings.pause")}
+            </button>
+          </Form>
+        </>
+      )}
+    </section>
+  );
+}
+
 // How fast each agency answered a month's reports. By name, never ranked.
 export function DeskResponseView({
   response,
   summary,
+  warnings,
 }: {
   readonly response: DeskResponse;
   readonly summary: DeskSummary | null;
+  readonly warnings: WarningControl | null;
 }) {
   const t = useText();
   const { month } = response;
@@ -167,6 +214,7 @@ export function DeskResponseView({
       )}
       <p className="text-meta text-muted">{t("desk.response.method")}</p>
       <Aggregates />
+      <Warnings warnings={warnings} />
     </DeskShell>
   );
 }

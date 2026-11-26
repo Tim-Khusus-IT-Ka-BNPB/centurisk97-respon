@@ -1,6 +1,7 @@
 import { screen, within } from "@testing-library/react";
 import { describe, expect, test } from "vitest";
 import type { DeskResponse } from "../../../../src/contract/desk";
+import type { WarningControl } from "../../../../src/contract/warnings";
 import { renderDesk, SUMMARY } from "../../../testing/desk";
 import { DeskResponseView, monthStep } from "./DeskResponse";
 
@@ -35,8 +36,12 @@ const RESPONSE: DeskResponse = {
     { regencyCode: "81.71", regencyName: "Kota Tual", reports: 3, figures: null },
   ],
 };
-const draw = (response = RESPONSE) =>
-  renderDesk(<DeskResponseView response={response} summary={SUMMARY} />, { path: "/lapor/meja/respons" });
+const RUNNING: WarningControl = { open: true, paused: false, by: null, at: null, phones: 12 };
+const draw = (response = RESPONSE, warnings: WarningControl | null = RUNNING, entry?: string) =>
+  renderDesk(<DeskResponseView response={response} summary={SUMMARY} warnings={warnings} />, {
+    path: "/lapor/meja/respons",
+    ...(entry ? { entry } : {}),
+  });
 
 describe("how fast each agency answers", () => {
   test("each agency's median and nine in ten, in minutes or hours, with what is still waiting", async () => {
@@ -79,11 +84,39 @@ describe("how fast each agency answers", () => {
     expect([form.method, form.getAttribute("action")]).toEqual(["post", "/lapor/meja/respons/aggregates"]);
     expect(within(section).queryByText(/belum bisa diunduh/)).toBeNull();
     view.unmount();
-    await renderDesk(<DeskResponseView response={RESPONSE} summary={SUMMARY} />, {
-      path: "/lapor/meja/respons",
-      entry: "/lapor/meja/respons?refused=aggregates",
-    });
+    await draw(RESPONSE, RUNNING, "/lapor/meja/respons?refused=aggregates");
     expect(screen.getByText(/^Berkas belum bisa diunduh/)).toBeTruthy();
+  });
+
+  test("warnings run, are paused by an officer, or are shut, and the button posts the other way", async () => {
+    const view = await draw();
+    const section = () => within(screen.getByRole("region", { name: "Peringatan ke ponsel warga" }));
+    expect(section().getByText(/^Peringatan berjalan: .* 12 ponsel berlangganan\.$/)).toBeTruthy();
+    const pause = section().getByRole("button", { name: "Jeda peringatan" });
+    const form = pause.closest("form") as HTMLFormElement;
+    expect([form.method, (form.elements.namedItem("paused") as HTMLInputElement).value]).toEqual(["post", "1"]);
+    view.unmount();
+    const paused = await draw(RESPONSE, {
+      ...RUNNING,
+      paused: true,
+      by: "Petugas Uji",
+      at: "2026-11-26T03:05:00.000Z",
+    });
+    expect(
+      section().getByText(/^Peringatan dijeda oleh Petugas Uji pada 26 November 2026 pukul 10\.05 WIB\./),
+    ).toBeTruthy();
+    const resume = section().getByRole("button", { name: "Jalankan lagi" });
+    expect(((resume.closest("form") as HTMLFormElement).elements.namedItem("paused") as HTMLInputElement).value).toBe(
+      "0",
+    );
+    paused.unmount();
+    const shut = await draw(RESPONSE, { ...RUNNING, open: false, phones: 0 }, "/lapor/meja/respons?refused=warnings");
+    expect(section().getByText(/^Peringatan belum dibuka/)).toBeTruthy();
+    expect(section().getByText(/^Belum tersimpan/)).toBeTruthy();
+    shut.unmount();
+    await draw(RESPONSE, null);
+    expect(section().getByText(/^Keadaan peringatan belum bisa dibaca/)).toBeTruthy();
+    expect(section().queryByRole("button")).toBeNull();
   });
 
   test("months step over the year's end", () => {

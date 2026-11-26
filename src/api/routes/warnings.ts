@@ -1,8 +1,10 @@
 import { createRoute, z } from "@hono/zod-openapi";
+import { warningControlSchema, warningViewSchema } from "../../contract/warnings";
 import { ALL_HAZARDS, MAX_DISTRICTS, pushEndpointOk, pushKeysOk } from "../../domain/warnings";
-import { chooseWarnings, stopChoice, warningsOf } from "../../services/warnings";
+import { chooseWarnings, stopChoice, warningControl, warningsOf } from "../../services/warnings";
 import { refuse } from "../envelope";
 import { type Api, addRoute, jsonBody, jsonResponse, refusal } from "../route";
+import { answered, staffOf } from "./desk";
 import { limitRefused } from "./shared";
 
 // The push service's address travels in a body, never in an address a log could keep.
@@ -17,12 +19,6 @@ const choiceBody = phone.extend({
     .refine((codes) => new Set(codes).size === codes.length),
   hazards: z.number().int().min(1).max(ALL_HAZARDS),
   threshold: z.number().int().min(1).max(3),
-});
-
-const viewSchema = z.object({
-  districts: z.array(z.object({ code: z.string(), name: z.string() })),
-  hazards: z.number().int().nullable(),
-  threshold: z.number().int().nullable(),
 });
 
 export function addWarningRoutes(api: Api): void {
@@ -49,7 +45,7 @@ export function addWarningRoutes(api: Api): void {
       method: "post",
       path: "/warnings/status",
       request: { body: jsonBody(phone) },
-      responses: { 200: jsonResponse("What this phone is warned of; no districts when nothing", viewSchema) },
+      responses: { 200: jsonResponse("What this phone is warned of; no districts when nothing", warningViewSchema) },
     }),
     async (c) => c.json(await warningsOf(c.env, c.req.valid("json").endpoint), 200),
   );
@@ -62,7 +58,7 @@ export function addWarningRoutes(api: Api): void {
       path: "/warnings",
       request: { body: jsonBody(choiceBody) },
       responses: {
-        200: jsonResponse("Kept: what this phone is now warned of", viewSchema),
+        200: jsonResponse("Kept: what this phone is now warned of", warningViewSchema),
         400: refusal("Not a push service, no districts or more than three, or a district not known"),
         429: refusal("Too many changes from this address"),
         503: refusal("Warnings are shut, or full"),
@@ -102,5 +98,34 @@ export function addWarningRoutes(api: Api): void {
       const refusal = await stopChoice(c.env, c.var.address, c.req.valid("json").endpoint);
       return refusal ? limitRefused(c, refusal, null) : c.body(null, 204);
     },
+  );
+
+  addRoute(
+    api,
+    "staff",
+    createRoute({
+      method: "get",
+      path: "/desk/warnings",
+      responses: {
+        200: jsonResponse("Whether warnings are sent, and to how many phones", warningControlSchema),
+        403: refusal("Not an account that may pause them"),
+      },
+    }),
+    async (c) => answered(c, await warningControl(c.env, staffOf(c), null)),
+  );
+
+  addRoute(
+    api,
+    "staff",
+    createRoute({
+      method: "post",
+      path: "/desk/warnings",
+      request: { body: jsonBody(z.object({ paused: z.boolean() })) },
+      responses: {
+        200: jsonResponse("Paused or resumed from the next run on", warningControlSchema),
+        403: refusal("Not an account that may pause them"),
+      },
+    }),
+    async (c) => answered(c, await warningControl(c.env, staffOf(c), c.req.valid("json").paused)),
   );
 }

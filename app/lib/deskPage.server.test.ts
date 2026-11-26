@@ -10,6 +10,7 @@ import {
   loadDeskQueue,
   loadDeskReport,
   loadDeskResponse,
+  pauseWarnings,
   queueQuery,
 } from "./deskPage.server";
 import { PAGE_TEXTS, pickTexts } from "./texts.server";
@@ -278,17 +279,46 @@ describe("taking a report and the response figures", () => {
   });
 
   test("the figures are read for the month asked, or this one, with the menu's counts", async () => {
-    const { api, calls } = fakeApi(() => Response.json({ month: "2026-11", agencies: [] }));
-    expect(await loadDeskResponse("2026-10", api)).toMatchObject({ kind: "response", response: { agencies: [] } });
+    const control = { open: true, paused: false, by: null, at: null, phones: 0 };
+    const { api, calls } = fakeApi((_method, path) =>
+      Response.json(path === "/desk/warnings" ? control : { month: "2026-11", agencies: [] }),
+    );
+    expect(await loadDeskResponse("2026-10", api)).toMatchObject({
+      kind: "response",
+      response: { agencies: [] },
+      warnings: control,
+    });
     await loadDeskResponse(null, api);
     expect(calls.map((call) => call.path)).toEqual([
       "/desk/response?month=2026-10",
       "/desk/summary",
+      "/desk/warnings",
       "/desk/response",
       "/desk/summary",
+      "/desk/warnings",
     ]);
+    const noWarnings = fakeApi((_method, path) =>
+      path === "/desk/warnings"
+        ? Response.json(envelope("desk.notAllowed"), { status: 403 })
+        : Response.json({ month: "2026-11", agencies: [] }),
+    );
+    expect(await loadDeskResponse(null, noWarnings.api)).toMatchObject({ kind: "response", warnings: null });
     const refused = fakeApi(() => Response.json(envelope("desk.notAllowed"), { status: 403 }));
     expect(await loadDeskResponse(null, refused.api)).toMatchObject({ kind: "refused", status: 403 });
+  });
+});
+
+describe("pausing the warnings", () => {
+  test("the pause and the resume are posted as a flag, and a refusal is told", async () => {
+    const { api, calls } = fakeApi(() => Response.json({}));
+    expect(await pauseWarnings(form({ paused: "1" }), api)).toBe(true);
+    expect(await pauseWarnings(form({ paused: "0" }), api)).toBe(true);
+    expect(calls.map((call) => [call.method, call.path, call.body])).toEqual([
+      ["POST", "/desk/warnings", { paused: true }],
+      ["POST", "/desk/warnings", { paused: false }],
+    ]);
+    const refused = fakeApi(() => Response.json(envelope("desk.notAllowed"), { status: 403 }));
+    expect(await pauseWarnings(form({}), refused.api)).toBe(false);
   });
 });
 

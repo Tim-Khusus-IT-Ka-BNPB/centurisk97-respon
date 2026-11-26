@@ -1,13 +1,18 @@
 import { activeSnapshot, areaOf } from "../adapters/d1/places";
 import {
   keepChoice,
+  latestPause,
+  setPause,
   stopWarnings,
   subscriberCount,
   subscriptionsOf,
   type WarningChoice,
 } from "../adapters/d1/warnings";
+import type { WarningControl } from "../contract/warnings";
 import { MAX_SUBSCRIBERS } from "../domain/warnings";
+import type { StaffPrincipal } from "../ports/identity";
 import type { ServiceBindings } from "./bindings";
+import { admitted, type DeskAnswer } from "./desk";
 import { checkLimits, type LimitRefusal } from "./limits";
 
 export type WarningView = {
@@ -69,4 +74,26 @@ export async function stopChoice(
   const refusal = await limited(bindings, address);
   if (refusal === null) await stopWarnings(bindings.db, endpoint);
   return refusal;
+}
+
+// The desk's pause (M07 gate): with a change, the newest row from now on; the sender reads it each run.
+export async function warningControl(
+  bindings: ServiceBindings,
+  staff: StaffPrincipal,
+  paused: boolean | null,
+): Promise<DeskAnswer<WarningControl>> {
+  const refused = await admitted(bindings, staff, "pauseWarnings", paused === null ? "desk.read" : "desk.write");
+  if (refused) return refused;
+  if (paused !== null) await setPause(bindings.db, paused, staff, new Date(bindings.clock.now()));
+  const latest = await latestPause(bindings.db);
+  return {
+    kind: "ok",
+    body: {
+      open: bindings.settings.push !== null,
+      paused: latest?.paused === 1,
+      by: latest?.staff_label ?? null,
+      at: latest?.at ?? null,
+      phones: await subscriberCount(bindings.db),
+    },
+  };
 }

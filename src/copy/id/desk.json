@@ -298,5 +298,14 @@
   "desk.cluster.title": "Gugus laporan",
   "desk.cluster.lead": "Laporan {hazard} lain di dekatnya dalam beberapa jam, dari {reporters} nomor berbeda. Gugus bukan tanda terverifikasi, dan angka tiap laporan tidak dijumlah.",
   "desk.cluster.this": "Laporan ini",
-  "desk.nav.poster": "Poster QR desa"
+  "desk.nav.poster": "Poster QR desa",
+  "desk.warnings.title": "Peringatan ke ponsel warga",
+  "desk.warnings.running": "Peringatan berjalan: dikirim setiap 15 menit bila prakiraan naik tingkat.",
+  "desk.warnings.paused": "Peringatan dijeda oleh {by} pada {at} WIB. Tidak ada yang dikirim sampai dijalankan lagi.",
+  "desk.warnings.shut": "Peringatan belum dibuka: kunci pengiriman belum dipasang.",
+  "desk.warnings.phones": "{count} ponsel berlangganan.",
+  "desk.warnings.pause": "Jeda peringatan",
+  "desk.warnings.resume": "Jalankan lagi",
+  "desk.warnings.unavailable": "Keadaan peringatan belum bisa dibaca. Muat ulang halaman ini.",
+  "desk.warnings.refused": "Belum tersimpan. Akun ini tidak boleh mengubahnya, atau batas perubahan per jam sudah tercapai."
 }

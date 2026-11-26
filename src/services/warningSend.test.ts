@@ -1,7 +1,10 @@
 import { afterEach, beforeAll, describe, expect, test, vi } from "vitest";
+import { SEEDED_SESSIONS } from "../../db/synthetic/reporters";
+import { api } from "../api/app";
 import type { ApiBindings } from "../api/context";
+import { warningControlSchema } from "../contract/warnings";
 import { run, sql } from "../platform/database";
-import { manualClock, query, testBindings, testDatabase } from "../testing/api";
+import { browser, manualClock, query, testBindings, testDatabase } from "../testing/api";
 import { phone, vapidKeys } from "../testing/push";
 import { messageOf, PER_RUN, sendWarnings } from "./warningSend";
 
@@ -49,6 +52,17 @@ const reset = async () => {
   await run(db, sql`delete from warning_subscription where endpoint like ${`${PREFIX}%`}`);
 };
 afterEach(reset);
+
+const desk = () => {
+  const officer = browser((request) => api.app.fetch(request, { ...bindings, db: testDatabase() }));
+  officer.cookies.set("seeded_session", (SEEDED_SESSIONS[2] as { token: string }).token);
+  return officer;
+};
+const regional = () => {
+  const officer = browser((request) => api.app.fetch(request, { ...bindings, db: testDatabase() }));
+  officer.cookies.set("seeded_session", (SEEDED_SESSIONS[3] as { token: string }).token);
+  return officer;
+};
 
 describe("sending the warnings", () => {
   test("each phone hears once of its own rise; gone phones are dropped; the same rise is not sent again", async () => {
@@ -131,5 +145,39 @@ describe("sending the warnings", () => {
     handed.length = 0;
     await sendWarnings(bindings, service);
     expect(mine()).toEqual([`${PREFIX}bogor`]);
+  });
+});
+
+describe("the desk's pause", () => {
+  test("an officer pauses: the next run sends nothing; resumed, it sends", async () => {
+    await reset();
+    await addPhone("all", 15, 1);
+    const before = await desk().call("GET", "/desk/warnings");
+    expect(warningControlSchema.parse(before.json)).toMatchObject({ open: true, phones: expect.any(Number) });
+    const paused = await desk().call("POST", "/desk/warnings", { paused: true });
+    expect(paused.status).toBe(200);
+    expect(paused.json).toMatchObject({
+      paused: true,
+      by: "Pusdalops BNPB, Petugas Uji",
+      at: "2026-11-26T03:00:00.000Z",
+    });
+    try {
+      expect(await sendWarnings(bindings, service)).toEqual({ sent: 0, gone: 0, failed: 0 });
+      expect((await desk().call("GET", "/desk/warnings")).json).toMatchObject({ paused: true });
+    } finally {
+      expect((await desk().call("POST", "/desk/warnings", { paused: false })).json).toMatchObject({ paused: false });
+    }
+    await sendWarnings(bindings, service);
+    expect(mine()).toEqual([`${PREFIX}all`]);
+  });
+
+  test("a regional officer may not, and with no push keys the desk says warnings are shut", async () => {
+    expect((await regional().call("GET", "/desk/warnings")).status).toBe(403);
+    expect((await regional().call("POST", "/desk/warnings", { paused: true })).status).toBe(403);
+    const shut = browser((request) =>
+      api.app.fetch(request, { ...testBindings({}, { clock }).bindings, db: testDatabase() }),
+    );
+    shut.cookies.set("seeded_session", (SEEDED_SESSIONS[2] as { token: string }).token);
+    expect((await shut.call("GET", "/desk/warnings")).json).toMatchObject({ open: false });
   });
 });
