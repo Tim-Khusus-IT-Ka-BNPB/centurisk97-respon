@@ -1,66 +1,134 @@
+import { type MouseEvent, type ReactNode, useEffect, useRef, useState } from "react";
 import { Form, useLocation } from "react-router";
 import { LANGUAGE_GROUPS, OFFERED } from "../../../src/copy/languages";
+import { cn } from "../../lib/cn";
 import { useText } from "../../lib/text";
 import { Button } from "../atoms/Button";
 import { Icon } from "../atoms/Icon";
 
-// "Bahasa Batak Toba" reads as "Batak Toba" on a tile under its island.
+// "Bahasa Batak Toba" reads as "Batak Toba" on a tile under its island; "Bahasa Indonesia" as "Indonesia".
 const shortName = (name: string) => name.replace(/^Bahasa /, "");
 
-// The report pages' language, from those with words of their own, grouped by where each is spoken.
-// Closed it says the language in use; it opens and posts with no script. Shown only when there is a
-// choice.
-export function LanguagePicker() {
+// A group's tiles in as many columns as fit them evenly, as upstream lays them out.
+const COLUMNS: Readonly<Record<number, string>> = { 3: "sm:grid-cols-3", 4: "sm:grid-cols-4" };
+const columnsFor = (count: number) => (count % 3 === 0 ? COLUMNS[3] : count === 4 ? COLUMNS[4] : "");
+
+// The languages with words of their own, grouped by where each is spoken, and the button that keeps
+// the one picked. Before the page runs its script the button cannot follow the pick, so it says
+// only that it keeps it.
+export function LanguageChooser({ back, onClose }: { readonly back: string; readonly onClose: ReactNode }) {
   const t = useText();
-  const { pathname, search } = useLocation();
-  if (OFFERED.length < 2) return null;
   const current = t("app.lang");
   const named = new Map<string, string>(OFFERED);
+  const [picked, setPicked] = useState(current);
+  const [live, setLive] = useState(false);
+  useEffect(() => setLive(true), []);
   const groups = LANGUAGE_GROUPS.map(([group, ids]) => [group, ids.filter((id) => named.has(id))] as const).filter(
     ([, ids]) => ids.length > 0,
   );
   return (
-    <details className="group/picker card-surface">
-      <summary className="flex min-h-target cursor-pointer list-none items-center gap-3 rounded-control px-4 py-2 [&::-webkit-details-marker]:hidden">
+    <div className="flex max-h-full min-h-0 flex-col overflow-hidden rounded-[1.25rem] bg-surface">
+      <div className="contours flex items-center justify-between gap-4 px-5 py-6 text-on-hero md:px-8 md:py-8">
+        <h2 id="language-title" className="flex items-center gap-3 text-section font-extrabold tracking-[-0.015em]">
+          <Icon name="globe" className="size-8 shrink-0" />
+          {t("app.language.title")}
+        </h2>
+        {onClose}
+      </div>
+      <Form method="post" action="/lapor/bahasa" className="flex min-h-0 flex-1 flex-col">
+        <input type="hidden" name="back" value={back} />
+        <div className="flex min-h-0 flex-1 flex-col gap-5 overflow-y-auto px-5 py-5 md:px-8 md:py-6">
+          {groups.map(([group, ids]) => (
+            <fieldset key={group} className="flex flex-col gap-2">
+              <legend className="mb-2 flex w-full items-center gap-3 font-bold text-primary">
+                {t(`app.language.group.${group}`)}
+                <span aria-hidden="true" className="h-px flex-1 bg-line" />
+              </legend>
+              <div className={cn("grid grid-cols-2 gap-2.5", columnsFor(ids.length))}>
+                {ids.map((id) => (
+                  <label
+                    key={id}
+                    lang={id}
+                    className="group/tile flex min-h-12 cursor-pointer items-center gap-2 rounded-xl border-2 border-transparent bg-sunken px-3 font-bold sm:min-h-14 sm:px-4 sm:text-card text-ink transition-colors duration-100 motion-reduce:transition-none hover:border-line has-[:checked]:border-primary has-[:checked]:bg-primary has-[:checked]:text-on-primary has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-offset-2 has-[:focus-visible]:outline-primary"
+                  >
+                    <input
+                      type="radio"
+                      name="language"
+                      value={id}
+                      defaultChecked={id === current}
+                      onChange={() => setPicked(id)}
+                      className="sr-only"
+                    />
+                    <span className="min-w-0 flex-1">{shortName(named.get(id) as string)}</span>
+                    <Icon name="check" className="hidden size-5 shrink-0 group-has-[:checked]/tile:block" />
+                  </label>
+                ))}
+              </div>
+            </fieldset>
+          ))}
+        </div>
+        <div className="border-t border-line px-5 py-4 md:px-8 md:py-5">
+          <Button type="submit" variant="primary" size="main" className="w-full">
+            <Icon name="check" className="size-5" />
+            {live ? t("app.language.continue", { name: named.get(picked) as string }) : t("app.language.submit")}
+          </Button>
+        </div>
+      </Form>
+    </div>
+  );
+}
+
+// The report pages' language. Closed it says the language in use; it opens the chooser in a dialog,
+// or with no script as a page of its own. Shown only when there is a choice.
+export function LanguagePicker() {
+  const t = useText();
+  const { pathname, search } = useLocation();
+  const dialog = useRef<HTMLDialogElement>(null);
+  if (OFFERED.length < 2) return null;
+  const back = `${pathname}${search}`;
+  const named = new Map<string, string>(OFFERED);
+  const open = (event: MouseEvent<HTMLAnchorElement>) => {
+    if (typeof dialog.current?.showModal !== "function") return;
+    event.preventDefault();
+    dialog.current.showModal();
+  };
+  return (
+    <>
+      <a
+        href={`/lapor/bahasa?back=${encodeURIComponent(back)}`}
+        onClick={open}
+        className="flex min-h-target items-center gap-3 card-surface px-4 py-2 text-ink no-underline hover:border-primary"
+      >
         <Icon name="globe" className="size-5 text-primary" />
         <span className="flex min-w-0 flex-col leading-tight">
           <span className="text-meta text-muted">{t("app.language.label")}</span>
-          <span className="font-semibold">{named.get(current)}</span>
+          <span className="font-semibold">{named.get(t("app.lang"))}</span>
         </span>
         <span className="ms-auto flex items-center gap-1 font-semibold text-primary">
-          <span className="group-open/picker:hidden">{t("app.language.change")}</span>
-          <Icon name="chevronRight" className="size-5 transition-transform group-open/picker:rotate-90" />
+          {t("app.language.change")}
+          <Icon name="chevronRight" className="size-5" />
         </span>
-      </summary>
-      <Form method="post" action="/lapor/bahasa" className="flex flex-col gap-5 border-t border-line p-4 md:p-5">
-        <input type="hidden" name="back" value={`${pathname}${search}`} />
-        <h2 className="text-card font-bold">{t("app.language.title")}</h2>
-        {groups.map(([group, ids]) => (
-          <fieldset key={group} className="flex flex-col gap-2">
-            <legend className="mb-2 flex w-full items-center gap-3 text-meta font-semibold text-primary">
-              {t(`app.language.group.${group}`)}
-              <span aria-hidden="true" className="h-px flex-1 bg-line" />
-            </legend>
-            <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
-              {ids.map((id) => (
-                <label
-                  key={id}
-                  lang={id}
-                  className="group/tile flex min-h-target cursor-pointer items-center gap-2 rounded-control border border-line bg-sunken px-3 font-semibold has-[:checked]:border-primary has-[:checked]:bg-primary has-[:checked]:text-on-primary has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-offset-2 has-[:focus-visible]:outline-primary"
-                >
-                  <input type="radio" name="language" value={id} defaultChecked={id === current} className="sr-only" />
-                  <span className="min-w-0 flex-1">{shortName(named.get(id) as string)}</span>
-                  <Icon name="check" className="hidden size-5 shrink-0 group-has-[:checked]/tile:block" />
-                </label>
-              ))}
-            </div>
-          </fieldset>
-        ))}
-        <Button type="submit" variant="primary" size="main" className="w-full sm:w-auto sm:self-start">
-          <Icon name="check" className="size-5" />
-          {t("app.language.submit")}
-        </Button>
-      </Form>
-    </details>
+      </a>
+      <dialog
+        ref={dialog}
+        aria-labelledby="language-title"
+        className="m-auto h-fit max-h-[calc(100dvh-2rem)] w-[min(56rem,calc(100%-2rem))] overflow-hidden rounded-[1.25rem] bg-transparent p-0 shadow-2xl backdrop:bg-[color-mix(in_oklab,var(--ink),transparent_45%)] backdrop:backdrop-blur-sm open:flex open:flex-col"
+      >
+        <LanguageChooser
+          back={back}
+          onClose={
+            <form method="dialog">
+              <button
+                type="submit"
+                aria-label={t("app.language.close")}
+                className="flex size-target shrink-0 items-center justify-center rounded-full text-on-hero hover:bg-white/10"
+              >
+                <Icon name="x" className="size-7" />
+              </button>
+            </form>
+          }
+        />
+      </dialog>
+    </>
   );
 }

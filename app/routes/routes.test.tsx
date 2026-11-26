@@ -27,7 +27,7 @@ import HelpRoute, * as help from "./help";
 import HomeRoute, * as home from "./home";
 import * as rootIndex from "./index";
 import InfoRoute, * as info from "./info";
-import * as language from "./language";
+import LanguageRoute, * as language from "./language";
 import * as manifest from "./manifest";
 import MissingRoute, * as missing from "./missing";
 import NotFoundRoute, * as notFound from "./notFound";
@@ -1074,6 +1074,23 @@ describe("language route", () => {
       "/lapor/report?desa=1108012005",
       "bahasa=ace; Path=/",
     ]);
+  });
+
+  test("with no script, the chooser is a page of its own that goes back where it came from", async () => {
+    expect(language.headers()).toEqual({ "cache-control": "private, no-store", "x-robots-tag": "noindex" });
+    expect(language.meta({ data: { texts: pickTexts(PAGE_TEXTS.language) }, matches: [] } as Args)[0]).toEqual({
+      title: "Pilih bahasa, Pantau Bencana BNPB",
+    });
+    const loaded = language.loader({
+      request: new Request("http://x/lapor/bahasa?back=%2Flapor%2Freport%3Fdesa%3D1"),
+    } as Args);
+    expect(loaded.back).toBe("/lapor/report?desa=1");
+    expect(language.loader({ request: new Request("http://x/lapor/bahasa?back=https://x.test") } as Args).back).toBe(
+      "/lapor",
+    );
+    renderPage(routeElement(LanguageRoute, { loaderData: loaded }), { path: "/lapor/bahasa" });
+    expect(await screen.findByRole("heading", { name: "Pilih bahasa Anda" })).toBeTruthy();
+    expect(screen.getByRole("link", { name: "Tutup" }).getAttribute("href")).toBe("/lapor/report?desa=1");
   });
 });
 

@@ -43,6 +43,8 @@ describe("copy for a page", () => {
     expect(Object.keys(pickTexts(["app."], 7)).sort()).toEqual([
       "app.lang",
       "app.language.change",
+      "app.language.close",
+      "app.language.continue",
       ...["baliNusa", "java", "kalimantan", "malukuPapua", "national", "sulawesi", "sumatra"].map(
         (group) => `app.language.group.${group}`,
       ),
