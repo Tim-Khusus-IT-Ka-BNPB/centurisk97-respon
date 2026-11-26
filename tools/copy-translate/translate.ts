@@ -7,6 +7,7 @@ import { join } from "node:path";
 import { isTranslated, translationProblem } from "../../src/copy/translated.ts";
 
 const NAMES: Readonly<Record<string, string>> = {
+  en: "English (plain, for visitors and foreign residents in Indonesia)",
   jv: "Javanese (ngoko alus, polite)",
   su: "Sundanese (lemes, polite)",
   mad: "Madurese",

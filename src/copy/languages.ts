@@ -4,6 +4,8 @@
 // so each is found by those who speak it ("bahasa batak gitu", owner, 20 Nov 2026).
 export const LANGUAGES = [
   ["id", "Bahasa Indonesia"],
+  // Named in itself, for visitors and foreign residents who read no Indonesian (upstream offers it).
+  ["en", "English"],
   ["jv", "Bahasa Jawa"],
   ["su", "Bahasa Sunda"],
   ["mad", "Bahasa Madura"],
@@ -32,7 +34,7 @@ export type LanguageId = (typeof LANGUAGES)[number][0];
 
 // Where each is spoken, as the picker groups them (upstream's order).
 export const LANGUAGE_GROUPS: readonly (readonly [string, readonly LanguageId[]])[] = [
-  ["national", ["id"]],
+  ["national", ["id", "en"]],
   ["java", ["jv", "su", "mad"]],
   ["baliNusa", ["ban", "sas"]],
   ["sumatra", ["min", "bbc", "btx", "btm", "bts", "nia", "ace", "msa", "ljp"]],
