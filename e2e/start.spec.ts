@@ -47,7 +47,9 @@ test("a decline asks first, its way back keeps the values, and the decline itsel
   await expect(page.getByLabel("Nama")).toHaveValue("Uji Dua");
   await page.getByRole("button", { name: "Tidak setuju" }).click();
   await page.getByRole("button", { name: "Ya, tidak setuju" }).click();
-  await expect(page.getByRole("heading", { name: "Laporan tidak dibuat" })).toBeVisible();
-  await expect(page.getByRole("link", { name: "Telepon 112" })).toHaveAttribute("href", "tel:112");
+  const declined = page.getByRole("region", { name: "Laporan tidak dibuat" });
+  await expect(declined.getByRole("heading", { name: "Laporan tidak dibuat" })).toBeVisible();
+  // On a wide screen the side column offers 112 as well; the decline's own is the one asked for.
+  await expect(declined.getByRole("link", { name: "Telepon 112" })).toHaveAttribute("href", "tel:112");
   expect(page.url()).not.toContain("#");
 });
