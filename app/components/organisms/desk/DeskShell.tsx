@@ -15,6 +15,7 @@ import { deskLink, STATUSES, StatusDot } from "./parts";
 const NONE: DeskSummary["emergencies"] = [];
 const RESPONSE = "/lapor/meja/respons";
 const PILOT = "/lapor/meja/pilot";
+const MISSING = "/lapor/meja/orang-hilang";
 
 const VIEW_ICON: Readonly<Record<DeskView, IconName>> = { list: "list", map: "map", gallery: "images" };
 
@@ -153,6 +154,12 @@ function DeskNav({ place }: { readonly place: DeskPlace }) {
             </Link>
           </li>
         ) : null}
+        <li>
+          <Link to={MISSING} aria-current={pathname === MISSING ? "page" : undefined} className={item}>
+            <Icon name="userSearch" className={navIcon} />
+            {t("missing.desk.title")}
+          </Link>
+        </li>
         <li>
           <Link to="/lapor/poster" className={item}>
             <Icon name="scan" className={navIcon} />

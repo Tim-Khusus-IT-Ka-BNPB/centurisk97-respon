@@ -16,6 +16,7 @@ import AboutRoute, * as about from "./about";
 import DeskRoute, * as desk from "./desk";
 import * as deskAggregates from "./deskAggregates";
 import * as deskDocument from "./deskDocument";
+import DeskMissingRoute, * as deskMissing from "./deskMissing";
 import DeskPilotRoute, * as deskPilot from "./deskPilot";
 import DeskReportRoute, * as deskReport from "./deskReport";
 import DeskResponseRoute, * as deskResponse from "./deskResponse";
@@ -28,6 +29,7 @@ import * as rootIndex from "./index";
 import InfoRoute, * as info from "./info";
 import * as language from "./language";
 import * as manifest from "./manifest";
+import MissingRoute, * as missing from "./missing";
 import NotFoundRoute, * as notFound from "./notFound";
 import * as ownDocument from "./ownDocument";
 import OwnReportRoute, * as ownReport from "./ownReport";
@@ -235,6 +237,91 @@ describe("route modules", () => {
       },
     );
     expect(await screen.findByRole("heading", { level: 1, name: "Info daerah" })).toBeTruthy();
+  });
+
+  test("a missing person: who reports first, a village search, the form, and what was sent", async () => {
+    expect(missing.headers()).toEqual({ "cache-control": "private, no-store", "x-robots-tag": "noindex" });
+    expect(missing.meta({ data: { texts: pickTexts(PAGE_TEXTS.missing) }, matches: [] } as Args)[0]).toEqual({
+      title: "Lapor orang hilang, Pantau Bencana BNPB",
+    });
+    const village = (level: string, code: string) => ({
+      level,
+      code,
+      name: "Uji",
+      districtName: level === "regency" ? null : "Baktiya",
+      regencyName: "Aceh Utara",
+      provinceName: "Aceh",
+    });
+    const found = {
+      items: [
+        village("district", "11.08.01"),
+        village("village", "11.08.01.2001"),
+        { ...village("village", "11.08.01.2002"), districtName: null },
+      ],
+      total: 3,
+      cut: false,
+      dataDate: "2026-11-01",
+    };
+    const load = async (query: string, answers: Record<string, () => Response>) =>
+      missing.loader({
+        request: new Request(`http://x/lapor/orang-hilang${query}`),
+        context: { api: api(answers) },
+      } as Args);
+    const mine = json([]);
+    expect(await load("", { "GET /missing/mine": json(apiEnvelope("auth.signInFirst"), 401) })).toMatchObject({
+      kind: "whoFirst",
+    });
+    expect(await load("", { "GET /missing/mine": mine })).toMatchObject({ kind: "form", search: { kind: "start" } });
+    expect(await load("?q=ab", { "GET /missing/mine": mine })).toMatchObject({ search: { kind: "short" } });
+    expect(await load("?q=uji", { "GET /missing/mine": mine, "GET /places/search": json({}, 503) })).toMatchObject({
+      search: { kind: "unavailable" },
+    });
+    expect(
+      await load("?q=uji", { "GET /missing/mine": mine, "GET /places/search": json({ ...found, items: [] }) }),
+    ).toMatchObject({ search: { kind: "none" } });
+    const results = await load("?q=uji&terkirim=1", { "GET /missing/mine": mine, "GET /places/search": json(found) });
+    expect(results).toMatchObject({
+      sent: true,
+      search: {
+        kind: "results",
+        villages: [
+          { code: "11.08.01.2001", name: "Uji", districtName: "Baktiya", regencyName: "Aceh Utara" },
+          { code: "11.08.01.2002", name: "Uji", districtName: "", regencyName: "Aceh Utara" },
+        ],
+      },
+    });
+    const posted = (answer: () => Response) => {
+      return missing.action({
+        // The photo goes on to the service and is not drawn again.
+        request: {
+          formData: async () => {
+            const body = new FormData();
+            body.set("name", "Uji");
+            body.set("villageCode", "11.08.01.2001");
+            body.set("photo", new File([new Uint8Array(3)], "foto.jpg"));
+            return body;
+          },
+        },
+        context: { api: api({ "POST /missing": answer }) },
+      } as Args);
+    };
+    const done = (await posted(json({ id: "x" }, 201))) as Response;
+    expect([done.status, done.headers.get("location")]).toEqual([303, "/lapor/orang-hilang?terkirim=1"]);
+    const wrongName = {
+      ...apiEnvelope("request.invalidFields"),
+      fields: [{ fieldId: "name", copyKey: "fieldError.missing.name", params: {} }],
+    };
+    const refused = unwrap(await posted(json(wrongName, 422)));
+    expect(refused.init?.status).toBe(422);
+    expect(refused.data).toMatchObject({ typed: { name: "Uji", villageCode: "11.08.01.2001" } });
+    renderPage(routeElement(MissingRoute, { loaderData: results, actionData: refused.data }), {
+      path: "/lapor/orang-hilang",
+    });
+    expect(await screen.findByRole("heading", { level: 1, name: "Lapor orang hilang" })).toBeTruthy();
+    expect((screen.getByLabelText("Nama lengkap") as HTMLInputElement).value).toBe("Uji");
+    cleanup();
+    renderPage(routeElement(MissingRoute, { loaderData: results }), { path: "/lapor/orang-hilang" });
+    expect(await screen.findByRole("heading", { name: "Laporan orang hilang terkirim" })).toBeTruthy();
   });
 
   test("the public feed is read on the server with only a known hazard, and says when it cannot be", async () => {
@@ -449,7 +536,7 @@ describe("route modules", () => {
     expect(screen.getAllByRole("listitem").length).toBeGreaterThan(6);
     renderPage(routeElement(PrivacyRoute, { loaderData: privacy.loader() }), { path: "/lapor/privacy" });
     expect(await screen.findByRole("heading", { level: 2, name: "Hak Anda" })).toBeTruthy();
-    expect(screen.getByText("23 November 2026")).toBeTruthy();
+    expect(screen.getByText("26 November 2026")).toBeTruthy();
     expect(screen.getAllByRole("link", { name: "Tentang" })[0]?.getAttribute("href")).toBe("/lapor/about");
     expect(screen.getByRole("link", { name: "Hak Anda" }).getAttribute("href")).toBe("#privacy-rights-2");
   });
@@ -476,6 +563,17 @@ describe("route modules", () => {
     expect(moved.status).toBe(303);
     expect(moved.headers.get("location")).toBe(`/lapor/report/${DRAFT}`);
     expect(moved.headers.get("set-cookie")).toBe("device_key=x");
+    // Who reports is said on the way to a missing person's report, which is where it leads back.
+    const back = (await start.action({
+      request: post("http://x/lapor/report?hilang=1", [
+        ["action", "consent"],
+        ["role", "citizen"],
+        ["name", "Uji"],
+        ["number", "080000000001"],
+      ]),
+      context,
+    } as Args)) as Response;
+    expect([back.status, back.headers.get("location")]).toEqual([303, "/lapor/orang-hilang"]);
     const drawn = unwrap(
       await start.action({ request: post("http://x/lapor/report", [["action", "decline"]]), context } as Args),
     );
@@ -710,6 +808,73 @@ describe("desk routes", () => {
     expect(again.init?.status).toBe(403);
     show((await load(list)).data, again.data);
     expect(((await screen.findByLabelText("Nomor WhatsApp")) as HTMLInputElement).value).toBe("12");
+  });
+
+  test("missing persons: the list by status, the sign-in form, a refusal, and a move", async () => {
+    expect(deskMissing.headers()).toEqual({ "cache-control": "private, no-store", "x-robots-tag": "noindex" });
+    expect(deskMissing.meta({ data: { texts: pickTexts(PAGE_TEXTS.desk) }, matches: [] } as Args)[0]).toEqual({
+      title: "Meja laporan, Pantau Bencana BNPB",
+    });
+    const asked: string[] = [];
+    const load = async (url: string, answer: () => Response) =>
+      unwrap(
+        await deskMissing.loader({
+          request: new Request(url),
+          context: {
+            api: async (_method: string, path: string) => {
+              asked.push(path);
+              return path === "/desk/summary" ? json(SUMMARY)() : answer();
+            },
+          },
+        } as Args),
+      );
+    const show = (loaderData: unknown, actionData?: unknown) =>
+      renderPage(routeElement(DeskMissingRoute, { loaderData, actionData }), { path: "/lapor/meja/orang-hilang" });
+    const listed = await load("http://x/lapor/meja/orang-hilang?status=toSar&saved=1", json({ items: [] }));
+    expect(listed.data).toMatchObject({ kind: "missing", status: "toSar", saved: true, items: [] });
+    expect((await load("http://x/lapor/meja/orang-hilang?status=gone", json({ items: [] }))).data).toMatchObject({
+      status: null,
+      saved: false,
+    });
+    expect(asked.filter((path) => path !== "/desk/summary")).toEqual(["/desk/missing?status=toSar", "/desk/missing"]);
+    show(listed.data);
+    expect(await screen.findByRole("heading", { level: 1, name: "Orang dicari" })).toBeTruthy();
+    cleanup();
+    show((await load("http://x/lapor/meja/orang-hilang", json(signInFirst, 401))).data);
+    expect(await screen.findByRole("heading", { name: "Masuk meja laporan" })).toBeTruthy();
+    cleanup();
+    const refused = await load("http://x/lapor/meja/orang-hilang", json(notAllowed, 403));
+    expect(refused.init?.status).toBe(403);
+    show(refused.data);
+    expect(await screen.findByRole("heading", { name: "Meja laporan belum bisa dibuka" })).toBeTruthy();
+    cleanup();
+    const sent: unknown[] = [];
+    const moved = (url: string, answer: () => Response) =>
+      deskMissing.action({
+        request: post(url, [
+          ["id", "abc"],
+          ["to", "foundSafe"],
+          ["note", "Di posko"],
+        ]),
+        context: {
+          api: async (_method: string, path: string, body: unknown) => {
+            sent.push([path, body]);
+            return answer();
+          },
+        },
+      } as Args);
+    const done = (await moved("http://x/lapor/meja/orang-hilang?status=open", json({}))) as Response;
+    expect([done.status, done.headers.get("location")]).toEqual([
+      303,
+      "/lapor/meja/orang-hilang?status=open&saved=1#orang-abc",
+    ]);
+    const plain = (await moved("http://x/lapor/meja/orang-hilang", json({}))) as Response;
+    expect(plain.headers.get("location")).toBe("/lapor/meja/orang-hilang?saved=1#orang-abc");
+    expect(sent[0]).toEqual(["/desk/missing/abc/status", { to: "foundSafe", note: "Di posko" }]);
+    const again = unwrap(await moved("http://x/lapor/meja/orang-hilang", json(notAllowed, 409)));
+    expect(again.init?.status).toBe(409);
+    show(listed.data, again.data);
+    expect(await screen.findByText(/^Akun ini belum berhak/)).toBeTruthy();
   });
 
   test("signing in redirects with the cookie; a refused code renders with its status", async () => {

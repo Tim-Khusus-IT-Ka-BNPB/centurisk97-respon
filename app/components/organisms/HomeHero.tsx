@@ -27,6 +27,13 @@ export function HomeHero({ sent }: { readonly sent: boolean }) {
             <Link to="/lapor/report" className={buttonStyles({ variant: "accent", size: "main", className: "px-7" })}>
               {t("home.report")}
             </Link>
+            <Link
+              to="/lapor/orang-hilang"
+              className="inline-flex min-h-target items-center justify-center gap-1.5 rounded-control px-3 font-semibold text-on-hero underline decoration-on-hero-muted/50 underline-offset-4 hover:decoration-on-hero"
+            >
+              <Icon name="userSearch" className="size-5" />
+              {t("home.missing")}
+            </Link>
             <a
               href={sent ? "#laporan-saya" : "#steps"}
               className="inline-flex min-h-target items-center justify-center gap-1.5 rounded-control px-3 font-semibold text-on-hero underline decoration-on-hero-muted/50 underline-offset-4 hover:decoration-on-hero"

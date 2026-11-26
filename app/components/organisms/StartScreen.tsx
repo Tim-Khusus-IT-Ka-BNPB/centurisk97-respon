@@ -36,11 +36,13 @@ function replaceBody(t: Text, draft: NonNullable<Profile["openDraft"]>): string 
   return t("card.confirm.replaceDraft.body", { hazardType });
 }
 
-// The start page at another step, still an emergency when it is one, and still for a poster's village.
+// The start page at another step, still an emergency when it is one, still for a poster's village,
+// and still on the way back to a missing person's report.
 function useStep() {
   const [params] = useSearchParams();
   const kept = [
     ...(params.has("darurat") ? ["darurat=1"] : []),
+    ...(params.has("hilang") ? ["hilang=1"] : []),
     ...(POSTER_DESA.test(params.get("desa") ?? "") ? [`desa=${params.get("desa")}`] : []),
   ];
   return (step: string) => {

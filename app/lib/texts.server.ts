@@ -85,6 +85,7 @@ export const PAGE_TEXTS = {
   help: [...SHELL, "help."],
   poster: [...SHELL, "poster."],
   info: [...SHELL, "info.", "emergency.call112", "emergency.call117", "emergency.callBpbd"],
+  missing: [...SHELL, "missing.", "fieldError.missing.", "error.", "limit."],
   feed: [
     ...SHELL,
     "feed.",
@@ -136,6 +137,7 @@ export const PAGE_TEXTS = {
   desk: [
     ...SHELL,
     "desk.",
+    "missing.",
     "version.",
     "stage.",
     "hazard.",

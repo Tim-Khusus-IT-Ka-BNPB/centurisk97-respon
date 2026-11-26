@@ -31,7 +31,11 @@ const missingForm = z.object({
   personNumber: box(60),
   contactNumber: box(60),
   waitPlace: box(400),
-  photo: z.instanceof(File).openapi({ type: "string", format: "binary" }).optional(),
+  // An empty file box arrives as an empty text on some runtimes.
+  photo: z
+    .union([z.instanceof(File), z.literal("")])
+    .openapi({ type: "string", format: "binary" })
+    .optional(),
 });
 
 const statusSchema = z.enum(MISSING_STATUSES);
@@ -56,7 +60,7 @@ export function addMissingPersonRoutes(api: Api): void {
     }),
     async (c) => {
       const { photo, ...input } = c.req.valid("form");
-      const bytes = photo && photo.size > 0 ? new Uint8Array(await photo.arrayBuffer()) : null;
+      const bytes = photo instanceof File && photo.size > 0 ? new Uint8Array(await photo.arrayBuffer()) : null;
       const answer = await reportMissing(c.env, c.var.principal as Reporter, input, bytes);
       if (answer.kind === "sent") return c.json({ id: answer.id }, 201);
       if (answer.kind === "unknownReporter") return refuse(c, 401, "auth.signInFirst");

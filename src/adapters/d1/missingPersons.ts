@@ -87,10 +87,12 @@ export type MissingHistoryRow = {
   readonly at: string;
 };
 
-export const missingHistory = (db: Database, id: string) =>
-  rows<MissingHistoryRow>(
+// The history of each listed report, oldest first; the reports are the list's own, so a region's.
+export const missingHistory = (db: Database, ids: readonly string[]) =>
+  rows<MissingHistoryRow & { readonly missing_id: string }>(
     db,
-    sql`select to_status, note, staff_label, at from missing_person_history where missing_id = ${id} order by at, id`,
+    sql`select missing_id, to_status, note, staff_label, at from missing_person_history
+      where missing_id in (select value from json_each(${JSON.stringify(ids)})) order by at, id`,
   );
 
 // A move, only from the status it was read in, so two officers never overwrite each other.

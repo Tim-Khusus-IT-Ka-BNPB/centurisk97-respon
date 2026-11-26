@@ -19,7 +19,9 @@ export async function loader({ request, context }: Route.LoaderArgs) {
 export async function action({ request, context }: Route.ActionArgs) {
   const url = new URL(request.url);
   const acted = await actOnStart(await request.formData(), context.api, isEmergency(url), posterVillageCode(url));
-  if (acted.kind === "redirect") return redirect(acted.location, { status: 303, headers: acted.headers });
+  // Who reports is known now: a missing person's report goes back to its own page.
+  const location = acted.kind === "redirect" && url.searchParams.has("hilang") ? "/lapor/orang-hilang" : null;
+  if (acted.kind === "redirect") return redirect(location ?? acted.location, { status: 303, headers: acted.headers });
   return data(acted.data, { status: acted.status });
 }
 

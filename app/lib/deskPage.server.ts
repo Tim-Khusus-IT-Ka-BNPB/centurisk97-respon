@@ -12,7 +12,9 @@ import type {
 import type { ErrorEnvelope } from "../../src/contract/errors";
 import type { WarningControl } from "../../src/contract/warnings";
 import type { Texts } from "../../src/copy/text";
+import { MISSING_STATUSES, type MissingStatus } from "../../src/domain/missingPerson";
 import { DESK_VIEWS, type DeskFilters, type DeskShown, type DeskTyped, type DeskView } from "./deskTypes";
+import type { DeskMissingOne } from "./missingTypes";
 import { documentOrBack } from "./ownReportPage.server";
 import { PAGE_TEXTS, pickTexts } from "./texts.server";
 
@@ -326,4 +328,45 @@ export async function downloadAggregates(api: ApiCall): Promise<Response> {
   const response = await api("POST", "/desk/aggregates", {});
   if (response.ok) return response;
   return new Response(null, { status: 303, headers: { location: "/lapor/meja/respons?refused=aggregates" } });
+}
+
+export type DeskMissingLoad =
+  | DeskRefusal
+  | {
+      readonly kind: "missing";
+      readonly texts: Texts;
+      readonly status: MissingStatus | null;
+      readonly items: readonly DeskMissingOne[];
+      readonly summary: DeskSummary | null;
+      readonly saved: boolean;
+    };
+
+const isMissingStatus = (value: string | null): value is MissingStatus =>
+  (MISSING_STATUSES as readonly (string | null)[]).includes(value);
+
+// GET /lapor/meja/orang-hilang: the region's missing persons, each with its history, by status.
+export async function loadDeskMissing(url: URL, api: ApiCall): Promise<DeskMissingLoad> {
+  const asked = url.searchParams.get("status");
+  const status = isMissingStatus(asked) ? asked : null;
+  const [response, summary] = await Promise.all([
+    api("GET", `/desk/missing${status === null ? "" : `?status=${status}`}`),
+    summaryOf(api, ""),
+  ]);
+  if (!response.ok) return refusalOf(response);
+  const { items } = (await response.json()) as { items: DeskMissingOne[] };
+  return { kind: "missing", texts: texts(), status, items, summary, saved: url.searchParams.has("saved") };
+}
+
+// POST /lapor/meja/orang-hilang: one person's new status, with its note.
+export async function actOnDeskMissing(form: FormData, api: ApiCall, url: URL): Promise<DeskPosted> {
+  const id = encodeURIComponent(formText(form, "id"));
+  const response = await api("POST", `/desk/missing/${id}/status`, {
+    to: formText(form, "to"),
+    note: formText(form, "note"),
+  });
+  const status = url.searchParams.get("status");
+  const back = `/lapor/meja/orang-hilang?${isMissingStatus(status) ? `status=${status}&` : ""}saved=1#orang-${id}`;
+  if (response.ok) return redirectTo(back, response);
+  const envelope = (await response.json()) as ErrorEnvelope;
+  return { kind: "render", status: response.status, envelope, typed: typedIn(form) };
 }

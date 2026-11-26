@@ -129,6 +129,8 @@ describe("a missing person reported from a phone", () => {
     body.set("photo", new File([], "kosong.jpg", { type: "image/jpeg" }));
     const answer = await phone.upload("/missing", body);
     expect(answer.status).toBe(201);
+    body.set("photo", "");
+    expect((await phone.upload("/missing", body)).status).toBe(201);
     const { id } = answer.json as { id: string };
     expect((await regency().call("GET", `/desk/missing/${id}`)).json).toMatchObject({ hasPhoto: false });
     expect((await regency().file(`/desk/missing/${id}/photo`)).status).toBe(404);

@@ -68,6 +68,16 @@ describe("numbers known on this device", () => {
     expect(hrefs).toContain("/lapor/report?new=1&darurat=1");
   });
 
+  test("the way back to a missing person's report stays through every step", async () => {
+    renderPage(<StartScreen page={page()} acted={null} />, {
+      path: "/lapor/report",
+      entry: "/lapor/report?hilang=1",
+      action: never,
+    });
+    const hrefs = (await screen.findAllByRole("link")).map((link) => link.getAttribute("href"));
+    expect(hrefs).toContain(`/lapor/report?profile=${profile.profileId}&hilang=1`);
+  });
+
   test("a poster's village stays through every step; a desa of the wrong shape is dropped", async () => {
     const view = renderPage(<StartScreen page={page()} acted={null} />, {
       path: "/lapor/report",

@@ -12,5 +12,6 @@
   "page.emergency.title": "Darurat sekali ketuk, {appName}",
   "page.feed.title": "Alun-alun, {appName}",
   "page.poster.title": "Poster QR desa, {appName}",
-  "page.info.title": "Info daerah, {appName}"
+  "page.info.title": "Info daerah, {appName}",
+  "page.missing.title": "Lapor orang hilang, {appName}"
 }

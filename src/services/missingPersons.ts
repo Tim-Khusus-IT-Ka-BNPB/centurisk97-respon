@@ -114,40 +114,57 @@ const viewOf = (one: MissingRow) => {
 
 export type MissingView = ReturnType<typeof viewOf>;
 
+type MissingHistory = { status: MissingStatus; note: string | null; actor: string | null; at: ReturnType<typeof at> };
+
+// Each report with its history, read in one query for the whole list.
+async function withHistory(bindings: ServiceBindings, found: readonly MissingRow[]) {
+  const history = await missingHistory(
+    bindings.db,
+    found.map((one) => one.id),
+  );
+  return found.map((one) => {
+    const zone = draftZone(one.village_code);
+    return {
+      ...viewOf(one),
+      history: history
+        .filter((row) => row.missing_id === one.id)
+        .map(
+          (row): MissingHistory => ({
+            status: row.to_status,
+            note: row.note,
+            actor: row.staff_label,
+            at: at(Date.parse(row.at), zone),
+          }),
+        ),
+    };
+  });
+}
+
 // Every officer of a region reads its missing persons; numbers stay with officers.
 export async function deskMissing(
   bindings: ServiceBindings,
   staff: StaffPrincipal,
   status: MissingStatus | null,
-): Promise<DeskAnswer<{ items: MissingView[] }>> {
+): Promise<DeskAnswer<{ items: (MissingView & { history: MissingHistory[] })[] }>> {
   const refused = await admitted(bindings, staff, "readQueue", "desk.read");
   if (refused) return refused;
-  return { kind: "ok", body: { items: (await missingList(bindings.db, staff.scope, status)).map(viewOf) } };
+  return {
+    kind: "ok",
+    body: { items: await withHistory(bindings, await missingList(bindings.db, staff.scope, status)) },
+  };
 }
 
 export async function deskMissingOne(
   bindings: ServiceBindings,
   staff: StaffPrincipal,
   id: string,
-): Promise<
-  DeskAnswer<
-    MissingView & {
-      history: { status: MissingStatus; note: string | null; actor: string | null; at: ReturnType<typeof at> }[];
-    }
-  >
-> {
+): Promise<DeskAnswer<MissingView & { history: MissingHistory[] }>> {
   const refused = await admitted(bindings, staff, "readReport", "desk.read");
   if (refused) return refused;
   const found = await missingOf(bindings.db, staff.scope, id);
   if (found === null) return { kind: "notFound" };
-  const zone = draftZone(found.village_code);
-  const history = (await missingHistory(bindings.db, id)).map((one) => ({
-    status: one.to_status,
-    note: one.note,
-    actor: one.staff_label,
-    at: at(Date.parse(one.at), zone),
-  }));
-  return { kind: "ok", body: { ...viewOf(found), history } };
+  const [one] = await withHistory(bindings, [found]);
+  return { kind: "ok", body: one as MissingView & { history: MissingHistory[] } };
 }
 
 export type MissingMove = DeskAnswer<{ status: MissingStatus }> | { readonly kind: "refusedMove" };
