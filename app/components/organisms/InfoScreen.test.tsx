@@ -1,0 +1,80 @@
+import { screen, within } from "@testing-library/react";
+import { describe, expect, test } from "vitest";
+import { OUTLOOK } from "../../testing/outlook";
+import { renderPage } from "../../testing/render";
+import { type InfoLoad, InfoScreen } from "./InfoScreen";
+
+const draw = (load: InfoLoad) => renderPage(<InfoScreen load={load} />, { path: "/lapor/info" });
+const phones = () =>
+  screen
+    .getAllByRole("link")
+    .flatMap((link) => link.getAttribute("href") ?? [])
+    .filter((href) => href.startsWith("tel:"));
+
+describe("the regional outlook", () => {
+  test("three days, each level in words, the advice, and the regency's BPBD after 112 and 117", async () => {
+    draw({ kind: "outlook", query: "", outlook: OUTLOOK });
+    expect(await screen.findByRole("heading", { name: "Tiga hari ke depan di Kab. Aceh Utara" })).toBeTruthy();
+    expect(screen.getByText(/^Provinsi Aceh\. Prakiraan dibuat 26 November 2026/)).toBeTruthy();
+    const days = screen.getAllByRole("listitem").filter((item) => item.querySelector("h3"));
+    expect(days.map((day) => day.querySelector("h3")?.textContent)).toEqual([
+      "Kamis, 26 November",
+      "Jumat, 27 November",
+      "Sabtu, 28 November",
+    ]);
+    const first = within(days[0] as HTMLElement);
+    expect(first.getByText("Hujan 62 mm")).toBeTruthy();
+    expect(first.getByText("Siaga")).toBeTruthy();
+    expect(
+      within(first.getByRole("list", { name: "Peringatan" }))
+        .getAllByRole("listitem")
+        .map((one) => one.textContent),
+    ).toEqual(["BanjirAwas", "LongsorWaspada"]);
+    expect(within(days[1] as HTMLElement).getByText("Normal")).toBeTruthy();
+    expect(within(days[1] as HTMLElement).getByText("Tidak ada peringatan di atas Normal.")).toBeTruthy();
+    expect(within(days[2] as HTMLElement).getByText("Curah hujan belum diketahui")).toBeTruthy();
+    expect(screen.getByText(": Siapkan tas siaga", { exact: false })).toBeTruthy();
+    expect(phones()).toEqual(["tel:112", "tel:117", "tel:080011080001"]);
+    expect(screen.getByRole("link", { name: "Ganti wilayah" }).getAttribute("href")).toBe("/lapor/info");
+    expect(screen.queryByRole("searchbox")).toBeNull();
+  });
+
+  test("with no BPBD of its own and no advice: 112 and 117 alone", async () => {
+    draw({ kind: "outlook", query: "", outlook: { ...OUTLOOK, advice: [], contact: { level: "national" } } });
+    expect(await screen.findByRole("heading", { name: "Nomor yang bisa ditelepon" })).toBeTruthy();
+    expect(phones()).toEqual(["tel:112", "tel:117"]);
+    expect(screen.queryByText("Yang perlu disiapkan")).toBeNull();
+  });
+
+  test("a search lists each regency once, linked to its outlook; the numbers show before any is picked", async () => {
+    draw({
+      kind: "results",
+      query: "aceh",
+      regencies: [
+        { code: "11.08", name: "Aceh Utara", provinceName: "Aceh" },
+        { code: "11.06", name: "Aceh Besar", provinceName: "Aceh" },
+      ],
+    });
+    const found = await screen.findByRole("link", { name: "Aceh Utara, Aceh" });
+    expect(found.getAttribute("href")).toBe("/lapor/info?kab=11.08");
+    expect((screen.getByRole("searchbox") as HTMLInputElement).value).toBe("aceh");
+    expect(phones()).toEqual(["tel:112", "tel:117"]);
+  });
+
+  test.each([
+    [{ kind: "results", query: "zzz", regencies: [] }, 'Tidak ada wilayah yang cocok dengan "zzz".'],
+    [{ kind: "short", query: "ab" }, "Ketik paling sedikit 3 huruf."],
+    [{ kind: "unavailable", query: "" }, "Prakiraan belum bisa dibuka sekarang."],
+    [{ kind: "none", query: "" }, "Belum ada prakiraan untuk kabupaten atau kota ini."],
+  ] as const)("%o says so", async (load, words) => {
+    draw(load as InfoLoad);
+    expect(await screen.findByText(words, { exact: false })).toBeTruthy();
+  });
+
+  test("before a search, only the box and the numbers", async () => {
+    draw({ kind: "start", query: "" });
+    expect(await screen.findByRole("searchbox")).toBeTruthy();
+    expect(screen.queryByText("Pilih kabupaten atau kota")).toBeNull();
+    expect(phones()).toEqual(["tel:112", "tel:117"]);
+  });
+});

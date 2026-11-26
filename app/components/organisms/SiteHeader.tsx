@@ -6,7 +6,7 @@ import { BrandLockup } from "../molecules/BrandLockup";
 import { ThemeSwitch } from "../molecules/ThemeSwitch";
 
 const navLink =
-  "inline-flex min-h-target-min items-center rounded-control px-3 text-body font-medium text-ink hover:bg-sunken";
+  "inline-flex min-h-target-min items-center whitespace-nowrap rounded-control px-3 text-body font-medium text-ink hover:bg-sunken";
 
 function NavLinks({ className }: { readonly className: string }) {
   const t = useText();
@@ -14,6 +14,9 @@ function NavLinks({ className }: { readonly className: string }) {
     <nav className={className}>
       <Link to="/lapor/feed" className={navLink}>
         {t("nav.feed")}
+      </Link>
+      <Link to="/lapor/info" className={navLink}>
+        {t("nav.info")}
       </Link>
       <Link to="/lapor/help" className={navLink}>
         {t("help.title")}
@@ -42,11 +45,11 @@ export function SiteHeader({ nav, width }: { readonly nav: boolean; readonly wid
           <BrandLockup />
         </Link>
         <div className="flex items-center gap-2 sm:gap-4">
-          {nav ? <NavLinks className="hidden sm:flex" /> : null}
+          {nav ? <NavLinks className="hidden md:flex" /> : null}
           {/* On a phone a page with links keeps the switch in its menu, so the bar stays one row. */}
-          <ThemeSwitch className={nav ? "hidden sm:block" : undefined} />
+          <ThemeSwitch className={nav ? "hidden md:block" : undefined} />
           {nav ? (
-            <details key={pathname} className="group sm:hidden">
+            <details key={pathname} className="group md:hidden">
               <summary className="flex size-target-min cursor-pointer list-none items-center justify-center rounded-control text-ink hover:bg-sunken [&::-webkit-details-marker]:hidden">
                 <Icon name="menu" />
                 <span className="sr-only">{t("nav.menu")}</span>

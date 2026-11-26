@@ -84,6 +84,7 @@ export const PAGE_TEXTS = {
   refused: [...SHELL, "card.expired.new", "common.retryTime."],
   help: [...SHELL, "help."],
   poster: [...SHELL, "poster."],
+  info: [...SHELL, "info.", "emergency.call112", "emergency.call117", "emergency.callBpbd"],
   feed: [
     ...SHELL,
     "feed.",

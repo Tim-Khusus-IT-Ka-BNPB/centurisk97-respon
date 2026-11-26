@@ -30,6 +30,9 @@
   /* Reports nobody has handled yet, on dots and markers; words sit beside it. */
   --open: oklch(62% 0.15 58);
   --on-open: oklch(100% 0 0);
+  /* The outlook's Siaga level, between Waspada's tint and Awas's signal. */
+  --siaga: oklch(80% 0.14 65);
+  --on-siaga: oklch(25% 0.07 256);
   --dock-shadow: oklch(25% 0.07 256 / 0.1);
   --card-shadow: oklch(25% 0.07 256 / 0.05);
   /* BNPB's orange from the emblem, for the one main action on navy. */
@@ -67,6 +70,8 @@
   --warn-icon: oklch(80% 0.12 80);
   --open: oklch(80% 0.13 75);
   --on-open: oklch(17% 0.03 256);
+  --siaga: oklch(80% 0.13 75);
+  --on-siaga: oklch(17% 0.03 256);
   --dock-shadow: oklch(0% 0 0 / 0.4);
   --card-shadow: oklch(0% 0 0 / 0.2);
   --accent: oklch(76% 0.16 62);
@@ -100,6 +105,8 @@
   --color-danger-tint: var(--danger-tint);
   --color-warn-tint: var(--warn-tint);
   --color-warn-icon: var(--warn-icon);
+  --color-siaga: var(--siaga);
+  --color-on-siaga: var(--on-siaga);
   --color-accent: var(--accent);
   --color-on-accent: var(--on-accent);
   --color-hero: var(--hero);

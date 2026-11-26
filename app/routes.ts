@@ -8,6 +8,7 @@ export default [
   route("lapor/darurat", "routes/emergency.tsx"),
   route("lapor/lacak", "routes/tracking.tsx"),
   route("lapor/feed", "routes/feed.tsx"),
+  route("lapor/info", "routes/info.tsx"),
   route("lapor/poster", "routes/poster.tsx"),
   route("lapor/reports/:ticketNumber", "routes/ownReport.tsx"),
   route("lapor/reports/:ticketNumber/:file", "routes/ownDocument.tsx"),

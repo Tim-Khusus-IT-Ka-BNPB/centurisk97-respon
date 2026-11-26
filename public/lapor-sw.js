@@ -6,7 +6,15 @@ const KEPT = `${VERSION}-pages`;
 // Kept at install: the home and the emergency page, so a report can be made with no signal.
 const FIRST = ["/lapor", "/lapor/darurat"];
 // Only these pages are ever kept: never the desk, or a reporter's own report with its details.
-const KEEPABLE = new Set([...FIRST, "/lapor/help", "/lapor/about", "/lapor/privacy", "/lapor/feed", "/lapor/lacak"]);
+const KEEPABLE = new Set([
+  ...FIRST,
+  "/lapor/help",
+  "/lapor/about",
+  "/lapor/privacy",
+  "/lapor/feed",
+  "/lapor/info",
+  "/lapor/lacak",
+]);
 
 self.addEventListener("install", (event) => {
   event.waitUntil(

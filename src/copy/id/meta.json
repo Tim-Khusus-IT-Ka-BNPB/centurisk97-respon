@@ -12,5 +12,6 @@
   "meta.ownReport.description": "Status, dokumen, dan kabar laporan bencana Anda. Hanya bisa dibuka dari perangkat yang dipakai melapor.",
   "meta.emergency.description": "Kirim titik lokasi Anda ke BNPB sebagai laporan darurat.",
   "meta.feed.description": "Laporan bencana dari warga yang sedang atau sudah ditangani BNPB dan BPBD, di peta dan daftar, tanpa data pelapor.",
-  "meta.poster.description": "Poster QR per desa untuk dicetak: pindaian membuka halaman lapor kejadian bencana."
+  "meta.poster.description": "Poster QR per desa untuk dicetak: pindaian membuka halaman lapor kejadian bencana.",
+  "meta.info.description": "Prakiraan hujan dan ancaman bencana tiga hari ke depan per kabupaten atau kota, dengan nomor BPBD, 112, dan 117."
 }

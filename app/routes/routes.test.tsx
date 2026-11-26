@@ -9,6 +9,7 @@ import { PAGE_TEXTS, pickTexts } from "../lib/texts.server";
 import * as root from "../root";
 import { SUMMARY } from "../testing/desk";
 import { FEED_ENTRY } from "../testing/feed";
+import { OUTLOOK } from "../testing/outlook";
 import { OWN_REPORT } from "../testing/ownReport";
 import { never, renderPage } from "../testing/render";
 import AboutRoute, * as about from "./about";
@@ -24,6 +25,7 @@ import FeedRoute, * as feed from "./feed";
 import HelpRoute, * as help from "./help";
 import HomeRoute, * as home from "./home";
 import * as rootIndex from "./index";
+import InfoRoute, * as info from "./info";
 import * as manifest from "./manifest";
 import NotFoundRoute, * as notFound from "./notFound";
 import * as ownDocument from "./ownDocument";
@@ -163,6 +165,75 @@ describe("route modules", () => {
     renderPage(routeElement(PosterRoute, { loaderData: shown }), { path: "/lapor/poster" });
     expect(await screen.findByRole("heading", { level: 1, name: "Poster QR desa" })).toBeTruthy();
     expect(screen.getAllByRole("article")).toHaveLength(1);
+  });
+
+  test("the regional outlook: a search by regency, an outlook, one the file has not, and one that cannot be read", async () => {
+    expect(info.meta({ data: { texts: pickTexts(PAGE_TEXTS.info) }, matches: [] } as Args)[0]).toEqual({
+      title: "Info daerah, Pantau Bencana BNPB",
+    });
+    const place = (level: string, code: string, name: string) => ({
+      level,
+      code,
+      name,
+      districtName: level === "regency" ? null : "Baktiya",
+      regencyName: "Aceh Utara",
+      provinceName: "Aceh",
+    });
+    const found = {
+      items: [
+        place("regency", "11.08", "Aceh Utara"),
+        place("district", "11.08.01", "Baktiya"),
+        place("village", "11.06.01.2001", "Uji"),
+      ],
+      total: 3,
+      cut: false,
+      dataDate: "2026-11-01",
+    };
+    const asked: string[] = [];
+    const load = async (query: string, response: () => Response) =>
+      (
+        await info.loader({
+          request: new Request(`http://localhost/lapor/info${query}`),
+          context: {
+            api: async (_method: string, path: string) => {
+              asked.push(path);
+              return response();
+            },
+          },
+        } as Args)
+      ).load;
+    const none = json({}, 500);
+    expect(await load("", none)).toEqual({ kind: "start", query: "" });
+    expect(await load("?kab=1108", none)).toEqual({ kind: "start", query: "" });
+    expect(await load("?q=ab", none)).toEqual({ kind: "short", query: "ab" });
+    expect(await load("?q=aceh", json(found))).toEqual({
+      kind: "results",
+      query: "aceh",
+      regencies: [
+        { code: "11.08", name: "Aceh Utara", provinceName: "Aceh" },
+        { code: "11.06", name: "Aceh Utara", provinceName: "Aceh" },
+      ],
+    });
+    expect(await load("?q=aceh", json({}, 503))).toEqual({ kind: "unavailable", query: "aceh" });
+    expect(await load("?kab=11.08", json(OUTLOOK))).toEqual({ kind: "outlook", query: "", outlook: OUTLOOK });
+    expect(await load("?kab=99.99", json({}, 404))).toEqual({ kind: "none", query: "" });
+    expect(await load("?kab=11.08", json({}, 503))).toEqual({ kind: "unavailable", query: "" });
+    expect(asked).toEqual([
+      "/places/search?q=aceh",
+      "/places/search?q=aceh",
+      "/outlook?regency=11.08",
+      "/outlook?regency=99.99",
+      "/outlook?regency=11.08",
+    ]);
+    renderPage(
+      routeElement(InfoRoute, {
+        loaderData: { load: { kind: "start", query: "" }, texts: pickTexts(PAGE_TEXTS.info) },
+      }),
+      {
+        path: "/lapor/info",
+      },
+    );
+    expect(await screen.findByRole("heading", { level: 1, name: "Info daerah" })).toBeTruthy();
   });
 
   test("the public feed is read on the server with only a known hazard, and says when it cannot be", async () => {
