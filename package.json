@@ -18,6 +18,7 @@
     "sweep:local": "tsx --env-file-if-exists=.env scripts/sweep-local.ts",
     "reference:import": "tsx --env-file-if-exists=.env tools/reference-import/import.ts",
     "reference:import-file": "tsx --env-file-if-exists=.env tools/reference-import/importFile.ts",
+    "push:keys": "tsx tools/push-keys/make.ts",
     "openapi": "vitest run --project server src/api/route.test.ts -t \"OpenAPI document\"",
     "reference:timing": "tsx --env-file-if-exists=.env tools/reference-import/timing.ts",
     "db:migrate": "tsx --env-file-if-exists=.env scripts/db/migrate.ts",

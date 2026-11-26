@@ -16,6 +16,7 @@
     "src/domain/education.ts",
     "src/domain/responseActions.ts",
     "src/domain/forecast.ts",
+    "src/platform/webPush.ts",
     "src/testing/jpegs.ts",
     "src/domain/modelMessage.ts",
     "vite.config.ts",
