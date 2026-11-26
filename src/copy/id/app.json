@@ -3,5 +3,14 @@
   "home.contact.organisation": "Badan Nasional Penanggulangan Bencana",
   "app.lang": "id",
   "app.language.label": "Bahasa",
-  "app.language.submit": "Ganti bahasa"
+  "app.language.submit": "Pakai bahasa ini",
+  "app.language.change": "Ganti",
+  "app.language.title": "Pilih bahasa Anda",
+  "app.language.group.national": "Nasional",
+  "app.language.group.java": "Jawa",
+  "app.language.group.baliNusa": "Bali dan Nusa Tenggara",
+  "app.language.group.sumatra": "Sumatra",
+  "app.language.group.kalimantan": "Kalimantan",
+  "app.language.group.sulawesi": "Sulawesi",
+  "app.language.group.malukuPapua": "Maluku dan Papua"
 }

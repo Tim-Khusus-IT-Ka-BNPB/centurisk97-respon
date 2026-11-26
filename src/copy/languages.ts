@@ -30,6 +30,17 @@ export const LANGUAGES = [
 
 export type LanguageId = (typeof LANGUAGES)[number][0];
 
+// Where each is spoken, as the picker groups them (upstream's order).
+export const LANGUAGE_GROUPS: readonly (readonly [string, readonly LanguageId[]])[] = [
+  ["national", ["id"]],
+  ["java", ["jv", "su", "mad"]],
+  ["baliNusa", ["ban", "sas"]],
+  ["sumatra", ["min", "bbc", "btx", "btm", "bts", "nia", "ace", "msa", "ljp"]],
+  ["kalimantan", ["bjn", "nij"]],
+  ["sulawesi", ["bug", "mak", "sda", "gor"]],
+  ["malukuPapua", ["abs", "pmy"]],
+];
+
 type Translation = Readonly<Record<string, string>>;
 
 const FILES = import.meta.glob<Translation>("./tr/*.json", { eager: true, import: "default" });
