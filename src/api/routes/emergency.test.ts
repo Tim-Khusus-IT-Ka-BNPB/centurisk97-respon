@@ -269,6 +269,11 @@ describe("one tap", () => {
     expect((await photo(0, jpeg(savedAt), {}, await boundPhone())).status).toBe(404);
     expect((await photo(0, jpeg(savedAt), {}, signedIn(1))).status).toBe(404);
     expect((await photo(0, jpeg(savedAt), {}, phone, crypto.randomUUID())).status).toBe(404);
+    // One sent at once has no save time: its photo is checked against now.
+    const live = await boundPhone();
+    const liveId = crypto.randomUUID();
+    expect((await tap(live, { ...HERE, clientId: liveId })).status).toBe(201);
+    expect((await photo(0, jpeg(clock.now() - 60_000), {}, live, liveId)).json).toEqual({ photos: 1 });
     const key = await hmacKey(bindings.settings.keyHmacSecret, "address", addressBucket(phone.address) as string);
     const window = new Date(windowStart("clockHour", clock.now())).toISOString();
     await query`insert into rate_counter (limit_id, subject_key, window_start, count) values ('address.messages', ${key}, ${window}, 2000)

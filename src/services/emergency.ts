@@ -205,7 +205,8 @@ export async function addOfflinePhoto(
   const checked = checkPhoto({
     bytes: photo.bytes,
     nowMs: offlinePhotoClock(ticket.savedAt, nowMs),
-    placePoint: place.point ?? null,
+    // One tap places a report at the phone's own point.
+    placePoint: place.point as PlacePoint,
     count: kept.length,
     exif: readExif(photo.bytes),
     device: photo.device,
