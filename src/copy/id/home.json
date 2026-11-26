@@ -32,5 +32,18 @@
   "home.reports.open": "Buka laporan",
   "home.emergency": "Lapor darurat",
   "home.missing": "Lapor orang hilang",
-  "home.contact.channels": "Kanal resmi BNPB"
+  "home.contact.channels": "Kanal resmi BNPB",
+  "home.door.emergency": "Lapor darurat",
+  "home.door.emergency.note": "Ada korban, orang terjebak, atau bahaya sekarang",
+  "home.door.report": "Lapor kejadian",
+  "home.door.report.note": "Banjir, longsor, gempa, kebakaran, dan lainnya",
+  "home.door.missing": "Lapor orang hilang",
+  "home.door.missing.note": "Keluarga atau kerabat belum ditemukan",
+  "home.more": "Layanan lain",
+  "home.door.info": "Info daerah",
+  "home.door.info.note": "Prakiraan 3 hari dan peringatan dini",
+  "home.door.education": "Edukasi siaga",
+  "home.door.education.note": "Sebelum, saat, dan sesudah bencana",
+  "home.door.numbers": "Nomor penting",
+  "home.door.numbers.note": "112, 117, Basarnas, ambulans, polisi, pemadam"
 }

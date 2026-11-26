@@ -9,6 +9,7 @@ import { Icon } from "../atoms/Icon";
 import { ActionRow } from "../molecules/layout";
 import { Notice } from "../molecules/Notice";
 import { ContactSection } from "./ContactSection";
+import { MoreDoors } from "./HomeDoors";
 import { HowToReport } from "./HowToReport";
 import { resumeLine } from "./StartScreen";
 
@@ -124,6 +125,7 @@ export function HomeScreen({ me }: { readonly me: MeResponse | null }) {
     );
   return (
     <div className="flex flex-col gap-14 md:gap-16">
+      <MoreDoors />
       {resumes}
       <HowToReport />
       <ContactSection />

@@ -1,8 +1,8 @@
 import { Link } from "react-router";
 import { useText } from "../../lib/text";
-import { buttonStyles } from "../atoms/Button";
 import { Icon } from "../atoms/Icon";
 import { EmergencyPanel } from "./EmergencyPanel";
+import { ReportDoors } from "./HomeDoors";
 
 const heroLink =
   "inline-flex min-h-target items-center gap-1.5 rounded-control px-3 font-semibold text-on-hero underline decoration-on-hero-muted/50 underline-offset-4 hover:decoration-on-hero";
@@ -19,24 +19,9 @@ export function HomeHero({ sent }: { readonly sent: boolean }) {
             {t("home.hero.title")}
           </h1>
           <p className="max-w-[52ch] text-card text-on-hero-muted text-pretty">{t("home.lead")}</p>
-          <div className="flex flex-col gap-4 pt-2">
-            <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap">
-              <Link
-                to="/lapor/report?darurat=1"
-                className={buttonStyles({ variant: "signal", size: "main", className: "px-7" })}
-              >
-                <Icon name="triangleAlert" className="size-5" />
-                {t("home.emergency")}
-              </Link>
-              <Link to="/lapor/report" className={buttonStyles({ variant: "accent", size: "main", className: "px-7" })}>
-                {t("home.report")}
-              </Link>
-            </div>
-            <div className="-mx-3 flex flex-col items-start sm:flex-row sm:flex-wrap sm:gap-x-2">
-              <Link to="/lapor/orang-hilang" className={heroLink}>
-                <Icon name="userSearch" className="size-5" />
-                {t("home.missing")}
-              </Link>
+          <div className="flex flex-col gap-3 pt-2">
+            <ReportDoors />
+            <div className="-mx-3 flex flex-wrap">
               <a href={sent ? "#laporan-saya" : "#steps"} className={heroLink}>
                 <Icon name="chevronRight" className="size-5" />
                 {t(sent ? "home.reports.check" : "home.hero.howTo")}
