@@ -24,6 +24,7 @@ import FeedRoute, * as feed from "./feed";
 import HelpRoute, * as help from "./help";
 import HomeRoute, * as home from "./home";
 import * as rootIndex from "./index";
+import * as manifest from "./manifest";
 import NotFoundRoute, * as notFound from "./notFound";
 import * as ownDocument from "./ownDocument";
 import OwnReportRoute, * as ownReport from "./ownReport";
@@ -79,6 +80,7 @@ describe("route modules", () => {
     expect(root.links().map((link) => (link as { href: string }).href)).toEqual([
       "/favicon-32.png",
       "/apple-touch-icon.png",
+      "/lapor/manifest.webmanifest",
     ]);
   });
 
@@ -92,6 +94,25 @@ describe("route modules", () => {
     renderPage(routeElement(NotFoundRoute, { loaderData: loaded.data }), { path: "/lapor/nowhere" });
     expect(await screen.findByRole("heading", { name: "Halaman tidak ditemukan" })).toBeTruthy();
     expect(screen.getByRole("link", { name: "Ke halaman awal" }).getAttribute("href")).toBe("/lapor");
+  });
+
+  test("the app installs with its name, icons and three ways in from the home screen", async () => {
+    const answer = manifest.loader();
+    expect(answer.headers.get("content-type")).toBe("application/manifest+json");
+    const body = (await answer.json()) as {
+      name: string;
+      start_url: string;
+      icons: unknown[];
+      shortcuts: { url: string }[];
+    };
+    expect(body).toMatchObject({
+      name: "Pantau Bencana BNPB",
+      short_name: "Pantau Bencana",
+      start_url: "/lapor",
+      display: "standalone",
+    });
+    expect(body.icons).toHaveLength(3);
+    expect(body.shortcuts.map((one) => one.url)).toEqual(["/lapor/report", "/lapor/report?darurat=1", "/lapor/feed"]);
   });
 
   test("the public feed is read on the server with only a known hazard, and says when it cannot be", async () => {

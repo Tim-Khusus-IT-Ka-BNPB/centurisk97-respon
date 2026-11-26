@@ -20,6 +20,7 @@ import { drawnTheme, type Theme, themeFromCookie } from "./lib/theme";
 export const links: Route.LinksFunction = () => [
   { rel: "icon", href: "/favicon-32.png", type: "image/png", sizes: "32x32" },
   { rel: "apple-touch-icon", href: "/apple-touch-icon.png" },
+  { rel: "manifest", href: "/lapor/manifest.webmanifest" },
 ];
 
 // The site's address, so every page's canonical and share links are absolute, and the theme this
