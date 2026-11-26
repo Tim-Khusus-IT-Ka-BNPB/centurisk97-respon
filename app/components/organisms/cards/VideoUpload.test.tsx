@@ -30,8 +30,9 @@ function answer(routes: Record<string, Answer | Answer[]>) {
 
 const draw = () =>
   renderPage(<VideoUpload draftId={DRAFT} readSeconds={async () => 12.5} retryMs={0} />, { path: "/lapor/report/d" });
-const pick = (bytes = 6) =>
-  fireEvent.change(screen.getByLabelText("Rekam video"), {
+// The picker shows once the kept videos are read; a busy machine may take a moment.
+const pick = async (bytes = 6) =>
+  fireEvent.change(await screen.findByLabelText("Rekam video", {}, { timeout: 5000 }), {
     target: { files: [new File([new Uint8Array(bytes)], "kejadian.mp4", { type: "video/mp4" })] },
   });
 const invalid = (copyKey: string) => ({
@@ -61,7 +62,7 @@ describe("a video of the scene", () => {
     await waitFor(() => expect(calls).toContain(`GET ${BASE}`));
     // The picker closed with nothing picked: nothing is sent.
     fireEvent.change(screen.getByLabelText("Rekam video"), { target: { files: [] } });
-    pick();
+    await pick();
     expect(await screen.findByText("Video 1, 13 detik")).toBeTruthy();
     expect(calls).toEqual([
       `GET ${BASE}`,
@@ -90,7 +91,7 @@ describe("a video of the scene", () => {
     });
     draw();
     await waitFor(() => expect(calls).toContain(`GET ${BASE}`));
-    pick();
+    await pick();
     expect(await screen.findByText("Sinyal putus. 1 dari 2 bagian sudah sampai.")).toBeTruthy();
     expect(calls.filter((call) => call.endsWith("/parts/1"))).toHaveLength(3);
     fireEvent.click(screen.getByRole("button", { name: "Lanjutkan mengirim" }));
@@ -102,7 +103,7 @@ describe("a video of the scene", () => {
     answer({ [`GET ${BASE}`]: { status: 200, body: [] }, [`POST ${BASE}`]: invalid("fieldError.video.tooBig") });
     const view = draw();
     await waitFor(() => expect(calls).toContain(`GET ${BASE}`));
-    pick();
+    await pick();
     expect(await screen.findByText(/^Video paling besar 30 MB/)).toBeTruthy();
     view.unmount();
     answer({
@@ -112,7 +113,7 @@ describe("a video of the scene", () => {
     });
     const second = draw();
     await waitFor(() => expect(calls).toContain(`GET ${BASE}`));
-    pick();
+    await pick();
     expect(await screen.findByText(/^Sebagian video terpotong/)).toBeTruthy();
     second.unmount();
     answer({
@@ -123,14 +124,14 @@ describe("a video of the scene", () => {
     });
     const third = draw();
     await waitFor(() => expect(calls).toContain(`GET ${BASE}`));
-    pick();
+    await pick();
     fireEvent.click(await screen.findByRole("button", { name: "Lanjutkan mengirim" }));
     expect(await screen.findByText("Berkas ini bukan video MP4, MOV, atau WebM.")).toBeTruthy();
     third.unmount();
     answer({ [`GET ${BASE}`]: "drop", [`POST ${BASE}`]: "drop" });
     draw();
     await screen.findByLabelText("Rekam video");
-    pick();
+    await pick();
     expect(await screen.findByText(/^Video belum terkirim/)).toBeTruthy();
   });
 
@@ -161,7 +162,7 @@ describe("a video of the scene", () => {
     });
     draw();
     await waitFor(() => expect(calls).toContain(`GET ${BASE}`));
-    pick();
+    await pick();
     fireEvent.click(await screen.findByRole("button", { name: "Lanjutkan mengirim" }));
     fireEvent.click(await screen.findByRole("button", { name: "Lanjutkan mengirim" }));
     expect(await screen.findByText(/./, { selector: "p.text-danger" })).toBeTruthy();
