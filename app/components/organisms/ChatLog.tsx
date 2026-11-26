@@ -34,7 +34,7 @@ function Lines({ entries, keys }: { readonly entries: readonly Entry[]; readonly
           <li
             key={keys[index]}
             className={cn(
-              "max-w-[85%] rounded-[1.125rem] px-4 py-2.5 text-body",
+              "max-w-[min(85%,40rem)] rounded-[1.125rem] px-4 py-2.5 text-body",
               own
                 ? "self-end rounded-ee-chip bg-primary text-on-primary [overflow-wrap:anywhere]"
                 : "self-start rounded-es-chip border border-line bg-surface break-words",

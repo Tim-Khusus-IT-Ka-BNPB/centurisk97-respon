@@ -86,6 +86,8 @@ export function DraftScreen({ page, acted }: { readonly page: Loaded; readonly a
       <Page
         texts={page.texts}
         publicPage={false}
+        // A sent report keeps the wide frame it was written in, for its two-column ticket.
+        wide={view.draft.card.kind === "sent"}
         aside={open ? <DraftAside draft={view.draft} /> : null}
         dock={open ? <MessageBox key={view.draft.revision} /> : null}
       >

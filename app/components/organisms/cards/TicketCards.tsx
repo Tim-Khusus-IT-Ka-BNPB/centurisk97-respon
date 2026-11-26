@@ -9,6 +9,7 @@ import { useText } from "../../../lib/text";
 import { buttonStyles } from "../../atoms/Button";
 import { Icon } from "../../atoms/Icon";
 import { FieldError } from "../../molecules/Field";
+import { ActionRow } from "../../molecules/layout";
 import { headingIdOf, useDraftView } from "./CardShell";
 
 type SentCardData = Extract<Card, { kind: "sent" }>;
@@ -211,53 +212,75 @@ export function TicketCard({ card }: { readonly card: SentCardData }) {
         aria-labelledby={headingIdOf(card)}
         data-card-kind={card.kind}
         data-card-id={card.cardId}
-        className="@container flex animate-settle flex-col gap-4 card-surface p-4 md:p-5"
+        className="@container flex animate-settle flex-col gap-6 card-surface p-4 md:p-6"
       >
-        <span className="flex size-14 items-center justify-center rounded-full bg-selected text-primary">
-          <Icon name="check" className="size-7" />
-        </span>
-        <h2 id={headingIdOf(card)} ref={heading} tabIndex={-1} className="text-card font-bold text-balance">
-          {t("card.sent.heading")}
-        </h2>
-        <p>{t("card.sent.contactPromise")}</p>
-        <div className="flex flex-col gap-4 @tiles:flex-row @tiles:items-start @tiles:justify-between">
-          <div className="flex min-w-0 flex-col gap-2">
-            <span className="text-meta text-muted">{t("card.sent.number")}</span>
-            <p className="flex flex-wrap items-center gap-3">
-              <span data-testid="ticket-number" className="text-ticket font-bold whitespace-nowrap tabular-nums">
-                {card.ticketNumber}
+        {/* Wide: the ticket and what to do on the left, the QR and who to call on the right. */}
+        <div className="grid gap-6 @split:grid-cols-[minmax(0,1fr)_16rem] @split:gap-8">
+          <div className="flex min-w-0 flex-col gap-5">
+            <div className="flex flex-col gap-3 @tiles:flex-row @tiles:items-start @tiles:gap-4">
+              <span className="flex size-12 shrink-0 items-center justify-center rounded-full bg-selected text-primary">
+                <Icon name="check" className="size-6" />
               </span>
-              <CopyNumber ticketNumber={card.ticketNumber} />
-            </p>
+              <div className="flex min-w-0 flex-col gap-1">
+                <h2 id={headingIdOf(card)} ref={heading} tabIndex={-1} className="text-page font-bold text-balance">
+                  {t("card.sent.heading")}
+                </h2>
+                <p className="text-muted">{t("card.sent.contactPromise")}</p>
+              </div>
+            </div>
+            <div className="flex flex-col gap-1 rounded-control bg-sunken px-4 py-3">
+              <span className="text-meta text-muted">{t("card.sent.number")}</span>
+              <p className="flex flex-wrap items-center gap-3">
+                <span data-testid="ticket-number" className="text-ticket font-bold whitespace-nowrap tabular-nums">
+                  {card.ticketNumber}
+                </span>
+                <CopyNumber ticketNumber={card.ticketNumber} />
+              </p>
+            </div>
+            <section aria-label={t("card.sent.stages")}>
+              {card.tracking.rejected === null ? (
+                <StageStrip stages={card.tracking.stages} />
+              ) : (
+                <p className="flex items-start gap-2">
+                  <Icon name="circleX" className="mt-0.5 text-danger" />
+                  <span className="flex min-w-0 flex-col">
+                    <span className="font-semibold">{t("stage.long.invalid")}</span>
+                    <span className="break-words">
+                      {t("tracking.rejected", { reason: card.tracking.rejected.reason })}
+                    </span>
+                  </span>
+                </p>
+              )}
+            </section>
+            <ActionRow>
+              <Link
+                to={`/lapor/reports/${card.ticketNumber}`}
+                className={buttonStyles({ variant: "primary", size: "main", className: "@actions:flex-1" })}
+              >
+                {t("card.sent.open")}
+              </Link>
+              <a
+                href={link}
+                className={buttonStyles({ variant: "secondary", size: "main", className: "@actions:px-6" })}
+              >
+                {t("card.sent.track")}
+              </a>
+            </ActionRow>
           </div>
-          <figure className="flex flex-col items-start gap-1">
-            <QrCode text={`${origin}${link}`} label={t("card.sent.qr", { ticketNumber: card.ticketNumber })} />
-            <figcaption className="max-w-40 text-meta text-muted">{t("card.sent.qrHint")}</figcaption>
-          </figure>
+          <div className="flex min-w-0 flex-col gap-4 @split:border-s @split:border-line @split:ps-8">
+            <figure className="flex flex-col items-start gap-2">
+              <QrCode text={`${origin}${link}`} label={t("card.sent.qr", { ticketNumber: card.ticketNumber })} />
+              <figcaption className="text-meta text-muted">{t("card.sent.qrHint")}</figcaption>
+            </figure>
+            <ContactBlock contact={card.tracking.contact} />
+          </div>
         </div>
-        <section aria-label={t("card.sent.stages")}>
-          {card.tracking.rejected === null ? (
-            <StageStrip stages={card.tracking.stages} />
-          ) : (
-            <p className="flex items-start gap-2">
-              <Icon name="circleX" className="mt-0.5 text-danger" />
-              <span className="flex min-w-0 flex-col">
-                <span className="font-semibold">{t("stage.long.invalid")}</span>
-                <span className="break-words">{t("tracking.rejected", { reason: card.tracking.rejected.reason })}</span>
-              </span>
-            </p>
-          )}
-        </section>
-        <Link to={`/lapor/reports/${card.ticketNumber}`} className={buttonStyles({ variant: "primary", size: "main" })}>
-          {t("card.sent.open")}
-        </Link>
-        <a href={link} className={buttonStyles({ variant: "secondary", size: "main" })}>
-          {t("card.sent.track")}
-        </a>
-        <ContactBlock contact={card.tracking.contact} />
-        <Link to="/lapor/report" className={buttonStyles({ variant: "secondary", size: "main" })}>
-          {t("card.sent.new")}
-        </Link>
+        <div className="flex flex-col border-t border-line pt-4 @actions:items-start">
+          <Link to="/lapor/report" className={buttonStyles({ variant: "secondary", size: "main" })}>
+            <Icon name="plus" />
+            {t("card.sent.new")}
+          </Link>
+        </div>
       </section>
     </>
   );
