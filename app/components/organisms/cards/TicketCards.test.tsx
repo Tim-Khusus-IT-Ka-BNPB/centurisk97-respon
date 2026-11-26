@@ -130,3 +130,15 @@ describe("ticket card", () => {
     expect(await screen.findByText(/Nilai harus angka bulat 1 sampai 5/)).toBeTruthy();
   });
 });
+
+describe("after sending", () => {
+  test("the national numbers follow the ticket, 112 first, each one a call", async () => {
+    draw(withCard({ rating: 4 }));
+    const section = await screen.findByRole("region", { name: "Nomor penting" });
+    const calls = within(section)
+      .getAllByRole("link")
+      .map((link) => link.getAttribute("href"));
+    expect(calls).toEqual(["tel:112", "tel:117", "tel:115", "tel:119", "tel:110", "tel:113"]);
+    expect(within(section).getByText("Basarnas, pencarian dan pertolongan")).toBeTruthy();
+  });
+});
