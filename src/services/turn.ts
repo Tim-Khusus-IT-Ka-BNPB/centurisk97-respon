@@ -43,6 +43,7 @@ import { draftView, draftZone, LIFE_LINE, type Notice, noticesOnRead, type SentT
 import { answerLine, extractFrom } from "./extract";
 import { checkLimits, type LimitRefusal } from "./limits";
 import { locatePlace } from "./places";
+import { withSameEvent } from "./sameEvent";
 import { phraseOf } from "./summary";
 import { myReports, trackingOf, trackingToken } from "./tracking";
 
@@ -334,7 +335,9 @@ export async function takeTurn(
       errors: [],
       draft: await viewOf(bindings, draft, [], request.turnKey),
     };
-  return commit(bindings, draft, request, requestHash, outcome, prepared.messages, photos);
+  const offered =
+    outcome.kind === "next" ? { ...outcome, draft: await withSameEvent(bindings, before, outcome.draft) } : outcome;
+  return commit(bindings, draft, request, requestHash, offered, prepared.messages, photos);
 }
 
 async function commit(

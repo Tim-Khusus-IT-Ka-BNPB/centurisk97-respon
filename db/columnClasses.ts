@@ -195,6 +195,10 @@ export const COLUMN_CLASSES: Readonly<Record<string, TableClasses>> = {
     retention: "kept; append-only",
     columns: { id: I, staff_id: I, staff_label: I, at: I },
   },
+  report_link: {
+    retention: "with the report",
+    columns: { ticket_number: I, same_as: I, at: I },
+  },
   proof_publication: {
     retention: "with the report; append-only",
     columns: { id: I, proof_id: I, public: I, staff_id: I, staff_label: I, at: I },

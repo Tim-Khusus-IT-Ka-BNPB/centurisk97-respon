@@ -75,6 +75,9 @@ export async function answerCard(card: Locator, kind: string): Promise<void> {
       await card.getByLabel("Tidak tahu jamnya").check();
       return card.getByRole("button", { name: "Simpan jawaban" }).click();
     default: {
+      // Offered a report nearby, the plain walk tells of its own event.
+      if ((await card.getByRole("heading", { name: "Kejadian yang sama?" }).count()) > 0)
+        return card.getByRole("button", { name: /^Bukan, kejadian lain/ }).click();
       const tiles = card.locator('input[name="optionIds"]');
       if ((await tiles.count()) === 0) return buttons.first().click();
       await tiles.first().check();

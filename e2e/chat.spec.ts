@@ -39,6 +39,7 @@ function phone(request: APIRequestContext, number: string) {
 }
 
 const PLAIN: readonly (readonly [RegExp, string])[] = [
+  [/^\*Kejadian yang sama\?/m, "bukan"],
   [/^\*RT dan RW/m, "RT 4 RW 2"],
   [/^\*Jenis bencana/m, "banjir"],
   [/• Meninggal/, "2 0 5"],

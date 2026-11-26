@@ -153,9 +153,11 @@ describe("send", () => {
     const phone = browser(w.fetchApi);
     const number = freshNumber().typed;
     const firstSentAt = w.clock.now() + 0;
+    // A report an hour, as a person sends them: the hourly message limit is not what is tested here.
     for (let index = 0; index < 5; index += 1) {
       const { draft } = await atSummary(w, phone, number);
       expect((await send(phone, draft)).status).toBe(201);
+      w.clock.advance(3_600_000);
     }
     const { draft } = await atSummary(w, phone, number);
     const refused = await send(phone, draft);
@@ -181,6 +183,7 @@ describe("send", () => {
     for (let index = 0; index < 4; index += 1) {
       const { draft } = await atSummary(w, phone, number);
       await send(phone, draft);
+      w.clock.advance(3_600_000);
     }
     const { draft } = await atSummary(w, phone, number);
     const tabs = await Promise.all([send(phone, draft), send(phone, draft)]);

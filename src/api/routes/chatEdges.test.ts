@@ -158,7 +158,8 @@ describe("the last of what may be said", () => {
   test("news may be started with the 20th message of a minute, which is counted once", async () => {
     const { clock, one, hurry } = world();
     const ticket = await sent(one);
-    clock.set(Math.ceil(clock.now() / 60_000) * 60_000);
+    // The start of a minute after this one, so no message of the report counts in it.
+    clock.set((Math.floor(clock.now() / 60_000) + 1) * 60_000);
     hurry();
     for (let count = 0; count < 19; count += 1) await one.send("halo");
     expect((await one.send(`kabar ${ticket}`)).text).toMatch(new RegExp(`^\\*Tambah kabar untuk ${ticket}`));

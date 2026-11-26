@@ -71,6 +71,15 @@ export const recentReports = (db: Database, since: Date, scope: StaffScope = { l
       order by r.sent_at desc limit 3000`,
   );
 
+// What reporters confirmed as the same event, among reports sent since a time.
+export const recentLinks = async (db: Database, since: Date): Promise<(readonly [string, string])[]> =>
+  (
+    await rows<{ ticket_number: string; same_as: string }>(
+      db,
+      sql`select ticket_number, same_as from report_link where at > ${since}`,
+    )
+  ).map((one) => [one.ticket_number, one.same_as] as const);
+
 // A photo's newest mark decides.
 const NEWEST_MARK = sql`(select u.public from proof_publication u where u.proof_id = p.id order by u.id desc limit 1)`;
 

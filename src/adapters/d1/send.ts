@@ -108,3 +108,9 @@ export const storeTicketReply = (
   sql`insert into turn_reply (draft_id, turn_key, request_hash, status, body, created_at)
     values (${draftId}, ${turnKey}, ${requestHash}, 201,
       json_object('ticketNumber', ${ticketNumber}, 'sentAt', json_object('utc', ${sentAt}, 'zone', 'WIB')), ${sentAt})`;
+
+// The report just sent is of the same event as one sent before, when that one is still there.
+export const linkReport = (reportId: string, sameAs: string, at: Date): Query =>
+  sql`insert into report_link (ticket_number, same_as, at)
+    select r.ticket_number, ${sameAs}, ${at} from report r
+    where r.id = ${reportId} and exists (select 1 from ticket t where t.ticket_number = ${sameAs})`;

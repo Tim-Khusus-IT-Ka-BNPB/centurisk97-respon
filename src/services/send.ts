@@ -2,6 +2,7 @@ import { DRAFT_LIFE_MS, endDraft, loadDraft, storedReply } from "../adapters/d1/
 import { latestConsent, profileById } from "../adapters/d1/reporters";
 import {
   insertReport,
+  linkReport,
   nextSequence,
   recentSends,
   sendsBelow,
@@ -115,6 +116,7 @@ async function sendOnce(
       completePercent: completePercent(states),
     }),
     ...endDraft(draft.id, "sent", at),
+    ...(content.sameEvent?.joined ? [linkReport(reportId, content.sameEvent.joined, at)] : []),
     storeTicketReply(draft.id, turnKey, requestHash, ticketNumber, at),
     ...(bindings.settings.faultSend ? [ROLL_BACK] : []),
   ]);

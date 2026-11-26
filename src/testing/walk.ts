@@ -16,7 +16,8 @@ export function defaultAnswer(card: Card, villageCode: string): Record<string, u
     case "textQuestion":
       return { optionIds: ["unknown"] };
     case "choice":
-      return { optionIds: [(card.options[0] as { id: string }).id] };
+      // Offered a report nearby, the plain walk tells of its own event.
+      return { optionIds: [card.fieldId === "sameEvent" ? "none" : (card.options[0] as { id: string }).id] };
     case "chronologyStep":
       return { optionIds: [(card.options[0] as { id: string }).id] };
     case "multiChoice":

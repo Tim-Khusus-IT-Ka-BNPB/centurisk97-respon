@@ -26,6 +26,10 @@ function door(overrides: Record<string, string> = {}, start = START) {
 }
 
 type One = ReturnType<typeof chatOf>;
+
+// Reports of earlier tests are near: the offer of one is answered no, and the next question read.
+const pastOffer = async (one: One, text: string) =>
+  /^\*Kejadian yang sama\?\*/.test(text) ? (await one.send("bukan")).text : text;
 const { clock, bindings, open } = door();
 
 const reporters = (number: string) => query`select id from reporter where number = ${number}`;
@@ -253,14 +257,14 @@ describe("answers", () => {
       /^Pesan itu belum menjawab pertanyaan ini[\s\S]*\*RT dan RW\*/,
     );
     expect((await one.send("RT 4567")).text).toMatch(/RT diisi 1 sampai 3 angka/);
-    expect((await one.send("004/012")).text).toMatch(/^\*Jenis bencana\*/);
+    expect(await pastOffer(one, (await one.send("004/012")).text)).toMatch(/^\*Jenis bencana\*/);
     expect((await states(one)).neighbourhood).toMatchObject({ value: { rt: "004", rw: "012" } });
   });
 
   test("a number off the list, two where one is asked, and words that say nothing (AC-07)", async () => {
     const one = open();
     await known(one);
-    await one.send("-");
+    await pastOffer(one, (await one.send("-")).text);
     const before = await draftOf(one.number);
     expect((await one.send("99")).text).toMatch(
       /^Pilihannya 1 sampai 10, jadi belum ada yang dicatat\.[\s\S]*\*Jenis bencana\*/,

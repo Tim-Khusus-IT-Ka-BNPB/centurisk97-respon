@@ -190,5 +190,22 @@
   "card.emergency.victims.no": "Tidak ada",
   "card.emergency.victims.unknown": "Belum tahu",
   "card.emergency.summary": "Laporan darurat, sedang berlangsung",
-  "card.emergency.summaryVictims": "Orang terluka, hilang, atau terjebak: {victims}"
+  "card.emergency.summaryVictims": "Orang terluka, hilang, atau terjebak: {victims}",
+  "card.sameEvent.title": "Kejadian yang sama?",
+  "card.sameEvent.prompt": "Di Kec. {district} sudah ada laporan {offers}. Apakah yang Anda laporkan kejadian yang sama?",
+  "card.sameEvent.offer": "{hazard} sejak {since} dari {reporters} warga",
+  "card.sameEvent.yes.flood": "Ya, banjir yang sama",
+  "card.sameEvent.yes.landslide": "Ya, tanah longsor yang sama",
+  "card.sameEvent.yes.tidalWaveAbrasion": "Ya, gelombang pasang dan abrasi yang sama",
+  "card.sameEvent.yes.extremeWeather": "Ya, cuaca ekstrem yang sama",
+  "card.sameEvent.yes.drought": "Ya, kekeringan yang sama",
+  "card.sameEvent.yes.forestFire": "Ya, kebakaran hutan dan lahan yang sama",
+  "card.sameEvent.yes.earthquake": "Ya, gempa bumi yang sama",
+  "card.sameEvent.yes.tsunami": "Ya, tsunami yang sama",
+  "card.sameEvent.yes.volcanicEruption": "Ya, erupsi gunung api yang sama",
+  "card.sameEvent.yes.buildingFire": "Ya, kebakaran gedung dan permukiman yang sama",
+  "card.sameEvent.yes.other": "Ya, kejadian yang sama",
+  "card.sameEvent.yesNote": "Jenis dan waktunya diambil dari laporan itu, sisanya ditanyakan seperti biasa",
+  "card.sameEvent.no": "Bukan, kejadian lain",
+  "card.sameEvent.noNote": "Isi laporan baru dari awal"
 }

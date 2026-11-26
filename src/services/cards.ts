@@ -1,9 +1,11 @@
 import type { Card } from "../contract/card";
 import { copy } from "../copy";
+import { hazardKey } from "../copy/hazardKey";
+import { localClockText, localDateText } from "../copy/time";
 import { chronologySteps, isExclusive } from "../domain/chronology";
 import type { ChronologyAnswers } from "../domain/chronology/sentence";
 import { VICTIM_ANSWERS } from "../domain/emergency";
-import { localDate, type Zone } from "../domain/eventTime";
+import { localClock, localDate, type Zone } from "../domain/eventTime";
 import type { FieldState } from "../domain/fieldState";
 import { chosenHazardType } from "../domain/fields/applicable";
 import { type FieldId, fieldById } from "../domain/fields/catalogue";
@@ -19,6 +21,7 @@ import {
   type PlaceReading,
   photoMax,
   type Question,
+  type SameEvent,
 } from "../domain/turn/content";
 import { choiceOptions, isExclusiveOption } from "../domain/turn/options";
 import { allGroups, changeRows, chronologyRow, summaryGroups } from "./summary";
@@ -260,6 +263,32 @@ function followUpCard(base: CardBase, content: DraftContent, followUp: FollowUpO
 }
 
 // The card for the question code picked. Copy keys only; the client fills the text.
+// What is already reported in the district, each as its kind, since when and from how many people:
+// no name, number, ticket or words of another reporter (D104).
+function sameEventCard(base: CardBase, sameEvent: SameEvent, zone: Zone): Card {
+  const offers = sameEvent.offers.map((offer) =>
+    copy.format("card.sameEvent.offer", {
+      hazard: copy.text(hazardKey(offer.hazardType)).toLowerCase(),
+      since: `${localDateText(localDate(offer.sinceMs, zone))}, ${localClockText(localClock(offer.sinceMs, zone))} ${zone}`,
+      reporters: offer.reporters,
+    }),
+  );
+  return {
+    ...base,
+    params: { district: sameEvent.districtName, offers: offers.join("; ") },
+    kind: "choice",
+    titleKey: "card.sameEvent.title",
+    promptKey: "card.sameEvent.prompt",
+    fieldId: "sameEvent",
+    options: [
+      ...sameEvent.offers.map((offer) =>
+        option(offer.hazardType, `card.sameEvent.yes.${offer.hazardType}`, "card.sameEvent.yesNote"),
+      ),
+      option("none", "card.sameEvent.no", "card.sameEvent.noNote"),
+    ],
+  };
+}
+
 export function cardFor(question: Question, content: DraftContent, context: CardContext): Card {
   const base: CardBase = { cardId: context.cardId, params: {} };
   const hazardType = chosenHazardType(content.states);
@@ -277,6 +306,8 @@ export function cardFor(question: Question, content: DraftContent, context: Card
         query: null,
         places: null,
       };
+    case "sameEvent":
+      return sameEventCard(base, content.sameEvent as SameEvent, context.zone);
     case "emergencyVictims":
       return {
         ...base,

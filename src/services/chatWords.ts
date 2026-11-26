@@ -45,6 +45,9 @@ const choiceOf = (option: CardOption, notes: boolean): Choice => ({
 
 const MEANS: Readonly<Record<string, Choice["means"]>> = { confirm: "yes", other: "no", yes: "yes", no: "no" };
 
+const sameEventMeaning = (id: string, options: number): Pick<Choice, "means"> =>
+  id === "none" ? { means: "no" } : options === 2 ? { means: "yes" } : {};
+
 // The numbered answers of a card, in the order its message lists them: what a number in the reply means.
 export function cardChoices(card: Card): Choice[] {
   switch (card.kind) {
@@ -54,6 +57,8 @@ export function cardChoices(card: Card): Choice[] {
       return card.options.map((option) => ({
         ...choiceOf(option, notes),
         ...(card.fieldId === "emergencyVictims" ? { means: MEANS[option.id] } : {}),
+        // "bukan" is a report of its own; a plain "ya" joins the one report offered.
+        ...(card.fieldId === "sameEvent" ? sameEventMeaning(option.id, card.options.length) : {}),
       }));
     }
     case "chronologyStep":

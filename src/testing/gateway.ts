@@ -106,6 +106,8 @@ export const VILLAGE = { lat: 5.14705, lon: 97.0482 } as const;
 // The plainest way through a report: the first answer of each list, none or not known of the rest.
 export const PLAIN: readonly (readonly [RegExp, string])[] = [
   [/^\*RT dan RW/m, "tidak tahu"],
+  // Offered a report nearby, the plain walk tells of its own event.
+  [/^\*Kejadian yang sama\?/m, "bukan"],
   [/^\*Jenis bencana/m, "1"],
   [/^\*Kronologi tersusun/m, "lanjut"],
   [/^\*Waktu kejadian/m, "1 07.00"],
