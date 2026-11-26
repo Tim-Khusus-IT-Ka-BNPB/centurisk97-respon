@@ -357,6 +357,14 @@ export const COLUMN_CLASSES: Readonly<Record<string, TableClasses>> = {
       created_at: I,
     },
   },
+  warning_sent: {
+    retention: "until the day it is for has passed, swept by the sender",
+    columns: { regency_code: I, hazard: I, date: I, level: I },
+  },
+  warning_pause: {
+    retention: "kept; append-only",
+    columns: { id: I, paused: I, staff_id: I, staff_label: I, at: I },
+  },
   photo_removal: {
     retention: "until the sweep has deleted the file from the photo store",
     columns: { store_key: I, queued_at: I },

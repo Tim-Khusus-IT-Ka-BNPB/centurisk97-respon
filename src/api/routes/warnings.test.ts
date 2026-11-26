@@ -105,7 +105,7 @@ describe("warnings of a phone", () => {
       sql`with recursive k(i) as (select 1 union all select i + 1 from k where i < ${filler})
         insert into warning_subscription (endpoint, p256dh, auth, district_code, regency_code, district_name, hazards,
           threshold, created_at)
-        select 'https://fcm.googleapis.com/fcm/send/isi-' || i, ${keys.p256dh}, ${keys.auth}, '11.08.01', '11.08',
+        select 'https://fcm.googleapis.com/fcm/send/isi-' || i, ${keys.p256dh}, ${keys.auth}, '99.98.01', '99.98',
           'Isi', 15, 1, '2026-11-26T00:00:00.000Z' from k`,
     );
     try {

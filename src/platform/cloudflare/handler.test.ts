@@ -1,5 +1,6 @@
 import { describe, expect, test } from "vitest";
 import { testDatabase } from "../../testing/api";
+import { vapidKeys } from "../../testing/push";
 import type { Database } from "../database";
 import type { LogLine } from "../log";
 import { createWorker } from "./handler";
@@ -108,7 +109,33 @@ describe("worker handler", () => {
   test("the scheduled event runs the sweep and logs it", async () => {
     const { handler, lines } = worker();
     await expect(handler.scheduled(controller, sweepEnv())).resolves.toBeUndefined();
-    expect(lines.map((line) => line.event)).toEqual(["sweep.done"]);
+    expect(lines.map((line) => line.event)).toEqual(["sweep.done", "warnings.done"]);
+  });
+
+  test("a failed warnings send is logged as its own step, after the sweep", async () => {
+    const { handler, lines } = worker();
+    const real = testDatabase();
+    // The sweep reads and writes as usual; the warnings' first read breaks.
+    const db = new Proxy(real, {
+      get(target, name) {
+        if (name !== "prepare") return Reflect.get(target, name);
+        return (text: string) => {
+          if (text.includes("warning_pause")) throw new Error("D1_ERROR: no such table: warning_pause: SQLITE_ERROR");
+          return target.prepare(text);
+        };
+      },
+    });
+    const push = await vapidKeys();
+    const env = {
+      ...sweepEnv(),
+      DB: db,
+      PUSH_PUBLIC_KEY: push.publicKey,
+      PUSH_PRIVATE_KEY: push.privateKey,
+      PUSH_SUBJECT: push.subject,
+    } as unknown as Env;
+    await expect(handler.scheduled(controller, env)).rejects.toThrow("Scheduled warnings failed");
+    expect(lines.map((line) => line.event)).toEqual(["sweep.done", "warnings.failed"]);
+    expect(lines.at(-1)).toEqual({ event: "warnings.failed", errorCode: "warnings.failed", sqlState: "SQLITE_ERROR" });
   });
 
   test("a bad setting refuses the scheduled run as it refuses requests", async () => {

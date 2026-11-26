@@ -3,6 +3,7 @@ import { r2PhotoStore } from "../../adapters/r2/photoStore";
 import { api } from "../../api/app";
 import { createBridge } from "../../api/bridge";
 import { runSweep } from "../../services/sweep";
+import { sendWarnings } from "../../services/warningSend";
 import { createClock } from "../clock";
 import { sqlState } from "../database";
 import { createLogger, type Logger, type LogSink } from "../log";
@@ -64,21 +65,23 @@ export function createWorker(pages: PageHandler, runtime: string, sink?: LogSink
       };
       return withPageHeaders(await pages(request, context));
     },
-    // The cron trigger. A bad setting refuses the run as it refuses requests.
+    // The cron trigger: the sweep, then the warnings. A bad setting refuses the run as it refuses requests.
     async scheduled(_controller, env) {
       const state = startOnce(env);
       if (!state.ok) return;
+      const { settings, log, clock } = state.instance;
+      let step = "sweep";
       try {
-        await runSweep(env.DB, r2PhotoStore(env.PHOTOS), state.instance.clock, state.instance.log);
+        await runSweep(env.DB, r2PhotoStore(env.PHOTOS), clock, log);
+        step = "warnings";
+        const started = Date.now();
+        await sendWarnings({ db: env.DB, settings, clock }, (request) => fetch(request));
+        log.info({ event: "warnings.done", durationMs: Date.now() - started });
       } catch (error) {
         // The driver's message may quote values, so only its SQLite code leaves this run.
         const code = sqlState(error);
-        state.instance.log.error({
-          event: "sweep.failed",
-          errorCode: "sweep.failed",
-          ...(code ? { sqlState: code } : {}),
-        });
-        throw new Error("Scheduled sweep failed");
+        log.error({ event: `${step}.failed`, errorCode: `${step}.failed`, ...(code ? { sqlState: code } : {}) });
+        throw new Error(`Scheduled ${step} failed`);
       }
     },
   } satisfies ExportedHandler<Env>;

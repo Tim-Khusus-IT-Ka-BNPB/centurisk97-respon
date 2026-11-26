@@ -45,3 +45,60 @@ export async function keepChoice(db: Database, choice: WarningChoice, at: Date):
 
 export const stopWarnings = (db: Database, endpoint: string) =>
   run(db, sql`delete from warning_subscription where endpoint = ${endpoint}`);
+
+export type TargetRow = {
+  readonly endpoint: string;
+  readonly p256dh: string;
+  readonly auth: string;
+  readonly hazards: number;
+  readonly threshold: number;
+};
+
+// Each phone warned of a regency, once, however many of its districts it picked.
+export const phonesOf = (db: Database, regencyCode: string) =>
+  rows<TargetRow>(
+    db,
+    sql`select endpoint, max(p256dh) as p256dh, max(auth) as auth, max(hazards) as hazards, min(threshold) as threshold
+      from warning_subscription where regency_code = ${regencyCode} group by endpoint`,
+  );
+
+export async function sentLevels(db: Database): Promise<Map<string, number>> {
+  const found = await rows<{ regency_code: string; hazard: string; date: string; level: number }>(
+    db,
+    sql`select regency_code, hazard, date, level from warning_sent`,
+  );
+  return new Map(found.map((one) => [`${one.regency_code}|${one.hazard}|${one.date}`, one.level]));
+}
+
+// Kept as sent, the higher level winning; days past are dropped.
+export async function keepSent(
+  db: Database,
+  sent: readonly { regencyCode: string; hazard: string; date: string; level: number }[],
+  today: string,
+): Promise<void> {
+  await atomically(db, [
+    sql`delete from warning_sent where date < ${today}`,
+    ...sent.map(
+      (one) => sql`insert into warning_sent (regency_code, hazard, date, level)
+        values (${one.regencyCode}, ${one.hazard}, ${one.date}, ${one.level})
+        on conflict (regency_code, hazard, date) do update set level = max(level, excluded.level)`,
+    ),
+  ]);
+}
+
+export type PauseRow = { readonly paused: number; readonly staff_label: string; readonly at: string };
+
+export const latestPause = (db: Database) =>
+  row<PauseRow>(db, sql`select paused, staff_label, at from warning_pause order by id desc limit 1`);
+
+export const setPause = (
+  db: Database,
+  paused: boolean,
+  staff: { readonly staffId: string; readonly label: string },
+  at: Date,
+) =>
+  run(
+    db,
+    sql`insert into warning_pause (paused, staff_id, staff_label, at)
+      values (${paused}, ${staff.staffId}, ${staff.label}, ${at})`,
+  );

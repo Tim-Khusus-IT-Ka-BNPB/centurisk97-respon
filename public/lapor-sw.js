@@ -1,7 +1,7 @@
 // The service worker of /lapor (LR-03): a page seen before opens again with no signal, from the copy
 // kept here. Pages: the network first, the kept copy when it fails. Built files, whose names carry
 // their content's hash: the kept copy first. The API is never kept. Raise VERSION when this file changes.
-const VERSION = "lapor-1";
+const VERSION = "lapor-2";
 const KEPT = `${VERSION}-pages`;
 // Kept at install: the home and the emergency page, so a report can be made with no signal.
 const FIRST = ["/lapor", "/lapor/darurat"];
@@ -75,6 +75,44 @@ self.addEventListener("fetch", (event) => {
         event.waitUntil(caches.open(KEPT).then((cache) => cache.put(request, copy)));
       }
       return response;
+    })(),
+  );
+});
+
+// A warning of the outlook (M07): shown as sent, and a tap opens its Info daerah page. Only a page of
+// this site is ever opened.
+self.addEventListener("push", (event) => {
+  const message = (() => {
+    try {
+      return event.data?.json() ?? null;
+    } catch {
+      return null;
+    }
+  })();
+  if (!message || typeof message.title !== "string") return;
+  const url = typeof message.url === "string" && message.url.startsWith("/lapor/") ? message.url : "/lapor/info";
+  event.waitUntil(
+    self.registration.showNotification(message.title, {
+      body: typeof message.body === "string" ? message.body : "",
+      icon: "/icons/192.png",
+      badge: "/icons/192.png",
+      tag: url,
+      data: { url },
+    }),
+  );
+});
+
+self.addEventListener("notificationclick", (event) => {
+  event.notification.close();
+  const url = event.notification.data?.url ?? "/lapor/info";
+  event.waitUntil(
+    (async () => {
+      for (const client of await self.clients.matchAll({ type: "window" }))
+        if (new URL(client.url).pathname === url.split("?")[0] && "focus" in client) {
+          await client.navigate(url);
+          return client.focus();
+        }
+      return self.clients.openWindow(url);
     })(),
   );
 });
