@@ -1,3 +1,4 @@
+import type { StaffScope } from "../../domain/deskRights";
 import type { TicketStatus } from "../../domain/stages";
 import { type Database, row, rows, run, sql } from "../../platform/database";
 import type { StaffPrincipal } from "../../ports/identity";
@@ -55,8 +56,8 @@ export type ClusterRow = {
   readonly placed_photo: number;
 };
 
-// Every report sent since a time, to find the clusters among them.
-export const recentReports = (db: Database, since: Date) =>
+// Every report sent since a time, of a region or of all, to find the clusters among them.
+export const recentReports = (db: Database, since: Date, scope: StaffScope = { level: "national" }) =>
   rows<ClusterRow>(
     db,
     sql`select r.ticket_number, r.hazard_type, r.village_code, r.regency_code, r.number_key, t.status, r.sent_at,
@@ -66,7 +67,7 @@ export const recentReports = (db: Database, since: Date) =>
       from report r
       join ticket t on t.report_id = r.id
       join report_version v on v.report_id = r.id and v.version = ${LATEST}
-      where r.sent_at > ${since}
+      where r.sent_at > ${since}${regionCondition(scope)}
       order by r.sent_at desc limit 3000`,
   );
 

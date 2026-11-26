@@ -1,6 +1,7 @@
 import { describe, expect, test } from "vitest";
 import type { ClusterRow, ShownRow } from "../adapters/d1/publicFeed";
-import { clusterInput, entryOf } from "./publicFeed";
+import { clusterInput } from "./clusters";
+import { entryOf } from "./publicFeed";
 
 const SENT = "2026-11-24T03:00:00.000Z";
 const place = (point?: object) => ({

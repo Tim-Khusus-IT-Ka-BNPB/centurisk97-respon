@@ -1,28 +1,17 @@
-import {
-  type ClusterRow,
-  markProof,
-  publicProofKey,
-  publicProofs,
-  recentReports,
-  type ShownRow,
-  shownReports,
-} from "../adapters/d1/publicFeed";
+import { markProof, publicProofKey, publicProofs, type ShownRow, shownReports } from "../adapters/d1/publicFeed";
 import type { Feed, FeedEntry } from "../contract/publicFeed";
-import { type ClusterInput, clusterOfTicket, clustersOf } from "../domain/clusters";
-import { eventInstantMs } from "../domain/eventTime";
 import type { EventTimeValue, PlaceValue } from "../domain/fieldState";
 import { impactOf } from "../domain/impact";
-import { DAY_MS } from "../domain/time";
 import { parsed } from "../platform/database";
 import { hmacKey } from "../platform/keys";
 import type { StaffPrincipal } from "../ports/identity";
 import type { ServiceBindings } from "./bindings";
+import { clusterMap } from "./clusters";
 import { changeTicket, type DeskChange } from "./desk";
 import { at, draftZone } from "./draftView";
 import { checkLimits, type LimitRefusal } from "./limits";
 
-// Clusters are found among the reports of the last 30 days; the feed shows the newest 100 entries.
-const CLUSTER_DAYS = 30;
+// The feed shows the newest 100 entries.
 const ENTRIES = 100;
 const PROOFS = 4;
 
@@ -34,23 +23,6 @@ const fieldValue = <T>(states: States, field: string): T | null => {
   const state = states[field];
   return state?.state === "value" ? (state.value as T) : null;
 };
-
-export function clusterInput(row: ClusterRow): ClusterInput {
-  const states = parsed<States>(row.fields) as States;
-  const place = fieldValue<PlaceValue>(states, "place") as PlaceValue;
-  const eventTime = fieldValue<EventTimeValue>(states, "eventTime");
-  return {
-    ticketNumber: row.ticket_number,
-    hazardType: row.hazard_type,
-    point: place.point ? { lat: place.point.lat, lon: place.point.lon } : null,
-    villageCode: row.village_code,
-    regencyCode: row.regency_code,
-    atMs: (eventTime && eventInstantMs(eventTime)) ?? Date.parse(row.sent_at),
-    numberKey: row.number_key,
-    placedPhoto: row.placed_photo === 1,
-    status: row.status,
-  };
-}
 
 const rounded = (degrees: number) => Math.round(degrees * 1e4) / 1e4;
 
@@ -89,13 +61,11 @@ export type FeedAnswer =
 export async function publicFeed(bindings: ServiceBindings, address: string, filter: FeedFilter): Promise<FeedAnswer> {
   const refusal = await checkLimits(bindings, [["address.feed", { kind: "address", bucket: address }]]);
   if (refusal) return { kind: "limit", refusal };
-  const since = new Date(bindings.clock.now() - CLUSTER_DAYS * DAY_MS);
-  const [shown, recent, proofs] = await Promise.all([
+  const [shown, clusterOf, proofs] = await Promise.all([
     shownReports(bindings.db, filter),
-    recentReports(bindings.db, since),
+    clusterMap(bindings),
     publicProofs(bindings.db),
   ]);
-  const clusterOf = clusterOfTicket(clustersOf(recent.map(clusterInput)));
   const standing = new Map<string, ShownRow>();
   for (const row of shown) {
     const key = clusterOf.get(row.ticket_number)?.tickets[0] ?? row.ticket_number;
