@@ -1,6 +1,7 @@
 import { copy } from "../../src/copy";
-import { type LanguageId, TRANSLATIONS } from "../../src/copy/languages";
+import type { LanguageId } from "../../src/copy/languages";
 import type { Texts } from "../../src/copy/text";
+import { TRANSLATIONS } from "../../src/copy/translations";
 
 // Every page needs the shell's words; each page adds the namespaces it draws from.
 const SHELL = [

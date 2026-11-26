@@ -41,16 +41,12 @@ export const LANGUAGE_GROUPS: readonly (readonly [string, readonly LanguageId[]]
   ["malukuPapua", ["abs", "pmy"]],
 ];
 
-type Translation = Readonly<Record<string, string>>;
-
-const FILES = import.meta.glob<Translation>("./tr/*.json", { eager: true, import: "default" });
-
-export const TRANSLATIONS: ReadonlyMap<string, Translation> = new Map(
-  Object.entries(FILES).map(([path, words]) => [path.slice(5, -5), words]),
-);
+// Which languages have a file, by name only: the words stay on the server (translations.ts), so a
+// page never ships all of them to the phone.
+const HAVE = new Set(Object.keys(import.meta.glob("./tr/*.json")).map((path) => path.slice(5, -5)));
 
 // Indonesian, and each language with a file.
-export const OFFERED = LANGUAGES.filter(([id]) => id === "id" || TRANSLATIONS.has(id));
+export const OFFERED = LANGUAGES.filter(([id]) => id === "id" || HAVE.has(id));
 
 export const LANGUAGE_COOKIE = "bahasa";
 

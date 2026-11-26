@@ -1,7 +1,8 @@
 import { describe, expect, test } from "vitest";
 import { copy } from ".";
-import { LANGUAGES, languageFrom, OFFERED, TRANSLATIONS } from "./languages";
+import { LANGUAGES, languageFrom, OFFERED } from "./languages";
 import { isTranslated, TRANSLATED, translationProblem } from "./translated";
+import { TRANSLATIONS } from "./translations";
 
 describe("a translated line", () => {
   test("keeps its placeholders and numbers, is no answer, and never calls anything safe", () => {
