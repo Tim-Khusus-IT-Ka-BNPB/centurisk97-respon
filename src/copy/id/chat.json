@@ -9,5 +9,6 @@
   "chat.box.useCard": "Pilih jawaban di kartu di atas, atau ketik \"kembali\" untuk mengubah jawaban sebelumnya.",
   "chat.aside.progress": "Kelengkapan laporan",
   "chat.aside.percent": "{percent}% lengkap",
-  "chat.aside.help": "Lihat bantuan melapor"
+  "chat.aside.help": "Lihat bantuan melapor",
+  "chat.posterPlace": "Lokasi dari poster: Desa/Kel. {village}, Kec. {district}. Bila kejadiannya di tempat lain, ubah di ringkasan sebelum mengirim."
 }

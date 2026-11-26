@@ -7,7 +7,7 @@ import { checkIdentity } from "../../domain/identityForm";
 import { PRIVACY } from "../../domain/privacy";
 import { LIFE_LINE } from "../../services/draftView";
 import { checkLimits } from "../../services/limits";
-import { giveConsent, knownReporters, removeProfile, startDraft } from "../../services/reporters";
+import { giveConsent, knownReporters, posterVillage, removeProfile, startDraft } from "../../services/reporters";
 import { viewOf } from "../../services/turn";
 import type { ApiContext } from "../context";
 import { refuse } from "../envelope";
@@ -16,6 +16,8 @@ import { fieldErrors, limitRefused } from "./shared";
 
 const DEVICE_KEY_DAYS = 365;
 const text = (max: number) => z.string().max(max);
+
+const villageCode = z.string().regex(/^\d{2}\.\d{2}\.\d{2}\.\d{4}$/);
 
 const consentBody = z.object({
   role: text(40),
@@ -26,6 +28,8 @@ const consentBody = z.object({
   privacyVersion: z.literal(PRIVACY.version),
   agree: z.literal(true),
   emergency: z.boolean().default(false),
+  // A poster's village (D131): the new draft starts with it as its place.
+  villageCode: villageCode.optional(),
 });
 
 const identityEdit = z.object({
@@ -40,6 +44,7 @@ const startBody = z.object({
   replaceOpenDraft: z.boolean().default(false),
   profileEdit: identityEdit.optional(),
   emergency: z.boolean().default(false),
+  villageCode: villageCode.optional(),
 });
 
 async function createdDraft(c: ApiContext, draftId: string): Promise<Response> {
@@ -82,7 +87,8 @@ export function addReporterRoutes(api: Api): void {
       if ("errors" in checked) return refuse(c, 422, "request.invalidFields", { fields: fieldErrors(checked.errors) });
       const limited = await checkLimits(c.env, [["address.bindings", { kind: "address", bucket: c.var.address }]]);
       if (limited) return limitRefused(c, limited, null);
-      const result = await giveConsent(c.env, principal, checked.identity, body.emergency);
+      const village = await posterVillage(c.env, body.villageCode ?? null);
+      const result = await giveConsent(c.env, principal, checked.identity, body.emergency, null, village);
       if (result.kind === "deviceFull") return limitRefused(c, { limitId: "device.numbers", retryAtMs: null }, null);
       if (result.deviceKey !== null) {
         setCookie(c, DEVICE_COOKIE, result.deviceKey, {
@@ -128,6 +134,7 @@ export function addReporterRoutes(api: Api): void {
         body.replaceOpenDraft,
         edit,
         body.emergency,
+        await posterVillage(c.env, body.villageCode ?? null),
       );
       if (result.kind === "notFound") return refuse(c, 404, "draft.notFound");
       if (result.kind === "openExists") {

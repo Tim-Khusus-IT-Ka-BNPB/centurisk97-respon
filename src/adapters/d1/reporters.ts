@@ -1,3 +1,4 @@
+import type { DraftState } from "../../domain/draftStates";
 import type { Identity, ReporterRole } from "../../domain/identityForm";
 import type { DraftContent } from "../../domain/turn/content";
 import { type Database, type Query, row, rows, sql } from "../../platform/database";
@@ -114,11 +115,13 @@ export const createDraft = (
   at: Date,
   firstNotices: unknown,
   content: DraftContent,
+  // A place known from the start (a poster's village) moves the draft past the place question.
+  start: { readonly state: DraftState; readonly villageCode: string | null } = { state: "place", villageCode: null },
 ): Query =>
   sql`insert into report_draft (id, reporter_id, profile_id, owner_slot, state, fields, back_stack, asked, created_at,
-      last_acted_at, pending_notices)
-    values (${draftId}, (select id from reporter where number_key = ${numberKey}), ${profileIdOf}, ${ownerSlot}, 'place',
-      ${content}, '[]', '{}', ${at}, ${at}, ${firstNotices})`;
+      last_acted_at, pending_notices, village_code)
+    values (${draftId}, (select id from reporter where number_key = ${numberKey}), ${profileIdOf}, ${ownerSlot},
+      ${start.state}, ${content}, '[]', '{}', ${at}, ${at}, ${firstNotices}, ${start.villageCode})`;
 
 // An open draft turned into an emergency, its answers kept.
 export const makeEmergency = (draftId: string): Query =>

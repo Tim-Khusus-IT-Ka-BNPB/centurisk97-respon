@@ -1,4 +1,5 @@
 import { addMessages, DRAFT_LIFE_MS, endDraft, isLive, type OpenDraft, openDraftOf } from "../adapters/d1/drafts";
+import { activeVillage } from "../adapters/d1/places";
 import {
   addConsent,
   createDevice,
@@ -17,16 +18,19 @@ import {
   upsertReporter,
 } from "../adapters/d1/reporters";
 import type { MeResponse } from "../contract/draft";
+import type { PlaceValue } from "../domain/fieldState";
 import type { Identity } from "../domain/identityForm";
 import { LIMITS } from "../domain/limits";
 import { ownerSlotOf, SESSION_SLOT } from "../domain/ownership";
 import { maskNumber } from "../domain/phoneNumber";
 import { PRIVACY } from "../domain/privacy";
-import { EMERGENCY_CONTENT, EMPTY_CONTENT } from "../domain/turn/content";
+import { type DraftContent, EMERGENCY_CONTENT, EMPTY_CONTENT } from "../domain/turn/content";
+import { nextQuestion, stateFor } from "../domain/turn/next";
 import { atomically, decide, holds, type Query, row, sql } from "../platform/database";
 import { hmacKey, sha256Hex } from "../platform/keys";
 import type { Principal } from "../ports/identity";
 import type { ServiceBindings } from "./bindings";
+import { cardFor } from "./cards";
 import { draftZone, LIFE_LINE, at as shownAt } from "./draftView";
 import { myReports } from "./tracking";
 
@@ -40,16 +44,55 @@ function newDeviceKey(): string {
     .replace(/=+$/, "");
 }
 
-// The first lines of every new draft: the greeting and the place question.
-const openingMessages = (draftId: string, at: Date): Query[] =>
-  addMessages(
-    draftId,
-    [
-      { speaker: "assistant", copyKey: "chat.greeting", params: {}, cardKind: null },
-      { speaker: "assistant", copyKey: "card.placeSearch.title", params: {}, cardKind: "placeSearch" },
-    ],
-    at,
-  );
+// The first lines of every new draft: the greeting and the place question, or, with a poster's
+// village, that village and the question after it.
+function opening(draftId: string, at: Date, content: DraftContent, village: PlaceValue | null) {
+  if (village === null)
+    return {
+      state: "place" as const,
+      writes: addMessages(
+        draftId,
+        [
+          { speaker: "assistant", copyKey: "chat.greeting", params: {}, cardKind: null },
+          { speaker: "assistant", copyKey: "card.placeSearch.title", params: {}, cardKind: "placeSearch" },
+        ],
+        at,
+      ),
+    };
+  const question = nextQuestion("place", content, {});
+  const card = cardFor(question, content, {
+    cardId: "",
+    nowMs: at.getTime(),
+    zone: draftZone(village.villageCode),
+    reporter: { name: "", role: "citizen" },
+    completePercent: 0,
+    asked: {},
+    photos: [],
+  });
+  return {
+    state: stateFor(question, "place"),
+    writes: addMessages(
+      draftId,
+      [
+        { speaker: "assistant", copyKey: "chat.greeting", params: {}, cardKind: null },
+        {
+          speaker: "assistant",
+          copyKey: "chat.posterPlace",
+          params: { village: village.villageName, district: village.districtName },
+          cardKind: null,
+        },
+        {
+          speaker: "assistant",
+          copyKey: card.titleKey,
+          promptKey: card.promptKey,
+          params: card.params,
+          cardKind: card.kind,
+        },
+      ],
+      at,
+    ),
+  };
+}
 
 // A new draft, with the open one ended first when it is past its 24 hours. The one-open-draft
 // index refuses a second open draft, so a race between two of these ends in one draft.
@@ -60,26 +103,31 @@ function newDraft(
   open: OpenDraft | null,
   at: Date,
   emergency: boolean,
+  village: PlaceValue | null,
 ) {
   const draftId = crypto.randomUUID();
   const expired = open === null ? [] : endDraft(open.id, "expired", at, sql`last_acted_at = ${open.lastActedAt}`);
+  const base = emergency ? EMERGENCY_CONTENT : EMPTY_CONTENT;
+  // The poster's village stands as set by the service; the reporter changes it on the summary.
+  const content: DraftContent =
+    village === null ? base : { ...base, states: { place: { state: "value", value: village, origin: "system" } } };
+  const first = opening(draftId, at, content, village);
   return {
     draftId,
     writes: [
       ...expired,
-      createDraft(
-        draftId,
-        numberKey,
-        profileIdOf,
-        slot,
-        at,
-        [LIFE_LINE],
-        emergency ? EMERGENCY_CONTENT : EMPTY_CONTENT,
-      ),
-      ...openingMessages(draftId, at),
+      createDraft(draftId, numberKey, profileIdOf, slot, at, [LIFE_LINE], content, {
+        state: first.state,
+        villageCode: village?.villageCode ?? null,
+      }),
+      ...first.writes,
     ],
   };
 }
+
+// The village a poster's code named, when the active place data has it; anything else is ignored.
+export const posterVillage = (bindings: ServiceBindings, code: string | null) =>
+  code === null ? Promise.resolve(null) : activeVillage(bindings.db, code);
 
 const STILL_OPEN = (draftId: string) =>
   holds(
@@ -99,6 +147,7 @@ export async function giveConsent(
   emergency: boolean,
   // When they agreed, if that was before this request: a chat asks who they are after its "Setuju".
   agreedAt: Date | null = null,
+  village: PlaceValue | null = null,
 ): Promise<ConsentResult> {
   const at = new Date(bindings.clock.now());
   const deviceKey = principal.kind === "anonymous" ? newDeviceKey() : null;
@@ -150,7 +199,7 @@ export async function giveConsent(
     }
     // News not sent yet never stands in for the report being started, least of all an emergency.
     const dropped = open !== null && live ? endDraft(open.id, "cancelled", at) : [];
-    const created = newDraft(key, profileIdOf, slot, live ? null : open, at, emergency);
+    const created = newDraft(key, profileIdOf, slot, live ? null : open, at, emergency, village);
     const done = await atomically(db, [...dropped, ...writes, ...created.writes]);
     return done === null ? null : { kind: "draft", draftId: created.draftId, deviceKey };
   });
@@ -169,6 +218,7 @@ export async function startDraft(
   replaceOpenDraft: boolean,
   edit: Omit<Identity, "number"> | null,
   emergency: boolean,
+  village: PlaceValue | null = null,
 ): Promise<StartResult> {
   const at = new Date(bindings.clock.now());
   const slot = ownerSlotOf(principal);
@@ -187,6 +237,7 @@ export async function startDraft(
       live ? null : open,
       at,
       emergency,
+      village,
     );
     const done = await atomically(bindings.db, [
       ...replaced,
