@@ -451,6 +451,24 @@ describe("a report on the desk", () => {
     expect(screen.queryByRole("button", { name: "Lepaskan laporan ini dari kejadian" })).toBeNull();
   });
 
+  test("the reporter's videos play from the desk's own address, each with its length", async () => {
+    const videos = [
+      { id: "33333333-3333-4333-8333-333333333333", seconds: 12, container: "mp4" },
+      { id: "44444444-4444-4444-8444-444444444444", seconds: 60, container: "webm" },
+    ];
+    const view = await renderDesk(<DeskReportView report={{ ...REPORT, videos }} summary={SUMMARY} />, PATH);
+    const section = screen.getByRole("region", { name: "Video dari pelapor" });
+    const players = section.querySelectorAll("video");
+    expect([...players].map((player) => [player.getAttribute("src"), player.controls])).toEqual([
+      [`/api/lapor/desk/reports/LA-241126-01/videos/${videos[0]?.id}`, true],
+      [`/api/lapor/desk/reports/LA-241126-01/videos/${videos[1]?.id}`, true],
+    ]);
+    expect(within(section).getByText("Video 2, 60 detik, tanpa keterangan lokasi")).toBeTruthy();
+    view.unmount();
+    await renderDesk(<DeskReportView report={REPORT} summary={SUMMARY} />, PATH);
+    expect(screen.queryByRole("region", { name: "Video dari pelapor" })).toBeNull();
+  });
+
   test("each photo of the work is shown on the Alun-alun or taken off it by its own button", async () => {
     const proofs = [
       { proofId: "p1", hasPoint: true, at: SENT, actor: "Petugas Uji", public: true },

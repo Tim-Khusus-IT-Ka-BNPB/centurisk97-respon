@@ -197,6 +197,34 @@ function Cluster({ report }: { readonly report: DeskReport }) {
   );
 }
 
+// The reporter's videos of the scene, each played from the desk's own address, a range at a time.
+function Videos({ report }: { readonly report: DeskReport }) {
+  const t = useText();
+  if (report.videos.length === 0) return null;
+  return (
+    <Section id="desk-videos" title={t("desk.videos.title")}>
+      <ul className="grid gap-3 sm:grid-cols-2">
+        {report.videos.map((video, index) => (
+          <li key={video.id}>
+            <figure className="flex flex-col gap-1.5">
+              {/* biome-ignore lint/a11y/useMediaCaption: a reporter's own recording has no captions to give. */}
+              <video
+                controls
+                preload="metadata"
+                src={`/api/lapor/desk/reports/${encodeURIComponent(report.ticketNumber)}/videos/${video.id}`}
+                className="aspect-video w-full rounded-control bg-sunken"
+              />
+              <figcaption className="text-meta text-muted">
+                {t("desk.videos.caption", { n: index + 1, seconds: video.seconds })}
+              </figcaption>
+            </figure>
+          </li>
+        ))}
+      </ul>
+    </Section>
+  );
+}
+
 // The event its reporter confirmed it is of (K66, D106), by its code. BNPB may take it out.
 function EventCode({ report }: { readonly report: DeskReport }) {
   const t = useText();
@@ -453,6 +481,7 @@ export function DeskReportView({
             </Section>
           </div>
           <Handling report={report} />
+          <Videos report={report} />
           <EventCode report={report} />
           <Cluster report={report} />
           <DeskValues report={report} />

@@ -313,5 +313,7 @@
   "desk.event.lead": "Pelapor menyatakan {count} laporan ini satu kejadian. Angka tiap laporan tidak dijumlah.",
   "desk.event.release": "Lepaskan laporan ini dari kejadian",
   "desk.history.released": "Dilepas dari kejadian {code}",
-  "desk.saved.released": "Laporan ini dilepas dari kejadiannya."
+  "desk.saved.released": "Laporan ini dilepas dari kejadiannya.",
+  "desk.videos.title": "Video dari pelapor",
+  "desk.videos.caption": "Video {n}, {seconds} detik, tanpa keterangan lokasi"
 }
