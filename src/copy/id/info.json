@@ -56,5 +56,13 @@
   "info.warn.stopped": "Peringatan dimatikan untuk ponsel ini.",
   "info.warn.failed": "Belum tersimpan. Periksa sambungan internet, lalu coba lagi.",
   "info.warn.needDistrict": "Pilih paling sedikit satu kecamatan.",
-  "info.warn.needHazard": "Pilih paling sedikit satu jenis ancaman."
+  "info.warn.needHazard": "Pilih paling sedikit satu jenis ancaman.",
+  "info.analysis.title": "Analisis daerah",
+  "info.analysis.status": "Status 3 hari ke depan: {level}",
+  "info.analysis.threats": "Paling tinggi: {threats}",
+  "info.analysis.calm": "Tidak ada ancaman yang diperkirakan.",
+  "info.analysis.alertDays": "Hari Waspada ke atas",
+  "info.analysis.peakRain": "Hujan terbesar",
+  "info.analysis.days": "{count} dari 3 hari",
+  "info.analysis.threatCount": "Ancaman"
 }

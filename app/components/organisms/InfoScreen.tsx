@@ -42,10 +42,77 @@ function LevelTag({ level }: { readonly level: Level }) {
   );
 }
 
+// A day's highest level, of its rain and its threats.
+const dayLevel = (day: Day): Level =>
+  Math.max(day.rainLevel ?? 0, ...day.threats.map((threat) => threat.level)) as Level;
+
+const EDGE: Record<Level, string> = {
+  0: "border-t-line",
+  1: "border-t-warn-icon",
+  2: "border-t-siaga",
+  3: "border-t-signal",
+};
+
+// Analisis daerah (upstream K89): the three days at a glance, by the highest level among them, the
+// threats at that level, and a few figures. Read from the outlook alone; nothing is recomputed.
+export function analysisOf(outlook: OutlookView) {
+  const top = Math.max(0, ...outlook.days.map(dayLevel)) as Level;
+  const threats = [...new Set(outlook.days.flatMap((day) => day.threats.map((threat) => threat.label)))];
+  const atTop = [
+    ...new Set(
+      outlook.days.flatMap((day) => day.threats.filter((threat) => threat.level === top).map((threat) => threat.label)),
+    ),
+  ];
+  const rains = outlook.days.flatMap((day) => (day.rainMm === null ? [] : [day.rainMm]));
+  return {
+    top,
+    atTop: top === 0 ? [] : atTop,
+    threats: threats.length,
+    alertDays: outlook.days.filter((day) => dayLevel(day) >= 1).length,
+    peakRain: rains.length === 0 ? null : Math.max(...rains),
+  };
+}
+
+function Analysis({ outlook }: { readonly outlook: OutlookView }) {
+  const t = useText();
+  const summary = analysisOf(outlook);
+  return (
+    <section aria-labelledby="info-analysis" className="flex flex-col gap-3">
+      <h3 id="info-analysis" className="sr-only">
+        {t("info.analysis.title")}
+      </h3>
+      <div className={cn("flex flex-col gap-1 rounded-card p-4 md:p-5", LEVEL_STYLE[summary.top])}>
+        <p className="text-card font-extrabold">
+          {t("info.analysis.status", { level: t(`info.level.${summary.top}`) })}
+        </p>
+        <p>
+          {summary.atTop.length === 0
+            ? t("info.analysis.calm")
+            : t("info.analysis.threats", { threats: summary.atTop.join(", ") })}
+        </p>
+      </div>
+      <dl className="grid grid-cols-3 gap-3">
+        {(
+          [
+            ["threatCount", summary.threats.toLocaleString("id-ID")],
+            ["alertDays", t("info.analysis.days", { count: summary.alertDays })],
+            ["peakRain", summary.peakRain === null ? "-" : t("info.day.rain", { mm: summary.peakRain })],
+          ] as const
+        ).map(([key, value]) => (
+          <div key={key} className="flex flex-col gap-0.5 card-surface px-4 py-3">
+            <dt className="text-meta text-muted">{t(`info.analysis.${key}`)}</dt>
+            <dd className="font-extrabold tabular-nums">{value}</dd>
+          </div>
+        ))}
+      </dl>
+    </section>
+  );
+}
+
 function DayCard({ day }: { readonly day: Day }) {
   const t = useText();
   return (
-    <li className="flex flex-col gap-3 card-surface p-4">
+    <li className={cn("flex flex-col gap-3 card-surface border-t-4 p-4", EDGE[dayLevel(day)])}>
       <h3 className="font-bold">{dayName.format(Date.parse(day.date))}</h3>
       <p className="flex flex-wrap items-center justify-between gap-2">
         <span className="inline-flex items-center gap-2">
@@ -105,6 +172,7 @@ function Outlook({ outlook }: { readonly outlook: OutlookView }) {
             {t("info.outlook.change")}
           </Link>
         </div>
+        <Analysis outlook={outlook} />
         <ul className="grid grid-cols-1 gap-3 md:grid-cols-3">
           {outlook.days.map((day) => (
             <DayCard key={day.date} day={day} />

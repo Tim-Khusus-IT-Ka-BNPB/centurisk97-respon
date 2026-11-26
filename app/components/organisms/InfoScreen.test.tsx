@@ -2,7 +2,7 @@ import { screen, within } from "@testing-library/react";
 import { describe, expect, test } from "vitest";
 import { OUTLOOK } from "../../testing/outlook";
 import { renderPage } from "../../testing/render";
-import { type InfoLoad, InfoScreen } from "./InfoScreen";
+import { analysisOf, type InfoLoad, InfoScreen } from "./InfoScreen";
 
 const draw = (load: InfoLoad) => renderPage(<InfoScreen load={load} />, { path: "/lapor/info" });
 const phones = () =>
@@ -37,6 +37,34 @@ describe("the regional outlook", () => {
     expect(phones()).toEqual(["tel:112", "tel:117", "tel:080011080001"]);
     expect(screen.getByRole("link", { name: "Ganti wilayah" }).getAttribute("href")).toBe("/lapor/info");
     expect(screen.queryByRole("searchbox")).toBeNull();
+  });
+
+  test("the analysis says the highest level of the three days and its threats, with a few figures", async () => {
+    draw({ kind: "outlook", query: "", outlook: OUTLOOK });
+    expect(await screen.findByText("Status 3 hari ke depan: Awas")).toBeTruthy();
+    expect(screen.getByText("Paling tinggi: Banjir")).toBeTruthy();
+    const figures = [...document.querySelectorAll("dl > div")].map((one) => one.textContent);
+    expect(figures).toEqual(["Ancaman2", "Hari Waspada ke atas1 dari 3 hari", "Hujan terbesarHujan 62 mm"]);
+    expect(
+      analysisOf({ ...OUTLOOK, days: [{ date: "2026-11-27", rainMm: null, rainLevel: null, threats: [] }] }),
+    ).toEqual({
+      top: 0,
+      atTop: [],
+      threats: 0,
+      alertDays: 0,
+      peakRain: null,
+    });
+  });
+
+  test("a calm three days says so, with no rain figure shown as a dash", async () => {
+    draw({
+      kind: "outlook",
+      query: "",
+      outlook: { ...OUTLOOK, days: [{ date: "2026-11-27", rainMm: null, rainLevel: null, threats: [] }] },
+    });
+    expect(await screen.findByText("Status 3 hari ke depan: Normal")).toBeTruthy();
+    expect(screen.getByText("Tidak ada ancaman yang diperkirakan.")).toBeTruthy();
+    expect(screen.getByText("-")).toBeTruthy();
   });
 
   test("with no BPBD of its own and no advice: 112 and 117 alone", async () => {
