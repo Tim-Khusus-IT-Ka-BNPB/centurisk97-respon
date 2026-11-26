@@ -16,13 +16,27 @@ const KEEPABLE = new Set([
   "/lapor/lacak",
 ]);
 
+// Kept at install with them: the emblem every page draws, and the built files those pages name, so
+// they open whole with no signal even when the first visit loaded them before this worker ran.
+const SHELL = ["/lambang-bnpb.png", "/icons/192.png"];
+
 self.addEventListener("install", (event) => {
   event.waitUntil(
     (async () => {
       const cache = await caches.open(KEPT);
+      const named = new Set(SHELL);
       await Promise.all(
         FIRST.map(async (path) => {
           const response = await fetch(path, { credentials: "same-origin" }).catch(() => null);
+          if (!response?.ok) return;
+          for (const found of (await response.clone().text()).matchAll(/["'](\/assets\/[^"'?#]+)["']/g))
+            named.add(found[1]);
+          await cache.put(path, response);
+        }),
+      );
+      await Promise.all(
+        [...named].map(async (path) => {
+          const response = await fetch(path).catch(() => null);
           if (response?.ok) await cache.put(path, response);
         }),
       );
