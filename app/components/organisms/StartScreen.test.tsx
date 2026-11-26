@@ -344,6 +344,35 @@ describe("the home", () => {
     expect(within(list).queryByText(/kabar baru/)).toBeNull();
   });
 
+  test("Laporan saya counts what was sent, in hand and finished, and lists missing persons reported", async () => {
+    const reports = [
+      ...SAMPLE_ME.reports,
+      {
+        ...(SAMPLE_ME.reports[0] as (typeof SAMPLE_ME.reports)[number]),
+        ticketNumber: "LA-231126-02",
+        status: "closed" as const,
+      },
+    ];
+    const missing = [
+      {
+        id: "m1",
+        name: "Uji Hilang",
+        status: "open" as const,
+        villageName: "Uji",
+        createdAt: "2026-11-26T03:00:00.000Z",
+      },
+      { id: "m2", name: null, status: "closed" as const, villageName: "Dua", createdAt: "2026-11-25T03:00:00.000Z" },
+    ];
+    renderPage(<HomeScreen me={{ ...SAMPLE_ME, reports }} missing={missing} />, { path: "/lapor" });
+    const list = await screen.findByRole("region", { name: "Laporan saya" });
+    const tiles = [...list.querySelectorAll("dl > div")].map((tile) => tile.textContent);
+    expect(tiles).toEqual([`Terkirim${reports.length}`, `Diproses${reports.length - 1}`, "Selesai1"]);
+    const sought = within(screen.getByRole("region", { name: "Orang hilang yang Anda laporkan" }));
+    expect(sought.getByText("Uji Hilang, terakhir terlihat di Uji")).toBeTruthy();
+    expect(sought.getByText("Nama sudah dihapus, terakhir terlihat di Dua")).toBeTruthy();
+    expect(sought.getAllByRole("link")[0]?.getAttribute("href")).toBe("/lapor/orang-hilang");
+  });
+
   test("with nothing sent, Laporan saya says so and there is no Cek status laporan", async () => {
     renderPage(<HomeScreen me={{ ...SAMPLE_ME, reports: [] }} />, { path: "/lapor" });
     expect(await screen.findByText("Belum ada laporan terkirim dari perangkat ini.")).toBeTruthy();

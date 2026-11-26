@@ -20,6 +20,9 @@ export const PAGE_TEXTS = {
   home: [
     ...SHELL,
     "home.",
+    "missing.mine.item",
+    "missing.anonymous",
+    "missing.status.",
     "resume.",
     "hazard.",
     "stage.",

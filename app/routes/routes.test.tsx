@@ -62,7 +62,10 @@ const post = (url: string, entries: [string, string][]) => {
 };
 const unwrap = (value: unknown) => (value as { data: unknown; init: ResponseInit | null }) ?? null;
 const homeLoaderIn = (cookie: string) =>
-  home.loader({ request: visit("/lapor", cookie), context: { api: api({ "GET /me": json(SAMPLE_ME) }) } } as Args);
+  home.loader({
+    request: visit("/lapor", cookie),
+    context: { api: api({ "GET /me": json(SAMPLE_ME), "GET /missing/mine": json([]) }) },
+  } as Args);
 // A visitor's request, in the language their cookie names.
 const visit = (path = "/lapor", cookie = "") => new Request(`http://x${path}`, cookie ? { headers: { cookie } } : {});
 
@@ -384,13 +387,23 @@ describe("route modules", () => {
   });
 
   test("the home reads the open drafts on the server, and survives when it cannot", async () => {
-    const read = await home.loader({ request: visit(), context: { api: api({ "GET /me": json(SAMPLE_ME) }) } } as Args);
+    const sought = [
+      { id: "m1", name: "Uji Hilang", status: "open", villageName: "Uji", createdAt: "2026-11-26T03:00:00.000Z" },
+    ];
+    const read = await home.loader({
+      request: visit(),
+      context: { api: api({ "GET /me": json(SAMPLE_ME), "GET /missing/mine": json(sought) }) },
+    } as Args);
     expect(read.me).toEqual(SAMPLE_ME);
+    expect(read.missing).toEqual(sought);
     const down = await home.loader({
       request: visit(),
-      context: { api: api({ "GET /me": json(SAMPLE_FIELD_ERROR, 503) }) },
+      context: {
+        api: api({ "GET /me": json(SAMPLE_FIELD_ERROR, 503), "GET /missing/mine": json(SAMPLE_FIELD_ERROR, 401) }),
+      },
     } as Args);
     expect(down.me).toBeNull();
+    expect(down.missing).toEqual([]);
     renderPage(routeElement(HomeRoute, { loaderData: read }), { path: "/lapor" });
     expect(await screen.findByRole("link", { name: "Lapor kejadian" })).toBeTruthy();
     expect(screen.getByRole("link", { name: "Lapor darurat" }).getAttribute("href")).toBe("/lapor/report?darurat=1");

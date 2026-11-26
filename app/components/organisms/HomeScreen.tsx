@@ -3,6 +3,7 @@ import type { MeResponse } from "../../../src/contract/draft";
 import { hazardKey } from "../../../src/copy/hazardKey";
 import { clockTime, longDate } from "../../../src/copy/time";
 import { hazardIcon } from "../../lib/hazardIcons";
+import type { MissingMine } from "../../lib/missingTypes";
 import { useText } from "../../lib/text";
 import { buttonStyles } from "../atoms/Button";
 import { Icon } from "../atoms/Icon";
@@ -82,9 +83,66 @@ function ReportRow({ report }: { readonly report: OwnReport }) {
 }
 
 // "Laporan saya": what this number sent from this device, read from the database, newest first.
-function OwnReports({ reports }: { readonly reports: readonly OwnReport[] }) {
+// Upstream's three number tiles over the list: sent, in hand, finished.
+function Tiles({ reports }: { readonly reports: readonly OwnReport[] }) {
   const t = useText();
-  const empty = reports.length === 0;
+  const tiles = [
+    ["sent", reports.length],
+    ["active", reports.filter((report) => !["closed", "invalid"].includes(report.status)).length],
+    ["closed", reports.filter((report) => report.status === "closed").length],
+  ] as const;
+  return (
+    <dl className="grid grid-cols-3 gap-3">
+      {tiles.map(([key, count]) => (
+        <div key={key} className="flex flex-col gap-0.5 card-surface px-4 py-3">
+          <dt className="text-meta text-muted">{t(`home.reports.tiles.${key}`)}</dt>
+          <dd className="text-section font-extrabold tabular-nums">{count.toLocaleString("id-ID")}</dd>
+        </div>
+      ))}
+    </dl>
+  );
+}
+
+function MissingList({ missing }: { readonly missing: readonly MissingMine[] }) {
+  const t = useText();
+  return (
+    <section aria-labelledby="own-missing" className="flex flex-col gap-2">
+      <h3 id="own-missing" className="font-bold">
+        {t("home.reports.missing")}
+      </h3>
+      <ul className="overflow-hidden card-surface">
+        {missing.map((one) => (
+          <li key={one.id} className="border-t border-line first:border-t-0">
+            <Link
+              to="/lapor/orang-hilang"
+              className="flex min-h-target-main items-center gap-4 px-4 py-3 text-ink no-underline hover:bg-sunken md:px-5"
+            >
+              <span className="flex size-10 shrink-0 items-center justify-center rounded-control bg-selected text-primary">
+                <Icon name="userSearch" />
+              </span>
+              <span className="min-w-0 flex-1">
+                {t("missing.mine.item", { name: one.name ?? t("missing.anonymous"), village: one.villageName })}
+              </span>
+              <span className="rounded-chip bg-selected px-2 py-0.5 text-meta font-semibold text-primary">
+                {t(`missing.status.${one.status}`)}
+              </span>
+            </Link>
+          </li>
+        ))}
+      </ul>
+    </section>
+  );
+}
+
+function OwnReports({
+  reports,
+  missing,
+}: {
+  readonly reports: readonly OwnReport[];
+  readonly missing: readonly MissingMine[];
+}) {
+  const t = useText();
+  const empty = reports.length === 0 && missing.length === 0;
   return (
     <section id="laporan-saya" aria-labelledby="own-reports" className="flex scroll-mt-4 flex-col gap-4">
       <div className="flex flex-col gap-1">
@@ -93,19 +151,29 @@ function OwnReports({ reports }: { readonly reports: readonly OwnReport[] }) {
         </h2>
         <p className="text-muted">{t(empty ? "home.reports.empty" : "home.reports.lead")}</p>
       </div>
-      {empty ? null : (
-        <ul className="overflow-hidden card-surface">
-          {reports.map((report) => (
-            <ReportRow key={report.ticketNumber} report={report} />
-          ))}
-        </ul>
+      {reports.length === 0 ? null : (
+        <>
+          <Tiles reports={reports} />
+          <ul className="overflow-hidden card-surface">
+            {reports.map((report) => (
+              <ReportRow key={report.ticketNumber} report={report} />
+            ))}
+          </ul>
+        </>
       )}
+      {missing.length === 0 ? null : <MissingList missing={missing} />}
     </section>
   );
 }
 
 // Under the opening band: the offer to resume, the reports sent, how reporting goes, and BNPB's contacts.
-export function HomeScreen({ me }: { readonly me: MeResponse | null }) {
+export function HomeScreen({
+  me,
+  missing = [],
+}: {
+  readonly me: MeResponse | null;
+  readonly missing?: readonly MissingMine[];
+}) {
   const t = useText();
   const resumes =
     me === null ? (
@@ -120,7 +188,7 @@ export function HomeScreen({ me }: { readonly me: MeResponse | null }) {
         {me.knownReporters.map((profile) => (
           <Resume key={profile.profileId} profile={profile} />
         ))}
-        <OwnReports reports={me.reports} />
+        <OwnReports reports={me.reports} missing={missing} />
       </>
     );
   return (
