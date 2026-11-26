@@ -67,7 +67,8 @@ async function saved(page: Page, press: () => Promise<void>): Promise<{ name: st
   await press();
   const download: Download = await coming;
   const bytes = readFileSync(await download.path());
-  return { name: download.suggestedFilename(), start: bytes.subarray(0, 4).toString("latin1") };
+  // WebKit on Linux saves a name's spaces as underscores.
+  return { name: download.suggestedFilename().replaceAll("_", " "), start: bytes.subarray(0, 4).toString("latin1") };
 }
 
 test("a sent report is downloaded, added to, and answered by staff, each on its own page", async ({
