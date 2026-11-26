@@ -28,7 +28,7 @@ function NavLinks({ className }: { readonly className: string }) {
   );
 }
 
-// The band on every page: the way home, and on public pages help and about. On a phone it stays
+// The band on every page: the way home, and on public pages help and about. Below 1024px it stays
 // one row: the links move into a menu that opens with no script, and closes on each new page.
 export function SiteHeader({ nav, width }: { readonly nav: boolean; readonly width: string }) {
   const t = useText();
@@ -45,11 +45,11 @@ export function SiteHeader({ nav, width }: { readonly nav: boolean; readonly wid
           <BrandLockup />
         </Link>
         <div className="flex items-center gap-2 sm:gap-4">
-          {nav ? <NavLinks className="hidden md:flex" /> : null}
+          {nav ? <NavLinks className="hidden lg:flex" /> : null}
           {/* On a phone a page with links keeps the switch in its menu, so the bar stays one row. */}
-          <ThemeSwitch className={nav ? "hidden md:block" : undefined} />
+          <ThemeSwitch className={nav ? "hidden lg:block" : undefined} />
           {nav ? (
-            <details key={pathname} className="group md:hidden">
+            <details key={pathname} className="group lg:hidden">
               <summary className="flex size-target-min cursor-pointer list-none items-center justify-center rounded-control text-ink hover:bg-sunken [&::-webkit-details-marker]:hidden">
                 <Icon name="menu" />
                 <span className="sr-only">{t("nav.menu")}</span>
