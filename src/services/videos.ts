@@ -15,6 +15,10 @@ import {
 } from "../adapters/d1/videos";
 import { HOUR_MS } from "../domain/time";
 import { checkVideo, partBytes, partsOf, VIDEO, type VideoRefusal } from "../domain/video";
+
+// 1 January 2010: a made time before it is a phone clock never set.
+const MADE_SINCE_MS = Date.UTC(2010, 0, 1);
+
 import type { Principal, StaffPrincipal } from "../ports/identity";
 import type { ServiceBindings } from "./bindings";
 import { admitted } from "./desk";
@@ -172,10 +176,23 @@ export async function completeVideo(
   });
   if (checked.kind !== "ok") return drop(checked.kind, true);
   if ((await draftVideos(bindings.db, draftId)).length >= VIDEO.perReport) return drop("tooMany", true);
+  const nowMs = bindings.clock.now();
+  // A made time from before phones filmed, or ahead of now, is not believed.
+  const made =
+    checked.createdMs !== null && checked.createdMs > MADE_SINCE_MS && checked.createdMs <= nowMs + 5 * 60_000;
   await keepVideo(
     bindings.db,
-    { id, draftId, storeKey: upload.store_key, bytes: size, container: checked.container, seconds: checked.seconds },
-    new Date(bindings.clock.now()),
+    {
+      id,
+      draftId,
+      storeKey: upload.store_key,
+      bytes: size,
+      container: checked.container,
+      seconds: checked.seconds,
+      madeAt: made ? new Date(checked.createdMs as number) : null,
+      point: checked.point,
+    },
+    new Date(nowMs),
   );
   await dropUpload(bindings.db, id);
   return { kind: "ok", body: await draftVideos(bindings.db, draftId) };

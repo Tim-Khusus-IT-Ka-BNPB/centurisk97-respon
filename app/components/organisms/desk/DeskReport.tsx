@@ -217,8 +217,19 @@ function Videos({ report }: { readonly report: DeskReport }) {
                 src={`/api/lapor/desk/reports/${encodeURIComponent(report.ticketNumber)}/videos/${video.id}`}
                 className="aspect-video w-full rounded-control bg-sunken"
               />
-              <figcaption className="text-meta text-muted">
-                {t("desk.videos.caption", { n: index + 1, seconds: video.seconds })}
+              <figcaption className="flex flex-col text-meta text-muted">
+                <span>
+                  {t(video.point === null ? "desk.videos.caption" : "desk.videos.captionPlaced", {
+                    n: index + 1,
+                    seconds: video.seconds,
+                  })}
+                </span>
+                {video.madeAt === null ? null : <span>{when(t, "desk.videos.made", video.madeAt)}</span>}
+                {video.point === null ? null : (
+                  <span className="tabular-nums">
+                    {t("desk.videos.point", { lat: video.point.lat.toFixed(5), lon: video.point.lon.toFixed(5) })}
+                  </span>
+                )}
               </figcaption>
             </figure>
           </li>

@@ -507,8 +507,14 @@ describe("a report on the desk", () => {
 
   test("the reporter's videos play from the desk's own address, each with its length", async () => {
     const videos = [
-      { id: "33333333-3333-4333-8333-333333333333", seconds: 12, container: "mp4" },
-      { id: "44444444-4444-4444-8444-444444444444", seconds: 60, container: "webm" },
+      {
+        id: "33333333-3333-4333-8333-333333333333",
+        seconds: 12,
+        container: "mp4",
+        madeAt: SENT,
+        point: { lat: 5.147051, lon: 97.048212 },
+      },
+      { id: "44444444-4444-4444-8444-444444444444", seconds: 60, container: "webm", madeAt: null, point: null },
     ];
     const view = await renderDesk(<DeskReportView report={{ ...REPORT, videos }} summary={SUMMARY} />, PATH);
     const section = screen.getByRole("region", { name: "Video dari pelapor" });
@@ -518,6 +524,10 @@ describe("a report on the desk", () => {
       [`/api/lapor/desk/reports/LA-241126-01/videos/${videos[1]?.id}`, true],
     ]);
     expect(within(section).getByText("Video 2, 60 detik, tanpa keterangan lokasi")).toBeTruthy();
+    // The file of the first said when and where it was made.
+    expect(within(section).getByText("Video 1, 12 detik")).toBeTruthy();
+    expect(within(section).getByText(/^Direkam 24 November 2026, pukul 09\.30 WIB, menurut file video$/)).toBeTruthy();
+    expect(within(section).getByText("Titik di file video 5.14705, 97.04821")).toBeTruthy();
     view.unmount();
     await renderDesk(<DeskReportView report={REPORT} summary={SUMMARY} />, PATH);
     expect(screen.queryByRole("region", { name: "Video dari pelapor" })).toBeNull();

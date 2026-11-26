@@ -1,3 +1,4 @@
+import type { Point } from "../../domain/geo";
 import { type Database, row, rows, run, sql } from "../../platform/database";
 
 export type UploadRow = {
@@ -43,13 +44,23 @@ export const dropUpload = (db: Database, id: string) => run(db, sql`delete from 
 
 export const keepVideo = (
   db: Database,
-  video: { id: string; draftId: string; storeKey: string; bytes: number; container: string; seconds: number },
+  video: {
+    id: string;
+    draftId: string;
+    storeKey: string;
+    bytes: number;
+    container: string;
+    seconds: number;
+    madeAt: Date | null;
+    point: Point | null;
+  },
   at: Date,
 ) =>
   run(
     db,
-    sql`insert into draft_video (id, draft_id, store_key, bytes, container, seconds, received_at)
-      values (${video.id}, ${video.draftId}, ${video.storeKey}, ${video.bytes}, ${video.container}, ${video.seconds}, ${at})`,
+    sql`insert into draft_video (id, draft_id, store_key, bytes, container, seconds, received_at, made_at, lat, lon)
+      values (${video.id}, ${video.draftId}, ${video.storeKey}, ${video.bytes}, ${video.container}, ${video.seconds}, ${at},
+        ${video.madeAt}, ${video.point?.lat ?? null}, ${video.point?.lon ?? null})`,
   );
 
 export const draftVideos = (db: Database, draftId: string) =>
@@ -69,10 +80,12 @@ export const reportVideo = (db: Database, ticketNumber: string, id: string) =>
       where r.ticket_number = ${ticketNumber} and v.id = ${id}`,
   );
 
+// A report's videos for the desk, with when and where their files say they were made.
 export const reportVideos = (db: Database, ticketNumber: string) =>
-  rows<KeptVideo>(
+  rows<KeptVideo & { made_at: string | null; lat: number | null; lon: number | null }>(
     db,
-    sql`select v.id, v.seconds, v.container from draft_video v join report r on r.draft_id = v.draft_id
+    sql`select v.id, v.seconds, v.container, v.made_at, v.lat, v.lon from draft_video v
+      join report r on r.draft_id = v.draft_id
       where r.ticket_number = ${ticketNumber} order by v.received_at, v.id`,
   );
 

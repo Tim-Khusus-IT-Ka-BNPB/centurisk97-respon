@@ -339,5 +339,8 @@
   "desk.gps.doubt": "GPS janggal",
   "desk.gps.zone": "Jam HP memakai zona waktu lain dari tempat kejadian, ciri aplikasi lokasi palsu.",
   "desk.gps.abroad": "Jaringan terbaca dari luar Indonesia.",
-  "desk.gps.jump": "Titik foto melompat terlalu jauh dari foto sebelumnya dalam waktu singkat."
+  "desk.gps.jump": "Titik foto melompat terlalu jauh dari foto sebelumnya dalam waktu singkat.",
+  "desk.videos.made": "Direkam {date}, pukul {time} {zone}, menurut file video",
+  "desk.videos.point": "Titik di file video {lat}, {lon}",
+  "desk.videos.captionPlaced": "Video {n}, {seconds} detik"
 }

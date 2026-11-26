@@ -325,7 +325,18 @@ export const COLUMN_CLASSES: Readonly<Record<string, TableClasses>> = {
   },
   draft_video: {
     retention: "deleted when its draft is cancelled, expires or is removed; kept with a sent report",
-    columns: { id: I, draft_id: I, store_key: I, bytes: I, container: I, seconds: I, received_at: I },
+    columns: {
+      id: I,
+      draft_id: I,
+      store_key: I,
+      bytes: I,
+      container: I,
+      seconds: I,
+      received_at: I,
+      made_at: P,
+      lat: P,
+      lon: P,
+    },
   },
   missing_person: {
     retention: "kept; 2 years after it is closed its name, numbers, places and photo are emptied, swept",

@@ -316,7 +316,13 @@ async function reportBody(bindings: ServiceBindings, staff: StaffPrincipal, tick
     ...queueItem(staff, found, await clusterMap(bindings, staff.scope), bindings.clock.now()),
     account: { label: staff.label },
     event: await eventView(bindings, staff, ticketNumber),
-    videos: [...(await reportVideos(bindings.db, ticketNumber))],
+    videos: (await reportVideos(bindings.db, ticketNumber)).map((video) => ({
+      id: video.id,
+      seconds: video.seconds,
+      container: video.container,
+      madeAt: video.made_at === null ? null : at(Date.parse(video.made_at), zone),
+      point: video.lat === null || video.lon === null ? null : { lat: video.lat, lon: video.lon },
+    })),
     reporter: {
       role: found.reporterRole,
       identity: mayUse(staff.role, "readIdentity") ? identityOf(found) : null,

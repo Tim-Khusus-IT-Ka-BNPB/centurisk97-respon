@@ -1,16 +1,16 @@
 import { describe, expect, test } from "vitest";
-import { checkVideo, containerOf, mp4Seconds, partBytes, partsOf, VIDEO } from "./video";
+import { checkVideo, containerOf, mp4Created, mp4Place, mp4Seconds, partBytes, partsOf, VIDEO } from "./video";
 
 const MB = 1_048_576;
 const ascii = (text: string) => [...text].map((char) => char.charCodeAt(0));
 const u32 = (value: number) => [(value >>> 24) & 255, (value >>> 16) & 255, (value >>> 8) & 255, value & 255];
 // An ftyp box of this brand, then a movie header of this version, scale and length.
-function movie({ brand = "isom", version = 0, scale = 1000, units = 12_500, lead = 0 } = {}) {
+function movie({ brand = "isom", version = 0, scale = 1000, units = 12_500, lead = 0, created = 0 } = {}) {
   const ftyp = [...u32(16), ...ascii("ftyp"), ...ascii(brand), ...u32(0)];
   const times =
     version === 1
-      ? [...u32(0), ...u32(0), ...u32(0), ...u32(0), ...u32(scale), ...u32(0), ...u32(units)]
-      : [...u32(0), ...u32(0), ...u32(scale), ...u32(units)];
+      ? [...u32(0), ...u32(created), ...u32(0), ...u32(0), ...u32(scale), ...u32(0), ...u32(units)]
+      : [...u32(created), ...u32(0), ...u32(scale), ...u32(units)];
   const mvhd = [...u32(8 + 4 + times.length), ...ascii("mvhd"), version, 0, 0, 0, ...times];
   return new Uint8Array([...ftyp, ...new Array(lead).fill(0), ...mvhd]);
 }
@@ -61,13 +61,21 @@ describe("a video made whole", () => {
     checkVideo({ head: movie(), tail: null, bytes: 5000, announcedBytes: 5000, browserSeconds: null, ...extra });
 
   test("an MP4 or MOV by its own length, from its start or its end; a WebM by the browser's", () => {
-    expect(whole()).toEqual({ kind: "ok", container: "mp4", seconds: 13 });
+    expect(whole()).toEqual({ kind: "ok", container: "mp4", seconds: 13, createdMs: null, point: null });
     expect(whole({ head: movie().subarray(0, 16), tail: movie({ units: 61_000 }) })).toEqual({
       kind: "ok",
       container: "mp4",
       seconds: 61,
+      createdMs: null,
+      point: null,
     });
-    expect(whole({ head: WEBM, browserSeconds: 59.6 })).toEqual({ kind: "ok", container: "webm", seconds: 60 });
+    expect(whole({ head: WEBM, browserSeconds: 59.6 })).toEqual({
+      kind: "ok",
+      container: "webm",
+      seconds: 60,
+      createdMs: null,
+      point: null,
+    });
   });
 
   test("refused: not a video, a size not as announced, no length, or past 61 seconds", () => {
@@ -78,5 +86,42 @@ describe("a video made whole", () => {
     expect(whole({ head: WEBM, browserSeconds: 61 })).toMatchObject({ kind: "ok", seconds: 61 });
     expect(whole({ head: WEBM, browserSeconds: 61.01 })).toEqual({ kind: "tooLong" });
     expect(whole({ head: movie({ units: 61_001 }) })).toEqual({ kind: "tooLong" });
+  });
+});
+
+// 26 November 2026, 03.00 UTC, in seconds from 1904 as a movie header counts them.
+const MADE_MS = Date.UTC(2026, 10, 26, 3);
+const MADE_1904 = MADE_MS / 1000 + 2_082_844_800;
+const withPlace = (text: string) =>
+  new Uint8Array([...movie(), ...ascii("\u00a9xyz"), 0, 18, 0x15, 0xc7, ...ascii(text)]);
+
+describe("when and where a video's file says it was made", () => {
+  test("the movie header's made time, in either version; none when it is unset, absent or cut", () => {
+    expect(mp4Created(movie({ created: MADE_1904 }))).toBe(MADE_MS);
+    expect(mp4Created(movie({ version: 1, created: MADE_1904 }))).toBe(MADE_MS);
+    expect(mp4Created(movie())).toBeNull();
+    expect(mp4Created(WEBM)).toBeNull();
+    expect(mp4Created(movie({ created: MADE_1904 }).subarray(0, 16 + 8 + 4 + 3))).toBeNull();
+    expect(mp4Created(movie({ version: 1, created: MADE_1904 }).subarray(0, 16 + 8 + 4 + 7))).toBeNull();
+  });
+
+  test("an ISO 6709 point in Indonesia; one abroad or none is no place", () => {
+    expect(mp4Place(withPlace("+05.1470+097.0482/"))).toEqual({ lat: 5.147, lon: 97.0482 });
+    expect(mp4Place(withPlace("-6.2001+106.8166+012.000/"))).toEqual({ lat: -6.2001, lon: 106.8166 });
+    expect(mp4Place(withPlace("+51.5007-000.1246/"))).toBeNull();
+    expect(mp4Place(movie())).toBeNull();
+  });
+
+  test("a video made whole carries them, read from either end of its file", () => {
+    const head = movie({ created: MADE_1904 });
+    expect(checkVideo({ head, tail: null, bytes: 9, announcedBytes: 9, browserSeconds: null })).toMatchObject({
+      kind: "ok",
+      createdMs: MADE_MS,
+      point: null,
+    });
+    const tail = withPlace("+05.1470+097.0482/");
+    expect(
+      checkVideo({ head: movie({ lead: 4 }).subarray(0, 16), tail, bytes: 9, announcedBytes: 9, browserSeconds: null }),
+    ).toMatchObject({ kind: "ok", createdMs: null, point: { lat: 5.147, lon: 97.0482 } });
   });
 });

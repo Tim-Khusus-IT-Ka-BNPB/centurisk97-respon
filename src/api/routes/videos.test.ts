@@ -38,8 +38,11 @@ async function atPhotos() {
 
 const ascii = (text: string) => [...text].map((char) => char.charCodeAt(0));
 const u32 = (value: number) => [(value >>> 24) & 255, (value >>> 16) & 255, (value >>> 8) & 255, value & 255];
-// An MP4 of this size whose movie header says 12.5 seconds.
-function movie(bytes: number) {
+// Seconds from 1904, an MP4's epoch, to 1970.
+const MP4_EPOCH_S = 2_082_844_800;
+// An MP4 of this size whose movie header says 12.5 seconds, made ten minutes before the clock
+// (or when given), in Aceh Utara.
+function movie(bytes: number, madeMs = clock.now() - 600_000) {
   const file = new Uint8Array(bytes);
   file.set([
     ...u32(16),
@@ -51,10 +54,11 @@ function movie(bytes: number) {
     0,
     0,
     0,
-    ...u32(0),
+    ...u32(madeMs / 1000 + MP4_EPOCH_S),
     ...u32(0),
     ...u32(1000),
     ...u32(12_500),
+    ...ascii("+05.1470+097.0482/"),
   ]);
   return file;
 }
@@ -86,7 +90,8 @@ async function upload(phone: Phone, draftId: string, file: Uint8Array, seconds: 
 describe("a video of the scene", () => {
   test("sent in parts in any order, picked up where it stopped, made whole, kept, and played on the desk", async () => {
     const { phone, draft } = await atPhotos();
-    const file = movie(6 * MB);
+    const made = clock.now() - 600_000;
+    const file = movie(6 * MB, made);
     const started = await phone.call("POST", `/drafts/${draft.draftId}/videos`, { bytes: file.length, seconds: null });
     expect(started.status).toBe(200);
     const { id } = started.json as Progress;
@@ -117,7 +122,15 @@ describe("a video of the scene", () => {
     const desk = browser(fetchApi);
     desk.cookies.set("seeded_session", (SEEDED_SESSIONS[2] as { token: string }).token);
     const report = (await desk.call("GET", `/desk/reports/${ticket}`)).json as { videos: unknown };
-    expect(report.videos).toEqual([{ id, seconds: 13, container: "mp4" }]);
+    expect(report.videos).toEqual([
+      {
+        id,
+        seconds: 13,
+        container: "mp4",
+        madeAt: { utc: new Date(made).toISOString(), zone: "WIB" },
+        point: { lat: 5.147, lon: 97.0482 },
+      },
+    ]);
     const play = (range?: string) =>
       fetchApi(
         new Request(`http://localhost/api/lapor/desk/reports/${ticket}/videos/${id}`, {
@@ -179,10 +192,18 @@ describe("a video of the scene", () => {
     const refused = await phone.call("POST", `/drafts/${draft.draftId}/videos/${junk.id}/complete`);
     expect(refused.error.fields[0]?.copyKey).toBe("fieldError.video.notVideo");
     expect(await query`select 1 from video_upload where id = ${junk.id}`).toEqual([]);
-    for (let n = 0; n < 3; n += 1) {
-      const one = await upload(phone, draft.draftId, movie(4000));
+    // A time ahead of the clock, or from before phones filmed, is not believed.
+    for (const made of [clock.now() + 3_600_000, Date.UTC(2005, 0, 1), undefined]) {
+      const one = await upload(phone, draft.draftId, movie(4000, made));
       expect((await phone.call("POST", `/drafts/${draft.draftId}/videos/${one.id}/complete`)).status).toBe(200);
     }
+    expect(
+      (
+        await query<{
+          made_at: string | null;
+        }>`select made_at from draft_video where draft_id = ${draft.draftId} order by rowid`
+      ).map((one) => one.made_at !== null),
+    ).toEqual([false, false, true]);
     expect((await start({ bytes: 5000, seconds: null })).error.fields[0]?.copyKey).toBe("fieldError.video.tooMany");
     const [first] = (await phone.call("GET", `/drafts/${draft.draftId}/videos`)).json as { id: string }[];
     const back = await phone.call("DELETE", `/drafts/${draft.draftId}/videos/${first?.id}`);
