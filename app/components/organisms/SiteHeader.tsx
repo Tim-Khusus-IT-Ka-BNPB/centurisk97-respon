@@ -47,8 +47,9 @@ function QuickIcons() {
   );
 }
 
-// The band on every page: the way home, and on public pages help and about. Below 1024px it stays
-// one row: the links move into a menu that opens with no script, and closes on each new page.
+// The band on every page: the way home, the language and the theme. A wide screen has the public
+// links in the side rail; below 1024px they sit in a menu that opens with no script, and closes on
+// each new page.
 export function SiteHeader({
   nav,
   width,
@@ -73,7 +74,6 @@ export function SiteHeader({
           <BrandLockup />
         </Link>
         <div className="flex items-center gap-2 sm:gap-4">
-          {nav ? <NavLinks className="hidden lg:flex" /> : null}
           {/* On a phone a page with links keeps the switch in its menu, so the bar stays one row. */}
           {languages ? <LanguagePicker /> : null}
           {nav ? <QuickIcons /> : null}

@@ -3,6 +3,7 @@ import { makeText, type Texts } from "../../../src/copy/text";
 import { cn } from "../../lib/cn";
 import { TextContext } from "../../lib/text";
 import { PageBanner } from "../organisms/PageBanner";
+import { SideRail } from "../organisms/SideRail";
 import { SiteFooter } from "../organisms/SiteFooter";
 import { SiteHeader } from "../organisms/SiteHeader";
 
@@ -45,7 +46,8 @@ export function Page({
   const width = wide || aside ? SITE : "max-w-[40rem]";
   return (
     <TextContext.Provider value={text}>
-      <div className="flex min-h-dvh flex-col" lang={text("app.lang")}>
+      <div className={cn("flex min-h-dvh flex-col", publicPage && "lg:ps-[4.75rem]")} lang={text("app.lang")}>
+        {publicPage ? <SideRail /> : null}
         <SiteHeader nav={publicPage} width={SITE} />
         {hero}
         {banner ? <PageBanner titleKey={banner.title} leadKey={banner.lead} /> : null}
