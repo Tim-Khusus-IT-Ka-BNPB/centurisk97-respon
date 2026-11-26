@@ -70,6 +70,22 @@ describe("how fast each agency answers", () => {
     expect([door?.getAttribute("href"), door?.getAttribute("aria-current")]).toEqual(["/lapor/meja/respons", "page"]);
   });
 
+  test("the weekly counts are posted for as a file, and a refused download says why", async () => {
+    const view = await draw();
+    const section = screen.getByRole("region", { name: "Data agregat untuk penelitian" });
+    expect(within(section).getByText(/^Jumlah laporan per minggu/)).toBeTruthy();
+    const button = within(section).getByRole("button", { name: "Unduh CSV" });
+    const form = button.closest("form") as HTMLFormElement;
+    expect([form.method, form.getAttribute("action")]).toEqual(["post", "/lapor/meja/respons/aggregates"]);
+    expect(within(section).queryByText(/belum bisa diunduh/)).toBeNull();
+    view.unmount();
+    await renderDesk(<DeskResponseView response={RESPONSE} summary={SUMMARY} />, {
+      path: "/lapor/meja/respons",
+      entry: "/lapor/meja/respons?refused=aggregates",
+    });
+    expect(screen.getByText(/^Berkas belum bisa diunduh/)).toBeTruthy();
+  });
+
   test("months step over the year's end", () => {
     expect(monthStep("2026-12", 1)).toBe("2027-01");
     expect(monthStep("2026-01", -1)).toBe("2025-12");

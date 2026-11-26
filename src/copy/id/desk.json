@@ -286,5 +286,9 @@
   "desk.proof.hide": "Sembunyikan dari Alun-alun",
   "desk.proof.publicHint": "Foto yang ditampilkan bisa dilihat siapa saja di Alun-alun. Pilih foto tanpa wajah korban atau pelat kendaraan.",
   "desk.saved.proofShown": "Foto tampil di Alun-alun.",
-  "desk.saved.proofHidden": "Foto tidak lagi tampil di Alun-alun."
+  "desk.saved.proofHidden": "Foto tidak lagi tampil di Alun-alun.",
+  "desk.aggregates.title": "Data agregat untuk penelitian",
+  "desk.aggregates.lead": "Jumlah laporan per minggu, kabupaten atau kota, dan jenis bencana, sebagai berkas CSV. Tanpa nama, nomor, nomor tiket, desa, atau titik. Sel dari kurang dari 3 pelapor ditulis <3. Setiap unduhan tercatat atas akun Anda.",
+  "desk.aggregates.download": "Unduh CSV",
+  "desk.aggregates.refused": "Berkas belum bisa diunduh. Akun ini tidak berhak, atau batas unduhan per jam sudah tercapai. Coba lagi nanti."
 }

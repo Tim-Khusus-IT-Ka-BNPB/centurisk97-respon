@@ -1,10 +1,11 @@
-import { Link } from "react-router";
+import { Form, Link, useSearchParams } from "react-router";
 import type { DeskResponse, DeskSummary } from "../../../../src/contract/desk";
 import type { Text } from "../../../../src/copy/text";
 import { monthText } from "../../../../src/copy/time";
 import { useText } from "../../../lib/text";
 import { buttonStyles } from "../../atoms/Button";
 import { Icon } from "../../atoms/Icon";
+import { FileFrame, useFileTarget } from "../../molecules/FileFrame";
 import { Notice } from "../../molecules/Notice";
 import { DeskShell } from "./DeskShell";
 import { ALL_FILTERS } from "./parts";
@@ -74,6 +75,34 @@ function AgencyRow({ agency }: { readonly agency: Agency }) {
   );
 }
 
+// The weekly counts for research (K62): one file of every report, small cells hidden, each
+// download logged.
+function Aggregates() {
+  const t = useText();
+  const target = useFileTarget();
+  const [search] = useSearchParams();
+  return (
+    <section aria-labelledby="desk-aggregates" className="flex flex-col gap-3 card-surface p-5 md:p-6">
+      <h2 id="desk-aggregates" className="text-section font-bold tracking-[-0.015em]">
+        {t("desk.aggregates.title")}
+      </h2>
+      <p className="max-w-[65ch] text-muted">{t("desk.aggregates.lead")}</p>
+      {search.get("refused") === "aggregates" ? (
+        <Notice kind="error">
+          <p>{t("desk.aggregates.refused")}</p>
+        </Notice>
+      ) : null}
+      <Form reloadDocument method="post" action="/lapor/meja/respons/aggregates" target={target}>
+        <button type="submit" className={buttonStyles({ variant: "secondary", size: "min", className: "px-4" })}>
+          <Icon name="download" className="size-5" />
+          {t("desk.aggregates.download")}
+        </button>
+      </Form>
+      <FileFrame />
+    </section>
+  );
+}
+
 // How fast each agency answered a month's reports. By name, never ranked.
 export function DeskResponseView({
   response,
@@ -137,6 +166,7 @@ export function DeskResponseView({
         </div>
       )}
       <p className="text-meta text-muted">{t("desk.response.method")}</p>
+      <Aggregates />
     </DeskShell>
   );
 }

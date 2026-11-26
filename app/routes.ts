@@ -13,6 +13,7 @@ export default [
   route("lapor/theme", "routes/theme.tsx"),
   route("lapor/meja", "routes/desk.tsx"),
   route("lapor/meja/respons", "routes/deskResponse.tsx"),
+  route("lapor/meja/respons/aggregates", "routes/deskAggregates.tsx"),
   route("lapor/meja/pilot", "routes/deskPilot.tsx"),
   route("lapor/meja/:ticketNumber", "routes/deskReport.tsx"),
   route("lapor/meja/:ticketNumber/documents", "routes/deskDocument.tsx"),

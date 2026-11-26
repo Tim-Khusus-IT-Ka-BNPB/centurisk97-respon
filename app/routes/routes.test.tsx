@@ -13,6 +13,7 @@ import { OWN_REPORT } from "../testing/ownReport";
 import { never, renderPage } from "../testing/render";
 import AboutRoute, * as about from "./about";
 import DeskRoute, * as desk from "./desk";
+import * as deskAggregates from "./deskAggregates";
 import * as deskDocument from "./deskDocument";
 import DeskPilotRoute, * as deskPilot from "./deskPilot";
 import DeskReportRoute, * as deskReport from "./deskReport";
@@ -497,6 +498,13 @@ describe("desk routes", () => {
     expect(refused.init?.status).toBe(403);
     show(refused.data);
     expect(await screen.findByRole("heading", { name: "Meja laporan belum bisa dibuka" })).toBeTruthy();
+    const csv = () => new Response("minggu\n", { headers: { "content-type": "text/csv" } });
+    const file = await deskAggregates.action({ context: { api: api({ "POST /desk/aggregates": csv }) } } as Args);
+    expect(await file.text()).toBe("minggu\n");
+    const barred = await deskAggregates.action({
+      context: { api: api({ "POST /desk/aggregates": json(notAllowed, 403) }) },
+    } as Args);
+    expect([barred.status, barred.headers.get("location")]).toEqual([303, "/lapor/meja/respons?refused=aggregates"]);
   });
 
   test("the pilot's numbers: the page, the sign-in form, a refusal, and its forms", async () => {

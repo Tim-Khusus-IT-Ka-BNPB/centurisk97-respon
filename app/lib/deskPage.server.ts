@@ -291,3 +291,10 @@ export async function downloadDeskDocument(ticketNumber: string, form: FormData,
   const response = await api("POST", `/desk/reports/${ticket}/documents`, body);
   return documentOrBack(response, `/lapor/meja/${ticket}`);
 }
+
+// POST /lapor/meja/respons: the weekly counts as a file, or the page again with why not.
+export async function downloadAggregates(api: ApiCall): Promise<Response> {
+  const response = await api("POST", "/desk/aggregates", {});
+  if (response.ok) return response;
+  return new Response(null, { status: 303, headers: { location: "/lapor/meja/respons?refused=aggregates" } });
+}
