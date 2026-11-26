@@ -106,7 +106,7 @@ describe("the feed map", () => {
     await waitFor(() => expect(made.maps).toHaveLength(1));
     const map = made.maps[0] as FakeMap;
     map.load?.();
-    (made.markers[0]?.options.element as HTMLButtonElement).click();
+    ((made.markers[0] as FakeMarker).options.element as HTMLButtonElement).click();
     view.unmount();
     made.maps.length = 0;
     const none = draw([FEED_ALONE]);

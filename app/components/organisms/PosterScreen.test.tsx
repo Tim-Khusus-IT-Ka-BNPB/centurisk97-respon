@@ -97,26 +97,19 @@ describe("the village posters", () => {
   });
 });
 
+const SHEETS: PosterLoad = {
+  kind: "sheets",
+  query: "",
+  area: { name: "Baktiya", regencyName: "Aceh Utara" },
+  district: "11.08.01",
+  villages: [village("11.08.01.2001", "Uji Satu")],
+  one: false,
+  cut: false,
+};
+const SheetsPage = () => <PosterScreen load={SHEETS} origin="" />;
+
 test("with no script the browser's own print is used: no button that does nothing", () => {
-  const Stub = createRoutesStub([
-    {
-      path: "/lapor/poster",
-      Component: () => (
-        <PosterScreen
-          load={{
-            kind: "sheets",
-            query: "",
-            area: { name: "Baktiya", regencyName: "Aceh Utara" },
-            district: "11.08.01",
-            villages: [village("11.08.01.2001", "Uji Satu")],
-            one: false,
-            cut: false,
-          }}
-          origin=""
-        />
-      ),
-    },
-  ]);
+  const Stub = createRoutesStub([{ path: "/lapor/poster", Component: SheetsPage }]);
   const html = renderToStaticMarkup(
     <TextContext.Provider value={text}>
       <Stub initialEntries={["/lapor/poster"]} />

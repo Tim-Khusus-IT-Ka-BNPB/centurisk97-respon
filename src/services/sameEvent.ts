@@ -15,13 +15,13 @@ type States = Record<string, { readonly state: string; readonly value?: unknown 
 // The longest window of any hazard (72 hours) bounds the read.
 const LOOK_BACK_MS = 3 * DAY_MS;
 
-const valueOf = <T>(states: States, field: string): T | null =>
+const fieldValue = <T>(states: States, field: string): T | null =>
   states[field]?.state === "value" ? (states[field].value as T) : null;
 
 export function candidateOf(row: CandidateRow, reporters: number) {
   const states = parsed<States>(row.fields) as States;
-  const eventTime = valueOf<EventTimeValue>(states, "eventTime");
-  const subtype = valueOf<string>(states, "hazardSubtype");
+  const eventTime = fieldValue<EventTimeValue>(states, "eventTime");
+  const subtype = fieldValue<string>(states, "hazardSubtype");
   return {
     ticketNumber: row.ticket_number,
     hazardType: row.hazard_type as HazardTypeId,
