@@ -1,8 +1,12 @@
 // The order of the text pages: catalogue keys are flat, the reading order lives here.
 export const HELP_GROUPS = [
-  { group: "reporting", items: ["prepare", "placeRequired", "official", "words", "unsent"] },
+  {
+    group: "reporting",
+    items: ["prepare", "emergency", "placeRequired", "media", "missing", "language", "official", "words", "unsent"],
+  },
   { group: "terms", items: ["displaced", "familyCard", "houseDamage", "shakingScale"] },
-  { group: "status", items: ["meaning"] },
+  { group: "status", items: ["meaning", "missing", "numbers"] },
+  { group: "info", items: ["outlook", "warnings"] },
   { group: "privacy", items: ["who", "remove"] },
 ] as const;
 

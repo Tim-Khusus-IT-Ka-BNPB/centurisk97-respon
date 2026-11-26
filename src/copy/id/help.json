@@ -39,5 +39,22 @@
   "help.education.butir": "Yang perlu diingat",
   "help.education.sources": "Sumber",
   "help.education.dataDate": "Topik per {dataDate}.",
-  "help.education.unavailable": "Topik edukasi siaga belum bisa dimuat. Bagian bantuan lain tetap bisa dibaca."
+  "help.education.unavailable": "Topik edukasi siaga belum bisa dimuat. Bagian bantuan lain tetap bisa dibaca.",
+  "help.group.info": "Info daerah",
+  "help.reporting.emergency.q": "Bagaimana melapor saat nyawa terancam?",
+  "help.reporting.emergency.a": "Telepon 112 dulu. Lalu ketuk Lapor darurat di halaman awal: pertanyaannya lebih sedikit, dan laporan tampil di meja petugas dengan tanda darurat. Bila ada korban, Anda akan ditanya apakah ada yang terjebak dan apakah ada yang butuh pertolongan medis.",
+  "help.reporting.media.q": "Bisakah saya mengirim foto dan video?",
+  "help.reporting.media.a": "Bisa. Foto paling baik diambil langsung di lokasi. Video paling banyak 3 untuk satu laporan, setiap video paling lama 60 detik dan paling besar 30 MB. Bila sinyal putus saat mengirim video, ketuk Lanjutkan mengirim. Bagian yang sudah sampai tidak dikirim ulang.",
+  "help.reporting.missing.q": "Bagaimana melapor orang hilang?",
+  "help.reporting.missing.a": "Ketuk Lapor orang hilang di halaman awal. Cari desa tempat orang itu terakhir terlihat, lalu isi nama, ciri, waktu terakhir terlihat, dan nomor yang bisa dihubungi. Foto lama dari galeri juga boleh. Laporan ini hanya dibaca BNPB dan BPBD daerah itu, dan tidak tampil di peta. Satu nomor bisa mengirim 5 laporan orang hilang dalam sehari.",
+  "help.reporting.language.q": "Bisakah memakai bahasa daerah?",
+  "help.reporting.language.a": "Bisa. Pilih bahasa di bagian atas halaman laporan. Bagian yang belum diterjemahkan tetap tampil dalam bahasa Indonesia. Jawaban Anda dicatat apa adanya.",
+  "help.status.missing.q": "Apa arti status orang hilang?",
+  "help.status.missing.a": "Dicari: petugas sudah menerima laporan. Ditemukan selamat atau Ditemukan meninggal: petugas sudah mendapat kabar. Diteruskan ke Basarnas: pencarian ditangani tim SAR. Statusnya tampil di halaman Lapor orang hilang.",
+  "help.status.numbers.q": "Nomor apa yang bisa saya telepon?",
+  "help.status.numbers.a": "Sesudah laporan terkirim, halaman tiket menampilkan nomor darurat nasional: 112 darurat, 117 BNPB, 115 Basarnas, 119 ambulans, 110 polisi, dan 113 pemadam kebakaran.",
+  "help.info.outlook.q": "Apa isi Info daerah?",
+  "help.info.outlook.a": "Prakiraan hujan dan ancaman bencana tiga hari ke depan untuk kabupaten atau kota yang Anda cari, dengan nomor BPBD setempat, 112, dan 117.",
+  "help.info.warnings.q": "Bagaimana mendapat peringatan dini di ponsel?",
+  "help.info.warnings.a": "Di Info daerah, pilih paling banyak 3 kecamatan, jenis bencana, dan tingkat yang ingin Anda terima, lalu izinkan notifikasi. Peringatan longsor, angin kencang, dan asap berlabel Hipotesis karena belum diuji dengan kejadian nyata. Hentikan kapan saja dari halaman yang sama."
 }

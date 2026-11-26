@@ -8,7 +8,7 @@ How it is built: typed contracts between pages and API, layered code (route, ser
 
 Staging: https://lapor-bencana.centurisk97.id/lapor, synthetic data only.
 
-Status: the guided report (identity and consent, place by search or GPS, hazard, questions, photos, summary, send), the ticket with its rating, the tracking page and "Laporan saya" work end to end locally. Staging is not set up yet.
+Status: on staging for the pilot. Reporters: the guided report on the web and WhatsApp (place by search or GPS, hazard, follow-up and rescue questions, photos and video, summary, send), an emergency report, the ticket with the national numbers and its rating, tracking, "Laporan saya", the missing person report, Info daerah with warnings to the phone, and the report pages in local languages. Staff: the desk (map, list, gallery, clusters, status, replies, checks, documents), Orang dicari, Respons BPBD and the WhatsApp pilot numbers. Not built: the main-site login (`/masuk`), so staff and reporters sign in with this product's own codes until it lands.
 
 ## Where things are
 
