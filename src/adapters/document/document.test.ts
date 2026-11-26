@@ -139,6 +139,25 @@ describe("PDF", () => {
     expect(renderPdf(documentWith(...ALL))).toEqual(bytes);
   });
 
+  test("is tagged for a screen reader: parts in reading order, a photo said by its caption, lines and grounds skipped", () => {
+    const text = latin1(renderPdf(documentWith(...ALL)));
+    expect(text).toContain("/MarkInfo << /Marked true >> /StructTreeRoot");
+    for (const role of ["Document", "H1", "H2", "P", "L", "LI", "Lbl", "LBody", "Table", "TR", "TH", "TD", "Figure"])
+      expect(text).toContain(`/S /${role} /P `);
+    expect(text).toMatch(/\/S \/Figure [^\n]*\/Alt \(Foto 1/);
+    const parents = [...(/\/Nums \[(.*)\] >>/.exec(text)?.[1] ?? "").matchAll(/(\d+) \[([^\]]*)\]/g)];
+    const pages = text.split("endstream").filter((part) => part.includes(" Tj"));
+    expect(parents).toHaveLength(pages.length);
+    pages.forEach((page, index) => {
+      // Every piece is closed, numbered in order, and the structure names who owns each.
+      expect(page.match(/ B[DM]C\n/g)?.length).toBe(page.match(/\nEMC/g)?.length);
+      const pieces = [...page.matchAll(/<<\/MCID (\d+)>> BDC/g)].map(([, mcid]) => Number(mcid));
+      expect(pieces).toEqual(pieces.map((_, n) => n));
+      expect(parents[index]?.[2]?.match(/ 0 R/g)).toHaveLength(pieces.length);
+      expect(page).toContain("/Artifact <</Type /Pagination>> BDC");
+    });
+  });
+
   test("a table longer than a page goes on under its own head, and a group's name stays with its rows", () => {
     const rows = Array.from({ length: 70 }, (_, n) => (n % 9 === 0 ? `Kelompok ${n}` : cells(`Isian ${n}`, "ya")));
     const bytes = renderPdf(documentWith({ kind: "table", widths: [0.5, 0.5], head: ["Isian", "Nilai"], rows }));
@@ -146,6 +165,8 @@ describe("PDF", () => {
     expect(pages).toBeGreaterThan(1);
     const lines = pdfLines(bytes);
     expect(lines.filter((line) => line === "Nilai")).toHaveLength(pages);
+    // A reader has the head once; on the next pages it is drawn for the eye only.
+    expect(latin1(bytes).match(/\/Scope \/Column/g)).toHaveLength(2);
     for (let n = 0; n < 70; n += 1) expect(lines).toContain(n % 9 === 0 ? `Kelompok ${n}` : `Isian ${n}`);
   });
 
