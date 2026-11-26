@@ -26,6 +26,55 @@ const report = (extra: Partial<ClusterInput> = {}): ClusterInput => {
   };
 };
 
+// A point this many km east of A.
+const east = (km: number) => ({
+  lat: A.lat,
+  lon: A.lon + km / ((6371 * Math.PI * Math.cos((A.lat * Math.PI) / 180)) / 180),
+});
+
+describe("each hazard's reach", () => {
+  test.each([
+    ["flood", 3, 6],
+    ["landslide", 3, 6],
+    ["buildingFire", 3, 6],
+    ["extremeWeather", 5, 6],
+    ["forestFire", 5, 12],
+  ])("%s joins within %d km and %d hours, and no further", (hazardType, km, hours) => {
+    const pair = (point: { lat: number; lon: number }, atMs = T0) => [
+      report({ hazardType }),
+      report({ hazardType, point, villageCode: "elsewhere", atMs }),
+    ];
+    expect(clustersOf(pair(east(km - 0.1), T0 + hours * HOUR_MS))).toHaveLength(1);
+    expect(clustersOf(pair(east(km + 0.1)))).toEqual([]);
+    expect(clustersOf(pair(east(0), T0 + hours * HOUR_MS + 1))).toEqual([]);
+  });
+
+  test.each([
+    ["earthquake", 12],
+    ["volcanicEruption", 12],
+    ["tsunami", 12],
+  ])("%s joins across its regency within %d hours", (hazardType, hours) => {
+    const far = { hazardType, point: east(50), villageCode: "elsewhere" };
+    expect(clustersOf([report({ hazardType }), report({ ...far, atMs: T0 + hours * HOUR_MS })])).toHaveLength(1);
+    expect(clustersOf([report({ hazardType }), report({ ...far, atMs: T0 + hours * HOUR_MS + 1 })])).toEqual([]);
+  });
+});
+
+describe("the edge of the reach", () => {
+  // On the equator these points are exactly 3 and 5 km from the origin, as distanceKm computes it.
+  test.each([
+    ["flood", 0.026979648177561915],
+    ["extremeWeather", 0.04496608029593653],
+  ])("%s joins at exactly its distance", (hazardType, lat) => {
+    const origin = { lat: 0, lon: 0 };
+    const pair = [
+      report({ hazardType, point: origin }),
+      report({ hazardType, point: { lat, lon: 0 }, villageCode: "elsewhere" }),
+    ];
+    expect(clustersOf(pair)).toHaveLength(1);
+  });
+});
+
 describe("clusters of reports", () => {
   test("two numbers within 3 km and 6 hours make one cluster, oldest first, figures never added", () => {
     const later = report({ point: NEAR, atMs: T0 + 6 * HOUR_MS });

@@ -49,9 +49,13 @@ export type Cluster = {
 
 function near(a: ClusterInput, b: ClusterInput, rule: ClusterRule): boolean {
   if (a.hazardType !== b.hazardType || Math.abs(a.atMs - b.atMs) > rule.hours * HOUR_MS) return false;
-  if (rule.reach === "regency") return a.regencyCode === b.regencyCode;
-  if (a.point && b.point && distanceKm(a.point, b.point) <= rule.km) return true;
-  return a.villageCode === b.villageCode;
+  switch (rule.reach) {
+    case "regency":
+      return a.regencyCode === b.regencyCode;
+    case "local":
+      if (a.point && b.point && distanceKm(a.point, b.point) <= rule.km) return true;
+      return a.villageCode === b.villageCode;
+  }
 }
 
 export function clustersOf(reports: readonly ClusterInput[]): readonly Cluster[] {

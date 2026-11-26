@@ -62,6 +62,11 @@ describe("weekly aggregates", () => {
     expect(aggregateRows([report("a", -1), report("b", -2), report("c", -3)])[0]?.medianMinutesToReport).toBeNull();
   });
 
+  test("the median is of the sorted delays, a send at the event time counting as 0", () => {
+    expect(aggregateRows([report("a", 50), report("b", 10), report("c", 30)])[0]?.medianMinutesToReport).toBe(30);
+    expect(aggregateRows([report("a", 0), report("b", 0), report("c", 90)])[0]?.medianMinutesToReport).toBe(0);
+  });
+
   test("cells split by week, regency and hazard, in that order", () => {
     const week = 7 * 24 * 60;
     const rows = aggregateRows([
