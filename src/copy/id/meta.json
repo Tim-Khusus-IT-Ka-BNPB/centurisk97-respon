@@ -10,5 +10,6 @@
   "meta.tracking.description": "Status penanganan laporan bencana Anda, dibuka lewat tautan yang dikirim kepada pelapor.",
   "meta.desk.description": "Meja laporan untuk petugas BNPB dan BPBD.",
   "meta.ownReport.description": "Status, dokumen, dan kabar laporan bencana Anda. Hanya bisa dibuka dari perangkat yang dipakai melapor.",
-  "meta.emergency.description": "Kirim titik lokasi Anda ke BNPB sebagai laporan darurat."
+  "meta.emergency.description": "Kirim titik lokasi Anda ke BNPB sebagai laporan darurat.",
+  "meta.feed.description": "Laporan bencana dari warga yang sedang atau sudah ditangani BNPB dan BPBD, di peta dan daftar, tanpa data pelapor."
 }

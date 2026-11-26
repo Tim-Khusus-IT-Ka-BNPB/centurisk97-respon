@@ -12,6 +12,9 @@ function NavLinks({ className }: { readonly className: string }) {
   const t = useText();
   return (
     <nav className={className}>
+      <Link to="/lapor/feed" className={navLink}>
+        {t("nav.feed")}
+      </Link>
       <Link to="/lapor/help" className={navLink}>
         {t("help.title")}
       </Link>

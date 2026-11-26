@@ -8,6 +8,7 @@ import { LOST } from "../lib/network";
 import { PAGE_TEXTS, pickTexts } from "../lib/texts.server";
 import * as root from "../root";
 import { SUMMARY } from "../testing/desk";
+import { FEED_ENTRY } from "../testing/feed";
 import { OWN_REPORT } from "../testing/ownReport";
 import { never, renderPage } from "../testing/render";
 import AboutRoute, * as about from "./about";
@@ -18,6 +19,7 @@ import DeskReportRoute, * as deskReport from "./deskReport";
 import DeskResponseRoute, * as deskResponse from "./deskResponse";
 import DraftRoute, * as draft from "./draft";
 import EmergencyRoute, * as emergency from "./emergency";
+import FeedRoute, * as feed from "./feed";
 import HelpRoute, * as help from "./help";
 import HomeRoute, * as home from "./home";
 import * as rootIndex from "./index";
@@ -89,6 +91,41 @@ describe("route modules", () => {
     renderPage(routeElement(NotFoundRoute, { loaderData: loaded.data }), { path: "/lapor/nowhere" });
     expect(await screen.findByRole("heading", { name: "Halaman tidak ditemukan" })).toBeTruthy();
     expect(screen.getByRole("link", { name: "Ke halaman awal" }).getAttribute("href")).toBe("/lapor");
+  });
+
+  test("the public feed is read on the server with only a known hazard, and says when it cannot be", async () => {
+    expect(feed.headers()).toEqual({ "cache-control": "private, no-store" });
+    const asked: string[] = [];
+    const answering =
+      (response: () => Response): ApiCall =>
+      async (_method, path) => {
+        asked.push(path);
+        return response();
+      };
+    const read = await feed.loader({
+      request: new Request("http://localhost/lapor/feed?hazard=flood"),
+      context: { api: answering(json({ entries: [FEED_ENTRY] })) },
+    } as Args);
+    expect(read).toMatchObject({ load: { kind: "feed", feed: { entries: [FEED_ENTRY] } }, hazard: "flood" });
+    await feed.loader({
+      request: new Request("http://localhost/lapor/feed?hazard=other"),
+      context: { api: answering(json({ entries: [] })) },
+    } as Args);
+    expect(asked).toEqual(["/feed?hazard=flood", "/feed"]);
+    const limited = apiEnvelope("limit.address.feed", { params: { limit: 600 } });
+    const refused = await feed.loader({
+      request: new Request("http://localhost/lapor/feed"),
+      context: { api: answering(json(limited, 429)) },
+    } as Args);
+    expect(refused.load).toEqual({ kind: "unavailable", envelope: limited });
+    const broken = await feed.loader({
+      request: new Request("http://localhost/lapor/feed"),
+      context: { api: answering(() => new Response("down", { status: 503 })) },
+    } as Args);
+    expect(broken.load).toEqual({ kind: "unavailable", envelope: null });
+    expect(feed.meta({ data: read, matches: [] } as Args)).toContainEqual({ title: "Alun-alun, Pantau Bencana BNPB" });
+    renderPage(routeElement(FeedRoute, { loaderData: read }), { path: "/lapor/feed" });
+    expect(await screen.findByRole("heading", { level: 1, name: "Alun-alun" })).toBeTruthy();
   });
 
   test("the home reads the open drafts on the server, and survives when it cannot", async () => {

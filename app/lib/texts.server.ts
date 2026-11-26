@@ -73,6 +73,17 @@ export const PAGE_TEXTS = {
   // A draft that cannot be opened needs only its card's words.
   refused: [...SHELL, "card.expired.new", "common.retryTime."],
   help: [...SHELL, "help."],
+  feed: [
+    ...SHELL,
+    "feed.",
+    "hazard.",
+    "hazardSubtype.",
+    "desk.impact.",
+    "desk.row.",
+    "value.eventTime.",
+    "limit.address.feed",
+    "common.retryTime.",
+  ],
   tracking: [
     ...SHELL,
     "tracking.",

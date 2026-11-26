@@ -55,7 +55,9 @@ export const STATUS_GROUPS = {
 export const GROUPS = ["open", "working", "done"] as const;
 
 // The box holding every point, as [[west, south], [east, north]], or null with no points.
-export function boundsOf(points: readonly MapPoint[]): [[number, number], [number, number]] | null {
+export function boundsOf(
+  points: readonly { readonly lat: number; readonly lon: number }[],
+): [[number, number], [number, number]] | null {
   if (points.length === 0) return null;
   const lons = points.map((point) => point.lon);
   const lats = points.map((point) => point.lat);
@@ -67,7 +69,7 @@ export function boundsOf(points: readonly MapPoint[]): [[number, number], [numbe
 
 const SVG = "http://www.w3.org/2000/svg";
 
-function iconElement(name: IconName): SVGSVGElement {
+export function iconElement(name: IconName): SVGSVGElement {
   const svg = document.createElementNS(SVG, "svg");
   for (const [key, value] of Object.entries({
     viewBox: "0 0 24 24",
