@@ -9,7 +9,7 @@ test("the header stays one row, with its links in a menu on a phone", async ({ p
   expect((await header.boundingBox())?.height).toBeLessThanOrEqual(80);
   await noSidewaysScroll(page);
   const menu = header.locator("summary", { hasText: "Menu" });
-  if (width >= 640) {
+  if (width >= 768) {
     await expect(menu).toBeHidden();
     await expect(header.getByRole("link", { name: "Bantuan" })).toBeVisible();
     return;
