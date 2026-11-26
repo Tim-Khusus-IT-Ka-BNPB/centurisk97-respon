@@ -411,10 +411,11 @@ describe("a report on the desk", () => {
     const handling = screen.getByRole("region", { name: "Penanganan" });
     expect(within(handling).getByText(/^Foto yang ditampilkan bisa dilihat siapa saja/)).toBeTruthy();
     expect(within(handling).getAllByText("Tampil di Alun-alun")).toHaveLength(1);
-    const hide = within(handling).getByRole("button", { name: "Sembunyikan dari Alun-alun" });
+    const hide = within(handling).getByRole("button", { name: "Sembunyikan foto penanganan 1 dari Alun-alun" });
     const form = hide.closest("form") as HTMLFormElement;
     expect(Object.fromEntries(new FormData(form))).toEqual({ action: "proofPublic", proofId: "p1", public: "0" });
-    const show = within(handling).getByRole("button", { name: "Tampilkan di Alun-alun" });
+    const show = within(handling).getByRole("button", { name: "Tampilkan foto penanganan 2 di Alun-alun" });
+    expect(show.textContent).toBe("Tampilkan di Alun-alun");
     expect(new FormData(show.closest("form") as HTMLFormElement).get("public")).toBe("1");
     view.unmount();
     await renderDesk(<DeskReportView report={REPORT} summary={SUMMARY} />, {

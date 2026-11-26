@@ -143,7 +143,11 @@ function Handling({ report }: { readonly report: DeskReport }) {
                   <input type="hidden" name="action" value="proofPublic" />
                   <input type="hidden" name="proofId" value={proof.proofId} />
                   <input type="hidden" name="public" value={proof.public ? "0" : "1"} />
-                  <Button size="min" className="w-full px-3 text-meta">
+                  <Button
+                    size="min"
+                    className="w-full px-3 text-meta"
+                    aria-label={t(proof.public ? "desk.proof.hideLabel" : "desk.proof.showLabel", { n: index + 1 })}
+                  >
                     {t(proof.public ? "desk.proof.hide" : "desk.proof.show")}
                   </Button>
                 </Form>

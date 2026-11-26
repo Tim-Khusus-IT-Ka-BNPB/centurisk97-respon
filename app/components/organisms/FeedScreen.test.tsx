@@ -23,7 +23,8 @@ describe("the public feed page", () => {
     expect(within(flood).getByText("Kejadian 24 Nov 2026, 08.30 WIB")).toBeTruthy();
     expect(within(flood).getByText("Dilaporkan 24 Nov 2026, 09.00 WIB")).toBeTruthy();
     expect(within(flood).getByText("3 warga melaporkan kejadian ini")).toBeTruthy();
-    const photos = within(flood).getAllByRole("img", { name: "Foto penanganan Banjir di Desa/Kel. Uji Satu" });
+    const photos = within(flood).getAllByRole("img", { name: /^Foto penanganan \d, Banjir di Desa\/Kel\. Uji Satu$/ });
+    expect(photos[1]?.getAttribute("alt")).toBe("Foto penanganan 2, Banjir di Desa/Kel. Uji Satu");
     expect(photos.map((photo) => photo.getAttribute("src"))).toEqual(
       FEED_ENTRY.proofs.map((id) => `/api/lapor/feed/proofs/${id}`),
     );

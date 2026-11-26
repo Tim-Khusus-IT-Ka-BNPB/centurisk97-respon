@@ -13,7 +13,7 @@
   "feed.reporters": "{count} warga melaporkan kejadian ini",
   "feed.place": "Desa/Kel. {village}, Kec. {district}, {regency}, {province}",
   "feed.proofs.title": "Foto penanganan petugas",
-  "feed.proofs.alt": "Foto penanganan {hazard} di Desa/Kel. {village}",
+  "feed.proofs.alt": "Foto penanganan {n}, {hazard} di Desa/Kel. {village}",
   "feed.empty.title": "Belum ada laporan yang ditangani",
   "feed.empty.filtered": "Belum ada laporan {hazard} yang ditangani",
   "feed.empty.lead": "Laporan warga muncul di sini sesudah diperiksa dan ditangani petugas BNPB atau BPBD.",

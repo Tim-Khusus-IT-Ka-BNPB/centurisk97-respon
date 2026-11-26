@@ -53,10 +53,10 @@ function FeedCard({ entry }: { readonly entry: FeedEntry }) {
           </span>
           {/* The status moves under the name where both do not fit beside the icon. */}
           <div className="flex min-w-48 flex-1 flex-col gap-0.5">
-            <h2 id={`feed-${entry.id}-title`} className="text-body font-bold">
+            <h3 id={`feed-${entry.id}-title`} className="text-body font-bold">
               {hazard}
               {subtype ? <span className="font-normal text-muted">, {subtype}</span> : null}
-            </h2>
+            </h3>
             <p className="text-meta text-muted">
               {t("feed.place", {
                 village: entry.place.villageName,
@@ -86,11 +86,11 @@ function FeedCard({ entry }: { readonly entry: FeedEntry }) {
           <figure className="flex flex-col gap-2">
             <figcaption className="text-meta text-muted">{t("feed.proofs.title")}</figcaption>
             <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
-              {entry.proofs.map((proofId) => (
+              {entry.proofs.map((proofId, index) => (
                 <img
                   key={proofId}
                   src={`/api/lapor/feed/proofs/${proofId}`}
-                  alt={t("feed.proofs.alt", { hazard, village: entry.place.villageName })}
+                  alt={t("feed.proofs.alt", { n: index + 1, hazard, village: entry.place.villageName })}
                   loading="lazy"
                   className="aspect-[4/3] w-full rounded-control bg-sunken object-cover"
                 />
