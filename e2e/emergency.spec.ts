@@ -177,7 +177,8 @@ test("with no signal one tap is kept on the phone with a camera photo, and both 
   // Signal returns; the button sends at once where the browser does not say so itself.
   await context.setOffline(false);
   const sendNow = page.getByRole("button", { name: "Kirim sekarang" });
-  if (await sendNow.isVisible()) await sendNow.click().catch(() => undefined);
+  // It may have gone on its own meanwhile, taking the button with it.
+  if (await sendNow.isVisible()) await sendNow.click({ timeout: 2000 }).catch(() => undefined);
   await expect(page.getByText(/Terkirim ke meja BNPB dengan nomor LA-/)).toBeVisible({ timeout: 40_000 });
   const ticket = /LA-\d{6}-\d{2,}/.exec((await page.getByRole("status").textContent()) ?? "")?.[0] as string;
   const desk = await deskPage(browser, DESK_CODE, baseURL as string);

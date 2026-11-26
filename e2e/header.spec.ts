@@ -16,7 +16,7 @@ test("the header stays one row, with its links in a menu below 1024px and in the
     // It opens over the page, so the page does not move.
     const before = await page.locator("main").boundingBox();
     await rail.getByRole("link", { name: "Bantuan" }).hover();
-    expect((await rail.boundingBox())?.width).toBeGreaterThan(200);
+    await expect.poll(async () => (await rail.boundingBox())?.width).toBeGreaterThan(200);
     expect(await page.locator("main").boundingBox()).toEqual(before);
     await rail.getByRole("link", { name: "Bantuan" }).click();
     await expect(page).toHaveURL(/\/lapor\/help$/);

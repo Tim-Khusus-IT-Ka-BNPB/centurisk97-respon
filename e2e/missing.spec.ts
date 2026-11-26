@@ -9,9 +9,11 @@ test.afterEach(async ({ browser, context }) => closeOthers(browser, context));
 test("a missing person is reported from the home's door, the desk of the region moves it, and the reporter sees it", async ({
   page,
   browser,
+  baseURL,
 }, info) => {
   test.setTimeout(120_000);
-  const name = `Uji Hilang ${Math.floor(Math.random() * 1e6)}`;
+  // A name has no digits, so each run's is letters of its own.
+  const name = `Uji Hilang ${Array.from({ length: 6 }, () => String.fromCharCode(97 + Math.floor(Math.random() * 26))).join("")}`;
   const number = syntheticNumber();
   await page.goto("/lapor");
   await page.getByRole("link", { name: /^Lapor orang hilang/ }).click();
@@ -31,7 +33,10 @@ test("a missing person is reported from the home's door, the desk of the region 
   await page.getByLabel("Cari desa atau kelurahan").fill("cot seumiyong");
   await page.getByRole("button", { name: "Cari desa" }).click();
   const form = page.getByRole("form", { name: "Lapor orang hilang" });
-  await expect(form.getByText(/^Cot Seumiyong, /)).toBeVisible();
+  await form
+    .getByLabel(/^Cot Seumiyong, /)
+    .first()
+    .check();
   await form.getByLabel("Nama lengkap").fill(name);
   await form.getByLabel("Anak").check();
   await form.getByLabel("Pria").check();
@@ -47,7 +52,7 @@ test("a missing person is reported from the home's door, the desk of the region 
   await page.screenshot({ path: info.outputPath("sent.png"), fullPage: true });
 
   // The desk of Aceh Utara reads it, with the reporter's number, and moves it.
-  const desk = await browser.newContext({ ...info.project.use });
+  const desk = await browser.newContext({ baseURL });
   await ownAddress(desk);
   const officer = await desk.newPage();
   await officer.goto("/lapor/meja", { waitUntil: "networkidle" });

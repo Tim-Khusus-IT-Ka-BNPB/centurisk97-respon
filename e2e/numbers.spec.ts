@@ -3,10 +3,8 @@ import { noSidewaysScroll } from "./support.ts";
 
 test("Nomor penting opens from the home's door and the header, each number a call", async ({ page }) => {
   await page.goto("/lapor");
-  await page
-    .getByRole("link", { name: /^Nomor penting/ })
-    .first()
-    .click();
+  // The home's own door; the header's icon is checked below.
+  await page.getByRole("main").getByRole("link", { name: "Nomor penting", exact: true }).click();
   await expect(page).toHaveURL(/\/lapor\/nomor-penting$/);
   await expect(page.getByRole("heading", { level: 1, name: "Nomor penting" })).toBeVisible();
   for (const number of ["112", "115", "119"])
