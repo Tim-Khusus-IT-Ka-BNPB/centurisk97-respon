@@ -103,6 +103,8 @@ describe("when and where a video's file says it was made", () => {
     expect(mp4Created(WEBM)).toBeNull();
     expect(mp4Created(movie({ created: MADE_1904 }).subarray(0, 16 + 8 + 4 + 3))).toBeNull();
     expect(mp4Created(movie({ version: 1, created: MADE_1904 }).subarray(0, 16 + 8 + 4 + 7))).toBeNull();
+    // A header at the very start of the bytes, ending right after its time, is read.
+    expect(mp4Created(Uint8Array.from([...ascii("mvhd"), 0, 0, 0, 0, ...u32(MADE_1904)]))).toBe(MADE_MS);
   });
 
   test("an ISO 6709 point in Indonesia; one abroad or none is no place", () => {

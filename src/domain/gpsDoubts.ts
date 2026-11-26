@@ -40,6 +40,7 @@ export function gpsDoubts(input: GpsDoubtInput): readonly GpsDoubt[] {
   if (input.previous !== null) {
     const km = distanceKm(input.point, input.previous.point);
     const hours = Math.max(input.atMs - input.previous.atMs, MINUTE_MS) / HOUR_MS;
+    // Stryker disable next-line EqualityOperator: exactly 50 km or 300 km/h is not writable in floats
     if (km > JUMP.minKm && km / hours > JUMP.maxKmPerHour) doubts.push("jump");
   }
   return doubts;
