@@ -404,6 +404,9 @@ describe("route modules", () => {
     } as Args);
     expect(down.me).toBeNull();
     expect(down.missing).toEqual([]);
+    // Upstream's old Alun-alun address opens the feed.
+    const alun = await home.loader({ request: visit("/lapor/?alun"), context: {} } as Args).catch((thrown) => thrown);
+    expect([(alun as Response).status, (alun as Response).headers.get("location")]).toEqual([301, "/lapor/feed"]);
     renderPage(routeElement(HomeRoute, { loaderData: read }), { path: "/lapor" });
     expect(await screen.findByRole("link", { name: "Lapor kejadian" })).toBeTruthy();
     expect(screen.getByRole("link", { name: "Lapor darurat" }).getAttribute("href")).toBe("/lapor/report?darurat=1");

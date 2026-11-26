@@ -1,3 +1,4 @@
+import { redirect } from "react-router";
 import type { MeResponse } from "../../src/contract/draft";
 import { HomeHero } from "../components/organisms/HomeHero";
 import { HomeScreen } from "../components/organisms/HomeScreen";
@@ -16,6 +17,8 @@ export const meta = (args: Route.MetaArgs) =>
 // The missing persons this phone reported show in Laporan saya too; a phone nobody reported from
 // has none.
 export async function loader({ request, context }: Route.LoaderArgs) {
+  // Upstream's Alun-alun lived at /lapor/?alun (LR-01, K94): an old link opens our feed.
+  if (new URL(request.url).searchParams.has("alun")) throw redirect("/lapor/feed", 301);
   const [response, sought] = await Promise.all([context.api("GET", "/me"), context.api("GET", "/missing/mine")]);
   const me = response.ok ? ((await response.json()) as MeResponse) : null;
   const missing = sought.ok ? ((await sought.json()) as MissingMine[]) : [];
