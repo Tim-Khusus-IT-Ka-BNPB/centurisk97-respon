@@ -367,3 +367,21 @@ test("a BPBD account works only its region, and asks for the reporter's identity
   await expect(other.getByRole("heading", { name: "Laporan tidak ditemukan" })).toBeVisible();
   await expect(other.getByText("Uji Satu")).toHaveCount(0);
 });
+
+test("on a report, BNPB opens a local BPBD officer's number, and can call or write to them", async ({
+  page,
+  browser,
+  baseURL,
+}) => {
+  test.setTimeout(240_000);
+  const { ticketNumber } = await sendReport(browser, baseURL as string);
+  await signIn(page);
+  await page.goto(`/lapor/meja/${ticketNumber}`);
+  const card = page.getByRole("region", { name: "PIC BPBD setempat" });
+  await expect(card.getByText("Uji Andi")).toBeVisible();
+  await expect(card.locator('a[href^="tel:"]')).toHaveCount(0);
+  await card.getByRole("button", { name: "Tampilkan nomor Uji Andi" }).click();
+  await expect(card.locator('a[href="tel:+628001108001"]')).toBeVisible();
+  await expect(card.locator('a[href="https://wa.me/628001108001"]')).toBeVisible();
+  await noSidewaysScroll(page);
+});
