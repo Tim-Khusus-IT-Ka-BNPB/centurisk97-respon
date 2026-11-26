@@ -161,7 +161,7 @@ export const deskIdentitySchema = z.object({
 export type DeskIdentity = z.infer<typeof deskIdentitySchema>;
 
 // The region's BPBD officers as BNPB sees them on a report: numbers masked until opened.
-export const deskOfficerSchema = z.object({
+const deskOfficerSchema = z.object({
   profileId: z.string(),
   name: z.string(),
   position: z.string(),
