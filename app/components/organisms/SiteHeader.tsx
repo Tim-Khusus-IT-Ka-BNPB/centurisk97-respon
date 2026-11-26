@@ -29,6 +29,24 @@ function NavLinks({ className }: { readonly className: string }) {
   );
 }
 
+const quickIcon =
+  "hidden size-target-min items-center justify-center rounded-control text-ink hover:bg-sunken sm:inline-flex";
+
+// Upstream's two marks beside the theme switch: the early warnings, and the numbers to call.
+function QuickIcons() {
+  const t = useText();
+  return (
+    <>
+      <Link to="/lapor/info#info-warn" aria-label={t("nav.warnings")} title={t("nav.warnings")} className={quickIcon}>
+        <Icon name="bell" />
+      </Link>
+      <Link to="/lapor/nomor-penting" aria-label={t("nav.numbers")} title={t("nav.numbers")} className={quickIcon}>
+        <Icon name="phone" />
+      </Link>
+    </>
+  );
+}
+
 // The band on every page: the way home, and on public pages help and about. Below 1024px it stays
 // one row: the links move into a menu that opens with no script, and closes on each new page.
 export function SiteHeader({
@@ -58,6 +76,7 @@ export function SiteHeader({
           {nav ? <NavLinks className="hidden lg:flex" /> : null}
           {/* On a phone a page with links keeps the switch in its menu, so the bar stays one row. */}
           {languages ? <LanguagePicker /> : null}
+          {nav ? <QuickIcons /> : null}
           <ThemeSwitch className={nav ? "hidden lg:block" : undefined} />
           {nav ? (
             <details key={pathname} className="group lg:hidden">
@@ -67,6 +86,9 @@ export function SiteHeader({
               </summary>
               <div className="absolute inset-x-0 top-full z-40 flex flex-col gap-1 border-b border-line bg-header px-4 py-2">
                 <NavLinks className="flex flex-col gap-1" />
+                <Link to="/lapor/nomor-penting" className={cn(navLink, "sm:hidden")}>
+                  {t("nav.numbers")}
+                </Link>
                 <ThemeSwitch withLabel className="border-t border-line pt-1" />
               </div>
             </details>
