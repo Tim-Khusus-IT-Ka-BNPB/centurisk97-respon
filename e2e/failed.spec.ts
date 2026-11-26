@@ -56,14 +56,19 @@ test("a page cut off from the service says so, keeps the numbers to call and its
   expect(errors).toEqual([]);
 });
 
-test("a refresh lost after what was done keeps the theme just picked", async ({ page }) => {
-  await page.goto("/lapor/help", { waitUntil: "networkidle" });
-  await page.route(/\.data/, (route) => (route.request().method() === "GET" ? route.abort() : route.continue()));
-  await pressTheme(page, "Pakai tema gelap");
-  await expect(heading(page)).toHaveText("Halaman belum bisa dibuka");
-  await drawn(page, "dark");
-  await page.unroute(/\.data/);
-  await page.getByRole("link", { name: "Muat ulang" }).click();
-  await expect(heading(page)).toHaveText("Bantuan");
-  await drawn(page, "dark");
+test.describe("with no service worker", () => {
+  // WebKit does not let a test cut off what passes through the service worker.
+  test.use({ serviceWorkers: "block" });
+
+  test("a refresh lost after what was done keeps the theme just picked", async ({ page }) => {
+    await page.goto("/lapor/help", { waitUntil: "networkidle" });
+    await page.route(/\.data/, (route) => (route.request().method() === "GET" ? route.abort() : route.continue()));
+    await pressTheme(page, "Pakai tema gelap");
+    await expect(heading(page)).toHaveText("Halaman belum bisa dibuka");
+    await drawn(page, "dark");
+    await page.unroute(/\.data/);
+    await page.getByRole("link", { name: "Muat ulang" }).click();
+    await expect(heading(page)).toHaveText("Bantuan");
+    await drawn(page, "dark");
+  });
 });
