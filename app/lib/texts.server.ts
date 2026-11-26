@@ -87,6 +87,7 @@ export const PAGE_TEXTS = {
   poster: [...SHELL, "poster."],
   info: [...SHELL, "info.", "emergency.call112", "emergency.call117", "emergency.callBpbd"],
   language: [...SHELL],
+  numbers: [...SHELL, "numbers.", "card.sent.numbers.", "home.contact."],
   missing: [...SHELL, "missing.", "fieldError.missing.", "error.", "limit.", "card.sent.numbers."],
   feed: [
     ...SHELL,

@@ -31,6 +31,7 @@ import LanguageRoute, * as language from "./language";
 import * as manifest from "./manifest";
 import MissingRoute, * as missing from "./missing";
 import NotFoundRoute, * as notFound from "./notFound";
+import NumbersRoute, * as numbers from "./numbers";
 import * as ownDocument from "./ownDocument";
 import OwnReportRoute, * as ownReport from "./ownReport";
 import PosterRoute, * as poster from "./poster";
@@ -581,6 +582,21 @@ describe("route modules", () => {
     expect(screen.getAllByRole("link", { name: "Tentang" })[0]?.getAttribute("href")).toBe("/lapor/about");
     expect(screen.getByRole("link", { name: "Hak Anda" }).getAttribute("href")).toBe("#privacy-rights-2");
     expect(screen.queryByText(/Yang berlaku secara hukum/)).toBeNull();
+  });
+
+  test("Nomor penting lists the national numbers, leads to the BPBD's, and BNPB's own", async () => {
+    const loaded = numbers.loader({ request: visit() } as Args);
+    expect(numbers.meta({ data: loaded, matches: [] } as Args)[0]).toEqual({
+      title: "Nomor penting, Pantau Bencana BNPB",
+    });
+    renderPage(routeElement(NumbersRoute, { loaderData: loaded }), { path: "/lapor/nomor-penting" });
+    expect(await screen.findByRole("heading", { level: 1, name: "Nomor penting" })).toBeTruthy();
+    const calls = screen
+      .getAllByRole("link")
+      .map((link) => link.getAttribute("href"))
+      .filter((href) => href?.startsWith("tel:"));
+    expect(calls).toEqual(expect.arrayContaining(["tel:112", "tel:117", "tel:115", "tel:119", "tel:110", "tel:113"]));
+    expect(screen.getByRole("link", { name: "Cari di Info daerah" }).getAttribute("href")).toBe("/lapor/info");
   });
 
   test("a public page is in the visitor's language, and the privacy text says the Indonesian one binds", async () => {

@@ -10,6 +10,7 @@ export default [
   route("lapor/feed", "routes/feed.tsx"),
   route("lapor/info", "routes/info.tsx"),
   route("lapor/orang-hilang", "routes/missing.tsx"),
+  route("lapor/nomor-penting", "routes/numbers.tsx"),
   route("lapor/poster", "routes/poster.tsx"),
   route("lapor/reports/:ticketNumber", "routes/ownReport.tsx"),
   route("lapor/reports/:ticketNumber/:file", "routes/ownDocument.tsx"),

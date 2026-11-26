@@ -14,5 +14,6 @@
   "page.poster.title": "Poster QR desa, {appName}",
   "page.info.title": "Info daerah, {appName}",
   "page.missing.title": "Lapor orang hilang, {appName}",
-  "page.language.title": "Pilih bahasa, {appName}"
+  "page.language.title": "Pilih bahasa, {appName}",
+  "page.numbers.title": "Nomor penting, {appName}"
 }

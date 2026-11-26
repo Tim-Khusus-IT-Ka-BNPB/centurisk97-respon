@@ -3,7 +3,7 @@ import { CallRow } from "./CallRow";
 
 // The national numbers, after any report is sent (upstream, 26 Nov): who to call while the desk reads
 // it. Shown at once, with no data to load.
-const NUMBERS = ["112", "117", "115", "119", "110", "113"] as const;
+export const NUMBERS = ["112", "117", "115", "119", "110", "113"] as const;
 
 export function NationalNumbers() {
   const t = useText();
