@@ -576,6 +576,7 @@ describe("desk routes", () => {
       eventTime: { kind: "olderThan30Days" },
       sentAt: { utc: "2026-11-24T02:30:00.000Z", zone: "WIB" },
       completePercent: 50,
+      cluster: null,
       photoCount: 0,
       numberUnverified: false,
       emergency: null,
