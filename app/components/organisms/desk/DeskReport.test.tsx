@@ -394,12 +394,34 @@ describe("a report on the desk", () => {
     const view = await renderDesk(<DeskReportView report={{ ...REPORT, proofs }} summary={SUMMARY} />, PATH);
     expect(within(screen.getByRole("region", { name: "Penanganan" })).getAllByRole("img")).toHaveLength(1);
     view.unmount();
-    const actions = [{ label: "Evakuasi warga", at: SENT, actor: "Petugas Uji", public: false }];
+    const actions = [{ label: "Evakuasi warga", at: SENT, actor: "Petugas Uji" }];
     const other = await renderDesk(<DeskReportView report={{ ...REPORT, actions }} summary={SUMMARY} />, PATH);
     expect(within(screen.getByRole("region", { name: "Penanganan" })).queryByRole("img")).toBeNull();
     other.unmount();
     await renderDesk(<DeskReportView report={REPORT} summary={SUMMARY} />, PATH);
     expect(screen.queryByRole("region", { name: "Penanganan" })).toBeNull();
+  });
+
+  test("each photo of the work is shown on the Alun-alun or taken off it by its own button", async () => {
+    const proofs = [
+      { proofId: "p1", hasPoint: true, at: SENT, actor: "Petugas Uji", public: true },
+      { proofId: "p2", hasPoint: false, at: SENT, actor: "Petugas Uji", public: false },
+    ];
+    const view = await renderDesk(<DeskReportView report={{ ...REPORT, proofs }} summary={SUMMARY} />, PATH);
+    const handling = screen.getByRole("region", { name: "Penanganan" });
+    expect(within(handling).getByText(/^Foto yang ditampilkan bisa dilihat siapa saja/)).toBeTruthy();
+    expect(within(handling).getAllByText("Tampil di Alun-alun")).toHaveLength(1);
+    const hide = within(handling).getByRole("button", { name: "Sembunyikan dari Alun-alun" });
+    const form = hide.closest("form") as HTMLFormElement;
+    expect(Object.fromEntries(new FormData(form))).toEqual({ action: "proofPublic", proofId: "p1", public: "0" });
+    const show = within(handling).getByRole("button", { name: "Tampilkan di Alun-alun" });
+    expect(new FormData(show.closest("form") as HTMLFormElement).get("public")).toBe("1");
+    view.unmount();
+    await renderDesk(<DeskReportView report={REPORT} summary={SUMMARY} />, {
+      ...PATH,
+      entry: `${PATH.path}?saved=proofShown`,
+    });
+    expect(screen.getByRole("status").textContent).toBe("Foto tampil di Alun-alun.");
   });
 
   test("who has a report in hand is named; an officer who may take it is told it is for good", async () => {

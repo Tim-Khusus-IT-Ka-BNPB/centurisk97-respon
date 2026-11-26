@@ -241,6 +241,8 @@ function deskPost(form: FormData): readonly [path: string, body?: unknown] {
       return ["identity"];
     case "take":
       return ["take"];
+    case "proofPublic":
+      return [`proofs/${encodeURIComponent(text("proofId"))}/public`, { public: text("public") === "1" }];
     default:
       return ["view"];
   }
@@ -263,7 +265,9 @@ export async function actOnDeskReport(ticketNumber: string, form: FormData, api:
   }
   if (path === "identity") return { kind: "identity", identity: (await response.json()) as DeskIdentity };
   if (form.get("action") === "opened") return { kind: "done" };
-  return redirectTo(`/lapor/meja/${ticket}${path === "view" ? "" : `?saved=${path}`}`, response);
+  const saved =
+    form.get("action") === "proofPublic" ? (formText(form, "public") === "1" ? "proofShown" : "proofHidden") : path;
+  return redirectTo(`/lapor/meja/${ticket}${path === "view" ? "" : `?saved=${saved}`}`, response);
 }
 
 // POST /lapor/meja/pilot: a number allowed, or taken away after its confirm.

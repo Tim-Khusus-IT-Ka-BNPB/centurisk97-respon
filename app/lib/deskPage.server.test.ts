@@ -175,6 +175,26 @@ describe("a change to a ticket", () => {
     ]);
   });
 
+  test("a photo of the work is shown on the Alun-alun or taken off, and named on the page after", async () => {
+    const { api, calls } = fakeApi(() => Response.json({}));
+    const shown = await actOnDeskReport(
+      "LA-241126-01",
+      form({ action: "proofPublic", proofId: "p1", public: "1" }),
+      api,
+    );
+    expect(shown).toMatchObject({ location: "/lapor/meja/LA-241126-01?saved=proofShown" });
+    const hidden = await actOnDeskReport(
+      "LA-241126-01",
+      form({ action: "proofPublic", proofId: "p1", public: "0" }),
+      api,
+    );
+    expect(hidden).toMatchObject({ location: "/lapor/meja/LA-241126-01?saved=proofHidden" });
+    expect(calls.map((call) => [call.path, call.body])).toEqual([
+      ["/desk/reports/LA-241126-01/proofs/p1/public", { public: true }],
+      ["/desk/reports/LA-241126-01/proofs/p1/public", { public: false }],
+    ]);
+  });
+
   test("a check sends its figures by field, and what was done its boxes", async () => {
     const { api, calls } = fakeApi(() => Response.json({}));
     const checked = await actOnDeskReport(

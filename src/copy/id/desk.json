@@ -280,5 +280,11 @@
   "desk.response.col.reports": "Laporan",
   "desk.response.col.seen": "Dibuka, nilai tengah",
   "desk.response.col.taken": "Diambil, nilai tengah",
-  "desk.response.method": "Diurutkan menurut nama, bukan peringkat. Menit dibulatkan. Selisih yang mundur tidak dihitung."
+  "desk.response.method": "Diurutkan menurut nama, bukan peringkat. Menit dibulatkan. Selisih yang mundur tidak dihitung.",
+  "desk.proof.public": "Tampil di Alun-alun",
+  "desk.proof.show": "Tampilkan di Alun-alun",
+  "desk.proof.hide": "Sembunyikan dari Alun-alun",
+  "desk.proof.publicHint": "Foto yang ditampilkan bisa dilihat siapa saja di Alun-alun. Pilih foto tanpa wajah korban atau pelat kendaraan.",
+  "desk.saved.proofShown": "Foto tampil di Alun-alun.",
+  "desk.saved.proofHidden": "Foto tidak lagi tampil di Alun-alun."
 }

@@ -32,7 +32,7 @@ import {
   when,
 } from "./parts";
 
-const SAVED = ["status", "replies", "checks", "actions", "proofs", "take"];
+const SAVED = ["status", "replies", "checks", "actions", "proofs", "take", "proofShown", "proofHidden"];
 
 // With script the open is posted once per visit, beside the page: a navigation would take what the
 // address says was just done off it.
@@ -115,6 +115,7 @@ function Handling({ report }: { readonly report: DeskReport }) {
           ))}
         </ul>
       )}
+      {report.proofs.length === 0 ? null : <p className="text-meta text-muted">{t("desk.proof.publicHint")}</p>}
       {report.proofs.length === 0 ? null : (
         <ul className="grid grid-cols-2 gap-3 sm:grid-cols-3">
           {report.proofs.map((proof, index) => (
@@ -131,7 +132,21 @@ function Handling({ report }: { readonly report: DeskReport }) {
                 <figcaption className="flex flex-col text-meta text-muted tabular-nums">
                   <span>{when(t, "desk.history.at", proof.at)}</span>
                   <span>{t(proof.hasPoint ? "desk.proof.point" : "desk.proof.noPoint")}</span>
+                  {proof.public ? (
+                    <span className="inline-flex items-center gap-1 font-semibold text-ink">
+                      <Icon name="circleCheck" className="size-4 text-primary" />
+                      {t("desk.proof.public")}
+                    </span>
+                  ) : null}
                 </figcaption>
+                <Form method="post" replace preventScrollReset>
+                  <input type="hidden" name="action" value="proofPublic" />
+                  <input type="hidden" name="proofId" value={proof.proofId} />
+                  <input type="hidden" name="public" value={proof.public ? "0" : "1"} />
+                  <Button size="min" className="w-full px-3 text-meta">
+                    {t(proof.public ? "desk.proof.hide" : "desk.proof.show")}
+                  </Button>
+                </Form>
               </figure>
             </li>
           ))}
