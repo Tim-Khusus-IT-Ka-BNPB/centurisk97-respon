@@ -68,6 +68,7 @@ export const queue = (overrides: Partial<DeskQueue> = {}): DeskQueue => ({
 export const list = (queue: DeskQueue) => ({ view: "list" as const, queue });
 
 export const REPORT: DeskReport = {
+  event: null,
   ...ITEM,
   status: "seen",
   account: { label: "Pusdalops BNPB, Petugas Uji" },

@@ -157,6 +157,8 @@ export type DeskIdentity = z.infer<typeof deskIdentitySchema>;
 
 export const deskReportSchema = queueItemSchema.extend({
   account: accountSchema,
+  // The event its reporter confirmed it is of, with its reports; this account may take it out.
+  event: z.object({ code: z.string(), tickets: z.array(z.string()).min(1), mayRelease: z.boolean() }).nullable(),
   // Null when the account must ask for it, each time logged.
   reporter: z.object({ role: reporterRoleSchema, identity: deskIdentitySchema.nullable() }),
   // Where it is on the map; null where its village has no outline to place it in.
@@ -172,7 +174,7 @@ export const deskReportSchema = queueItemSchema.extend({
       // The regency whose desk it went to.
       forwardedTo: z.string().nullable(),
       // Work told in the history: what a check found and put right, or what was done.
-      event: z.enum(["fieldCheck", "actions", "take", "followUp"]).nullable(),
+      event: z.enum(["fieldCheck", "actions", "take", "followUp", "released"]).nullable(),
       detail: z
         .object({
           result: z.enum(CHECK_RESULTS).optional(),
@@ -182,6 +184,8 @@ export const deskReportSchema = queueItemSchema.extend({
             .optional(),
           actions: z.array(z.string()).readonly().optional(),
           taker: z.string().optional(),
+          // The event a report was released from.
+          code: z.string().optional(),
           version: z.number().int().optional(),
         })
         .nullable(),

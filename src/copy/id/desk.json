@@ -308,5 +308,10 @@
   "desk.warnings.pause": "Jeda peringatan",
   "desk.warnings.resume": "Jalankan lagi",
   "desk.warnings.unavailable": "Keadaan peringatan belum bisa dibaca. Muat ulang halaman ini.",
-  "desk.warnings.refused": "Belum tersimpan. Akun ini tidak boleh mengubahnya, atau batas perubahan per jam sudah tercapai."
+  "desk.warnings.refused": "Belum tersimpan. Akun ini tidak boleh mengubahnya, atau batas perubahan per jam sudah tercapai.",
+  "desk.event.title": "Kejadian {code}",
+  "desk.event.lead": "Pelapor menyatakan {count} laporan ini satu kejadian. Angka tiap laporan tidak dijumlah.",
+  "desk.event.release": "Lepaskan laporan ini dari kejadian",
+  "desk.history.released": "Dilepas dari kejadian {code}",
+  "desk.saved.released": "Laporan ini dilepas dari kejadiannya."
 }

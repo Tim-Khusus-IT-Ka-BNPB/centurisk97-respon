@@ -196,6 +196,13 @@ describe("a change to a ticket", () => {
     ]);
   });
 
+  test("a report taken out of its event is posted to its route and named on the page after", async () => {
+    const { api, calls } = fakeApi(() => Response.json({}));
+    const done = await actOnDeskReport("LA-241126-01", form({ action: "release" }), api);
+    expect(done).toMatchObject({ location: "/lapor/meja/LA-241126-01?saved=released" });
+    expect(calls.map((call) => call.path)).toEqual(["/desk/reports/LA-241126-01/event/release"]);
+  });
+
   test("a check sends its figures by field, and what was done its boxes", async () => {
     const { api, calls } = fakeApi(() => Response.json({}));
     const checked = await actOnDeskReport(

@@ -16,6 +16,7 @@ import {
   reportPhotos,
   sentPhoto,
 } from "../adapters/d1/desk";
+import { eventOf } from "../adapters/d1/events";
 import { referenceFile } from "../adapters/d1/reports";
 import type {
   DeskEmergencies,
@@ -277,6 +278,13 @@ export async function offeredActions(bindings: ServiceBindings, hazardType: stri
   return actionsFor(checkActionFile(await referenceFile(bindings.db, "responseActions")), hazardType);
 }
 
+async function eventView(bindings: ServiceBindings, staff: StaffPrincipal, ticketNumber: string) {
+  const event = await eventOf(bindings.db, ticketNumber);
+  return event === null
+    ? null
+    : { ...event, tickets: [...event.tickets], mayRelease: mayUse(staff.role, "releaseEvent") };
+}
+
 async function reportBody(bindings: ServiceBindings, staff: StaffPrincipal, ticketNumber: string) {
   const found = await deskReport(bindings.db, staff.scope, ticketNumber);
   if (found === null) return null;
@@ -289,6 +297,7 @@ async function reportBody(bindings: ServiceBindings, staff: StaffPrincipal, tick
   const body: DeskReport = {
     ...queueItem(staff, found, await clusterMap(bindings, staff.scope)),
     account: { label: staff.label },
+    event: await eventView(bindings, staff, ticketNumber),
     reporter: {
       role: found.reporterRole,
       identity: mayUse(staff.role, "readIdentity") ? identityOf(found) : null,

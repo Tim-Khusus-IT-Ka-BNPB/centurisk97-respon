@@ -82,8 +82,25 @@ describe("the same event", () => {
     const report = (await desk().call("GET", `/desk/reports/${second}`)).json as {
       hazardType: string;
       cluster: unknown;
+      event: unknown;
     };
     expect(report).toMatchObject({ hazardType: "flood", cluster: { tickets: [first, second], reporters: 2 } });
+
+    // The two are one event by its code, from the first report's day; BNPB may take one out.
+    const code = `KJ-${first.slice(3, 9)}-01`;
+    expect(report.event).toEqual({ code, tickets: [first, second], mayRelease: true });
+    const regional = browser(fetchApi);
+    regional.cookies.set("seeded_session", (SEEDED_SESSIONS[3] as { token: string }).token);
+    expect((await regional.call("POST", `/desk/reports/${second}/event/release`)).status).toBe(403);
+    const released = await desk().call("POST", `/desk/reports/${second}/event/release`);
+    expect(released.status).toBe(200);
+    const after = released.json as { event: unknown; history: { event: string | null; detail: unknown }[] };
+    expect(after.event).toBeNull();
+    expect(after.history.at(-1)).toMatchObject({ event: "released", detail: { code } });
+    // An event of one report is no event.
+    expect(((await desk().call("GET", `/desk/reports/${first}`)).json as { event: unknown }).event).toBeNull();
+    expect(await query`select 1 from report_link where ticket_number = ${second}`).toEqual([]);
+    expect((await desk().call("POST", `/desk/reports/${second}/event/release`)).status).toBe(404);
   });
 
   test("no is a report of its own; drought joins only when its reporter says so", async () => {

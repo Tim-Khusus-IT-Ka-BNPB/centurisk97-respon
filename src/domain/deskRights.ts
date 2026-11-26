@@ -26,7 +26,9 @@ export type DeskCapability =
   // The weekly counts for research (K62): BNPB only until campus accounts come from the main site.
   | "downloadAggregates"
   // Stop the warnings to phones within one run, and send them again (M07).
-  | "pauseWarnings";
+  | "pauseWarnings"
+  // Take a report out of the event its reporter joined (D106): BNPB only.
+  | "releaseEvent";
 
 // The roles holding each capability. A regional officer works only its own region (StaffScope),
 // asks for a reporter's identity each time, and neither forwards nor reopens.
@@ -48,6 +50,7 @@ const HOLDERS: Readonly<Record<DeskCapability, readonly StaffRole[]>> = {
   downloadDocument: ["deskOfficer", "regionalOfficer"],
   downloadAggregates: ["deskOfficer"],
   pauseWarnings: ["deskOfficer"],
+  releaseEvent: ["deskOfficer"],
 };
 
 export const mayUse = (role: StaffRole, capability: DeskCapability): boolean => HOLDERS[capability].includes(role);

@@ -2,6 +2,7 @@ import { createRoute, z } from "@hono/zod-openapi";
 import { deskReportSchema } from "../../contract/desk";
 import { feedSchema } from "../../contract/publicFeed";
 import { SELECTABLE_HAZARD_TYPES } from "../../domain/hazards";
+import { releaseReport } from "../../services/events";
 import { feedProof, markProofPublic, publicFeed } from "../../services/publicFeed";
 import { refuse } from "../envelope";
 import { type Api, addRoute, jsonBody, jsonResponse, refusal } from "../route";
@@ -89,6 +90,24 @@ export function addPublicFeedRoutes(api: Api): void {
         c,
         await markProofPublic(c.env, staffOf(c), ticketNumber, proofId, c.req.valid("json").public),
       );
+    },
+  );
+
+  addRoute(
+    api,
+    "staff",
+    createRoute({
+      method: "post",
+      path: "/desk/reports/{ticketNumber}/event/release",
+      request: { params: ticketParams },
+      responses: {
+        200: jsonResponse("Out of its event, with the report as it is now", deskReportSchema),
+        404: refusal("No such report in this account's region, or it is of no event"),
+      },
+    }),
+    async (c) => {
+      c.header("x-robots-tag", "noindex");
+      return changeAnswered(c, await releaseReport(c.env, staffOf(c), c.req.valid("param").ticketNumber));
     },
   );
 }

@@ -416,6 +416,41 @@ describe("a report on the desk", () => {
     expect(within(section).getByText("LA-241126-01").getAttribute("aria-current")).toBe("page");
   });
 
+  test("an event its reporters confirmed shows by its code; BNPB may take this report out, and the history tells it", async () => {
+    const event = { code: "KJ-241126-01", tickets: ["LA-241126-01", "LA-241126-02"], mayRelease: true };
+    const history = [
+      ...REPORT.history,
+      {
+        status: REPORT.status,
+        at: SENT,
+        actor: "Pusdalops BNPB, Petugas Uji",
+        note: null,
+        forwardedTo: null,
+        event: "released" as const,
+        detail: { code: "KJ-241126-01" },
+      },
+    ];
+    const view = await renderDesk(<DeskReportView report={{ ...REPORT, event, history }} summary={SUMMARY} />, {
+      ...PATH,
+      entry: "/lapor/meja/LA-241126-01?saved=released",
+    });
+    const section = screen.getByRole("region", { name: "Kejadian KJ-241126-01" });
+    expect(within(section).getByText(/^Pelapor menyatakan 2 laporan ini satu kejadian/)).toBeTruthy();
+    expect(within(section).getByRole("link", { name: "LA-241126-01" }).getAttribute("aria-current")).toBe("page");
+    const button = within(section).getByRole("button", { name: "Lepaskan laporan ini dari kejadian" });
+    expect(((button.closest("form") as HTMLFormElement).elements.namedItem("action") as HTMLInputElement).value).toBe(
+      "release",
+    );
+    expect(screen.getByText("Laporan ini dilepas dari kejadiannya.")).toBeTruthy();
+    expect(screen.getByText("Dilepas dari kejadian KJ-241126-01")).toBeTruthy();
+    view.unmount();
+    await renderDesk(
+      <DeskReportView report={{ ...REPORT, event: { ...event, mayRelease: false } }} summary={SUMMARY} />,
+      PATH,
+    );
+    expect(screen.queryByRole("button", { name: "Lepaskan laporan ini dari kejadian" })).toBeNull();
+  });
+
   test("each photo of the work is shown on the Alun-alun or taken off it by its own button", async () => {
     const proofs = [
       { proofId: "p1", hasPoint: true, at: SENT, actor: "Petugas Uji", public: true },

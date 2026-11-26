@@ -34,7 +34,7 @@ import {
   when,
 } from "./parts";
 
-const SAVED = ["status", "replies", "checks", "actions", "proofs", "take", "proofShown", "proofHidden"];
+const SAVED = ["status", "replies", "checks", "actions", "proofs", "take", "proofShown", "proofHidden", "released"];
 
 // With script the open is posted once per visit, beside the page: a navigation would take what the
 // address says was just done off it.
@@ -193,6 +193,39 @@ function Cluster({ report }: { readonly report: DeskReport }) {
           </li>
         ))}
       </ul>
+    </Section>
+  );
+}
+
+// The event its reporter confirmed it is of (K66, D106), by its code. BNPB may take it out.
+function EventCode({ report }: { readonly report: DeskReport }) {
+  const t = useText();
+  const { event } = report;
+  if (event === null) return null;
+  return (
+    <Section id="desk-event" title={t("desk.event.title", { code: event.code })}>
+      <p className="text-meta text-muted">{t("desk.event.lead", { count: event.tickets.length })}</p>
+      <ul className="flex flex-wrap gap-2">
+        {event.tickets.map((ticket) => (
+          <li key={ticket}>
+            <Link
+              to={`/lapor/meja/${ticket}`}
+              aria-current={ticket === report.ticketNumber ? "page" : undefined}
+              className="inline-flex min-h-target-min items-center rounded-control border border-line bg-surface px-3 tabular-nums text-ink no-underline hover:border-control aria-[current=page]:border-primary aria-[current=page]:bg-selected aria-[current=page]:font-semibold aria-[current=page]:text-primary"
+            >
+              {ticket}
+            </Link>
+          </li>
+        ))}
+      </ul>
+      {event.mayRelease ? (
+        <Form method="post">
+          <input type="hidden" name="action" value="release" />
+          <button type="submit" className={buttonStyles({ variant: "secondary", size: "min", className: "px-4" })}>
+            {t("desk.event.release")}
+          </button>
+        </Form>
+      ) : null}
     </Section>
   );
 }
@@ -420,6 +453,7 @@ export function DeskReportView({
             </Section>
           </div>
           <Handling report={report} />
+          <EventCode report={report} />
           <Cluster report={report} />
           <DeskValues report={report} />
         </div>

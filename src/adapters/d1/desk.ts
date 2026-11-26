@@ -172,7 +172,7 @@ export async function queuePage(
   return { rows: found.map(queueRow), total: (counted as { total: number }).total };
 }
 
-type HistoryEvent = "fieldCheck" | "actions" | "take" | "followUp";
+type HistoryEvent = "fieldCheck" | "actions" | "take" | "followUp" | "released";
 
 // What a check found and put right, what was done, or what the reporter added.
 type HistoryDetail = {
@@ -180,6 +180,7 @@ type HistoryDetail = {
   readonly changes?: readonly Change[];
   readonly actions?: readonly string[];
   readonly taker?: string;
+  readonly code?: string;
   // The version the reporter's news made.
   readonly version?: number;
 };
