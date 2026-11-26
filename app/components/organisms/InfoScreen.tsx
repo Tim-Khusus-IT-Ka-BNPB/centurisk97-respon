@@ -6,6 +6,7 @@ import { Button, buttonStyles } from "../atoms/Button";
 import { Icon } from "../atoms/Icon";
 import { CallRow } from "../molecules/CallRow";
 import { Notice } from "../molecules/Notice";
+import { WarningPanel } from "./WarningPanel";
 
 type Regency = { readonly code: string; readonly name: string; readonly provinceName: string };
 type Day = OutlookView["days"][number];
@@ -179,6 +180,7 @@ export function InfoScreen({ load }: { readonly load: InfoLoad }) {
       {load.kind === "none" ? <Notice kind="info">{t("info.none")}</Notice> : null}
       {load.kind === "results" ? <Results regencies={load.regencies} query={load.query} /> : null}
       {load.kind === "outlook" ? <Outlook outlook={load.outlook} /> : <Calls contact={null} />}
+      <WarningPanel />
     </>
   );
 }

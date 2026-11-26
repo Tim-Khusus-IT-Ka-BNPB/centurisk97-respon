@@ -37,3 +37,9 @@ export const postJson = <T>(path: string, body: unknown) => answerOf<T>(path, po
 // A file kept behind a body, such as a photo of the work behind the tracking link's secret.
 export const postForFile = (path: string, body: unknown) =>
   answerOf<Blob>(path, posted(body), (response) => response.blob());
+
+export const putJson = <T>(path: string, body: unknown) =>
+  answerOf<T>(path, { ...posted(body), method: "PUT" }, json<T>);
+
+// A post answered with no body.
+export const postOnly = (path: string, body: unknown) => answerOf<null>(path, posted(body), async () => null);
