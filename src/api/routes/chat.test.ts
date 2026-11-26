@@ -663,7 +663,9 @@ describe("an emergency", () => {
     await one.share(VILLAGE.lat, VILLAGE.lon);
     expect((await one.send("1")).text).toMatch(/^\*Kejadian apa yang sedang terjadi\?\*/);
     expect((await one.send("banjir")).text).toMatch(/Ada orang terluka, hilang, atau terjebak\?/);
-    expect((await one.send("ya")).text).toMatch(/^\*Foto kejadian\*/);
+    expect((await one.send("ya")).text).toMatch(/terjebak atau terseret air/);
+    expect((await one.send("tidak tahu")).text).toMatch(/pertolongan medis/);
+    expect((await one.send("tidak tahu")).text).toMatch(/^\*Foto kejadian\*/);
     const summary = (await one.send("tidak")).text;
     expect(summary).toContain("*Laporan darurat, sedang berlangsung*\nOrang terluka, hilang, atau terjebak: Ya, ada");
     const { text } = await one.send("1");

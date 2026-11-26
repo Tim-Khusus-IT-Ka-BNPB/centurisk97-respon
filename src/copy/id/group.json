@@ -3,6 +3,8 @@
   "group.victims.label": "Korban",
   "group.victims.prompt": "Ada korban jiwa, hilang, atau luka? Sebutkan jumlahnya.",
   "group.victims.hint": "Arti tiap isian tertulis di bawah kotaknya.",
+  "group.rescue.label": "Penyelamatan dan medis",
+  "group.situation.label": "Situasi sekarang",
   "group.affected.label": "Warga terdampak",
   "group.affected.prompt": "Berapa keluarga dan warga yang terdampak?",
   "group.affected.hint": "Arti tiap isian tertulis di bawah kotaknya.",

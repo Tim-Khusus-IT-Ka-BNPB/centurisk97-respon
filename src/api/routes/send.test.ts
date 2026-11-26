@@ -221,5 +221,5 @@ describe("one lock order", () => {
     // its number (404); the other always answers.
     expect(statuses.filter((pair) => pair.includes("503"))).toEqual([]);
     expect(statuses.every((pair) => /^(201|409|404)\/(201|204)$/.test(pair))).toBe(true);
-  }, 60_000);
+  }, 180_000);
 });

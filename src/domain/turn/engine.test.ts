@@ -299,6 +299,14 @@ function floodSummary(): TurnDraft {
     "waterDepth",
     "farmland",
     "urgentNeeds",
+    "trapped",
+    "medicalHelp",
+    "currentState",
+    "siteAccess",
+    "threatenedResidents",
+    "movedBeforeDanger",
+    "isolatedAreas",
+    "officersOnSite",
   ])
     states[id] = unknown;
   return draft(states, { state: "summary" });

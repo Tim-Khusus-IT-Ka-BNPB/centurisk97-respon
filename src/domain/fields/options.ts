@@ -122,6 +122,10 @@ export const DISRUPTED_SERVICES = [
   { id: "powerOut" },
   { id: "phoneSignalLost" },
   { id: "cleanWaterStopped" },
+  // K101: fuel, food and transport (Juklak Lampiran I 7.4, 7.5).
+  { id: "fuelScarce" },
+  { id: "marketsClosed" },
+  { id: "transportClosed" },
   none("allRunning"),
   unknown,
 ] as const satisfies readonly ChoiceOption[];
@@ -154,9 +158,82 @@ export const URGENT_NEEDS: readonly ChoiceOption[] = [
   equipment("chainsaws", ["extremeWeather", "landslide"]),
   equipment("roofingMaterial", ["extremeWeather", "earthquake"]),
   equipment("generators", ["earthquake", "tsunami", "flood", "extremeWeather", "volcanicEruption"]),
+  // K99: sanitation and light (Juklak Lampiran I 9.1, Perka 9/2008 Format-9).
+  logistics("emergencyToilets", DISPLACING),
+  equipment("lighting", ["forestFire", "buildingFire", "landslide", "tidalWaveAbrasion"]),
   { id: "other", category: "other", freeTextMaxLength: 120 },
   { id: "noUrgentNeed", category: "other", meaning: "none" },
 ];
+
+// K94: someone still trapped or buried who needs rescue now.
+export const TRAPPED = [
+  { id: "seen" },
+  { id: "heardOf" },
+  none("noneKnown"),
+  unknown,
+] as const satisfies readonly ChoiceOption[];
+
+// K98: serious injuries not yet treated, or many taken ill at once.
+export const MEDICAL_HELP = [
+  { id: "seriousInjuries" },
+  { id: "suddenIllness" },
+  { id: "both" },
+  none("handled"),
+  unknown,
+] as const satisfies readonly ChoiceOption[];
+
+// K95: how the event stands now.
+export const CURRENT_STATE = [
+  { id: "growing" },
+  { id: "steady" },
+  { id: "easing" },
+  { id: "over" },
+  unknown,
+] as const satisfies readonly ChoiceOption[];
+
+// K96: how officers and vehicles reach the place from the nearest main road.
+export const SITE_ACCESS = [
+  { id: "cars" },
+  { id: "motorbikesOnly" },
+  { id: "onFootOnly" },
+  { id: "waterOrAir" },
+  unknown,
+] as const satisfies readonly ChoiceOption[];
+
+// K102: residents threatened but not yet hit, in bands, never a count.
+export const THREATENED_RESIDENTS = [
+  { id: "fewHouses" },
+  { id: "hamlet" },
+  { id: "villages" },
+  none("noneThreatened"),
+  unknown,
+] as const satisfies readonly ChoiceOption[];
+
+// K102: residents who moved before the danger came, apart from the displaced.
+export const MOVED_BEFORE = [
+  { id: "many" },
+  { id: "some" },
+  none("noOrder"),
+  unknown,
+] as const satisfies readonly ChoiceOption[];
+
+// K103: other hamlets cut off entirely.
+export const ISOLATED_AREAS = [
+  { id: "fullyCut" },
+  { id: "roadCut" },
+  none("noneCut"),
+  unknown,
+] as const satisfies readonly ChoiceOption[];
+
+// K100: officers already on site.
+export const OFFICERS_ON_SITE = [
+  { id: "bpbd" },
+  { id: "fireBrigade", onlyFor: ["buildingFire", "forestFire"] },
+  { id: "sar", onlyFor: ["flood", "landslide", "earthquake", "tsunami", "volcanicEruption", "tidalWaveAbrasion"] },
+  { id: "otherOfficers" },
+  none("noneYet"),
+  unknown,
+] as const satisfies readonly ChoiceOption[];
 
 // Options offered for this hazard type. An option tied to hazard types is hidden until the type is known.
 export function applicableOptions(

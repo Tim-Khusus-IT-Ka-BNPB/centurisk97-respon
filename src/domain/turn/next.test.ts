@@ -72,7 +72,21 @@ function floodAllBut(...open: string[]): FieldStates {
     "roads",
   ])
     states[id] = none;
-  for (const id of ["vulnerableGroups", "disruptedServices", "waterDepth", "farmland", "urgentNeeds"])
+  for (const id of [
+    "vulnerableGroups",
+    "disruptedServices",
+    "waterDepth",
+    "farmland",
+    "urgentNeeds",
+    "trapped",
+    "medicalHelp",
+    "currentState",
+    "siteAccess",
+    "threatenedResidents",
+    "movedBeforeDanger",
+    "isolatedAreas",
+    "officersOnSite",
+  ])
     states[id] = unknown;
   for (const id of open) delete states[id];
   return states;
@@ -125,7 +139,24 @@ describe("the next question, picked by code from the field table", () => {
       fieldIds: ["injuredInpatient"],
       askedBefore: false,
     });
-    expect(next({ ...event, dead: none, missing: none, injured: none })).toEqual({
+    const victimsTold = { ...event, dead: none, missing: none, injured: none };
+    // Rescue and the situation now are asked one by one before the next form (K94 to K103).
+    expect(next(victimsTold)).toEqual({ kind: "choice", fieldId: "trapped" });
+    const situationTold = {
+      ...victimsTold,
+      ...Object.fromEntries(
+        [
+          "trapped",
+          "medicalHelp",
+          "currentState",
+          "siteAccess",
+          "threatenedResidents",
+          "movedBeforeDanger",
+          "isolatedAreas",
+        ].map((id) => [id, unknown]),
+      ),
+    };
+    expect(next(situationTold)).toEqual({
       kind: "numberForm",
       groupId: "affected",
       fieldIds: ["affectedFamilies", "affectedPeople"],
@@ -316,12 +347,23 @@ describe("an emergency", () => {
     expect(next({ place }, {}, emergency(null))).toEqual({ kind: "choice", fieldId: "hazardType" });
     const told = { place, hazardType: tapped("flood") };
     expect(next(told, {}, emergency(null))).toEqual({ kind: "emergencyVictims" });
-    expect(next(told, {}, { ...emergency("yes"), photosDone: null })).toEqual({ kind: "photos" });
-    expect(next(told, {}, emergency("yes"))).toEqual({ kind: "summary" });
+    // "Ada korban? Ya" asks who is trapped and who needs medical help (K98); "Tidak" goes on.
+    expect(next(told, {}, emergency("yes"))).toEqual({ kind: "choice", fieldId: "trapped" });
+    expect(next({ ...told, trapped: unknown }, {}, emergency("yes"))).toEqual({
+      kind: "choice",
+      fieldId: "medicalHelp",
+    });
+    const rescued = { ...told, trapped: unknown, medicalHelp: unknown };
+    expect(next(rescued, {}, { ...emergency("yes"), photosDone: null })).toEqual({ kind: "photos" });
+    expect(next(rescued, {}, emergency("yes"))).toEqual({ kind: "summary" });
+    expect(next(told, {}, { emergency: { victims: "no" as const }, photosDone: null })).toEqual({ kind: "photos" });
+    // A drought has no one trapped to ask about.
+    const drought = { place, hazardType: tapped("drought") };
+    expect(next(drought, {}, emergency("yes"))).toEqual({ kind: "choice", fieldId: "medicalHelp" });
   });
 
   test("reopened from the summary asks what happened again, once", () => {
-    const told = { place, hazardType: tapped("flood") };
+    const told = { place, hazardType: tapped("flood"), trapped: unknown, medicalHelp: unknown };
     const edit = (done: ("hazardType" | "chronology")[]) => ({
       ...emergency("yes"),
       overlay: { kind: "edit" as const, groupId: "event" as const, done },

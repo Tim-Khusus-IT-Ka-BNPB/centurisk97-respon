@@ -90,9 +90,19 @@ describe("completeness", () => {
   test("an empty draft is 0 percent and rounding is to the nearest whole", () => {
     expect(completePercent({})).toBe(0);
     const applicable = applicableFields({}).length;
-    expect(applicable).toBe(23);
+    expect(applicable).toBe(27);
     expect(completePercent({ dead: none })).toBe(4);
-    expect(completePercent({ dead: none, missing: none })).toBe(9);
+    expect(completePercent({ dead: none, missing: none })).toBe(7);
+  });
+
+  test("medical help is asked after injuries, for some hazards without them, and stays once answered", () => {
+    const has = (states: Record<string, unknown>) =>
+      applicableFields(states as never).some((field) => field.id === "medicalHelp");
+    const landslide = { hazardType: { state: "value", value: "landslide", origin: "tappedOption" } };
+    expect(has(landslide)).toBe(false);
+    expect(has({ ...landslide, injured: count(1) })).toBe(true);
+    expect(has(flood)).toBe(true);
+    expect(has({ ...landslide, medicalHelp: { state: "confirmedUnknown", origin: "tappedOption" } })).toBe(true);
   });
 
   test("a parent above 0 adds its follow-up to the count", () => {

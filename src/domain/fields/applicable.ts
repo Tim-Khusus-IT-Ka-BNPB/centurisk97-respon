@@ -16,7 +16,10 @@ export function chosenHazardType(states: FieldStates): HazardTypeId | null {
 }
 
 const parentAbove0 = (states: FieldStates) => (field: FieldDefinition) =>
-  field.parent === undefined || (countOf(states[field.parent as FieldId]) ?? 0) > 0;
+  field.parent === undefined ||
+  (countOf(states[field.parent as FieldId]) ?? 0) > 0 ||
+  (field.alsoFor?.some((id) => id === chosenHazardType(states)) ?? false) ||
+  (field.keptOnceAnswered === true && states[field.id as FieldId] !== undefined);
 
 // Fields that apply to this draft: by hazard type, and a follow-up only when its parent count is above 0.
 export function applicableFields(states: FieldStates): readonly FieldDefinition[] {

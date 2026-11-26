@@ -123,6 +123,14 @@ describe("what news may change", () => {
     // Open before and left unasked is not opened by the news.
     expect(openedBy(base, { ...base, dead: count(1) })).toEqual([]);
     const tap: FieldStates = { hazardType: { state: "notYetKnown" } };
-    expect(openedBy(tap, { hazardType: hazard("flood") })).toEqual(["housesFlooded", "waterDepth", "farmland"]);
+    expect(openedBy(tap, { hazardType: hazard("flood") })).toEqual([
+      "medicalHelp",
+      "threatenedResidents",
+      "movedBeforeDanger",
+      "isolatedAreas",
+      "housesFlooded",
+      "waterDepth",
+      "farmland",
+    ]);
   });
 });

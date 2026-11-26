@@ -2,7 +2,7 @@ import { chronologySteps } from "../chronology";
 import type { DraftState } from "../draftStates";
 import type { VictimAnswer } from "../emergency";
 import type { FieldState } from "../fieldState";
-import { applicableFields, chosenHazardType } from "../fields/applicable";
+import { applicableFields, chosenHazardType, fieldsForHazard } from "../fields/applicable";
 import type { FieldDefinition, FieldId } from "../fields/catalogue";
 import { isLocked, openedBy } from "../followUp";
 import type { HazardTypeId } from "../hazards";
@@ -48,12 +48,20 @@ function questionFor(
   }
 }
 
+// After "Ada korban? Ya" an emergency asks who is still trapped and who needs medical help (K98).
+const RESCUE: readonly FieldId[] = ["trapped", "medicalHelp"];
+
 // An emergency asks only what happened and whether anyone is hurt, then for photos (K68).
 function emergencyQuestion(content: DraftContent, victims: VictimAnswer | null): Question {
   const { overlay } = content;
   const reopened = overlay?.kind === "edit" && !overlay.done.includes("hazardType");
   if (reopened || content.states.hazardType === undefined) return { kind: "choice", fieldId: "hazardType" };
   if (victims === null) return { kind: "emergencyVictims" };
+  const forHazard = fieldsForHazard(chosenHazardType(content.states));
+  const rescue = RESCUE.find(
+    (id) => victims === "yes" && content.states[id] === undefined && forHazard.some((field) => field.id === id),
+  );
+  if (rescue) return { kind: "choice", fieldId: rescue };
   return content.photosDone ? { kind: "summary" } : { kind: "photos" };
 }
 

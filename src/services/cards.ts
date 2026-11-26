@@ -109,7 +109,8 @@ function choiceCard(base: CardBase, fieldId: FieldId, content: DraftContent, mul
     const key = `option.${fieldId}.${choice.id}`;
     // Only the "Tidak tahu" choice borrows the shared label; every other choice has its own key.
     const labelKey = choice.id === "unknown" ? "common.unknown" : `${key}.label`;
-    return option(choice.id, labelKey, keyIfAny(`${key}.note`), {
+    // A note may differ by hazard type: "option.currentState.growing.note.flood".
+    return option(choice.id, labelKey, keyIfAny(variantKey(`${key}.note`, hazardType)), {
       exclusive: multiple && isExclusiveOption(choice),
       freeTextMaxLength: choice.freeTextMaxLength ?? null,
     });

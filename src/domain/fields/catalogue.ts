@@ -5,12 +5,20 @@ import {
   type ChoiceOption,
   CLEAN_WATER,
   CRATER_DISTANCE,
+  CURRENT_STATE,
   DISRUPTED_SERVICES,
   FARMLAND,
+  ISOLATED_AREAS,
+  MEDICAL_HELP,
+  MOVED_BEFORE,
+  OFFICERS_ON_SITE,
   ROAD_PASSABLE,
   SEA_WATER_HEIGHT,
   SHAKING_FELT,
   SHORELINE_LOSS,
+  SITE_ACCESS,
+  THREATENED_RESIDENTS,
+  TRAPPED,
   URGENT_NEEDS,
   VULNERABLE_GROUPS,
   WATER_DEPTH,
@@ -21,6 +29,9 @@ import {
 export const GROUP_IDS = [
   "event",
   "victims",
+  // K94, K98: rescue and medical help; K95, K96, K102, K103: how it stands now. Asked one by one.
+  "rescue",
+  "situation",
   "affected",
   "displacement",
   "houses",
@@ -40,6 +51,10 @@ type Scope = {
   readonly required?: true;
   // Asked only when this field holds a count above 0.
   readonly parent?: string;
+  // Asked for these hazard types even when the parent count is not above 0.
+  readonly alsoFor?: readonly HazardTypeId[];
+  // Once answered it stays, parent or not: an emergency asks it after "Ada korban? Ya", with no count.
+  readonly keptOnceAnswered?: true;
   readonly onlyFor?: readonly HazardTypeId[];
   readonly exceptFor?: readonly HazardTypeId[];
 };
@@ -68,6 +83,39 @@ export const FIELDS = [
   { id: "missing", group: "victims", kind: "count", unit: "people", max: 100_000 },
   { id: "injured", group: "victims", kind: "count", unit: "people", max: 1_000_000 },
   { id: "injuredInpatient", group: "victims", kind: "count", unit: "people", max: 1_000_000, parent: "injured" },
+  { id: "trapped", group: "rescue", kind: "choice", options: TRAPPED, exceptFor: ["drought", "tidalWaveAbrasion"] },
+  {
+    id: "medicalHelp",
+    group: "rescue",
+    kind: "choice",
+    options: MEDICAL_HELP,
+    parent: "injured",
+    alsoFor: ["volcanicEruption", "forestFire", "flood", "drought"],
+    keptOnceAnswered: true,
+  },
+  { id: "currentState", group: "situation", kind: "choice", options: CURRENT_STATE },
+  { id: "siteAccess", group: "situation", kind: "choice", options: SITE_ACCESS, exceptFor: NOT_FOR_DROUGHT },
+  {
+    id: "threatenedResidents",
+    group: "situation",
+    kind: "choice",
+    options: THREATENED_RESIDENTS,
+    onlyFor: ["landslide", "flood", "volcanicEruption", "forestFire", "tsunami", "extremeWeather"],
+  },
+  {
+    id: "movedBeforeDanger",
+    group: "situation",
+    kind: "choice",
+    options: MOVED_BEFORE,
+    onlyFor: ["volcanicEruption", "flood", "tsunami", "extremeWeather", "forestFire"],
+  },
+  {
+    id: "isolatedAreas",
+    group: "situation",
+    kind: "choice",
+    options: ISOLATED_AREAS,
+    onlyFor: ["flood", "landslide", "earthquake", "volcanicEruption", "tsunami", "extremeWeather", "tidalWaveAbrasion"],
+  },
   { id: "affectedFamilies", group: "affected", kind: "count", unit: "families", max: 5_000_000 },
   { id: "affectedPeople", group: "affected", kind: "count", unit: "people", max: 20_000_000 },
   { id: "displacedPeople", group: "displacement", kind: "count", unit: "people", max: 5_000_000 },
@@ -146,6 +194,7 @@ export const FIELDS = [
     onlyFor: ["volcanicEruption"],
   },
   { id: "urgentNeeds", group: "needs", kind: "multiChoice", options: URGENT_NEEDS },
+  { id: "officersOnSite", group: "needs", kind: "choice", options: OFFICERS_ON_SITE },
 ] as const satisfies readonly FieldDefinition[];
 
 export type FieldId = (typeof FIELDS)[number]["id"];

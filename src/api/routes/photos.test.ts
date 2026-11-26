@@ -161,6 +161,8 @@ describe("photos", () => {
 
   test("the 10th photo is kept, an 11th is refused, and the two step endings need photos or none", async () => {
     const { phone, draft } = await atPhotos();
+    // The walk to the photo step spent most of this minute's messages.
+    clock.advance(60_000);
     expect(
       (await phone.call("POST", `/drafts/${draft.draftId}/turns`, turn(draft, { optionIds: ["continue"] }))).status,
     ).toBe(409);

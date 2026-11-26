@@ -69,6 +69,202 @@ exports[`field spec ids > fields, groups and options, in asking order 1`] = `
     "unit": "people",
   },
   {
+    "exceptFor": [
+      "drought",
+      "tidalWaveAbrasion",
+    ],
+    "group": "rescue",
+    "id": "trapped",
+    "kind": "choice",
+    "options": [
+      {
+        "id": "seen",
+      },
+      {
+        "id": "heardOf",
+      },
+      {
+        "id": "noneKnown",
+        "meaning": "none",
+      },
+      {
+        "id": "unknown",
+        "meaning": "unknown",
+      },
+    ],
+  },
+  {
+    "alsoFor": [
+      "volcanicEruption",
+      "forestFire",
+      "flood",
+      "drought",
+    ],
+    "group": "rescue",
+    "id": "medicalHelp",
+    "keptOnceAnswered": true,
+    "kind": "choice",
+    "options": [
+      {
+        "id": "seriousInjuries",
+      },
+      {
+        "id": "suddenIllness",
+      },
+      {
+        "id": "both",
+      },
+      {
+        "id": "handled",
+        "meaning": "none",
+      },
+      {
+        "id": "unknown",
+        "meaning": "unknown",
+      },
+    ],
+    "parent": "injured",
+  },
+  {
+    "group": "situation",
+    "id": "currentState",
+    "kind": "choice",
+    "options": [
+      {
+        "id": "growing",
+      },
+      {
+        "id": "steady",
+      },
+      {
+        "id": "easing",
+      },
+      {
+        "id": "over",
+      },
+      {
+        "id": "unknown",
+        "meaning": "unknown",
+      },
+    ],
+  },
+  {
+    "exceptFor": [
+      "drought",
+    ],
+    "group": "situation",
+    "id": "siteAccess",
+    "kind": "choice",
+    "options": [
+      {
+        "id": "cars",
+      },
+      {
+        "id": "motorbikesOnly",
+      },
+      {
+        "id": "onFootOnly",
+      },
+      {
+        "id": "waterOrAir",
+      },
+      {
+        "id": "unknown",
+        "meaning": "unknown",
+      },
+    ],
+  },
+  {
+    "group": "situation",
+    "id": "threatenedResidents",
+    "kind": "choice",
+    "onlyFor": [
+      "landslide",
+      "flood",
+      "volcanicEruption",
+      "forestFire",
+      "tsunami",
+      "extremeWeather",
+    ],
+    "options": [
+      {
+        "id": "fewHouses",
+      },
+      {
+        "id": "hamlet",
+      },
+      {
+        "id": "villages",
+      },
+      {
+        "id": "noneThreatened",
+        "meaning": "none",
+      },
+      {
+        "id": "unknown",
+        "meaning": "unknown",
+      },
+    ],
+  },
+  {
+    "group": "situation",
+    "id": "movedBeforeDanger",
+    "kind": "choice",
+    "onlyFor": [
+      "volcanicEruption",
+      "flood",
+      "tsunami",
+      "extremeWeather",
+      "forestFire",
+    ],
+    "options": [
+      {
+        "id": "many",
+      },
+      {
+        "id": "some",
+      },
+      {
+        "id": "noOrder",
+        "meaning": "none",
+      },
+      {
+        "id": "unknown",
+        "meaning": "unknown",
+      },
+    ],
+  },
+  {
+    "group": "situation",
+    "id": "isolatedAreas",
+    "kind": "choice",
+    "onlyFor": [
+      "flood",
+      "landslide",
+      "earthquake",
+      "volcanicEruption",
+      "tsunami",
+      "extremeWeather",
+      "tidalWaveAbrasion",
+    ],
+    "options": [
+      {
+        "id": "fullyCut",
+      },
+      {
+        "id": "roadCut",
+      },
+      {
+        "id": "noneCut",
+        "meaning": "none",
+      },
+      {
+        "id": "unknown",
+        "meaning": "unknown",
+      },
+    ],
+  },
+  {
     "group": "affected",
     "id": "affectedFamilies",
     "kind": "count",
@@ -276,6 +472,15 @@ exports[`field spec ids > fields, groups and options, in asking order 1`] = `
       },
       {
         "id": "cleanWaterStopped",
+      },
+      {
+        "id": "fuelScarce",
+      },
+      {
+        "id": "marketsClosed",
+      },
+      {
+        "id": "transportClosed",
       },
       {
         "id": "allRunning",
@@ -741,6 +946,30 @@ exports[`field spec ids > fields, groups and options, in asking order 1`] = `
         ],
       },
       {
+        "category": "logistics",
+        "id": "emergencyToilets",
+        "onlyFor": [
+          "flood",
+          "landslide",
+          "tidalWaveAbrasion",
+          "extremeWeather",
+          "earthquake",
+          "tsunami",
+          "volcanicEruption",
+          "buildingFire",
+        ],
+      },
+      {
+        "category": "equipment",
+        "id": "lighting",
+        "onlyFor": [
+          "forestFire",
+          "buildingFire",
+          "landslide",
+          "tidalWaveAbrasion",
+        ],
+      },
+      {
         "category": "other",
         "freeTextMaxLength": 120,
         "id": "other",
@@ -749,6 +978,45 @@ exports[`field spec ids > fields, groups and options, in asking order 1`] = `
         "category": "other",
         "id": "noUrgentNeed",
         "meaning": "none",
+      },
+    ],
+  },
+  {
+    "group": "needs",
+    "id": "officersOnSite",
+    "kind": "choice",
+    "options": [
+      {
+        "id": "bpbd",
+      },
+      {
+        "id": "fireBrigade",
+        "onlyFor": [
+          "buildingFire",
+          "forestFire",
+        ],
+      },
+      {
+        "id": "sar",
+        "onlyFor": [
+          "flood",
+          "landslide",
+          "earthquake",
+          "tsunami",
+          "volcanicEruption",
+          "tidalWaveAbrasion",
+        ],
+      },
+      {
+        "id": "otherOfficers",
+      },
+      {
+        "id": "noneYet",
+        "meaning": "none",
+      },
+      {
+        "id": "unknown",
+        "meaning": "unknown",
       },
     ],
   },

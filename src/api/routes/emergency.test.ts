@@ -88,6 +88,15 @@ describe("an emergency told in the short conversation", () => {
       fieldId: "emergencyVictims",
     });
     await send({ optionIds: ["yes"] });
+    // Someone hurt: who is still trapped, and who needs medical help (K98).
+    expect(draft().card).toMatchObject({
+      kind: "choice",
+      fieldId: "trapped",
+      promptKey: "field.trapped.question.flood",
+    });
+    await send({ optionIds: ["seen"] });
+    expect(draft().card).toMatchObject({ kind: "choice", fieldId: "medicalHelp" });
+    await send({ optionIds: ["seriousInjuries"] });
     expect(draft().card.kind).toBe("photos");
     await send({ optionIds: ["cannotSend"] });
     expect(draft().card).toMatchObject({ kind: "summary", emergency: { victims: "yes" } });
