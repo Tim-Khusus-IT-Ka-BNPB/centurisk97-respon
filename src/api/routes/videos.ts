@@ -13,7 +13,7 @@ import type { ApiContext } from "../context";
 import { refuse } from "../envelope";
 import { type Api, addRoute, jsonBody, jsonResponse, refusal } from "../route";
 import { answered, staffOf, ticketParams } from "./desk";
-import { fieldErrors, limitRefused } from "./shared";
+import { fieldErrors } from "./shared";
 
 const draft = z.object({ draftId: z.uuid() });
 const one = draft.extend({ videoId: z.uuid() });
@@ -29,7 +29,6 @@ function videoAnswered<T>(c: ApiContext, answer: VideoAnswer<T>): Response {
   if (answer.kind === "ok") return c.json(answer.body as object, 200);
   if (answer.kind === "expired") return refuse(c, 410, "draft.expired");
   if (answer.kind === "notFound") return refuse(c, 404, "draft.notFound");
-  if (answer.kind === "limit") return limitRefused(c, answer.refusal, null);
   return refuse(c, 422, "request.invalidFields", {
     fields: fieldErrors([{ fieldId: "video", rule: answer.rule, params: {} }]),
   });
@@ -64,10 +63,7 @@ export function addVideoRoutes(api: Api): void {
       responses: { 200: jsonResponse("The upload, and the parts it wants", progressSchema), ...refusals },
     }),
     async (c) =>
-      videoAnswered(
-        c,
-        await startVideo(c.env, c.var.principal, c.var.address, c.req.valid("param").draftId, c.req.valid("json")),
-      ),
+      videoAnswered(c, await startVideo(c.env, c.var.principal, c.req.valid("param").draftId, c.req.valid("json"))),
   );
 
   addRoute(

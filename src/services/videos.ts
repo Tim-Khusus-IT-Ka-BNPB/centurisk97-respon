@@ -19,7 +19,7 @@ import type { Principal, StaffPrincipal } from "../ports/identity";
 import type { ServiceBindings } from "./bindings";
 import { admitted } from "./desk";
 import type { LimitRefusal } from "./limits";
-import { checkMessageLimits, ownedDraft } from "./turn";
+import { ownedDraft } from "./turn";
 
 // How each container is served to the desk.
 const CONTENT_TYPE: Readonly<Record<string, string>> = {
@@ -39,7 +39,6 @@ export type VideoAnswer<T> =
   | { readonly kind: "ok"; readonly body: T }
   | { readonly kind: "notFound" }
   | { readonly kind: "expired" }
-  | { readonly kind: "limit"; readonly refusal: LimitRefusal }
   // Why the video is refused, as a rule on the video field.
   | { readonly kind: "refused"; readonly rule: string };
 
@@ -61,17 +60,15 @@ async function photoStep(bindings: ServiceBindings, principal: Principal, draftI
 }
 
 // A video announced by its size: an upload opens, and the parts it wants are named.
+// Bounded by the draft: two open at once and three kept, so no message limit counts it.
 export async function startVideo(
   bindings: ServiceBindings,
   principal: Principal,
-  address: string,
   draftId: string,
   video: { readonly bytes: number; readonly seconds: number | null },
 ): Promise<VideoAnswer<Progress>> {
   const step = await photoStep(bindings, principal, draftId);
   if (step.kind !== "owned") return step;
-  const refusal = await checkMessageLimits(bindings, principal, address, step.draft);
-  if (refusal) return { kind: "limit", refusal };
   if (video.bytes < VIDEO.minBytes || video.bytes > VIDEO.maxBytes) return { kind: "refused", rule: "video.tooBig" };
   if (video.seconds !== null && video.seconds > VIDEO.maxSeconds + 1) return { kind: "refused", rule: "video.tooLong" };
   if ((await draftVideos(bindings.db, draftId)).length >= VIDEO.perReport)
@@ -149,7 +146,7 @@ export async function completeVideo(
   }));
   const drop = async (rule: VideoRefusal | "tooMany" | "notNow", whole: boolean) => {
     if (whole) await bindings.photos.delete([upload.store_key]);
-    else await bindings.photos.abortUpload(upload.store_key, upload.upload_id).catch(() => undefined);
+    else await bindings.photos.abortUpload(upload.store_key, upload.upload_id);
     await dropUpload(bindings.db, id);
     return { kind: "refused", rule: `video.${rule}` } as const;
   };
@@ -160,20 +157,14 @@ export async function completeVideo(
     upload.upload_id,
     parts.sort((a, b) => a.partNumber - b.partNumber),
   );
-  const head = await bindings.photos.range(upload.store_key, 0, VIDEO.sideBytes);
-  const size = head?.size ?? 0;
-  const tail =
-    size > VIDEO.sideBytes
-      ? ((
-          await bindings.photos.range(
-            upload.store_key,
-            Math.max(VIDEO.sideBytes, size - VIDEO.sideBytes),
-            VIDEO.sideBytes,
-          )
-        )?.bytes ?? null)
-      : null;
+  // Just made whole, so it is there.
+  const read = async (offset: number) =>
+    (await bindings.photos.range(upload.store_key, offset, VIDEO.sideBytes)) as { bytes: Uint8Array; size: number };
+  const head = await read(0);
+  const size = head.size;
+  const tail = size > VIDEO.sideBytes ? (await read(Math.max(VIDEO.sideBytes, size - VIDEO.sideBytes))).bytes : null;
   const checked = checkVideo({
-    head: head?.bytes ?? new Uint8Array(),
+    head: head.bytes,
     tail,
     bytes: size,
     announcedBytes: upload.bytes,

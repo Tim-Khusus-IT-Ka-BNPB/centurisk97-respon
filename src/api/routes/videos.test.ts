@@ -1,6 +1,8 @@
 import { describe, expect, test, vi } from "vitest";
 import { SEEDED_SESSIONS } from "../../../db/synthetic/reporters";
+import { windowStart } from "../../domain/limits";
 import { VIDEO } from "../../domain/video";
+import { hmacKey } from "../../platform/keys";
 import { sweepVideoUploads } from "../../services/videos";
 import { browser, freshNumber, manualClock, query, TEST_ORIGIN, testBindings, testDatabase } from "../../testing/api";
 import { walkTo } from "../../testing/walk";
@@ -140,6 +142,20 @@ describe("a video of the scene", () => {
       100,
     ]);
     expect((await play()).status).toBe(200);
+    // Another region's officer finds no such report; past the hourly limit the desk is refused.
+    const province = (SEEDED_SESSIONS[4] as { token: string }).token;
+    const elsewhere = await fetchApi(
+      new Request(`http://localhost/api/lapor/desk/reports/${ticket}/videos/${id}`, {
+        headers: { "cf-connecting-ip": desk.address, cookie: `seeded_session=${province}` },
+      }),
+    );
+    expect(elsewhere.status).toBe(404);
+    const key = await hmacKey(bindings.settings.keyHmacSecret, "subject", "staff:staff-desk-1");
+    const window = new Date(windowStart("clockHour", clock.now())).toISOString();
+    await query`insert into rate_counter (limit_id, subject_key, window_start, count) values ('desk.read', ${key}, ${window}, 1200)
+      on conflict do update set count = excluded.count`;
+    expect((await play()).status).toBe(429);
+    await query`delete from rate_counter where subject_key = ${key}`;
     const other = await fetchApi(
       new Request(`http://localhost/api/lapor/desk/reports/${ticket}/videos/${crypto.randomUUID()}`, {
         headers: {
@@ -180,7 +196,10 @@ describe("a video of the scene", () => {
     const [a, b] = [await start(), await start()];
     expect((await start()).error.fields[0]?.copyKey).toBe("fieldError.video.busy");
     clock.advance(24 * 3_600_000 + 1);
-    expect(await sweepVideoUploads({ ...bindings, db: testDatabase() })).toBeGreaterThanOrEqual(2);
+    // A store that cannot give the upload up still lets the row go.
+    const failing = { ...bindings.photos, abortUpload: () => Promise.reject(new Error("gone")) };
+    expect(await sweepVideoUploads({ ...bindings, photos: failing, db: testDatabase() })).toBeGreaterThanOrEqual(2);
+    expect((await phone.call("GET", `/drafts/${draft.draftId}/videos`)).status).toBe(410);
     for (const one of [a, b])
       expect(await query`select 1 from video_upload where id = ${(one.json as Progress).id}`).toEqual([]);
   });
@@ -195,6 +214,64 @@ describe("a video of the scene", () => {
     expect(summary.card.kind).toBe("summary");
     const late = await phone.call("POST", `/drafts/${draft.draftId}/videos`, { bytes: 5000, seconds: null });
     expect(late.error.fields[0]?.copyKey).toBe("fieldError.video.notNow");
+  });
+});
+
+describe("whose and when", () => {
+  test("another reporter's draft and an unknown upload are not found; a draft moved past photos takes none", async () => {
+    const { phone, draft } = await atPhotos();
+    const { phone: other } = await atPhotos();
+    const base = `/drafts/${draft.draftId}/videos`;
+    const open = await phone.call("POST", base, { bytes: 4000, seconds: null });
+    const id = (open.json as Progress).id;
+    for (const [method, path] of [
+      ["POST", base],
+      ["GET", base],
+      ["GET", `${base}/${id}`],
+      ["POST", `${base}/${id}/complete`],
+      ["DELETE", `${base}/${id}`],
+    ] as const)
+      expect(
+        (
+          await other.call(
+            method,
+            path,
+            method === "POST" && path === base ? { bytes: 4000, seconds: null } : undefined,
+          )
+        ).status,
+        `${method} ${path}`,
+      ).toBe(404);
+    expect((await putPart(other, `${base}/${id}/parts/0`, movie(4000))).status).toBe(404);
+    const unknown = crypto.randomUUID();
+    expect((await phone.call("GET", `${base}/${unknown}`)).status).toBe(404);
+    expect((await putPart(phone, `${base}/${unknown}/parts/0`, movie(4000))).status).toBe(404);
+    expect((await phone.call("POST", `${base}/${unknown}/complete`)).status).toBe(404);
+
+    await putPart(phone, `${base}/${id}/parts/0`, movie(4000));
+    const { draft: summary } = await walkTo(phone, draft, VILLAGE, { tick });
+    expect(summary.card.kind).toBe("summary");
+    expect((await phone.call("POST", `${base}/${id}/complete`)).error.fields[0]?.copyKey).toBe(
+      "fieldError.video.notNow",
+    );
+    expect(await query`select 1 from video_upload where id = ${id}`).toEqual([]);
+    expect((await phone.call("DELETE", `${base}/${id}`)).error.fields[0]?.copyKey).toBe("fieldError.video.notNow");
+  });
+
+  test("a fourth made whole while three were sent is refused at its end", async () => {
+    const { phone, draft } = await atPhotos();
+    const base = `/drafts/${draft.draftId}/videos`;
+    for (let n = 0; n < 2; n += 1) {
+      const one = await upload(phone, draft.draftId, movie(4000));
+      await phone.call("POST", `${base}/${one.id}/complete`);
+    }
+    const [third, fourth] = [
+      await upload(phone, draft.draftId, movie(4000)),
+      await upload(phone, draft.draftId, movie(4000)),
+    ];
+    expect((await phone.call("POST", `${base}/${third.id}/complete`)).status).toBe(200);
+    expect((await phone.call("POST", `${base}/${fourth.id}/complete`)).error.fields[0]?.copyKey).toBe(
+      "fieldError.video.tooMany",
+    );
   });
 });
 

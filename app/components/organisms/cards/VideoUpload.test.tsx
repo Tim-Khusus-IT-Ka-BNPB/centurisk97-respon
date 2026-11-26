@@ -59,6 +59,8 @@ describe("a video of the scene", () => {
     });
     draw();
     await waitFor(() => expect(calls).toContain(`GET ${BASE}`));
+    // The picker closed with nothing picked: nothing is sent.
+    fireEvent.change(screen.getByLabelText("Rekam video"), { target: { files: [] } });
     pick();
     expect(await screen.findByText("Video 1, 13 detik")).toBeTruthy();
     expect(calls).toEqual([
@@ -139,6 +141,10 @@ describe("a video of the scene", () => {
     const view = draw();
     expect(await screen.findByText("Video 3, 13 detik")).toBeTruthy();
     expect(screen.queryByLabelText("Rekam video")).toBeNull();
+    // A take-back the service refuses leaves the list as it was.
+    fireEvent.click(screen.getAllByRole("button", { name: "Hapus" })[0] as HTMLElement);
+    await waitFor(() => expect(calls.some((call) => call.startsWith("DELETE"))).toBe(true));
+    expect(screen.getByText("Video 3, 13 detik")).toBeTruthy();
     view.unmount();
     answer({
       [`GET ${BASE}`]: { status: 200, body: [] },

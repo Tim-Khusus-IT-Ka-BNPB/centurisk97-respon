@@ -1,4 +1,5 @@
 import { type ChangeEvent, useEffect, useId, useState } from "react";
+import type { ErrorEnvelope } from "../../../../src/contract/errors";
 import { deleteJson, getJson, postJson, putBytes } from "../../../lib/clientApi";
 import { useText } from "../../../lib/text";
 import { Button } from "../../atoms/Button";
@@ -39,10 +40,7 @@ export function browserSeconds(file: File): Promise<number | null> {
   });
 }
 
-const refusalOf = (answer: {
-  kind: string;
-  envelope?: { fields: { copyKey: string }[]; error: { copyKey: string } };
-}) => answer.envelope?.fields[0]?.copyKey ?? answer.envelope?.error.copyKey ?? "card.video.failed";
+const refusalOf = (envelope: ErrorEnvelope) => envelope.fields[0]?.copyKey ?? envelope.error.copyKey;
 
 // A video of the scene (D77, D89): sent in parts, each tried again, and continued where it stopped.
 // Needs script, so the photo form stays the way to send with none.
@@ -77,7 +75,7 @@ export function VideoUpload({
         if (tries > 0) await wait(retryMs * 2 ** (tries - 1));
         const answer = await putBytes<Progress>(`${base}/${upload.id}/parts/${n}`, part);
         if (answer.kind === "refused" && answer.status !== 429 && answer.status < 500)
-          return setSending({ kind: "refused", copyKey: refusalOf(answer) });
+          return setSending({ kind: "refused", copyKey: refusalOf(answer.envelope) });
         landed = answer.kind === "ok";
       }
       if (!landed) {
@@ -92,7 +90,7 @@ export function VideoUpload({
       setKept(whole.body);
       setSending({ kind: "idle" });
     } else if (whole.kind === "unreachable") setSending({ kind: "broken", file, upload: { ...upload, received: [] } });
-    else setSending({ kind: "refused", copyKey: refusalOf(whole) });
+    else setSending({ kind: "refused", copyKey: refusalOf(whole.envelope) });
   };
 
   const picked = async (event: ChangeEvent<HTMLInputElement>) => {
@@ -102,14 +100,19 @@ export function VideoUpload({
     setSending({ kind: "sending", done: 0, parts: 1 });
     const started = await postJson<Progress>(base, { bytes: file.size, seconds: await readSeconds(file) });
     if (started.kind === "ok") return send(file, started.body);
-    setSending({ kind: "refused", copyKey: started.kind === "refused" ? refusalOf(started) : "card.video.failed" });
+    setSending({
+      kind: "refused",
+      copyKey: started.kind === "refused" ? refusalOf(started.envelope) : "card.video.failed",
+    });
   };
 
   const resume = async (file: File, upload: Progress) => {
     const now = await getJson<Progress>(`${base}/${upload.id}`);
     if (now.kind === "ok") return send(file, now.body);
     setSending(
-      now.kind === "unreachable" ? { kind: "broken", file, upload } : { kind: "refused", copyKey: refusalOf(now) },
+      now.kind === "unreachable"
+        ? { kind: "broken", file, upload }
+        : { kind: "refused", copyKey: refusalOf(now.envelope) },
     );
   };
 
