@@ -14,6 +14,8 @@ import { checkLimits, type LimitRefusal } from "./limits";
 
 // The feed shows the newest 100 entries.
 const ENTRIES = 100;
+// Everyone sees the same feed, so one read serves a data centre's readers for a minute.
+const FEED_SECONDS = 60;
 const PROOFS = 4;
 
 export type FeedFilter = {
@@ -66,6 +68,9 @@ export type FeedAnswer =
 export async function publicFeed(bindings: ServiceBindings, address: string, filter: FeedFilter): Promise<FeedAnswer> {
   const refusal = await checkLimits(bindings, [["address.feed", { kind: "address", bucket: address }]]);
   if (refusal) return { kind: "limit", refusal };
+  const key = `feed?hazard=${filter.hazardType ?? ""}&province=${filter.provinceCode ?? ""}&period=${filter.period}`;
+  const kept = await bindings.edge.get(key);
+  if (kept !== null) return { kind: "ok", feed: JSON.parse(kept) as Feed };
   const [shown, clusterOf, proofs] = await Promise.all([
     shownReports(bindings.db, filter),
     clusterMap(bindings),
@@ -86,7 +91,9 @@ export async function publicFeed(bindings: ServiceBindings, address: string, fil
       return entryOf(row, id, cluster?.reporters ?? null, own);
     }),
   );
-  return { kind: "ok", feed: { entries } };
+  const feed = { entries };
+  await bindings.edge.put(key, JSON.stringify(feed), FEED_SECONDS);
+  return { kind: "ok", feed };
 }
 
 export type FeedProofAnswer =

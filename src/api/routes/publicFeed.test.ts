@@ -5,7 +5,16 @@ import { type Feed, feedSchema } from "../../contract/publicFeed";
 import { windowStart } from "../../domain/limits";
 import { addressBucket } from "../../platform/address";
 import { hmacKey } from "../../platform/keys";
-import { browser, freshAddress, freshNumber, manualClock, query, testBindings, testDatabase } from "../../testing/api";
+import {
+  browser,
+  freshAddress,
+  freshNumber,
+  manualClock,
+  query,
+  testBindings,
+  testDatabase,
+  testEdgeStore,
+} from "../../testing/api";
 import { exifDateTime } from "../../testing/jpegs";
 import { cameraJpeg } from "../../testing/photoBase";
 import { sendDraft, startDraft, turn } from "../../testing/walk";
@@ -216,5 +225,28 @@ describe("the public feed", () => {
     expect(refused.status).toBe(429);
     expect(refused.error.error.code).toBe("limit.address.feed");
     expect((await phone.file(`/feed/proofs/${crypto.randomUUID()}`)).status).toBe(429);
+  });
+});
+
+describe("the public feed at the edge", () => {
+  test("is read once a minute for each filter at a data centre, every reader handed the kept one", async () => {
+    // The cache's own clock, as the walk below moves the test's by minutes.
+    const kept = manualClock("2026-11-24T03:00:00.000Z");
+    const cached = testBindings({}, { clock, edge: testEdgeStore(kept) }).bindings;
+    const cachedApi = (request: Request) =>
+      api.app.fetch(request, { ...cached, db: testDatabase() } satisfies ApiBindings);
+    const read = async (query = "") => feedSchema.parse((await browser(cachedApi).call("GET", `/feed${query}`)).json);
+    const first = await read();
+    const flood = await read("?hazard=flood&period=7");
+    const [far] = await query<{ code: string }>`
+      select v.code from place_village v join place_snapshot s on s.id = v.snapshot_id and s.active = 1
+      where v.regency_code = '11.08' order by v.code limit 1 offset 9`;
+    const { ticket } = await sentReport(far?.code);
+    await handled(ticket);
+    expect(await read()).toEqual(first);
+    expect(await read("?hazard=flood&period=7")).toEqual(flood);
+    expect((await read("?hazard=flood")).entries[0]?.status).toBe("in_handling");
+    kept.advance(60_000);
+    expect((await read()).entries).toHaveLength(first.entries.length + 1);
   });
 });

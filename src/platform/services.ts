@@ -1,3 +1,4 @@
+import { edgeCache } from "../adapters/cache/edgeCache";
 import { mainSiteIdentity } from "../adapters/identity/mainSite";
 import { seededIdentity } from "../adapters/identity/seeded";
 import { httpModel } from "../adapters/model/http";
@@ -32,5 +33,14 @@ export function createServices(
     settings.identityAdapter === "seeded"
       ? seededIdentity(db, clock)
       : mainSiteIdentity(db, mainDb as Database, clock, settings.keyHmacSecret);
-  return { settings, log, db, clock, identity, model: modelFor(settings), photos: r2PhotoStore(photos) };
+  return {
+    settings,
+    log,
+    db,
+    clock,
+    identity,
+    model: modelFor(settings),
+    photos: r2PhotoStore(photos),
+    edge: edgeCache(settings.appOrigin),
+  };
 }

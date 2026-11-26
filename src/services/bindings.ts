@@ -2,6 +2,7 @@ import type { Database } from "../platform/database";
 import type { Logger } from "../platform/log";
 import type { Settings } from "../platform/settings";
 import type { Clock } from "../ports/clock";
+import type { EdgeCache } from "../ports/edgeCache";
 import type { IdentityPort } from "../ports/identity";
 import type { ModelPort } from "../ports/model";
 import type { PhotoStore } from "../ports/photoStore";
@@ -16,4 +17,5 @@ export type ServiceBindings = {
   readonly identity: IdentityPort;
   readonly model: ModelPort;
   readonly photos: PhotoStore;
+  readonly edge: EdgeCache;
 };

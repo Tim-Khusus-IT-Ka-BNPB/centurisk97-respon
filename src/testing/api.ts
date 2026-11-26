@@ -1,3 +1,4 @@
+import { type EdgeStore, edgeCache } from "../adapters/cache/edgeCache";
 import { seededIdentity } from "../adapters/identity/seeded";
 import { modelOff } from "../adapters/model/off";
 import { type Bucket, r2PhotoStore } from "../adapters/r2/photoStore";
@@ -116,7 +117,22 @@ export function manualClock(start: string | number) {
   };
 }
 
-type TestOptions = { readonly clock?: { now(): number }; readonly model?: ModelPort };
+type TestOptions = { readonly clock?: { now(): number }; readonly model?: ModelPort; readonly edge?: EdgeStore };
+
+// Cloudflare's cache as a map that honours max-age by the test's clock.
+export function testEdgeStore(clock: { now(): number }): EdgeStore {
+  const kept = new Map<string, { text: string; until: number }>();
+  return {
+    async match(key) {
+      const found = kept.get(key);
+      return found !== undefined && found.until > clock.now() ? new Response(found.text) : undefined;
+    },
+    async put(key, response) {
+      const seconds = Number(/max-age=(\d+)/.exec(response.headers.get("cache-control") ?? "")?.[1] ?? 0);
+      kept.set(key, { text: await response.text(), until: clock.now() + seconds * 1000 });
+    },
+  };
+}
 
 // Settings, ports and a capturing logger for API tests, as the Worker would hand them in.
 export function testBindings(
@@ -147,6 +163,8 @@ export function testBindings(
       identity: seededIdentity(db, clock),
       model: options.model ?? modelOff,
       photos: r2PhotoStore(testBucket()),
+      // No cache unless a test hands one in, so a change shows on the next read.
+      edge: edgeCache(TEST_ORIGIN, options.edge ?? null),
     },
     lines,
   };
