@@ -33,7 +33,7 @@ const consentBody = (number?: string) => ({
   role: "citizen",
   name: "Uji Satu",
   ...(number === undefined ? {} : { number }),
-  privacyVersion: 1,
+  privacyVersion: 2,
   agree: true,
 });
 const sendBody = (draft: DraftBody) => ({ revision: draft.revision, turnKey: crypto.randomUUID() });

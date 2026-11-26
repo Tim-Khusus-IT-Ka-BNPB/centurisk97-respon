@@ -27,7 +27,7 @@ async function sendEmergency(page: Page, baseURL: string): Promise<string> {
     role: "citizen",
     name: "Uji Satu",
     number: syntheticNumber(),
-    privacyVersion: 1,
+    privacyVersion: 2,
     agree: true,
     emergency: true,
   });

@@ -20,7 +20,7 @@ async function start(phone = browser(fetchApi), number = freshNumber().typed) {
     role: "citizen",
     name: "Uji Satu",
     number,
-    privacyVersion: 1,
+    privacyVersion: 2,
     agree: true,
   });
   return { phone, draft: answer.draft };
@@ -33,7 +33,7 @@ describe("who may read a draft", () => {
       role: "citizen",
       name: "Uji Dua",
       number: freshNumber().typed,
-      privacyVersion: 1,
+      privacyVersion: 2,
       agree: true,
     });
     const otherDevice = browser(fetchApi);
@@ -184,7 +184,7 @@ describe("limits", () => {
       role: "citizen",
       name: "Uji Satu",
       number: freshNumber().typed,
-      privacyVersion: 1,
+      privacyVersion: 2,
       agree: true,
     });
     const refused = await fetchApi(

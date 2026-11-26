@@ -13,7 +13,7 @@ const consent = (extra: object = {}) => ({
   role: "citizen",
   name: "Uji Poster",
   number: freshNumber().typed,
-  privacyVersion: 1,
+  privacyVersion: 2,
   agree: true,
   ...extra,
 });

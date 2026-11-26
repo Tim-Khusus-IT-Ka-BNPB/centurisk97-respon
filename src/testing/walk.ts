@@ -88,7 +88,7 @@ export async function startDraft(phone: Phone, number: string, name = "Uji Satu"
     role: "citizen",
     name,
     number,
-    privacyVersion: 1,
+    privacyVersion: 2,
     agree: true,
   });
   if (answer.status === 201) return answer.draft;

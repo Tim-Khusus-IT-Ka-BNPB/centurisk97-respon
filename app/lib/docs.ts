@@ -6,13 +6,20 @@ export const HELP_GROUPS = [
   { group: "privacy", items: ["who", "remove"] },
 ] as const;
 
+// In the order UU 27/2022 asks a notice to tell it (upstream, 25 Nov).
 export const PRIVACY_SECTIONS = [
-  { section: "collected", parts: ["p1", "item1", "item2", "item3", "item4", "p2"] },
-  { section: "use", parts: ["item1", "item2", "item3", "item4"] },
+  { section: "who", parts: ["p1"] },
+  { section: "collected", parts: ["p1", "item1", "item2", "item3", "item4", "item5", "p2"] },
+  { section: "device", parts: ["p1", "item1", "item2", "item3", "item4", "p2"] },
+  { section: "basis", parts: ["item1", "item2", "item3"] },
+  { section: "use", parts: ["item1", "item2", "item3", "item4", "item5", "item6", "p2"] },
   { section: "assistant", parts: ["p1"] },
-  { section: "access", parts: ["p1"] },
-  { section: "storage", parts: ["p1", "p2"] },
-  { section: "rights", parts: ["p1"] },
+  { section: "access", parts: ["item1", "item2", "item3"] },
+  { section: "others", parts: ["item1", "item2", "item3", "item4", "p2"] },
+  { section: "storage", parts: ["p1"] },
+  { section: "retention", parts: ["item1", "item2", "item3", "item4"] },
+  { section: "rights", parts: ["p1", "item1", "item2", "item3", "item4", "item5", "item6"] },
+  { section: "breach", parts: ["p1"] },
   { section: "falseReports", parts: ["p1"] },
   { section: "changes", parts: ["p1"] },
   { section: "contact", parts: ["p1"] },

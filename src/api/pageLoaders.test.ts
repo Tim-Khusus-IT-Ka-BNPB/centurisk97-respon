@@ -15,7 +15,7 @@ async function reporter() {
     role: "citizen",
     name: "Uji Satu",
     number: freshNumber().typed,
-    privacyVersion: 1,
+    privacyVersion: 2,
     agree: true,
   });
   const cookie = [...phone.cookies].map(([name, value]) => `${name}=${value}`).join("; ");

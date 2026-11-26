@@ -186,7 +186,7 @@ describe("a report as a file", () => {
       number: freshNumber().typed,
       officerRegency: "Aceh Utara",
       officerPosition: "Kepala Seksi Rahasia",
-      privacyVersion: 1,
+      privacyVersion: 2,
       agree: true,
       emergency: true,
     });

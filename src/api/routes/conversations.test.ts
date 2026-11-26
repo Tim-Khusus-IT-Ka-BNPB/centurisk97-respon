@@ -137,7 +137,7 @@ describe("the recorded conversations replayed through the stub", () => {
         number: reporter.typed,
         officerRegency: conversation.officer?.regency ?? "",
         officerPosition: conversation.officer?.position ?? "",
-        privacyVersion: 1,
+        privacyVersion: 2,
         agree: true,
       });
       expect(consent.status).toBe(201);

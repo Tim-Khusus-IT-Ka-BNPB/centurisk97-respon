@@ -11,7 +11,7 @@ const citizen = (number: string, name = "Uji Satu") => ({
   role: "citizen",
   name,
   number,
-  privacyVersion: 1,
+  privacyVersion: 2,
   agree: true,
 });
 
@@ -44,7 +44,7 @@ describe("consent", () => {
     const [consent] = await query<{ privacy_version: number; agreed_at: string }>`
       select c.privacy_version, c.agreed_at from reporter_consent c join reporter_profile p on p.id = c.profile_id
       join report_draft d on d.profile_id = p.id where d.id = ${answer.draft.draftId}`;
-    expect(consent?.privacy_version).toBe(1);
+    expect(consent?.privacy_version).toBe(2);
     expect(Date.parse(consent?.agreed_at as string)).toBeGreaterThanOrEqual(before - 1000);
   });
 
@@ -99,7 +99,7 @@ describe("consent", () => {
       name: "Uji 123",
       number: number.typed,
       officerRegency: "Ka",
-      privacyVersion: 1,
+      privacyVersion: 2,
       agree: true,
     });
     expect(answer.status).toBe(422);
@@ -134,7 +134,7 @@ describe("consent", () => {
   test("consent needs agree and the current privacy version", async () => {
     const phone = browser(fetchApi);
     expect((await phone.call("POST", "/consent", { ...citizen(freshNumber().typed), agree: false })).status).toBe(400);
-    expect((await phone.call("POST", "/consent", { ...citizen(freshNumber().typed), privacyVersion: 2 })).status).toBe(
+    expect((await phone.call("POST", "/consent", { ...citizen(freshNumber().typed), privacyVersion: 1 })).status).toBe(
       400,
     );
   });
@@ -196,7 +196,7 @@ describe("consent", () => {
     const answer = await first.call("POST", "/consent", {
       role: "citizen",
       name: "Uji Dua",
-      privacyVersion: 1,
+      privacyVersion: 2,
       agree: true,
     });
     expect(answer.status).toBe(201);
@@ -205,7 +205,7 @@ describe("consent", () => {
     second.cookies.set("seeded_session", token);
     expect((await second.call("GET", `/drafts/${answer.draft.draftId}`)).status).toBe(200);
     const me = await second.call("GET", "/me");
-    expect(me.json).toMatchObject({ session: { kind: "reporter" }, privacyVersion: 1 });
+    expect(me.json).toMatchObject({ session: { kind: "reporter" }, privacyVersion: 2 });
   });
 
   test("a staff session cannot consent", async () => {

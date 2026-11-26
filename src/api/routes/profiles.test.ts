@@ -10,7 +10,7 @@ const { bindings } = testBindings({}, { clock });
 const fetchApi = (request: Request) => api.app.fetch(request, bindings);
 
 const consent = (phone: ReturnType<typeof browser>, number: string, name: string) =>
-  phone.call("POST", "/consent", { role: "citizen", name, number, privacyVersion: 1, agree: true });
+  phone.call("POST", "/consent", { role: "citizen", name, number, privacyVersion: 2, agree: true });
 const me = async (phone: ReturnType<typeof browser>) => (await phone.call("GET", "/me")).json as MeResponse;
 
 async function deviceWith(names: readonly string[]) {
@@ -45,7 +45,7 @@ describe("numbers known on this device", () => {
     expect(await me(browser(fetchApi))).toEqual({
       reports: [],
       knownReporters: [],
-      privacyVersion: 1,
+      privacyVersion: 2,
       session: null,
     });
     const desk = browser(fetchApi);

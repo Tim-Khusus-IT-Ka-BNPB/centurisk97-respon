@@ -44,7 +44,7 @@ async function sendReport(
     role: "citizen",
     name: "Uji Satu",
     number: syntheticNumber(),
-    privacyVersion: 1,
+    privacyVersion: 2,
     agree: true,
   });
   const answer = (card: Card): Record<string, unknown> => {

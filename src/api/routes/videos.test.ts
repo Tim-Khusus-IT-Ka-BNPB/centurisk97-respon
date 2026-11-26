@@ -29,7 +29,7 @@ async function atPhotos() {
     role: "citizen",
     name: "Uji Video",
     number: freshNumber().typed,
-    privacyVersion: 1,
+    privacyVersion: 2,
     agree: true,
   });
   const { draft } = await walkTo(phone, started.draft, VILLAGE, { tick, stopAt: (one) => one.card.kind === "photos" });

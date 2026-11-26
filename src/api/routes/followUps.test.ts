@@ -379,7 +379,7 @@ describe("when news is taken", () => {
       role: "citizen",
       name: "Uji Satu",
       number,
-      privacyVersion: 1,
+      privacyVersion: 2,
       agree: true,
       emergency: true,
     });

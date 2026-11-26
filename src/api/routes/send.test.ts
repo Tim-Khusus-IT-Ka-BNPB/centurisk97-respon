@@ -25,7 +25,7 @@ async function atSummary(w: ReturnType<typeof world>, phone = browser(w.fetchApi
     role: "citizen",
     name: "Uji Satu",
     number,
-    privacyVersion: 1,
+    privacyVersion: 2,
     agree: true,
   });
   const { draft } = await walkTo(phone, start.draft, village, { tick: () => w.clock.advance(4000) });
@@ -139,7 +139,7 @@ describe("send", () => {
       role: "citizen",
       name: "Uji Satu",
       number: freshNumber().typed,
-      privacyVersion: 1,
+      privacyVersion: 2,
       agree: true,
     });
     expect(

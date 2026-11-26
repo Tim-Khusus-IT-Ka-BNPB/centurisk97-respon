@@ -25,7 +25,7 @@ async function started() {
     role: "citizen",
     name: "Uji Satu",
     number: number.typed,
-    privacyVersion: 1,
+    privacyVersion: 2,
     agree: true,
   });
   const [device] = await query<{

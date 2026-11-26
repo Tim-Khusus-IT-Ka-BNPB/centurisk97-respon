@@ -38,7 +38,7 @@ async function start(phone = browser(fetchApi)) {
     role: "citizen",
     name: "Uji Satu",
     number: freshNumber().typed,
-    privacyVersion: 1,
+    privacyVersion: 2,
     agree: true,
   });
   return { phone, draft: answer.draft };
@@ -62,7 +62,7 @@ describe("identity edges", () => {
     const answer = await browser(fetchApi).call("POST", "/consent", {
       role: "citizen",
       name: "Uji Satu",
-      privacyVersion: 1,
+      privacyVersion: 2,
       agree: true,
     });
     expect(answer.error.fields).toEqual([
@@ -72,7 +72,7 @@ describe("identity edges", () => {
 
   test("a session cannot start from another session's profile", async () => {
     const own = sessionOf(1);
-    await own.call("POST", "/consent", { role: "citizen", name: "Uji Dua", privacyVersion: 1, agree: true });
+    await own.call("POST", "/consent", { role: "citizen", name: "Uji Dua", privacyVersion: 2, agree: true });
     const profileId = (await me(own)).knownReporters[0]?.profileId as string;
     expect((await sessionOf(0).call("POST", "/drafts", { profileId })).status).toBe(404);
   });
@@ -194,7 +194,7 @@ describe("turn edges", () => {
     const started = await session.call("POST", "/consent", {
       role: "citizen",
       name: "Uji Dua",
-      privacyVersion: 1,
+      privacyVersion: 2,
       agree: true,
     });
     const told = await session.call(

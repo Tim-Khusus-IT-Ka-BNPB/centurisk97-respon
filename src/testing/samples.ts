@@ -406,6 +406,6 @@ export const SAMPLE_ME: MeResponse = {
       openDraft: { draftId: DRAFT_ID, hazardType: null, lastActedAt: at("2026-11-23T01:01:00.000Z"), followUpOf: null },
     },
   ],
-  privacyVersion: 1,
+  privacyVersion: 2,
   session: null,
 };

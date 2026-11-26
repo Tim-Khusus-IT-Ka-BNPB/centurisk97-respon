@@ -54,7 +54,7 @@ async function start(w: ReturnType<typeof world>, number = freshNumber().typed, 
     role: "citizen",
     name: "Uji Satu",
     number,
-    privacyVersion: 1,
+    privacyVersion: 2,
     agree: true,
   });
   return { phone, draft: answer.draft };

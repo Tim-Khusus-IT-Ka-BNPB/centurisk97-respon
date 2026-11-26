@@ -40,7 +40,7 @@ async function reporter(number = freshNumber().typed) {
     role: "citizen",
     name: "Uji Satu",
     number,
-    privacyVersion: 1,
+    privacyVersion: 2,
     agree: true,
   });
   return { phone, number, draft: started.draft };
@@ -61,7 +61,7 @@ describe("a write that loses its race is decided again", () => {
       role: "citizen",
       name: "Uji Satu",
       number,
-      privacyVersion: 1,
+      privacyVersion: 2,
       agree: true,
     });
     expect(again.draft.draftId).toBe(draft.draftId);

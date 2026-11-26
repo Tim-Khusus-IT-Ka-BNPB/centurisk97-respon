@@ -24,7 +24,7 @@ async function start() {
     role: "citizen",
     name: "Uji Satu",
     number: freshNumber().typed,
-    privacyVersion: 1,
+    privacyVersion: 2,
     agree: true,
   });
   return { phone, draft: answer.draft };
