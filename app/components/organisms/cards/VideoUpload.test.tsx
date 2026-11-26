@@ -1,5 +1,6 @@
 import { fireEvent, screen, waitFor } from "@testing-library/react";
 import { afterEach, describe, expect, test, vi } from "vitest";
+import { keepUpload, openUpload } from "../../../lib/videoResume";
 import { renderPage } from "../../../testing/render";
 import { browserSeconds, VideoUpload } from "./VideoUpload";
 
@@ -46,6 +47,7 @@ const invalid = (copyKey: string) => ({
 afterEach(() => {
   calls.length = 0;
   vi.unstubAllGlobals();
+  localStorage.clear();
 });
 
 describe("a video of the scene", () => {
@@ -133,6 +135,50 @@ describe("a video of the scene", () => {
     await screen.findByLabelText("Rekam video");
     await pick();
     expect(await screen.findByText(/^Video belum terkirim/)).toBeTruthy();
+  });
+
+  test("after a reload, the same file picked again goes on from the parts that landed; another starts over", async () => {
+    keepUpload(DRAFT, { id: ID, size: 6, modified: 7 });
+    answer({
+      [`GET ${BASE}`]: { status: 200, body: [] },
+      [`GET ${BASE}/${ID}`]: { status: 200, body: progress([0]) },
+      [`PUT ${BASE}/${ID}/parts/1`]: { status: 200, body: progress([0, 1]) },
+      [`POST ${BASE}/${ID}/complete`]: { status: 200, body: KEPT },
+    });
+    draw();
+    expect(await screen.findByText(/^Video sebelumnya belum selesai terkirim/)).toBeTruthy();
+    fireEvent.change(await screen.findByLabelText("Rekam video"), {
+      target: { files: [new File([new Uint8Array(6)], "kejadian.mp4", { type: "video/mp4", lastModified: 7 })] },
+    });
+    expect(await screen.findByText("Video 1, 13 detik")).toBeTruthy();
+    expect(calls).toEqual([
+      `GET ${BASE}`,
+      `GET ${BASE}/${ID}`,
+      `PUT ${BASE}/${ID}/parts/1`,
+      `POST ${BASE}/${ID}/complete`,
+    ]);
+    expect(openUpload(DRAFT)).toBeNull();
+  });
+
+  test("a cut-off upload the service no longer has, or another file, starts a new one", async () => {
+    keepUpload(DRAFT, { id: ID, size: 6, modified: 7 });
+    answer({
+      [`GET ${BASE}`]: { status: 200, body: [] },
+      [`GET ${BASE}/${ID}`]: { status: 404, body: {} },
+      [`POST ${BASE}`]: { status: 200, body: progress([0, 1]) },
+      [`POST ${BASE}/${ID}/complete`]: { status: 200, body: KEPT },
+    });
+    draw();
+    await waitFor(() => expect(calls).toContain(`GET ${BASE}`));
+    fireEvent.change(await screen.findByLabelText("Rekam video"), {
+      target: { files: [new File([new Uint8Array(6)], "kejadian.mp4", { type: "video/mp4", lastModified: 7 })] },
+    });
+    expect(await screen.findByText("Video 1, 13 detik")).toBeTruthy();
+    expect(calls).toContain(`POST ${BASE}`);
+    keepUpload(DRAFT, { id: ID, size: 99, modified: 7 });
+    calls.length = 0;
+    await pick();
+    await waitFor(() => expect(calls[0]).toBe(`POST ${BASE}`));
   });
 
   test("three kept: no more to record; a resume that cannot read the upload says so", async () => {

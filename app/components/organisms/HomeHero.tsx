@@ -1,4 +1,3 @@
-import { Link } from "react-router";
 import { useText } from "../../lib/text";
 import { Icon } from "../atoms/Icon";
 import { EmergencyPanel } from "./EmergencyPanel";

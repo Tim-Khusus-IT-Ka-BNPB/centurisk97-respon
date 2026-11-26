@@ -35,7 +35,9 @@
         "!app/components/organisms/OneTapScreen.test.tsx",
         "!app/testing/setup.ts",
         "!app/lib/follow.ts",
-        "!app/lib/follow.test.ts"
+        "!app/lib/follow.test.ts",
+        "!app/lib/videoResume.ts",
+        "!app/lib/videoResume.test.ts"
       ],
       "plugins": ["./tools/lint/web-storage.grit"],
       "linter": {

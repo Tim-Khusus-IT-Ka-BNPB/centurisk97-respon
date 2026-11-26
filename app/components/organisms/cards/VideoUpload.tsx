@@ -2,6 +2,7 @@ import { type ChangeEvent, useEffect, useId, useState } from "react";
 import type { ErrorEnvelope } from "../../../../src/contract/errors";
 import { deleteJson, getJson, postJson, putBytes } from "../../../lib/clientApi";
 import { useText } from "../../../lib/text";
+import { dropUpload, keepUpload, type OpenUpload, openUpload, sameFile } from "../../../lib/videoResume";
 import { Button } from "../../atoms/Button";
 import { Icon } from "../../atoms/Icon";
 
@@ -59,10 +60,21 @@ export function VideoUpload({
   const base = `/drafts/${encodeURIComponent(draftId)}/videos`;
   const [kept, setKept] = useState<readonly Kept[]>([]);
   const [sending, setSending] = useState<Sending>({ kind: "idle" });
+  // An upload a reload cut off, known once the page runs: picking its file again continues it.
+  const [cutOff, setCutOff] = useState<OpenUpload | null>(null);
 
   useEffect(() => {
     void getJson<Kept[]>(base).then((answer) => answer.kind === "ok" && setKept(answer.body));
-  }, [base]);
+    setCutOff(openUpload(draftId));
+  }, [base, draftId]);
+
+  const settle = (next: Sending) => {
+    if (next.kind === "idle" || next.kind === "refused") {
+      dropUpload(draftId);
+      setCutOff(null);
+    }
+    setSending(next);
+  };
 
   const send = async (file: File, upload: Progress) => {
     const missing = [...Array(upload.parts).keys()].filter((n) => !upload.received.includes(n));
@@ -75,7 +87,7 @@ export function VideoUpload({
         if (tries > 0) await wait(retryMs * 2 ** (tries - 1));
         const answer = await putBytes<Progress>(`${base}/${upload.id}/parts/${n}`, part);
         if (answer.kind === "refused" && answer.status !== 429 && answer.status < 500)
-          return setSending({ kind: "refused", copyKey: refusalOf(answer.envelope) });
+          return settle({ kind: "refused", copyKey: refusalOf(answer.envelope) });
         landed = answer.kind === "ok";
       }
       if (!landed) {
@@ -88,9 +100,9 @@ export function VideoUpload({
     const whole = await postJson<Kept[]>(`${base}/${upload.id}/complete`, {});
     if (whole.kind === "ok") {
       setKept(whole.body);
-      setSending({ kind: "idle" });
+      settle({ kind: "idle" });
     } else if (whole.kind === "unreachable") setSending({ kind: "broken", file, upload: { ...upload, received: [] } });
-    else setSending({ kind: "refused", copyKey: refusalOf(whole.envelope) });
+    else settle({ kind: "refused", copyKey: refusalOf(whole.envelope) });
   };
 
   const picked = async (event: ChangeEvent<HTMLInputElement>) => {
@@ -98,9 +110,17 @@ export function VideoUpload({
     event.target.value = "";
     if (!file) return;
     setSending({ kind: "sending", done: 0, parts: 1 });
+    // The file of an upload a reload cut off goes on where it stopped.
+    if (cutOff !== null && sameFile(cutOff, file)) {
+      const now = await getJson<Progress>(`${base}/${cutOff.id}`);
+      if (now.kind === "ok") return send(file, now.body);
+    }
     const started = await postJson<Progress>(base, { bytes: file.size, seconds: await readSeconds(file) });
-    if (started.kind === "ok") return send(file, started.body);
-    setSending({
+    if (started.kind === "ok") {
+      keepUpload(draftId, { id: started.body.id, size: file.size, modified: file.lastModified });
+      return send(file, started.body);
+    }
+    settle({
       kind: "refused",
       copyKey: started.kind === "refused" ? refusalOf(started.envelope) : "card.video.failed",
     });
@@ -109,7 +129,7 @@ export function VideoUpload({
   const resume = async (file: File, upload: Progress) => {
     const now = await getJson<Progress>(`${base}/${upload.id}`);
     if (now.kind === "ok") return send(file, now.body);
-    setSending(
+    settle(
       now.kind === "unreachable"
         ? { kind: "broken", file, upload }
         : { kind: "refused", copyKey: refusalOf(now.envelope) },
@@ -158,6 +178,7 @@ export function VideoUpload({
           </>
         ) : null}
         {sending.kind === "refused" ? <p className="text-danger">{t(sending.copyKey)}</p> : null}
+        {sending.kind === "idle" && cutOff !== null ? <p>{t("card.video.cutOff")}</p> : null}
       </div>
       {sending.kind === "sending" || sending.kind === "broken" || kept.length >= 3 ? null : (
         <label

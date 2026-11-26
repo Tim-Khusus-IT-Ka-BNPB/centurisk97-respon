@@ -225,5 +225,6 @@
   "card.video.resume": "Lanjutkan mengirim",
   "card.video.failed": "Video belum terkirim. Periksa sambungan internet, lalu coba lagi.",
   "card.placeSearch.similar": "Tidak ada yang persis sama. Ini tempat dengan ejaan yang mirip.",
-  "card.placeSearch.timeout": "Lokasi terlalu lama terbaca. Pindah ke tempat terbuka atau dekat jendela, lalu tekan Pakai lokasi saat ini lagi. Atau cari nama tempat di bawah."
+  "card.placeSearch.timeout": "Lokasi terlalu lama terbaca. Pindah ke tempat terbuka atau dekat jendela, lalu tekan Pakai lokasi saat ini lagi. Atau cari nama tempat di bawah.",
+  "card.video.cutOff": "Video sebelumnya belum selesai terkirim. Pilih file video yang sama untuk melanjutkan dari bagian yang sudah sampai."
 }
