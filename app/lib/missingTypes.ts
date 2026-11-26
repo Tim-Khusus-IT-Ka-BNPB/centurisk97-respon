@@ -36,7 +36,7 @@ type Place = { readonly villageName: string; readonly districtName: string; read
 type Stamp = Instant;
 
 // One missing person as the desk reads it; names, numbers and photo are gone once anonymised.
-export type DeskMissing = {
+type DeskMissing = {
   readonly id: string;
   readonly status: MissingStatus;
   readonly place: Place;
