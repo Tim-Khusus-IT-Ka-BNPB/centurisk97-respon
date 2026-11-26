@@ -15,16 +15,26 @@ export const PER_RUN = 200;
 
 const dayName = new Intl.DateTimeFormat("id-ID", { weekday: "long", day: "numeric", month: "long", timeZone: "UTC" });
 
+// Landslide, wind and smoke models have not passed their back-test: their warnings still go, labelled
+// as a hypothesis (upstream KI-01, KEPUTUSAN-KEMAMPUAN Q1). Flood has passed.
+const HYPOTHESIS: ReadonlySet<string> = new Set(["LSR", "CEX", "ASP"]);
+
 // What the phone shows, and the page it opens. Always says it is our outlook, not BMKG's (Q2).
-export const messageOf = (rise: Rise) => ({
-  title: copy.format("warn.push.title", {
+export function messageOf(rise: Rise) {
+  const hypothesis = HYPOTHESIS.has(rise.hazard);
+  const title = copy.format("warn.push.title", {
     level: copy.text(`info.level.${rise.level}`),
     hazard: copy.text(`warn.push.hazard.${rise.hazard}`),
     regency: rise.regencyName,
-  }),
-  body: copy.format("warn.push.body", { day: dayName.format(Date.parse(rise.date)) }),
-  url: `/lapor/info?kab=${rise.regencyCode}`,
-});
+  });
+  return {
+    title: hypothesis ? copy.format("warn.push.hypothesisTitle", { title }) : title,
+    body: copy.format(hypothesis ? "warn.push.hypothesisBody" : "warn.push.body", {
+      day: dayName.format(Date.parse(rise.date)),
+    }),
+    url: `/lapor/info?kab=${rise.regencyCode}`,
+  };
+}
 
 type Counts = { sent: number; gone: number; failed: number };
 

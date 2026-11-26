@@ -1,6 +1,8 @@
 {
   "warn.push.title": "Prakiraan {level} {hazard} di {regency}",
   "warn.push.body": "{day}. Prakiraan Pantau Bencana, bukan peringatan resmi BMKG. Buka untuk melihat yang perlu disiapkan dan nomor darurat.",
+  "warn.push.hypothesisTitle": "Hipotesis: {title}",
+  "warn.push.hypothesisBody": "{day}. Hipotesis: model prakiraan ini belum lolos uji balik. Prakiraan Pantau Bencana, bukan peringatan resmi BMKG. Buka untuk melihat yang perlu disiapkan dan nomor darurat.",
   "warn.push.hazard.BNJ": "banjir",
   "warn.push.hazard.LSR": "tanah longsor",
   "warn.push.hazard.ASP": "asap",

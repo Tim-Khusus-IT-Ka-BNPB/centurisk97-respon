@@ -106,6 +106,20 @@ describe("sending the warnings", () => {
       body: "Sabtu, 28 November. Prakiraan Pantau Bencana, bukan peringatan resmi BMKG. Buka untuk melihat yang perlu disiapkan dan nomor darurat.",
       url: "/lapor/info?kab=32.01",
     });
+    // Landslide, wind and smoke have not passed their back-test: labelled as a hypothesis (KI-01).
+    const slide = messageOf({
+      regencyCode: "32.01",
+      regencyName: "Kab. Bogor",
+      hazard: "LSR",
+      date: "2026-11-28",
+      level: 2,
+    });
+    expect(slide.title).toBe("Hipotesis: Prakiraan Siaga tanah longsor di Kab. Bogor");
+    expect(slide.body).toMatch(/^Sabtu, 28 November\. Hipotesis: model prakiraan ini belum lolos uji balik\./);
+    for (const hazard of ["CEX", "ASP"])
+      expect(messageOf({ regencyCode: "32.01", regencyName: "B", hazard, date: "2026-11-28", level: 1 }).title).toMatch(
+        /^Hipotesis: /,
+      );
   });
 
   test("nothing goes with no push keys, or with no outlook to read", async () => {
