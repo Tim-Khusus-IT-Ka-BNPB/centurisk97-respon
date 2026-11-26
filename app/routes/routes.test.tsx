@@ -28,6 +28,7 @@ import * as manifest from "./manifest";
 import NotFoundRoute, * as notFound from "./notFound";
 import * as ownDocument from "./ownDocument";
 import OwnReportRoute, * as ownReport from "./ownReport";
+import PosterRoute, * as poster from "./poster";
 import PrivacyRoute, * as privacy from "./privacy";
 import StartRoute, * as start from "./start";
 import * as theme from "./theme";
@@ -113,6 +114,55 @@ describe("route modules", () => {
     });
     expect(body.icons).toHaveLength(3);
     expect(body.shortcuts.map((one) => one.url)).toEqual(["/lapor/report", "/lapor/report?darurat=1", "/lapor/feed"]);
+  });
+
+  test("the village posters: a search, a district, one village of it, and a list that cannot be read", async () => {
+    expect(poster.headers()).toEqual({ "cache-control": "private, no-store", "x-robots-tag": "noindex" });
+    expect(poster.meta({ data: { texts: pickTexts(PAGE_TEXTS.poster) }, matches: [] } as Args)[0]).toEqual({
+      title: "Poster QR desa, Pantau Bencana BNPB",
+    });
+    const area = {
+      items: [
+        {
+          level: "village",
+          code: "11.08.01.2001",
+          name: "Uji Satu",
+          districtName: "Baktiya",
+          regencyName: "Aceh Utara",
+          provinceName: "Aceh",
+        },
+      ],
+      total: 1,
+      cut: false,
+      dataDate: "2026-11-01",
+      area: { level: "district", code: "11.08.01", name: "Baktiya", regencyName: "Aceh Utara", provinceName: "Aceh" },
+    };
+    const asked: string[] = [];
+    const answering =
+      (response: () => Response): ApiCall =>
+      async (_method, path) => {
+        asked.push(path);
+        return response();
+      };
+    const load = (query: string, response: () => Response = json(area)) =>
+      poster.loader({
+        request: new Request(`http://localhost/lapor/poster${query}`),
+        context: { api: answering(response) },
+      } as Args);
+    expect((await load("")).load).toEqual({ kind: "start", query: "" });
+    expect((await load("?q=ab")).load).toEqual({ kind: "short", query: "ab" });
+    expect((await load("?q=baktiya")).load).toMatchObject({ kind: "results", query: "baktiya" });
+    expect((await load("?q=baktiya", json({}, 503))).load).toEqual({ kind: "unavailable", query: "baktiya" });
+    expect((await load("?district=11.08.01")).load).toMatchObject({ kind: "sheets", one: false, cut: false });
+    expect((await load("?district=11.08.01&village=11.08.01.2001")).load).toMatchObject({ kind: "sheets", one: true });
+    expect((await load("?district=11.08.01&village=11.08.01.9999")).load).toMatchObject({ kind: "sheets", one: false });
+    expect((await load("?district=11.08.01", json({}, 503))).load).toEqual({ kind: "unavailable", query: "" });
+    expect(asked).toContain("/places/search?q=baktiya");
+    expect(asked).toContain("/places/districts/11.08.01/villages?q=");
+    const shown = await load("?district=11.08.01");
+    renderPage(routeElement(PosterRoute, { loaderData: shown }), { path: "/lapor/poster" });
+    expect(await screen.findByRole("heading", { level: 1, name: "Poster QR desa" })).toBeTruthy();
+    expect(screen.getAllByRole("article")).toHaveLength(1);
   });
 
   test("the public feed is read on the server with only a known hazard, and says when it cannot be", async () => {

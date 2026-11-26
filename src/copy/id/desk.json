@@ -297,5 +297,6 @@
   "desk.cluster.strong": "Gugus kuat, {count} laporan",
   "desk.cluster.title": "Gugus laporan",
   "desk.cluster.lead": "Laporan {hazard} lain di dekatnya dalam beberapa jam, dari {reporters} nomor berbeda. Gugus bukan tanda terverifikasi, dan angka tiap laporan tidak dijumlah.",
-  "desk.cluster.this": "Laporan ini"
+  "desk.cluster.this": "Laporan ini",
+  "desk.nav.poster": "Poster QR desa"
 }

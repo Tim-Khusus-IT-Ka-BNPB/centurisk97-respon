@@ -11,5 +11,6 @@
   "meta.desk.description": "Meja laporan untuk petugas BNPB dan BPBD.",
   "meta.ownReport.description": "Status, dokumen, dan kabar laporan bencana Anda. Hanya bisa dibuka dari perangkat yang dipakai melapor.",
   "meta.emergency.description": "Kirim titik lokasi Anda ke BNPB sebagai laporan darurat.",
-  "meta.feed.description": "Laporan bencana dari warga yang sedang atau sudah ditangani BNPB dan BPBD, di peta dan daftar, tanpa data pelapor."
+  "meta.feed.description": "Laporan bencana dari warga yang sedang atau sudah ditangani BNPB dan BPBD, di peta dan daftar, tanpa data pelapor.",
+  "meta.poster.description": "Poster QR per desa untuk dicetak: pindaian membuka halaman lapor kejadian bencana."
 }

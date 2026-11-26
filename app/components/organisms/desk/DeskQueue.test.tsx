@@ -110,6 +110,7 @@ describe("the side menu", () => {
     expect(screen.getAllByText("Masuk sebagai Pusdalops BNPB, Petugas Uji")).toHaveLength(2);
     expect(screen.getAllByRole("button", { name: "Keluar" })).toHaveLength(2);
     expect(screen.getAllByRole("link", { name: "Form lapor warga" })[0]?.getAttribute("href")).toBe("/lapor");
+    expect(screen.getAllByRole("link", { name: "Poster QR desa" })[0]?.getAttribute("href")).toBe("/lapor/poster");
     expect(screen.getByText("Antrean Ditelaah")).toBeTruthy();
   });
 

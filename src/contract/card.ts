@@ -103,6 +103,8 @@ export const placeResultsSchema = z.object({
   dataDate: z.iso.date(),
 });
 
+export type PlaceResults = z.infer<typeof placeResultsSchema>;
+
 // A summary row value; null when the field holds no value (none, not yet known, not known).
 const rowValueSchema = z.discriminatedUnion("kind", [
   z.object({ kind: z.literal("count"), count: z.number().int().positive() }),

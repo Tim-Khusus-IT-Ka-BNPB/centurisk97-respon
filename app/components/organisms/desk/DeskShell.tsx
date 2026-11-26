@@ -154,6 +154,12 @@ function DeskNav({ place }: { readonly place: DeskPlace }) {
           </li>
         ) : null}
         <li>
+          <Link to="/lapor/poster" className={item}>
+            <Icon name="scan" className={navIcon} />
+            {t("desk.nav.poster")}
+          </Link>
+        </li>
+        <li>
           <Link to="/lapor" className={item}>
             <Icon name="send" className={navIcon} />
             {t("desk.nav.reportForm")}
