@@ -16,7 +16,7 @@ import { CallRow } from "../molecules/CallRow";
 import { Notice } from "../molecules/Notice";
 
 type Step =
-  | { readonly kind: "ready" | "reading" | "sending" | "failed" }
+  | { readonly kind: "ready" | "reading" | "sending" }
   // No signal: the report waits on this phone and goes when signal returns.
   | { readonly kind: "kept"; readonly report: OfflineReport }
   | { readonly kind: "noPosition"; readonly reason: "denied" | "unavailable" | "unsupported" }
@@ -172,11 +172,6 @@ export function OneTapScreen({ start }: { readonly start: OneTapStart }) {
           </Notice>
         ) : null}
         {step.kind === "kept" ? <KeptDetails report={step.report} onChange={details} /> : null}
-        {step.kind === "failed" ? (
-          <Notice kind="error">
-            <p>{t("emergency.failed")}</p>
-          </Notice>
-        ) : null}
         {problem === null ? null : (
           <Notice kind={problem.fields.length > 0 ? "error" : "limit"}>
             <p>

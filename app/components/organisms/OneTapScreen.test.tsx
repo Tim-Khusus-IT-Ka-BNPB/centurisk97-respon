@@ -56,7 +56,12 @@ describe("one tap", () => {
     expect(calls).toEqual([]);
     await act(async () => found(READ));
     expect(await screen.findByText("Terkirim ke meja BNPB dengan nomor LA-241126-01.")).toBeTruthy();
-    expect(calls).toEqual([{ url: "/api/lapor/emergencies", body: { lat: 5.1, lon: 97, accuracyM: 12 } }]);
+    expect(calls).toEqual([
+      {
+        url: "/api/lapor/emergencies",
+        body: { lat: 5.1, lon: 97, accuracyM: 12, clientId: expect.any(String), takenAtMs: expect.any(Number) },
+      },
+    ]);
     expect(screen.getByRole("link", { name: "Lihat dan lengkapi laporan" }).getAttribute("href")).toBe(
       `/lapor/reports/${SENT.ticketNumber}`,
     );
@@ -123,18 +128,6 @@ describe("one tap", () => {
     );
     draw("/lapor/darurat?ketuk=1");
     expect(await screen.findByText(/Titik ini di luar Indonesia/)).toBeTruthy();
-  });
-
-  test("no connection says it is not sent, and trying again sends it", async () => {
-    vi.stubGlobal("fetch", async () => {
-      throw new TypeError("offline");
-    });
-    draw("/lapor/darurat?ketuk=1");
-    expect(await screen.findByText(/Titik lokasi belum terkirim/)).toBeTruthy();
-    answer(() => Response.json(SENT, { status: 201 }));
-    fireEvent.click(screen.getByRole("button", { name: "Coba lagi" }));
-    await waitFor(() => expect(calls).toHaveLength(1));
-    expect(await screen.findByText(/Terkirim ke meja BNPB/)).toBeTruthy();
   });
 
   test("with no script it shows who to call and the other way to report", () => {

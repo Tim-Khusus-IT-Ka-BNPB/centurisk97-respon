@@ -17,7 +17,6 @@
   "emergency.sentNext": "Petugas melihat titik ini sebagai darurat. Tetap telepon 112 bila perlu pertolongan segera.",
   "emergency.track": "Lihat dan lengkapi laporan",
   "emergency.chat": "Lapor darurat dengan keterangan",
-  "emergency.failed": "Titik lokasi belum terkirim. Periksa sambungan internet, lalu coba lagi. Bila nyawa terancam, telepon 112.",
   "emergency.position.denied": "Izin lokasi ditolak, jadi titik belum terkirim. Izinkan lokasi di pengaturan peramban, atau pilih Lapor darurat dengan keterangan.",
   "emergency.position.unavailable": "Lokasi belum terbaca, jadi titik belum terkirim. Pindah ke tempat terbuka lalu coba lagi, atau pilih Lapor darurat dengan keterangan.",
   "emergency.position.unsupported": "Peramban ini tidak bisa membaca lokasi. Pilih Lapor darurat dengan keterangan.",
