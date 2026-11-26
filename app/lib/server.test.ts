@@ -42,8 +42,13 @@ describe("copy for a page", () => {
     expect(draft["chronology.flood.step2.option.slowRise.label"]).toBeDefined();
     expect(Object.keys(pickTexts(["app."], 7)).sort()).toEqual([
       "app.lang",
+      "app.language.change",
+      ...["baliNusa", "java", "kalimantan", "malukuPapua", "national", "sulawesi", "sumatra"].map(
+        (group) => `app.language.group.${group}`,
+      ),
       "app.language.label",
       "app.language.submit",
+      "app.language.title",
       "app.name",
     ]);
   });
