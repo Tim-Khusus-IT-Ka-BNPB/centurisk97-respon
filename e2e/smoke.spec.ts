@@ -14,10 +14,12 @@ test("the home offers one way to report and BNPB's contacts", async ({ page }) =
 
 test("help, about and privacy open from the home with their content", async ({ page }) => {
   await page.goto("/lapor");
-  // On a phone the header's links sit in its menu.
+  // On a phone the header's links sit in its menu; on a wide screen in the side rail.
   const menu = page.getByRole("banner").locator("summary");
-  if (await menu.isVisible()) await menu.click();
-  await page.getByRole("banner").getByRole("link", { name: "Bantuan" }).click();
+  const phone = await menu.isVisible();
+  if (phone) await menu.click();
+  const links = phone ? page.getByRole("banner") : page.getByRole("navigation", { name: "Menu" });
+  await links.getByRole("link", { name: "Bantuan" }).click();
   await expect(page.getByRole("heading", { level: 1 })).toHaveText("Bantuan");
   for (const group of ["Melapor", "Istilah", "Status", "Privasi"])
     await expect(page.getByRole("heading", { level: 2, name: group })).toBeVisible();
