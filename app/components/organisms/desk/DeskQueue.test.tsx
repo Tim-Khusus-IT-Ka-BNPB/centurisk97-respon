@@ -63,6 +63,32 @@ test("a report in a cluster is marked in the table and the cards, never as verif
   expect(screen.getAllByText("Gugus, 2 laporan")).toHaveLength(2);
 });
 
+test("one row per event: the event's other reports on the page fold under its first, each still its own link", async () => {
+  const [item] = queue().items as [ReturnType<typeof queue>["items"][number]];
+  const cluster = { tickets: [item.ticketNumber, "LA-241126-09"], reporters: 2, strong: false };
+  const other = { ...item, ticketNumber: "LA-241126-09", cluster };
+  const alone = { ...item, ticketNumber: "LA-241126-07", cluster: null };
+  await renderDesk(
+    <DeskQueueView
+      shown={list(queue({ items: [{ ...item, cluster }, alone, other], total: 3 }))}
+      summary={SUMMARY}
+      filters={FILTERS}
+      envelope={null}
+    />,
+    { path: "/lapor/meja" },
+  );
+  const rows = table().getAllByRole("row").slice(1);
+  expect(rows).toHaveLength(3);
+  expect(within(rows[1] as HTMLElement).getByText("1 laporan lain dari kejadian ini di halaman ini")).toBeTruthy();
+  expect(
+    within(rows[1] as HTMLElement)
+      .getByRole("link", { name: /LA-241126-09/ })
+      .getAttribute("href"),
+  ).toBe("/lapor/meja/LA-241126-09");
+  expect(within(rows[2] as HTMLElement).getByRole("link", { name: "LA-241126-07" })).toBeTruthy();
+  expect(screen.getAllByText("1 laporan lain dari kejadian ini di halaman ini")).toHaveLength(2);
+});
+
 test("a report with news no officer has acted on is marked in the table and the cards", async () => {
   const [item] = queue().items as [ReturnType<typeof queue>["items"][number]];
   await renderDesk(

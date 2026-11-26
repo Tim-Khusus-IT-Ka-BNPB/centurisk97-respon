@@ -1,9 +1,11 @@
+import { Fragment } from "react";
 import { Link } from "react-router";
 import type { DeskGallery, DeskQueue, DeskSummary } from "../../../../src/contract/desk";
 import type { ErrorEnvelope } from "../../../../src/contract/errors";
 import { hazardKey } from "../../../../src/copy/hazardKey";
 import { valueLines } from "../../../../src/copy/values";
 import { cn } from "../../../lib/cn";
+import { foldEvents } from "../../../lib/deskEvents";
 import type { DeskFilters, DeskShown } from "../../../lib/deskTypes";
 import { hazardIcon } from "../../../lib/hazardIcons";
 import { useText } from "../../../lib/text";
@@ -77,6 +79,37 @@ function Filled({ item }: { readonly item: Item }) {
   );
 }
 
+// The event's other reports on this page, folded under its first: each still opens on its own.
+function FoldedMembers({ members }: { readonly members: readonly Item[] }) {
+  const t = useText();
+  return (
+    <details className="group rounded-control border border-line bg-surface">
+      <summary className="flex min-h-target-min cursor-pointer list-none items-center gap-2 px-3 text-meta font-semibold [&::-webkit-details-marker]:hidden">
+        <Icon
+          name="chevronRight"
+          className="size-4 transition-transform group-open:rotate-90 motion-reduce:transition-none"
+        />
+        {t("desk.cluster.folded", { count: members.length })}
+      </summary>
+      <ul className="flex flex-col border-t border-line">
+        {members.map((member) => (
+          <li key={member.ticketNumber}>
+            <Link
+              to={`/lapor/meja/${member.ticketNumber}`}
+              className="flex min-h-target-min flex-wrap items-center gap-x-3 gap-y-1 px-3 py-2 text-meta text-ink no-underline hover:bg-sunken"
+            >
+              <span className="font-bold tabular-nums">{member.ticketNumber}</span>
+              <StatusChip status={member.status} />
+              <span className="min-w-0 flex-1">{placeOf(t, member)}</span>
+              <span className="text-muted tabular-nums">{whenShort(t, member.sentAt)}</span>
+            </Link>
+          </li>
+        ))}
+      </ul>
+    </details>
+  );
+}
+
 const cell = "border-t border-line px-4 py-3.5 align-top";
 const head = "px-4 py-3 text-meta font-semibold text-muted";
 
@@ -87,6 +120,7 @@ const WIDTH = { ticket: "w-44", event: "", impact: "w-58", sent: "w-48", reporte
 // row's link.
 function QueueTable({ items }: { readonly items: readonly Item[] }) {
   const t = useText();
+  const events = foldEvents(items);
   return (
     <div className="hidden overflow-x-auto card-surface min-[88rem]:block">
       <table className="w-full table-fixed border-separate border-spacing-0 text-left">
@@ -103,51 +137,60 @@ function QueueTable({ items }: { readonly items: readonly Item[] }) {
           </tr>
         </thead>
         <tbody>
-          {items.map((item) => (
-            <tr key={item.ticketNumber} className="relative hover:bg-sunken/60">
-              <td className={cell}>
-                <span className="flex flex-col items-start gap-1.5">
-                  <Link
-                    to={`/lapor/meja/${item.ticketNumber}`}
-                    className="font-bold whitespace-nowrap text-ink tabular-nums no-underline after:absolute after:inset-0 hover:underline"
-                  >
-                    {item.ticketNumber}
-                  </Link>
-                  <span className="flex flex-wrap gap-1.5">
-                    <StatusChip status={item.status} />
-                    {item.emergency === null ? null : <EmergencyChip />}
-                    {item.news ? <NewsChip /> : null}
-                    {item.cluster === null ? null : <ClusterChip cluster={item.cluster} />}
+          {events.map(({ head: item, members }) => (
+            <Fragment key={item.ticketNumber}>
+              <tr className="relative hover:bg-sunken/60">
+                <td className={cell}>
+                  <span className="flex flex-col items-start gap-1.5">
+                    <Link
+                      to={`/lapor/meja/${item.ticketNumber}`}
+                      className="font-bold whitespace-nowrap text-ink tabular-nums no-underline after:absolute after:inset-0 hover:underline"
+                    >
+                      {item.ticketNumber}
+                    </Link>
+                    <span className="flex flex-wrap gap-1.5">
+                      <StatusChip status={item.status} />
+                      {item.emergency === null ? null : <EmergencyChip />}
+                      {item.news ? <NewsChip /> : null}
+                      {item.cluster === null ? null : <ClusterChip cluster={item.cluster} />}
+                    </span>
                   </span>
-                </span>
-              </td>
-              <td className={cell}>
-                <Hazard item={item} place={placeOf(t, item)} />
-              </td>
-              <td className={cell}>
-                <Impact impact={item.impact} />
-              </td>
-              <td className={cn(cell, "text-meta tabular-nums")}>
-                <span className="flex flex-col gap-0.5">
-                  <span>{whenShort(t, item.sentAt)}</span>
-                  <span className="text-muted">
-                    {t("desk.row.eventTime", { value: eventShort(t, item.eventTime) })}
+                </td>
+                <td className={cell}>
+                  <Hazard item={item} place={placeOf(t, item)} />
+                </td>
+                <td className={cell}>
+                  <Impact impact={item.impact} />
+                </td>
+                <td className={cn(cell, "text-meta tabular-nums")}>
+                  <span className="flex flex-col gap-0.5">
+                    <span>{whenShort(t, item.sentAt)}</span>
+                    <span className="text-muted">
+                      {t("desk.row.eventTime", { value: eventShort(t, item.eventTime) })}
+                    </span>
                   </span>
-                </span>
-              </td>
-              <td className={cell}>
-                <span className="flex flex-col items-start gap-1">
-                  {item.reporter.name === null ? null : <span>{item.reporter.name}</span>}
-                  <span className="text-meta text-muted">{roleText(t, item)}</span>
-                  {item.numberUnverified ? <UnverifiedMark /> : null}
-                  {item.door === "chat" ? <ChatMark /> : null}
-                  {item.taker === null ? null : <Taker taker={item.taker} />}
-                </span>
-              </td>
-              <td className={cn(cell, "text-right")}>
-                <Filled item={item} />
-              </td>
-            </tr>
+                </td>
+                <td className={cell}>
+                  <span className="flex flex-col items-start gap-1">
+                    {item.reporter.name === null ? null : <span>{item.reporter.name}</span>}
+                    <span className="text-meta text-muted">{roleText(t, item)}</span>
+                    {item.numberUnverified ? <UnverifiedMark /> : null}
+                    {item.door === "chat" ? <ChatMark /> : null}
+                    {item.taker === null ? null : <Taker taker={item.taker} />}
+                  </span>
+                </td>
+                <td className={cn(cell, "text-right")}>
+                  <Filled item={item} />
+                </td>
+              </tr>
+              {members.length > 0 ? (
+                <tr>
+                  <td colSpan={6} className="px-4 pb-3.5">
+                    <FoldedMembers members={members} />
+                  </td>
+                </tr>
+              ) : null}
+            </Fragment>
           ))}
         </tbody>
       </table>
@@ -160,8 +203,8 @@ function QueueCards({ items }: { readonly items: readonly Item[] }) {
   const t = useText();
   return (
     <ul className="grid grid-cols-[minmax(0,1fr)] gap-3 lg:grid-cols-2 min-[88rem]:hidden">
-      {items.map((item) => (
-        <li key={item.ticketNumber}>
+      {foldEvents(items).map(({ head: item, members }) => (
+        <li key={item.ticketNumber} className="flex flex-col gap-2">
           <Link
             to={`/lapor/meja/${item.ticketNumber}`}
             className="flex h-full flex-col gap-2.5 card-surface p-4 text-ink no-underline hover:bg-sunken"
@@ -187,6 +230,7 @@ function QueueCards({ items }: { readonly items: readonly Item[] }) {
               <span className="text-muted tabular-nums">{whenShort(t, item.sentAt)}</span>
             </span>
           </Link>
+          {members.length > 0 ? <FoldedMembers members={members} /> : null}
         </li>
       ))}
     </ul>

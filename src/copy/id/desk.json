@@ -295,6 +295,7 @@
   "desk.proof.hideLabel": "Sembunyikan foto penanganan {n} dari Alun-alun",
   "desk.cluster.chip": "Gugus, {count} laporan",
   "desk.cluster.strong": "Gugus kuat, {count} laporan",
+  "desk.cluster.folded": "{count} laporan lain dari kejadian ini di halaman ini",
   "desk.cluster.title": "Gugus laporan",
   "desk.cluster.lead": "Laporan {hazard} lain di dekatnya dalam beberapa jam, dari {reporters} nomor berbeda. Gugus bukan tanda terverifikasi, dan angka tiap laporan tidak dijumlah.",
   "desk.cluster.this": "Laporan ini",
