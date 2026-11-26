@@ -5,6 +5,7 @@ import type { Database } from "../platform/database";
 import type { Logger } from "../platform/log";
 import type { Clock } from "../ports/clock";
 import type { PhotoStore } from "../ports/photoStore";
+import { sweepVideoUploads } from "./videos";
 
 export type SweepCounts = {
   readonly expired: number;
@@ -12,6 +13,7 @@ export type SweepCounts = {
   readonly devicesRemoved: number;
   readonly draftsRemoved: number;
   readonly photoFilesRemoved: number;
+  readonly videoUploadsDropped: number;
 };
 
 // Deletes the files of photos whose rows are gone, then their queue rows. A run that stops in
@@ -47,6 +49,7 @@ export async function runSweep(db: Database, photos: PhotoStore, clock: Clock, l
     devicesRemoved: await drain(() => removeDeviceBatch(db, cutoffs, RETENTION.batch)),
     draftsRemoved: await drain(() => removeEmptiedBatch(db, cutoffs, RETENTION.batch)),
     photoFilesRemoved: await drain(() => removePhotoFiles(db, photos, RETENTION.batch)),
+    videoUploadsDropped: await sweepVideoUploads({ db, photos, clock }),
   };
   log.info({ event: "sweep.done", durationMs: Date.now() - started });
   return counts;

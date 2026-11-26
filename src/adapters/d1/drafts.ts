@@ -278,6 +278,7 @@ export function endDraft(draftId: string, reason: EndReason, at: Date, when: Que
     ended.push(
       sql`delete from draft_message where draft_id = ${draftId}`,
       sql`delete from draft_photo where draft_id = ${draftId}`,
+      sql`delete from draft_video where draft_id = ${draftId}`,
     );
   return ended;
 }

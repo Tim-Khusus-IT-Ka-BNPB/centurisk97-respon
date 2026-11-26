@@ -18,6 +18,7 @@ import {
 } from "../adapters/d1/desk";
 import { eventOf } from "../adapters/d1/events";
 import { referenceFile } from "../adapters/d1/reports";
+import { reportVideos } from "../adapters/d1/videos";
 import type {
   DeskEmergencies,
   DeskGallery,
@@ -298,6 +299,7 @@ async function reportBody(bindings: ServiceBindings, staff: StaffPrincipal, tick
     ...queueItem(staff, found, await clusterMap(bindings, staff.scope)),
     account: { label: staff.label },
     event: await eventView(bindings, staff, ticketNumber),
+    videos: [...(await reportVideos(bindings.db, ticketNumber))],
     reporter: {
       role: found.reporterRole,
       identity: mayUse(staff.role, "readIdentity") ? identityOf(found) : null,

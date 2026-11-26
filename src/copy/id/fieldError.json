@@ -44,5 +44,15 @@
   "fieldError.photo.proofTooMany": "Paling banyak 10 foto penanganan per laporan. Foto ini tidak disimpan.",
   "fieldError.emergency.outside": "Titik ini di luar Indonesia. Telepon 112, atau laporkan lewat Lapor darurat dan pilih lokasinya.",
   "fieldError.emergency.notFound": "Titik ini belum cocok dengan desa atau kelurahan mana pun. Laporkan lewat Lapor darurat dan pilih lokasinya.",
-  "fieldError.emergency.unavailable": "Lokasi belum bisa dibaca sekarang. Laporkan lewat Lapor darurat dan pilih lokasinya. Bila nyawa terancam, telepon 112."
+  "fieldError.emergency.unavailable": "Lokasi belum bisa dibaca sekarang. Laporkan lewat Lapor darurat dan pilih lokasinya. Bila nyawa terancam, telepon 112.",
+  "fieldError.video.notNow": "Video dikirim saat diminta foto atau video kejadian.",
+  "fieldError.video.tooBig": "Video paling besar 30 MB. Rekam lebih pendek, lalu kirim lagi.",
+  "fieldError.video.tooLong": "Video paling lama 60 detik. Potong dulu, lalu kirim lagi.",
+  "fieldError.video.tooMany": "Paling banyak 3 video per laporan.",
+  "fieldError.video.busy": "Selesaikan dulu video yang sedang dikirim.",
+  "fieldError.video.partCut": "Sebagian video terpotong di jalan. Kirim lagi, video berlanjut dari bagian yang sudah sampai.",
+  "fieldError.video.partsMissing": "Video belum sampai semua. Tekan Lanjutkan untuk mengirim sisanya.",
+  "fieldError.video.notVideo": "Berkas ini bukan video MP4, MOV, atau WebM.",
+  "fieldError.video.noLength": "Durasi video tidak terbaca. Rekam ulang dengan kamera, lalu kirim lagi.",
+  "fieldError.video.sizeChanged": "Video berubah saat dikirim. Pilih video lagi."
 }

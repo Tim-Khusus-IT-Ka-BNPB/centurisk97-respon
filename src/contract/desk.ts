@@ -157,6 +157,8 @@ export type DeskIdentity = z.infer<typeof deskIdentitySchema>;
 
 export const deskReportSchema = queueItemSchema.extend({
   account: accountSchema,
+  // Videos of the scene, in the order they came; each played from its own address.
+  videos: z.array(z.object({ id: z.uuid(), seconds: z.number().int(), container: z.string() })),
   // The event its reporter confirmed it is of, with its reports; this account may take it out.
   event: z.object({ code: z.string(), tickets: z.array(z.string()).min(1), mayRelease: z.boolean() }).nullable(),
   // Null when the account must ask for it, each time logged.

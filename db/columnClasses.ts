@@ -307,6 +307,24 @@ export const COLUMN_CLASSES: Readonly<Record<string, TableClasses>> = {
       version: I,
     },
   },
+  video_upload: {
+    retention: "until the video is whole, taken back, or 24 hours without a new part, swept",
+    columns: {
+      id: I,
+      draft_id: I,
+      store_key: I,
+      upload_id: I,
+      bytes: I,
+      parts: I,
+      browser_seconds: I,
+      started_at: I,
+      touched_at: I,
+    },
+  },
+  draft_video: {
+    retention: "deleted when its draft is cancelled, expires or is removed; kept with a sent report",
+    columns: { id: I, draft_id: I, store_key: I, bytes: I, container: I, seconds: I, received_at: I },
+  },
   pilot_number: {
     retention: "until taken off the list",
     columns: { number_key: I, number: P, officer_regency: P, added_by: I, added_at: I },

@@ -25,6 +25,7 @@ export async function expireBatch(db: Database, cutoffs: SweepCutoffs, now: Date
     sql`delete from draft_message where draft_id in (${ended})`,
     sql`delete from turn_reply where draft_id in (${ended})`,
     sql`delete from draft_photo where draft_id in (${ended})`,
+    sql`delete from draft_video where draft_id in (${ended})`,
   ]);
 }
 
