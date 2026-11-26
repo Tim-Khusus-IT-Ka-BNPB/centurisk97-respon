@@ -3,6 +3,7 @@ import { deskReportSchema, deskResponseSchema } from "../../contract/desk";
 import { DOCUMENT_FORMATS } from "../../domain/document";
 import { CHECK_RESULTS } from "../../domain/fieldCheck";
 import { monthOf } from "../../domain/response";
+import { aggregatesFile } from "../../services/aggregates";
 import { deskDocument } from "../../services/documents";
 import { addHandling, addHandlingProof, checkInField, deskProofFile } from "../../services/handling";
 import { deskResponse, takeDeskReport } from "../../services/taker";
@@ -12,6 +13,27 @@ import { answered, changeAnswered, staffOf, staffText, ticketParams } from "./de
 import { deviceFix, documentFile, documentSent, jpegFile, jpegSent, photoForm } from "./shared";
 
 export function addDeskHandlingRoutes(api: Api): void {
+  // A post, as each download is logged (D93).
+  addRoute(
+    api,
+    "staff",
+    createRoute({
+      method: "post",
+      path: "/desk/aggregates",
+      responses: {
+        200: {
+          description: "Weekly counts per regency and hazard, small cells hidden",
+          content: { "text/csv": { schema: z.string() } },
+        },
+        403: refusal("Not an account that may download them"),
+      },
+    }),
+    async (c) => {
+      const answer = await aggregatesFile(c.env, staffOf(c));
+      return answer.kind === "ok" ? documentSent(c, answer.body) : answered(c, answer);
+    },
+  );
+
   addRoute(
     api,
     "staff",

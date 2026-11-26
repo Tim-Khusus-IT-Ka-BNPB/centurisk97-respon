@@ -22,7 +22,9 @@ export type DeskCapability =
   | "managePilot"
   | "readIdentity"
   | "revealIdentity"
-  | "downloadDocument";
+  | "downloadDocument"
+  // The weekly counts for research (K62): BNPB only until campus accounts come from the main site.
+  | "downloadAggregates";
 
 // The roles holding each capability. A regional officer works only its own region (StaffScope),
 // asks for a reporter's identity each time, and neither forwards nor reopens.
@@ -42,6 +44,7 @@ const HOLDERS: Readonly<Record<DeskCapability, readonly StaffRole[]>> = {
   readIdentity: ["deskOfficer"],
   revealIdentity: ["regionalOfficer"],
   downloadDocument: ["deskOfficer", "regionalOfficer"],
+  downloadAggregates: ["deskOfficer"],
 };
 
 export const mayUse = (role: StaffRole, capability: DeskCapability): boolean => HOLDERS[capability].includes(role);

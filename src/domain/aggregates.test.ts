@@ -1,5 +1,5 @@
 import { describe, expect, test } from "vitest";
-import { type AggregateInput, aggregateRows, isoWeek } from "./aggregates";
+import { type AggregateInput, aggregateRows, isoWeek, toCsv } from "./aggregates";
 import { MINUTE_MS } from "./time";
 
 const T = Date.UTC(2026, 10, 18, 3);
@@ -81,5 +81,21 @@ describe("weekly aggregates", () => {
       "2026-W47 31.75 flood 3",
       "2026-W47 31.75 landslide 3",
     ]);
+  });
+});
+
+describe("the CSV", () => {
+  test("one line per row after the header, a cell quoted only when it must be, none left empty", () => {
+    expect(
+      toCsv(
+        ["a", "b"],
+        [
+          ["x", 1],
+          ['say "hi", now', null],
+          ["two\nlines", 0],
+        ],
+      ),
+    ).toBe('a,b\nx,1\n"say ""hi"", now",\n"two\nlines",0\n');
+    expect(toCsv(["only"], [])).toBe("only\n");
   });
 });

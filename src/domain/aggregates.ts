@@ -102,3 +102,13 @@ export function aggregateRows(reports: readonly AggregateInput[]): readonly Aggr
       };
     });
 }
+
+// One CSV cell: quoted when it holds a comma, a quote or a line break; empty for none.
+const cell = (value: string | number | null) => {
+  if (value === null) return "";
+  const text = String(value);
+  return /[",\n]/.test(text) ? `"${text.replaceAll('"', '""')}"` : text;
+};
+
+export const toCsv = (header: readonly string[], lines: readonly (readonly (string | number | null)[])[]) =>
+  `${[header, ...lines].map((line) => line.map(cell).join(",")).join("\n")}\n`;

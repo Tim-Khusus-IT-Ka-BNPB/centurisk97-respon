@@ -1,0 +1,14 @@
+{
+  "aggregate.column.week": "minggu",
+  "aggregate.column.provinceCode": "kode_provinsi",
+  "aggregate.column.provinceName": "provinsi",
+  "aggregate.column.regencyCode": "kode_kabupaten_kota",
+  "aggregate.column.regencyName": "kabupaten_kota",
+  "aggregate.column.hazardType": "jenis_bencana",
+  "aggregate.column.reports": "laporan",
+  "aggregate.column.reporters": "pelapor",
+  "aggregate.column.placedPhotos": "laporan_dengan_foto_berlokasi",
+  "aggregate.column.invalid": "tidak_dapat_ditindaklanjuti",
+  "aggregate.column.medianMinutesToReport": "median_menit_kejadian_sampai_lapor",
+  "aggregate.fileName": "lapor-agregat-mingguan-{date}.csv"
+}
