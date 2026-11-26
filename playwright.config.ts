@@ -19,6 +19,8 @@ export default defineConfig({
   reporter: ci ? [["line"]] : [["list"], ["html", { open: "never", outputFolder: "playwright-report" }]],
   use: {
     baseURL: `http://localhost:${appPort}`,
+    // A click that cannot land fails with its reason instead of running out the test's time.
+    actionTimeout: 30_000,
     // Traces and videos record typed names and numbers, so CI never keeps them.
     trace: ci ? "off" : "retain-on-failure",
     video: "off",
