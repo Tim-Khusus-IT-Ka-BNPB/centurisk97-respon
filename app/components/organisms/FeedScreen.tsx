@@ -21,10 +21,7 @@ const feedLink = (hazard: string | null) => (hazard === null ? "/lapor/feed" : `
 function HazardFilter({ hazard }: { readonly hazard: string | null }) {
   const t = useText();
   return (
-    <nav
-      aria-label={t("feed.filter.label")}
-      className="-mx-4 flex gap-2 overflow-x-auto px-4 pb-1 md:-mx-6 md:px-6"
-    >
+    <nav aria-label={t("feed.filter.label")} className="-mx-4 flex gap-2 overflow-x-auto px-4 pb-1 md:-mx-6 md:px-6">
       <Link to={feedLink(null)} aria-current={hazard === null ? "true" : undefined} className={chip}>
         {t("feed.filter.all")}
       </Link>
