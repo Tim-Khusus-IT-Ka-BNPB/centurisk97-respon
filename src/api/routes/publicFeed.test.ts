@@ -133,7 +133,12 @@ describe("the public feed", () => {
     expect(together.entries[0]).toMatchObject({ id: alone?.id, reporters: 2 });
     // The desk sees the cluster on each of its reports; another region's account sees none of it.
     const queued = (await desk().call("GET", `/desk/reports/${second.ticket}`)).json as { cluster: unknown };
-    expect(queued.cluster).toEqual({ tickets: [first.ticket, second.ticket], reporters: 2, strong: false });
+    expect(queued.cluster).toEqual({
+      tickets: [first.ticket, second.ticket],
+      reporters: 2,
+      strong: false,
+      sameVillage: false,
+    });
     const list = (await desk().call("GET", `/desk/reports?ticket=${first.ticket}`)).json as {
       items: { cluster: unknown }[];
     };

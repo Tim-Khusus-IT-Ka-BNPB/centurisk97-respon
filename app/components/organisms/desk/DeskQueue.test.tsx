@@ -49,7 +49,7 @@ test("a report that came through WhatsApp is marked in the table and the cards",
 
 test("a report in a cluster is marked in the table and the cards, never as verified", async () => {
   const [item] = queue().items as [ReturnType<typeof queue>["items"][number]];
-  const cluster = { tickets: [item.ticketNumber, "LA-241126-09"], reporters: 2, strong: false };
+  const cluster = { tickets: [item.ticketNumber, "LA-241126-09"], reporters: 2, strong: false, sameVillage: false };
   await renderDesk(
     <DeskQueueView
       shown={list(queue({ items: [{ ...item, cluster }], total: 1 }))}
@@ -65,7 +65,7 @@ test("a report in a cluster is marked in the table and the cards, never as verif
 
 test("one row per event: the event's other reports on the page fold under its first, each still its own link", async () => {
   const [item] = queue().items as [ReturnType<typeof queue>["items"][number]];
-  const cluster = { tickets: [item.ticketNumber, "LA-241126-09"], reporters: 2, strong: false };
+  const cluster = { tickets: [item.ticketNumber, "LA-241126-09"], reporters: 2, strong: false, sameVillage: false };
   const other = { ...item, ticketNumber: "LA-241126-09", cluster };
   const alone = { ...item, ticketNumber: "LA-241126-07", cluster: null };
   await renderDesk(

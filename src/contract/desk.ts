@@ -58,6 +58,8 @@ const queueItemSchema = z.object({
       tickets: z.array(z.string()).min(2),
       reporters: z.number().int().min(2),
       strong: z.boolean(),
+      // Joined only because its reports are of one village within a day (LK-01).
+      sameVillage: z.boolean(),
     })
     .nullable(),
 });

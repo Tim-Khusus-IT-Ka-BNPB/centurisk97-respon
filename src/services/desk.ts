@@ -120,7 +120,12 @@ function queueItem(
 const clusterView = (cluster: Cluster | undefined): DeskQueue["items"][number]["cluster"] =>
   cluster === undefined
     ? null
-    : { tickets: [...cluster.tickets], reporters: cluster.reporters, strong: cluster.strong };
+    : {
+        tickets: [...cluster.tickets],
+        reporters: cluster.reporters,
+        strong: cluster.strong,
+        sameVillage: cluster.sameVillage,
+      };
 
 export type QueueQuery = {
   readonly status: TicketStatus | null;

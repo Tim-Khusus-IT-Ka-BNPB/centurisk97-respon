@@ -84,7 +84,13 @@ describe("clusters of reports", () => {
     const later = report({ point: NEAR, atMs: T0 + 6 * HOUR_MS });
     const first = report();
     expect(clustersOf([later, first])).toEqual([
-      { tickets: [first.ticketNumber, later.ticketNumber], hazardType: "flood", reporters: 2, strong: false },
+      {
+        tickets: [first.ticketNumber, later.ticketNumber],
+        hazardType: "flood",
+        reporters: 2,
+        strong: false,
+        sameVillage: false,
+      },
     ]);
   });
 
@@ -94,8 +100,9 @@ describe("clusters of reports", () => {
 
   test("past the distance, past the hours, another hazard or set aside: apart", () => {
     expect(clustersOf([report(), report({ point: FAR, villageCode: "31.75.06.1002" })])).toEqual([]);
-    expect(clustersOf([report(), report({ atMs: T0 + 6 * HOUR_MS + 1 })])).toEqual([]);
-    expect(clustersOf([report(), report({ atMs: T0 - 6 * HOUR_MS - 1 })])).toEqual([]);
+    const far = { point: FAR, villageCode: "31.75.06.1002" };
+    expect(clustersOf([report(), report({ ...far, atMs: T0 + 6 * HOUR_MS + 1 })])).toEqual([]);
+    expect(clustersOf([report(), report({ ...far, atMs: T0 - 6 * HOUR_MS - 1 })])).toEqual([]);
     expect(clustersOf([report(), report({ hazardType: "landslide" })])).toEqual([]);
     expect(clustersOf([report(), report({ status: "invalid" })])).toEqual([]);
   });
@@ -127,7 +134,7 @@ describe("clusters of reports", () => {
     expect(
       clustersOf([
         report({ hazardType: "forestFire" }),
-        report({ hazardType: "forestFire", atMs: T0 + 12 * HOUR_MS + 1 }),
+        report({ hazardType: "forestFire", villageCode: "x", atMs: T0 + 12 * HOUR_MS + 1 }),
       ]),
     ).toEqual([]);
   });
@@ -178,11 +185,45 @@ describe("clusters of reports", () => {
   });
 });
 
+describe("one village and the chain limit (LK-01)", () => {
+  test("a local hazard in the same village joins within 24 hours, marked as joined by the village alone", () => {
+    const later = report({ point: FAR, atMs: T0 + 24 * HOUR_MS });
+    const joined = clustersOf([report(), later]);
+    expect(joined).toHaveLength(1);
+    expect(joined[0]?.sameVillage).toBe(true);
+    expect(clustersOf([report(), report({ point: FAR, atMs: T0 + 24 * HOUR_MS + 1 })])).toEqual([]);
+    // Within the hazard's own window the old rule holds it, so it is no village-only group.
+    expect(clustersOf([report(), report({ point: FAR })])[0]?.sameVillage).toBe(false);
+    // Another village, a regional hazard, or another hazard: no village rule.
+    expect(clustersOf([report(), report({ point: FAR, villageCode: "x", atMs: T0 + 7 * HOUR_MS })])).toEqual([]);
+    const quake = { hazardType: "earthquake", regencyCode: "31.74" };
+    expect(clustersOf([report({ hazardType: "earthquake" }), report({ ...quake, atMs: T0 + 13 * HOUR_MS })])).toEqual(
+      [],
+    );
+    expect(clustersOf([report(), report({ hazardType: "landslide", atMs: T0 + 7 * HOUR_MS })])).toEqual([]);
+  });
+
+  test("a group longer than 72 hours is cut at its widest gap, again until each part is short", () => {
+    // A chain of same-village reports 20 hours apart, with one wider gap of 23 hours.
+    const at = [0, 20, 40, 63, 83, 103].map((hours) => T0 + hours * HOUR_MS);
+    const chain = at.map((atMs) => report({ point: FAR, atMs }));
+    const cut = clustersOf(chain).map((cluster) => cluster.tickets);
+    expect(cut).toEqual([chain.slice(0, 3), chain.slice(3)].map((part) => part.map((one) => one.ticketNumber)));
+    // Exactly 72 hours stays one.
+    const span = [0, 24, 48, 72].map((hours) => report({ point: FAR, atMs: T0 + hours * HOUR_MS }));
+    expect(clustersOf(span)[0]?.tickets).toHaveLength(4);
+    // Gaps alike: the first one is cut, and a report left alone is no cluster.
+    const even = [0, 24, 48, 72, 96].map((hours) => report({ point: FAR, atMs: T0 + hours * HOUR_MS }));
+    expect(clustersOf(even).map((cluster) => cluster.tickets)).toEqual([even.slice(1).map((one) => one.ticketNumber)]);
+  });
+});
+
 describe("a reporter's own same event", () => {
   test("joins two reports the rules keep apart, but still needs two numbers", () => {
     const a = report({ hazardType: "drought" });
     const b = report({ hazardType: "drought", villageCode: "elsewhere", point: null });
     expect(clustersOf([a, b])).toEqual([]);
+    expect(clustersOf([a, b], [[b.ticketNumber, a.ticketNumber]])[0]?.sameVillage).toBe(false);
     expect(clustersOf([a, b], [[b.ticketNumber, a.ticketNumber]])[0]?.tickets).toEqual([
       a.ticketNumber,
       b.ticketNumber,

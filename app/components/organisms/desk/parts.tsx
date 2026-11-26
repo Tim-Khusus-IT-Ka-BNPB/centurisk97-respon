@@ -155,6 +155,7 @@ export function ClusterChip({ cluster }: { readonly cluster: NonNullable<Item["c
     <span className="inline-flex items-center gap-1 rounded-chip border border-line bg-surface px-2 py-0.5 text-meta whitespace-nowrap">
       <Icon name="users" className="size-4" />
       {t(cluster.strong ? "desk.cluster.strong" : "desk.cluster.chip", { count: cluster.tickets.length })}
+      {cluster.sameVillage ? <span className="text-muted">, {t("desk.cluster.sameVillage")}</span> : null}
     </span>
   );
 }

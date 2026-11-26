@@ -403,7 +403,12 @@ describe("a report on the desk", () => {
   });
 
   test("a report in a cluster names it beside its status and links the others, itself marked", async () => {
-    const cluster = { tickets: ["LA-241126-01", "LA-241126-02", "LA-241126-03"], reporters: 3, strong: true };
+    const cluster = {
+      tickets: ["LA-241126-01", "LA-241126-02", "LA-241126-03"],
+      reporters: 3,
+      strong: true,
+      sameVillage: false,
+    };
     await renderDesk(<DeskReportView report={{ ...REPORT, cluster }} summary={SUMMARY} />, PATH);
     expect(screen.getByText("Gugus kuat, 3 laporan")).toBeTruthy();
     const section = screen.getByRole("region", { name: "Gugus laporan" });
