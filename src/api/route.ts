@@ -22,7 +22,8 @@ const MAX_BODY_BYTES = 16 * 1024;
 // file first, so the route takes more and the photo check names the size.
 const PHOTO_BODY_BYTES = 12 * 1024 * 1024;
 const isPhotoUpload = (method: string, path: string) =>
-  (method === "POST" && /\/(?:(?:drafts|emergencies)\/[^/]+\/photos|desk\/reports\/[^/]+\/proofs|foto|missing)$/.test(path)) ||
+  (method === "POST" &&
+    /\/(?:(?:drafts|emergencies)\/[^/]+\/photos|desk\/reports\/[^/]+\/proofs|foto|missing)$/.test(path)) ||
   (method === "PUT" && /\/drafts\/[^/]+\/videos\/[^/]+\/parts\/\d+$/.test(path));
 // Upstream's route shapes for its gateway (ROADMAP section 7), kept as they are.
 export const isGatewayPath = (path: string) => /^\/api\/lapor\/(?:pesan|foto|izin|bahasa|kabar(?:\/.+)?)$/.test(path);
