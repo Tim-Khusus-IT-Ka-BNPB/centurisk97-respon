@@ -78,6 +78,20 @@ function floodAllBut(...open: string[]): FieldStates {
   return states;
 }
 
+describe("the same event", () => {
+  const sameEvent = { districtName: "B", offers: [], answered: false, joined: null };
+  test("once the place and its neighbourhood are known, a report nearby is offered before anything else", () => {
+    expect(next(placed, {}, { sameEvent })).toEqual({ kind: "sameEvent" });
+    expect(next({ place: placed.place }, {}, { sameEvent })).toEqual({ kind: "neighbourhood" });
+    expect(next(placed, {}, { sameEvent: { ...sameEvent, answered: true } })).toEqual({
+      kind: "choice",
+      fieldId: "hazardType",
+    });
+    expect(next(placed, {}, { sameEvent: null })).toEqual({ kind: "choice", fieldId: "hazardType" });
+    expect(stateFor({ kind: "sameEvent" }, "neighbourhood")).toBe("asking");
+  });
+});
+
 describe("the next question, picked by code from the field table", () => {
   test("place first, then RT and RW, then the hazard type and its subtype", () => {
     expect(next({})).toEqual({ kind: "place" });

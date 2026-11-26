@@ -5,7 +5,14 @@ import type { FieldId } from "../fields/catalogue";
 import type { HazardTypeId } from "../hazards";
 import { maskText } from "../masking";
 import { tidy } from "../text";
-import { type AskedCounts, type DraftContent, type PlaceReading, type Question, questionFields } from "./content";
+import {
+  type AskedCounts,
+  type DraftContent,
+  type PlaceReading,
+  type Question,
+  questionFields,
+  type SameEvent,
+} from "./content";
 import {
   type AnswerContext,
   type Applied,
@@ -24,6 +31,7 @@ import { choiceOptions, isExclusiveOption } from "./options";
 export type { AnswerContext, Applied, CardAnswer } from "./forms";
 
 const applied = (content: DraftContent): Applied => ({ kind: "applied", content });
+type FieldStatesPatch = { -readonly [Id in FieldId]?: FieldState };
 const NEIGHBOURHOOD_BOX = /^\d{1,3}$/;
 
 function answerPlace(answer: CardAnswer, content: DraftContent, village: PlaceValue | null): Applied {
@@ -67,6 +75,24 @@ function answerVictims(answer: CardAnswer, content: DraftContent): Applied {
   const [victims, ...rest] = answer.optionIds;
   if (rest.length > 0 || !isVictimAnswer(victims)) return STALE;
   return applied({ ...content, emergency: { victims } });
+}
+
+// The same event as a report nearby: its kind, subtype and time are taken from it, the rest asked as
+// usual. "none" goes on as a report of its own.
+function answerSameEvent(answer: CardAnswer, content: DraftContent): Applied {
+  const [picked, ...rest] = answer.optionIds;
+  const sameEvent = content.sameEvent as SameEvent;
+  const offer = sameEvent.offers.find((one) => one.hazardType === picked);
+  if (rest.length > 0 || (offer === undefined && picked !== "none")) return STALE;
+  if (offer === undefined) return applied({ ...content, sameEvent: { ...sameEvent, answered: true } });
+  const taken: FieldStatesPatch = { hazardType: { state: "value", value: offer.hazardType, origin: "tappedOption" } };
+  if (offer.hazardSubtype !== null)
+    taken.hazardSubtype = { state: "value", value: offer.hazardSubtype, origin: "system" };
+  if (offer.eventTime !== null) taken.eventTime = { state: "value", value: offer.eventTime, origin: "system" };
+  return applied({
+    ...withStates(content, taken),
+    sameEvent: { ...sameEvent, answered: true, joined: offer.ticketNumber },
+  });
 }
 
 function answerNeighbourhood(answer: CardAnswer, content: DraftContent): Applied {
@@ -176,6 +202,8 @@ function dispatch(
       return answerPhotos(answer, content, context.photoCount);
     case "emergencyVictims":
       return answerVictims(answer, content);
+    case "sameEvent":
+      return answerSameEvent(answer, content);
     case "neighbourhood":
       return answerNeighbourhood(answer, content);
     case "choice":

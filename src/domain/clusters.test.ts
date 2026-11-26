@@ -1,6 +1,10 @@
 import { describe, expect, test } from "vitest";
-import { type ClusterInput, clusterOfTicket, clustersOf } from "./clusters";
+import { type ClusterInput, clusterOfTicket, clustersOf as joined, sameEventHours } from "./clusters";
 import { HOUR_MS } from "./time";
+
+// By the rules alone, with no reporter saying two are one.
+const clustersOf = (reports: readonly ClusterInput[], links: readonly (readonly [string, string])[] = []) =>
+  joined(reports, links);
 
 const T0 = Date.UTC(2026, 10, 25, 3);
 const A = { lat: -6.2, lon: 106.9 };
@@ -171,5 +175,44 @@ describe("clusters of reports", () => {
     const byTicket = clusterOfTicket(clusters);
     expect(byTicket.get(late[1]?.ticketNumber as string)).toBe(clusters[1]);
     expect(byTicket.size).toBe(4);
+  });
+});
+
+describe("a reporter's own same event", () => {
+  test("joins two reports the rules keep apart, but still needs two numbers", () => {
+    const a = report({ hazardType: "drought" });
+    const b = report({ hazardType: "drought", villageCode: "elsewhere", point: null });
+    expect(clustersOf([a, b])).toEqual([]);
+    expect(clustersOf([a, b], [[b.ticketNumber, a.ticketNumber]])[0]?.tickets).toEqual([
+      a.ticketNumber,
+      b.ticketNumber,
+    ]);
+    const same = report({ hazardType: "drought", numberKey: a.numberKey });
+    expect(clustersOf([a, same], [[same.ticketNumber, a.ticketNumber]])).toEqual([]);
+    // A link to a report not read joins nothing, even two reports linked to the same one.
+    expect(clustersOf([a, b], [[b.ticketNumber, "LA-unknown"]])).toEqual([]);
+    expect(clustersOf([a, b], [["LA-unknown", a.ticketNumber]])).toEqual([]);
+    expect(
+      clustersOf(
+        [a, b],
+        [
+          ["X", a.ticketNumber],
+          ["X", b.ticketNumber],
+        ],
+      ),
+    ).toEqual([]);
+    expect(
+      clustersOf(
+        [a, b],
+        [
+          [a.ticketNumber, "X"],
+          [b.ticketNumber, "X"],
+        ],
+      ),
+    ).toEqual([]);
+  });
+
+  test("a hazard's window is its cluster window, or 72 hours", () => {
+    expect([sameEventHours("flood"), sameEventHours("forestFire"), sameEventHours("drought")]).toEqual([6, 12, 72]);
   });
 });

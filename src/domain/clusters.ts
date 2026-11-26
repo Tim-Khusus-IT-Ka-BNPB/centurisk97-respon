@@ -58,18 +58,32 @@ function near(a: ClusterInput, b: ClusterInput, rule: ClusterRule): boolean {
   }
 }
 
-export function clustersOf(reports: readonly ClusterInput[]): readonly Cluster[] {
-  const counted = reports.filter(
-    (report) => CLUSTER_RULES[report.hazardType as HazardTypeId] && report.status !== "invalid",
-  );
+// How long after a report of a hazard another one may still be of its event: its cluster window, or
+// 72 hours for a hazard with no cluster rule (upstream JENDELA_JENIS_JAM).
+export const sameEventHours = (hazardType: string): number => CLUSTER_RULES[hazardType as HazardTypeId]?.hours ?? 72;
+
+// A reporter's own "the same event" joins two reports whatever the rules say; a cluster still needs
+// two numbers.
+export function clustersOf(
+  reports: readonly ClusterInput[],
+  links: readonly (readonly [string, string])[],
+): readonly Cluster[] {
+  const counted = reports.filter((report) => report.status !== "invalid");
   const parent = counted.map((_, index) => index);
   const root = (index: number): number => (parent[index] === index ? index : root(parent[index] as number));
   counted.forEach((a, i) => {
     for (let j = i + 1; j < counted.length; j++) {
       const b = counted[j] as ClusterInput;
-      if (near(a, b, CLUSTER_RULES[a.hazardType as HazardTypeId] as ClusterRule)) parent[root(j)] = root(i);
+      const rule = CLUSTER_RULES[a.hazardType as HazardTypeId];
+      if (rule && near(a, b, rule)) parent[root(j)] = root(i);
     }
   });
+  const indexOf = new Map(counted.map((report, index) => [report.ticketNumber, index]));
+  for (const [a, b] of links) {
+    const i = indexOf.get(a);
+    const j = indexOf.get(b);
+    if (i !== undefined && j !== undefined) parent[root(j)] = root(i);
+  }
   const groups = new Map<number, ClusterInput[]>();
   counted.forEach((report, index) => {
     groups.set(root(index), [...(groups.get(root(index)) ?? []), report]);

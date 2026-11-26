@@ -82,6 +82,7 @@ export function nextQuestion(_state: DraftState, content: DraftContent, asked: A
   if (content.states.place === undefined) return content.placeReading ? { kind: "placeConfirm" } : { kind: "place" };
   if (content.emergency) return emergencyQuestion(content, content.emergency.victims);
   if (content.states.neighbourhood === undefined) return { kind: "neighbourhood" };
+  if (content.sameEvent && !content.sameEvent.answered) return { kind: "sameEvent" };
   const fields = applicableFields(content.states).filter(isAsked);
   const unasked = fields.filter((field) => content.states[field.id as FieldId] === undefined);
   if (content.overlay?.kind === "edit") {

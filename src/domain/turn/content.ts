@@ -1,6 +1,6 @@
 import type { ChronologyAnswers } from "../chronology/sentence";
 import type { VictimAnswer } from "../emergency";
-import type { FieldStates, PlaceValue } from "../fieldState";
+import type { EventTimeValue, FieldStates, PlaceValue } from "../fieldState";
 import type { FieldId, GroupId } from "../fields/catalogue";
 import type { HazardTypeId } from "../hazards";
 import { PHOTO } from "../photoChecks";
@@ -29,6 +29,26 @@ export type FollowUpOf = {
   readonly photosLeft: number;
 };
 
+// A sent report of the same district the reporter may be telling of too (K66, D103 to D105): what
+// is shown names no person, number or ticket.
+export type SameEventOffer = {
+  readonly ticketNumber: string;
+  readonly hazardType: HazardTypeId;
+  readonly hazardSubtype: string | null;
+  readonly eventTime: EventTimeValue | null;
+  // Since when it is known: its event time, or its send.
+  readonly sinceMs: number;
+  readonly reporters: number;
+};
+
+// Offered once, after the place: the report it joins, or none.
+export type SameEvent = {
+  readonly districtName: string;
+  readonly offers: readonly SameEventOffer[];
+  readonly answered: boolean;
+  readonly joined: string | null;
+};
+
 // Everything a draft holds while it is being filled. All of it is removed when the draft ends.
 export type DraftContent = {
   readonly states: FieldStates;
@@ -45,6 +65,8 @@ export type DraftContent = {
   // An emergency report: whether anyone is hurt, missing or trapped, null until asked.
   readonly emergency?: { readonly victims: VictimAnswer | null } | null;
   readonly followUp?: FollowUpOf | null;
+  // Absent until the place is known; null when no report nearby was offered.
+  readonly sameEvent?: SameEvent | null;
 };
 
 // How many times each field was answered while still empty. A second empty answer settles it.
@@ -71,6 +93,7 @@ export type Question =
   | { readonly kind: "neighbourhood" }
   | { readonly kind: "choice"; readonly fieldId: FieldId }
   | { readonly kind: "emergencyVictims" }
+  | { readonly kind: "sameEvent" }
   | { readonly kind: "multiChoice"; readonly fieldId: FieldId }
   | { readonly kind: "chronologyStep"; readonly step: number }
   | { readonly kind: "chronologyReview" }

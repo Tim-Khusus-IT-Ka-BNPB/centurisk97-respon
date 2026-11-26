@@ -294,3 +294,51 @@ describe("victims of an emergency", () => {
     expect(victims("maybe")).toEqual({ kind: "stale" });
   });
 });
+
+describe("the same event", () => {
+  const timed = { kind: "dateTime", localDate: "2026-11-23", localTime: "08:00", zone: "WIB" } as const;
+  const offer = { ticketNumber: "LA-231126-01", hazardSubtype: null, eventTime: null, sinceMs: NOW, reporters: 1 };
+  const sameEvent = {
+    districtName: "Baktiya",
+    answered: false,
+    joined: null,
+    offers: [
+      { ...offer, hazardType: "flood" as const, hazardSubtype: "flashFlood", eventTime: timed },
+      { ...offer, ticketNumber: "LA-231126-02", hazardType: "drought" as const },
+    ],
+  };
+  const pick = (...optionIds: string[]) => apply({ kind: "sameEvent" }, answer(optionIds), with_({}, { sameEvent }));
+
+  test("yes takes the kind, subtype and time of the report it joins", () => {
+    expect(pick("flood")).toEqual({
+      kind: "applied",
+      asked: {},
+      content: with_(
+        {
+          hazardType: tapped("flood"),
+          hazardSubtype: { state: "value", value: "flashFlood", origin: "system" },
+          eventTime: { state: "value", value: timed, origin: "system" },
+        },
+        { sameEvent: { ...sameEvent, answered: true, joined: "LA-231126-01" } },
+      ),
+    });
+  });
+
+  test("a report with no subtype or time gives only its kind", () => {
+    expect(states(pick("drought"))).toEqual({ hazardType: tapped("drought") });
+  });
+
+  test("no is a report of its own", () => {
+    expect(pick("none")).toEqual({
+      kind: "applied",
+      asked: {},
+      content: with_({}, { sameEvent: { ...sameEvent, answered: true } }),
+    });
+  });
+
+  test("none picked, two, or one not offered is stale", () => {
+    expect(pick()).toEqual({ kind: "stale" });
+    expect(pick("flood", "none")).toEqual({ kind: "stale" });
+    expect(pick("landslide")).toEqual({ kind: "stale" });
+  });
+});
