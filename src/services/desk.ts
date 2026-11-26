@@ -321,7 +321,8 @@ async function reportBody(bindings: ServiceBindings, staff: StaffPrincipal, tick
       seconds: video.seconds,
       container: video.container,
       madeAt: video.made_at === null ? null : at(Date.parse(video.made_at), zone),
-      point: video.lat === null || video.lon === null ? null : { lat: video.lat, lon: video.lon },
+      // Kept together, so a latitude has its longitude.
+      point: video.lat === null ? null : { lat: video.lat, lon: video.lon as number },
     })),
     reporter: {
       role: found.reporterRole,

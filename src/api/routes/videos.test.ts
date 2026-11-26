@@ -41,8 +41,8 @@ const u32 = (value: number) => [(value >>> 24) & 255, (value >>> 16) & 255, (val
 // Seconds from 1904, an MP4's epoch, to 1970.
 const MP4_EPOCH_S = 2_082_844_800;
 // An MP4 of this size whose movie header says 12.5 seconds, made ten minutes before the clock
-// (or when given), in Aceh Utara.
-function movie(bytes: number, madeMs = clock.now() - 600_000) {
+// (or when given, or with no time), in Aceh Utara (or with no place).
+function movie(bytes: number, madeMs: number | null = clock.now() - 600_000, placed = true) {
   const file = new Uint8Array(bytes);
   file.set([
     ...u32(16),
@@ -54,11 +54,11 @@ function movie(bytes: number, madeMs = clock.now() - 600_000) {
     0,
     0,
     0,
-    ...u32(madeMs / 1000 + MP4_EPOCH_S),
+    ...u32(madeMs === null ? 0 : madeMs / 1000 + MP4_EPOCH_S),
     ...u32(0),
     ...u32(1000),
     ...u32(12_500),
-    ...ascii("+05.1470+097.0482/"),
+    ...(placed ? ascii("+05.1470+097.0482/") : []),
   ]);
   return file;
 }
@@ -111,6 +111,10 @@ describe("a video of the scene", () => {
     expect(kept.json).toEqual([{ id, seconds: 13, container: "mp4" }]);
     expect((await phone.call("GET", `/drafts/${draft.draftId}/videos`)).json).toEqual(kept.json);
     expect(await query`select 1 from video_upload where id = ${id}`).toEqual([]);
+    // One whose file says neither when nor where it was made.
+    tick();
+    const bare = await upload(phone, draft.draftId, movie(4000, null, false));
+    expect((await phone.call("POST", `/drafts/${draft.draftId}/videos/${bare.id}/complete`)).status).toBe(200);
 
     // Sent with the report, the desk plays it, a range at a time.
     const { draft: summary } = await walkTo(phone, draft, VILLAGE, { tick });
@@ -130,6 +134,7 @@ describe("a video of the scene", () => {
         madeAt: { utc: new Date(made).toISOString(), zone: "WIB" },
         point: { lat: 5.147, lon: 97.0482 },
       },
+      { id: bare.id, seconds: 13, container: "mp4", madeAt: null, point: null },
     ]);
     const play = (range?: string) =>
       fetchApi(

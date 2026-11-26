@@ -151,6 +151,10 @@ describe("the gallery", () => {
       },
     ]);
     const photoId = gallery.photos[0]?.photoId as string;
+    // A photo a GPS doubt was raised for says so.
+    await query`update draft_photo set gps_doubts = '["zone"]' where id = ${photoId}`;
+    const doubted = deskGallerySchema.parse((await deskOfficer().call("GET", `/desk/photos?ticket=${ticket}`)).json);
+    expect(doubted.photos[0]?.doubts).toEqual(["zone"]);
     const detail = deskReportSchema.parse((await deskOfficer().call("GET", `/desk/reports/${ticket}`)).json);
     expect(detail.photos.map((photo) => photo.photoId)).toEqual([photoId]);
     const file = await deskOfficer().file(`/desk/photos/${photoId}`);
