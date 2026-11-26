@@ -78,15 +78,38 @@ export function LanguageChooser({ back, onClose }: { readonly back: string; read
   );
 }
 
-// The site's language, in the header of every public page: it says the language in use and opens the
-// chooser in a dialog, or with no script as a page of its own. Shown only when there is a choice.
-export function LanguagePicker() {
+// The page the chooser opens as, coming back here after.
+function useChooser() {
   const t = useText();
   const { pathname, search } = useLocation();
-  const dialog = useRef<HTMLDialogElement>(null);
-  if (OFFERED.length < 2) return null;
   const back = `${pathname}${search}`;
-  const current = new Map<string, string>(OFFERED).get(t("app.lang")) as string;
+  return {
+    back,
+    href: `/lapor/bahasa?back=${encodeURIComponent(back)}`,
+    current: new Map<string, string>(OFFERED).get(t("app.lang")) as string,
+  };
+}
+
+// The language in a phone's menu, opening the chooser as a page, so the bar keeps one row.
+export function LanguageLink({ className }: { readonly className: string }) {
+  const t = useText();
+  const { href, current } = useChooser();
+  if (OFFERED.length < 2) return null;
+  return (
+    <a href={href} aria-label={t("app.language.open", { name: current })} className={className}>
+      <Icon name="globe" className="size-5" />
+      {current}
+    </a>
+  );
+}
+
+// The site's language, in the header of every public page: it says the language in use and opens the
+// chooser in a dialog, or with no script as a page of its own. Shown only when there is a choice.
+export function LanguagePicker({ className }: { readonly className?: string }) {
+  const t = useText();
+  const dialog = useRef<HTMLDialogElement>(null);
+  const { back, href, current } = useChooser();
+  if (OFFERED.length < 2) return null;
   const open = (event: MouseEvent<HTMLAnchorElement>) => {
     if (typeof dialog.current?.showModal !== "function") return;
     event.preventDefault();
@@ -95,10 +118,13 @@ export function LanguagePicker() {
   return (
     <>
       <a
-        href={`/lapor/bahasa?back=${encodeURIComponent(back)}`}
+        href={href}
         onClick={open}
         aria-label={t("app.language.open", { name: current })}
-        className="inline-flex min-h-target-min items-center gap-1.5 rounded-control px-2 font-semibold text-ink no-underline hover:bg-sunken"
+        className={cn(
+          "inline-flex min-h-target-min items-center gap-1.5 rounded-control px-2 font-semibold text-ink no-underline hover:bg-sunken",
+          className,
+        )}
       >
         <Icon name="globe" className="size-5" />
         <span className="hidden sm:inline">{shortName(current)}</span>

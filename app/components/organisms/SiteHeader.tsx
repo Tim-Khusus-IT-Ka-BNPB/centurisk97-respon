@@ -3,7 +3,7 @@ import { cn } from "../../lib/cn";
 import { useText } from "../../lib/text";
 import { Icon } from "../atoms/Icon";
 import { BrandLockup } from "../molecules/BrandLockup";
-import { LanguagePicker } from "../molecules/LanguagePicker";
+import { LanguageLink, LanguagePicker } from "../molecules/LanguagePicker";
 import { ThemeSwitch } from "../molecules/ThemeSwitch";
 
 const navLink =
@@ -75,7 +75,8 @@ export function SiteHeader({
         </Link>
         <div className="flex items-center gap-2 sm:gap-4">
           {/* On a phone a page with links keeps the switch in its menu, so the bar stays one row. */}
-          {languages ? <LanguagePicker /> : null}
+          {/* A phone's menu holds the language too, so the bar stays one row at 320px. */}
+          {languages ? <LanguagePicker className={nav ? "hidden sm:inline-flex" : undefined} /> : null}
           {nav ? <QuickIcons /> : null}
           <ThemeSwitch className={nav ? "hidden lg:block" : undefined} />
           {nav ? (
@@ -89,6 +90,8 @@ export function SiteHeader({
                 <Link to="/lapor/nomor-penting" className={cn(navLink, "sm:hidden")}>
                   {t("nav.numbers")}
                 </Link>
+                {/* Only the page cut off from the service drops the language, and it has no menu. */}
+                <LanguageLink className={cn(navLink, "gap-2 sm:hidden")} />
                 <ThemeSwitch withLabel className="border-t border-line pt-1" />
               </div>
             </details>

@@ -1,7 +1,7 @@
 import { fireEvent, screen, within } from "@testing-library/react";
 import { describe, expect, test, vi } from "vitest";
 import { renderPage } from "../../testing/render";
-import { LanguageChooser, LanguagePicker } from "./LanguagePicker";
+import { LanguageChooser, LanguageLink, LanguagePicker } from "./LanguagePicker";
 
 const offered = vi.hoisted(() => ({
   list: [
@@ -70,10 +70,22 @@ describe("the language picker", () => {
     ).toBe("dialog");
   });
 
+  test("in a phone's menu it names the language and opens the chooser as its page", async () => {
+    renderPage(<LanguageLink className="menu" />, { path: "/lapor/feed" });
+    const open = await screen.findByRole("link", { name: "Bahasa: Bahasa Indonesia. Ganti bahasa" });
+    expect([open.getAttribute("href"), open.textContent]).toEqual([
+      "/lapor/bahasa?back=%2Flapor%2Ffeed",
+      "Bahasa Indonesia",
+    ]);
+  });
+
   test("with only Indonesian there is nothing to pick", async () => {
     offered.list = [["id", "Bahasa Indonesia"]];
-    const view = renderPage(<LanguagePicker />, { path: "/lapor/report" });
-    await new Promise((resolve) => setTimeout(resolve, 0));
-    expect(view.container.querySelector("a")).toBeNull();
+    for (const picker of [<LanguagePicker key="bar" />, <LanguageLink key="menu" className="menu" />]) {
+      const view = renderPage(picker, { path: "/lapor/report" });
+      await new Promise((resolve) => setTimeout(resolve, 0));
+      expect(view.container.querySelector("a")).toBeNull();
+      view.unmount();
+    }
   });
 });
