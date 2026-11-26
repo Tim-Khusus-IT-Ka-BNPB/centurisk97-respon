@@ -2,7 +2,7 @@ import type { StaffScope } from "../../domain/deskRights";
 import type { EmergencyKind, VictimAnswer } from "../../domain/emergency";
 import { ONE_TAP } from "../../domain/emergency";
 import { DAY_MS } from "../../domain/time";
-import { atomically, type Database, holds, row, rows, sql } from "../../platform/database";
+import { atomically, type Database, holds, row, rows, run, sql } from "../../platform/database";
 import { regionCondition } from "./deskShared";
 import { insertReport, type NewReport, nextSequence } from "./send";
 
@@ -94,3 +94,24 @@ export async function openEmergencies(db: Database, scope: StaffScope, limit: nu
     sentAt: new Date(one.sent_at),
   }));
 }
+
+// A report sent before under this id made on the phone, or null.
+export const offlineTicket = async (
+  db: Database,
+  clientId: string,
+): Promise<{ ticketNumber: string; reportId: string; villageCode: string } | null> => {
+  const found = await row<{ ticket_number: string; report_id: string; village_code: string }>(
+    db,
+    sql`select o.ticket_number, r.id as report_id, r.village_code from offline_send o
+      join report r on r.ticket_number = o.ticket_number where o.client_id = ${clientId}`,
+  );
+  return found === null
+    ? null
+    : { ticketNumber: found.ticket_number, reportId: found.report_id, villageCode: found.village_code };
+};
+
+export const keepOfflineSend = (db: Database, clientId: string, ticketNumber: string, at: Date) =>
+  run(
+    db,
+    sql`insert or ignore into offline_send (client_id, ticket_number, at) values (${clientId}, ${ticketNumber}, ${at})`,
+  );

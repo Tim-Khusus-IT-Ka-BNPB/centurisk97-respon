@@ -1,14 +1,23 @@
-import { lastOneTap, oneTapsOfDay, openEmergencies, sendOneTap } from "../adapters/d1/emergency";
+import {
+  keepOfflineSend,
+  lastOneTap,
+  offlineTicket,
+  oneTapsOfDay,
+  openEmergencies,
+  sendOneTap,
+} from "../adapters/d1/emergency";
 import { knownProfiles, latestConsent, type ProfileRow } from "../adapters/d1/reporters";
 import { ownReports, reportByTicket } from "../adapters/d1/reports";
 import { ticketNumberOf } from "../adapters/d1/send";
 import type { DeskEmergency } from "../contract/desk";
 import type { OneTapSent, OneTapStart } from "../contract/emergency";
-import { emergencyStates, oneTapDayOpensAt, oneTapOpensAt } from "../domain/emergency";
-import type { FieldStates, PlacePoint } from "../domain/fieldState";
+import { emergencyStates, oneTapDayOpensAt, oneTapOpensAt, type VictimAnswer } from "../domain/emergency";
+import type { FieldStates, PlacePoint, PlaceValue } from "../domain/fieldState";
 import { completePercent } from "../domain/fields/applicable";
+import type { HazardTypeId } from "../domain/hazards";
 import { maskNumber } from "../domain/phoneNumber";
 import { formatTicketNumber, ticketDay } from "../domain/ticketNumber";
+import { DAY_MS } from "../domain/time";
 import { EMPTY_CONTENT } from "../domain/turn/content";
 import { sha256Hex } from "../platform/keys";
 import type { Principal, StaffPrincipal } from "../ports/identity";
@@ -46,17 +55,52 @@ export type OneTapAnswer =
   | { readonly kind: "limit"; readonly refusal: LimitRefusal };
 
 // "Darurat sekali ketuk" (K90, D123, D124): the phone's point goes to the desk as an emergency.
+// What a report made with no signal adds to the point: its kind, whether anyone is hurt, when it was
+// made, and the id it was given on the phone (LR-03 to LR-05).
+export type OfflineDetails = {
+  readonly hazardType?: HazardTypeId;
+  readonly victims?: VictimAnswer;
+  readonly takenAtMs?: number;
+  readonly clientId?: string;
+};
+
+// A report kept on a phone this long is still sent, with the time it was made.
+const OFFLINE_KEPT_MS = 14 * DAY_MS;
+
+async function sentBefore(bindings: ServiceBindings, clientId: string): Promise<OneTapAnswer | null> {
+  const before = await offlineTicket(bindings.db, clientId);
+  if (before === null) return null;
+  const report = (await reportByTicket(bindings.db, before.ticketNumber)) as NonNullable<
+    Awaited<ReturnType<typeof reportByTicket>>
+  >;
+  const place = (report.states.place as { readonly value: PlaceValue }).value;
+  return {
+    kind: "sent",
+    ticketNumber: before.ticketNumber,
+    trackingToken: await trackingToken(bindings.settings.keyHmacSecret, before.reportId),
+    contact: await contactOf(bindings, place),
+  };
+}
+
 export async function oneTapEmergency(
   bindings: ServiceBindings,
   principal: Reporter,
   address: string,
-  reading: PlacePoint,
+  reading: PlacePoint & OfflineDetails,
 ): Promise<OneTapAnswer> {
   const db = bindings.db;
   const profile = await reporterOf(bindings, principal);
   const consent = profile === null ? null : await latestConsent(db, profile.id);
   if (profile === null || consent === null) return { kind: "unknownReporter" };
+  if (reading.clientId) {
+    const replayed = await sentBefore(bindings, reading.clientId);
+    if (replayed) return replayed;
+  }
   const nowMs = bindings.clock.now();
+  const takenMs =
+    reading.takenAtMs !== undefined && reading.takenAtMs <= nowMs && reading.takenAtMs >= nowMs - OFFLINE_KEPT_MS
+      ? reading.takenAtMs
+      : nowMs;
   const deviceOpens = async () => oneTapOpensAt(await lastOneTap(db, profile.number_key, profile.owner_slot), nowMs);
   const tooSoon = await deviceOpens();
   if (tooSoon !== null) return { kind: "limit", refusal: { limitId: "oneTap.device", retryAtMs: tooSoon } };
@@ -68,8 +112,13 @@ export async function oneTapEmergency(
   if (located.kind !== "found") return { kind: "place", rule: located.kind };
   const place = located.reading.village;
   const states: FieldStates = emergencyStates(
-    { place: { state: "value", value: place, origin: "system" }, hazardType: { state: "notYetKnown" } },
-    nowMs,
+    {
+      place: { state: "value", value: place, origin: "system" },
+      hazardType: reading.hazardType
+        ? { state: "value", value: reading.hazardType, origin: "tappedOption" }
+        : { state: "notYetKnown" },
+    },
+    takenMs,
     draftZone(place.villageCode),
   );
   const day = ticketDay(nowMs);
@@ -87,8 +136,8 @@ export async function oneTapEmergency(
       ownerSlot: profile.owner_slot,
       numberUnverified: principal.kind !== "session",
       door: "web",
-      // Its kind is not known yet; "other" is never offered, so it stands for that alone.
-      hazardType: "other",
+      // With no kind told, "other", which is never offered, stands for that alone.
+      hazardType: reading.hazardType ?? "other",
       villageCode: place.villageCode,
       sentAt: new Date(nowMs),
       content: { ...EMPTY_CONTENT, states },
@@ -101,13 +150,14 @@ export async function oneTapEmergency(
       },
       consent,
       completePercent: completePercent(states),
-      emergency: { kind: "oneTap", victims: "unknown" },
+      emergency: { kind: "oneTap", victims: reading.victims ?? "unknown" },
     },
     profile.id,
     day,
   );
   if (ticketNumber === null)
     return { kind: "limit", refusal: { limitId: "oneTap.device", retryAtMs: await deviceOpens() } };
+  if (reading.clientId) await keepOfflineSend(db, reading.clientId, ticketNumber, new Date(nowMs));
   return { kind: "sent", ticketNumber, trackingToken: token, contact: await contactOf(bindings, place) };
 }
 

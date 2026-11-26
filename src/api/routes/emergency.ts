@@ -1,5 +1,7 @@
 import { createRoute, z } from "@hono/zod-openapi";
 import { oneTapSentSchema, oneTapStartSchema } from "../../contract/emergency";
+import { VICTIM_ANSWERS } from "../../domain/emergency";
+import { type HazardTypeId, SELECTABLE_HAZARD_TYPES } from "../../domain/hazards";
 import { oneTapEmergency, oneTapStart, type Reporter } from "../../services/emergency";
 import type { ApiContext } from "../context";
 import { refuse } from "../envelope";
@@ -39,6 +41,11 @@ export function addEmergencyRoutes(api: Api): void {
             lat: z.number().min(-90).max(90),
             lon: z.number().min(-180).max(180),
             accuracyM: z.number().min(0).max(1e7),
+            // A report made with no signal: what it told, when it was made, and its id from the phone.
+            hazardType: z.enum(SELECTABLE_HAZARD_TYPES as [HazardTypeId, ...HazardTypeId[]]).optional(),
+            victims: z.enum(VICTIM_ANSWERS).optional(),
+            takenAtMs: z.number().int().nonnegative().optional(),
+            clientId: z.uuid().optional(),
           }),
         ),
       },

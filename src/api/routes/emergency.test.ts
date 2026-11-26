@@ -9,6 +9,7 @@ import {
 } from "../../contract/desk";
 import type { DraftBody } from "../../contract/draft";
 import { trackingSchema } from "../../contract/tracking";
+import { localClock } from "../../domain/eventTime";
 import { windowStart } from "../../domain/limits";
 import { addressBucket } from "../../platform/address";
 import { hmacKey } from "../../platform/keys";
@@ -180,6 +181,38 @@ describe("one tap", () => {
     // The conversation that was open is still there.
     const me = (await phone.call("GET", "/me")).json as { knownReporters: { openDraft: object | null }[] };
     expect(me.knownReporters[0]?.openDraft).not.toBeNull();
+  });
+
+  test("made with no signal: its kind, victims and time kept, and its id sends it once", async () => {
+    const phone = await boundPhone();
+    const clientId = crypto.randomUUID();
+    const takenAtMs = clock.now() - 2 * 3_600_000;
+    const offline = { ...HERE, hazardType: "flood", victims: "yes", takenAtMs, clientId };
+    const sent = await tap(phone, offline);
+    expect(sent.status, JSON.stringify(sent.json)).toBe(201);
+    const body = sent.json as { ticketNumber: string; trackingToken: string };
+    expect((await emergencies()).find((one) => one.ticketNumber === body.ticketNumber)).toMatchObject({
+      kind: "oneTap",
+      victims: "yes",
+      hazardType: "flood",
+    });
+    const report = deskReportSchema.parse((await desk().call("GET", `/desk/reports/${body.ticketNumber}`)).json);
+    expect(report.eventTime).toMatchObject({ kind: "dateTime", localTime: localClock(takenAtMs, "WIB") });
+    // The answer was lost and it is sent again: the same ticket, no second report.
+    const again = await tap(phone, offline);
+    expect([again.status, (again.json as { ticketNumber: string }).ticketNumber]).toEqual([201, body.ticketNumber]);
+    expect((again.json as { trackingToken: string }).trackingToken).toBe(body.trackingToken);
+    expect(await query`select count(*) as n from offline_send where client_id = ${clientId}`).toEqual([{ n: 1 }]);
+  });
+
+  test("a time from before the phone could have kept it is read as now", async () => {
+    clock.advance(31 * 60_000);
+    const phone = await boundPhone();
+    const sent = await tap(phone, { ...HERE, takenAtMs: clock.now() - 15 * 86_400_000 });
+    const ticket = (sent.json as { ticketNumber: string }).ticketNumber;
+    const report = deskReportSchema.parse((await desk().call("GET", `/desk/reports/${ticket}`)).json);
+    expect(report.eventTime).toMatchObject({ localTime: localClock(clock.now(), "WIB") });
+    expect((await tap(phone, { ...HERE, hazardType: "other" })).status).toBe(400);
   });
 
   test("opens again after 30 minutes, named in the refusal; two at once send one", async () => {
