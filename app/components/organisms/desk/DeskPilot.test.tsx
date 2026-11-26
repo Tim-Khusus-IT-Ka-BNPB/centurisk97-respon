@@ -47,8 +47,8 @@ describe("the numbers of the WhatsApp pilot", () => {
     expect(rows[0]?.textContent).toContain("3 laporanterakhir 24 Nov 2026");
     expect(rows[1]?.textContent).toContain("Warga");
     expect(rows[1]?.textContent).toContain("Belum melapor");
-    const links = screen.getAllByRole("link", { name: "Nomor uji WhatsApp" });
-    expect(links.map((link) => link.getAttribute("aria-current"))).toContain("page");
+    // WhatsApp waits: the page opens, but the menu does not offer it.
+    expect(screen.queryByRole("link", { name: "Nomor uji WhatsApp" })).toBeNull();
   });
 
   test("an empty list says what that means", async () => {

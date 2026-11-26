@@ -14,7 +14,6 @@ import { deskLink, STATUSES, StatusDot } from "./parts";
 
 const NONE: DeskSummary["emergencies"] = [];
 const RESPONSE = "/lapor/meja/respons";
-const PILOT = "/lapor/meja/pilot";
 const MISSING = "/lapor/meja/orang-hilang";
 
 const VIEW_ICON: Readonly<Record<DeskView, IconName>> = { list: "list", map: "map", gallery: "images" };
@@ -146,14 +145,8 @@ function DeskNav({ place }: { readonly place: DeskPlace }) {
             </Link>
           </li>
         ) : null}
-        {summary?.mayManagePilot ? (
-          <li>
-            <Link to={PILOT} aria-current={pathname === PILOT ? "page" : undefined} className={item}>
-              <Icon name="messageSquare" className={navIcon} />
-              {t("desk.pilot.title")}
-            </Link>
-          </li>
-        ) : null}
+        {/* The WhatsApp pilot numbers (/lapor/meja/pilot) are left out of the menu while WhatsApp waits
+            (owner, 26 Nov 2026); the page itself still opens. */}
         <li>
           <Link to={MISSING} aria-current={pathname === MISSING ? "page" : undefined} className={item}>
             <Icon name="userSearch" className={navIcon} />
