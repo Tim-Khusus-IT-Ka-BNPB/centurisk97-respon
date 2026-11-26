@@ -37,7 +37,8 @@
         "!app/lib/follow.ts",
         "!app/lib/follow.test.ts",
         "!app/lib/videoResume.ts",
-        "!app/lib/videoResume.test.ts"
+        "!app/lib/videoResume.test.ts",
+        "!app/components/organisms/cards/VideoUpload.test.tsx"
       ],
       "plugins": ["./tools/lint/web-storage.grit"],
       "linter": {
