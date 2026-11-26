@@ -36,10 +36,9 @@ const isCode = (value: unknown) => {
 export function checkForecastFile(json: unknown): ForecastFile | null {
   const file = json as Partial<ForecastFile> | null;
   if (typeof file?.dibuat !== "string" || Number.isNaN(Date.parse(file.dibuat))) return null;
-  const codes = file.kode;
-  if (Object.getPrototypeOf(codes ?? 0) !== Object.prototype || !Object.values(codes as object).every(isCode))
-    return null;
-  if (!(codes as ForecastFile["kode"]).HJN) return null;
+  // JSON gives plain objects or arrays; an array has no HJN.
+  const codes = (file.kode ?? {}) as Readonly<Record<string, unknown>>;
+  if (!Object.values(codes).every(isCode) || !codes.HJN) return null;
   if (!Array.isArray(file.kab) || file.kab.length === 0) return null;
   const regencies = file.kab.every(
     (one) => /^\d{4}$/.test(String(one?.id)) && typeof one.nama === "string" && typeof one.pn === "string",
@@ -112,13 +111,11 @@ export function outlookOf(file: ForecastFile, regencyCode: string): Outlook | nu
     const total = rainRow?.[rain.kol.indexOf("tot")] ?? null;
     return {
       date,
-      rainMm: total === null || total === undefined ? null : Math.round(total),
+      rainMm: total === null ? null : Math.round(total),
       rainLevel: cellLevel("HJN", rain.kol, rainRow),
       threats: THREATS.flatMap((code) => {
-        const level = cellLevel(code, file.kode[code]?.kol, rows(code)?.[index]);
-        return level !== null && level > 0
-          ? [{ code, label: (file.kode[code] as { label: string }).label, level }]
-          : [];
+        const level = cellLevel(code, file.kode[code]?.kol, rows(code)?.[index]) ?? 0;
+        return level > 0 ? [{ code, label: (file.kode[code] as { label: string }).label, level }] : [];
       }),
     };
   });

@@ -13,6 +13,34 @@ describe("the outlook file", () => {
     expect(checkForecastFile({ ...SEED, kab: [{ id: "11", nama: "X", pn: "Y" }] })).toBeNull();
     expect(checkForecastFile({ ...SEED, waspada: [{ kab: "1108", tenggang: 1.5, maka: "x" }] })).toBeNull();
     expect(checkForecastFile(null)).toBeNull();
+    expect(checkForecastFile({ ...SEED, kode: undefined })).toBeNull();
+  });
+
+  test("every code, regency and advice must keep its shape, one broken is enough", () => {
+    const code = SEED.kode.BNJ;
+    for (const broken of [
+      null,
+      { ...code, label: 1 },
+      { ...code, hari: [...code.hari, 5] },
+      { ...code, hari: "2026-11-26" },
+      { ...code, kol: [...code.kol, 5] },
+      { ...code, kol: "lv" },
+    ])
+      expect(checkForecastFile({ ...SEED, kode: { ...SEED.kode, X: broken } }), JSON.stringify(broken)).toBeNull();
+    const regency = SEED.kab[0] as Record<string, unknown>;
+    for (const broken of [
+      null,
+      { ...regency, id: "11080" },
+      { ...regency, id: "x1108" },
+      { ...regency, nama: 1 },
+      { ...regency, pn: null },
+    ])
+      expect(checkForecastFile({ ...SEED, kab: [...SEED.kab, broken] }), JSON.stringify(broken)).toBeNull();
+    expect(checkForecastFile({ ...SEED, kab: [{ ...regency, id: 1108 }] })).not.toBeNull();
+    const advice = SEED.waspada[0] as Record<string, unknown>;
+    for (const broken of [null, { ...advice, kab: 1108 }, { ...advice, maka: null }, { ...advice, tenggang: "1" }])
+      expect(checkForecastFile({ ...SEED, waspada: [...SEED.waspada, broken] }), JSON.stringify(broken)).toBeNull();
+    expect(checkForecastFile({ ...SEED, waspada: "x" })).toBeNull();
   });
 });
 
@@ -75,5 +103,21 @@ describe("a regency's three days", () => {
       threats: [],
     });
     expect(outlookOf(bare as never, "11.08")?.advice).toEqual([]);
+  });
+
+  test("advice for the last day is kept, past it dropped", () => {
+    const last = checkForecastFile({
+      ...SEED,
+      waspada: [
+        { kab: "1108", tenggang: 3, maka: "lusa" },
+        { kab: "1108", tenggang: 2, maka: "besok" },
+        { kab: "1108", tenggang: 4, maka: "nanti" },
+        { kab: "1108", tenggang: 0, maka: "kemarin" },
+      ],
+    });
+    expect(outlookOf(last as never, "11.08")?.advice).toEqual([
+      { date: "2026-11-28", text: "lusa" },
+      { date: "2026-11-27", text: "besok" },
+    ]);
   });
 });
