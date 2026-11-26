@@ -40,6 +40,18 @@ describe("place search across the country", () => {
     expect(body.items[0]).toMatchObject({ level: "regency", name: "Kota Tual" });
   });
 
+  test("a slip of one letter or an old spelling still finds the place, said to be a close match", async () => {
+    for (const typed of ["sukamajo", "sukmaju", "sukamaaju", "soekamadjoe"]) {
+      const body = placeResultsSchema.parse((await search(`/places/search?q=${typed}`)).json);
+      expect(body.similar, typed).toBe(true);
+      expect(body.items[0]?.name.toLowerCase(), typed).toContain("sukamaju");
+    }
+    // Found as typed, it is not called close.
+    expect(placeResultsSchema.parse((await search("/places/search?q=sukamaju")).json).similar).toBeUndefined();
+    // A word too short to bend is matched as typed.
+    expect((await search("/places/search?q=xqz%20sukamajo")).json).toMatchObject({ total: 0, similar: false });
+  });
+
   test("no match answers an empty list, not an error", async () => {
     const answer = await search("/places/search?q=zzqx");
     expect(answer.status).toBe(200);

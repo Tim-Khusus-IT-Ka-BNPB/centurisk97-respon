@@ -13,7 +13,7 @@ import {
 import type { PlacePoint, PlaceValue } from "../domain/fieldState";
 import { GEO, inIndonesia, nearestCentres, precisionOf, resolveVillage } from "../domain/geo";
 import { type AreaLevel, PLACE_RESULTS } from "../domain/placeSearch";
-import { placeQueryWords } from "../domain/placeText";
+import { nearWords, placeQueryWords } from "../domain/placeText";
 import type { LocateResult } from "../domain/turn/engine";
 import { sqlState } from "../platform/database";
 import type { ServiceBindings } from "./bindings";
@@ -22,7 +22,8 @@ import type { LimitRefusal } from "./limits";
 // Counts the search against its limit; null lets it run.
 export type Admit = () => Promise<LimitRefusal | null>;
 
-export type PlaceResults = PlaceHits & { readonly cut: boolean; readonly dataDate: string };
+// Similar: nothing held the words as typed, so these are places spelled close to them.
+export type PlaceResults = PlaceHits & { readonly cut: boolean; readonly dataDate: string; readonly similar?: boolean };
 
 export type AreaResults = PlaceResults & { readonly area: Area };
 
@@ -70,11 +71,12 @@ export function searchPlaces(
 ): Promise<PlaceAnswer<PlaceResults>> {
   return withSnapshot<PlaceResults>(bindings, admit, async (snapshot) => {
     const words = placeQueryWords(query);
-    const hits =
-      words.length === 0
-        ? { items: [], total: 0 }
-        : await searchCountry(bindings.db, snapshot.id, words, PLACE_RESULTS.country);
-    return { kind: "ok", value: results(hits, snapshot) };
+    if (words.length === 0) return { kind: "ok", value: results({ items: [], total: 0 }, snapshot) };
+    const hits = await searchCountry(bindings.db, snapshot.id, words, PLACE_RESULTS.country);
+    if (hits.total > 0) return { kind: "ok", value: results(hits, snapshot) };
+    // A slip of one letter or an old spelling still finds the village, said to be a close match.
+    const near = await searchCountry(bindings.db, snapshot.id, words, PLACE_RESULTS.country, words.map(nearWords));
+    return { kind: "ok", value: { ...results(near, snapshot), similar: near.total > 0 } };
   });
 }
 

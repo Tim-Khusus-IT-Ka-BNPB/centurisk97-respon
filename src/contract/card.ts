@@ -101,6 +101,8 @@ export const placeResultsSchema = z.object({
   total: z.number().int().nonnegative(),
   cut: z.boolean(),
   dataDate: z.iso.date(),
+  // Nothing held the words as typed; these are spelled close to them.
+  similar: z.boolean().optional(),
 });
 
 export type PlaceResults = z.infer<typeof placeResultsSchema>;

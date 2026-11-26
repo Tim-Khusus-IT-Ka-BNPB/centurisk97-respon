@@ -1,5 +1,5 @@
 import { describe, expect, test } from "vitest";
-import { placeQueryWords, placeSearchText } from "./placeText";
+import { modernSpelling, nearWords, placeQueryWords, placeSearchText } from "./placeText";
 import { folded, tidy, wordsOf } from "./text";
 
 describe("text helpers", () => {
@@ -32,5 +32,43 @@ describe("place text", () => {
       "satu",
     ]);
     expect(placeQueryWords("!!")).toEqual([]);
+  });
+});
+
+describe("near spellings of a place word", () => {
+  test("itself, each letter left out, swapped for any letter, or one more anywhere", () => {
+    expect(nearWords("abcd")).toEqual([
+      "abcd",
+      "bcd",
+      "_bcd",
+      "acd",
+      "a_cd",
+      "abd",
+      "ab_d",
+      "abc",
+      "abc_",
+      "_abcd",
+      "a_bcd",
+      "ab_cd",
+      "abc_d",
+      "abcd_",
+    ]);
+    expect(nearWords("abcdefghiklmnopqrstu")).toHaveLength(1 + 20 + 20 + 21);
+    expect(nearWords("soekamadjoe")).toContain("sukamaju");
+  });
+
+  test("a word under 4 or over 20 letters is only itself", () => {
+    expect(nearWords("abc")).toEqual(["abc"]);
+    expect(nearWords("a".repeat(21))).toEqual(["a".repeat(21)]);
+  });
+
+  test("the old spelling is read in the new one", () => {
+    expect(modernSpelling("djakarta")).toBe("jakarta");
+    expect(modernSpelling("tjilatjap")).toBe("cilacap");
+    expect(modernSpelling("soerabaja")).toBe("surabaya");
+    expect(modernSpelling("jogjakarta")).toBe("yogyakarta");
+    expect(modernSpelling("njamuk sjarif")).toBe("nyamuk syarif");
+    expect(modernSpelling("chairul")).toBe("khairul");
+    expect(modernSpelling("sukamaju")).toBe("sukamayu");
   });
 });

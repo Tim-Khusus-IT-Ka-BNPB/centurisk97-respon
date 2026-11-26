@@ -55,6 +55,12 @@ describe("place search", () => {
     fireEvent.click(village);
   });
 
+  test("places found by a close spelling say so", async () => {
+    const places: Places = { ...(placeCard.places as Places), similar: true };
+    renderDraft(<CardView card={{ ...placeCard, places }} />, SAMPLE_DRAFTS.placeSearch, { action: never });
+    expect(await screen.findByText(/ejaan yang mirip/)).toBeTruthy();
+  });
+
   test("a refused query sits under the box, tied to it, with focus on it", async () => {
     const refused = envelope("request.invalidFields", "error.request.invalidFields", [
       { fieldId: "q", copyKey: "fieldError.query.tooShort", params: {} },

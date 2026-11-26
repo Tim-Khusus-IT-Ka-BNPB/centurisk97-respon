@@ -245,6 +245,7 @@ function Results({ card }: { readonly card: SearchCard }) {
   return (
     <div className="flex flex-col gap-3">
       <p className="text-meta tabular-nums">{searchStatus(card, t)}</p>
+      {card.places.similar ? <p className="text-meta text-muted">{t("card.placeSearch.similar")}</p> : null}
       {areas.length > 0 ? (
         <ul className="flex flex-col gap-2">
           {areas.map((item) => (

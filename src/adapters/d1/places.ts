@@ -154,6 +154,19 @@ function everyWord(words: readonly string[]): Query {
 
 const startsWith = (text: Query, word: string) => sql`substr(${text}, 1, ${word.length}) = ${word}`;
 
+// Every typed word close to one of the place's words: any of its near spellings appears. Each word's
+// spellings go in as one JSON value, as D1 binds at most 100 values a query; one with no "_" is
+// looked for as it is, as a LIKE pattern may not pass 50 characters.
+function everyNearWord(near: readonly (readonly string[])[]): Query {
+  return near.reduce(
+    (fragment, spellings) =>
+      sql`${fragment} and exists (select 1 from json_each(${JSON.stringify(spellings)}) s
+        where case when instr(s.value, '_') > 0 then search_text like '%' || s.value || '%'
+          else instr(search_text, s.value) > 0 end)`,
+    empty,
+  );
+}
+
 // A regency's words without the kind of regency in front, so "kota" alone does not rank first.
 const REGENCY_NAME = sql`case
   when search_text like 'kota administrasi %' then substr(search_text, 19)
@@ -168,9 +181,11 @@ export async function searchCountry(
   snapshotId: number,
   words: readonly string[],
   limit: number,
+  // Each word's near spellings, for a second search when the exact one found nothing.
+  near: readonly (readonly string[])[] | null = null,
 ): Promise<PlaceHits> {
   const first = words[0] as string;
-  const match = everyWord(words);
+  const match = near === null ? everyWord(words) : everyNearWord(near);
   const found = await rows<HitRow>(
     db,
     sql`
