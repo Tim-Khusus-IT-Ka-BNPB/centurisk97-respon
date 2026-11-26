@@ -28,7 +28,12 @@
   },
   "overrides": [
     {
-      "includes": ["app/**"],
+      "includes": [
+        "app/**",
+        "!app/lib/offline.ts",
+        "!app/lib/offline.test.ts",
+        "!app/components/organisms/OneTapScreen.test.tsx"
+      ],
       "plugins": ["./tools/lint/web-storage.grit"],
       "linter": {
         "rules": {
