@@ -54,7 +54,7 @@ describe("the missing person page", () => {
     expect(((await screen.findByLabelText("Uji, Baktiya, Aceh Utara")) as HTMLInputElement).checked).toBe(true);
     expect(screen.getAllByText("Pilih salah satu.")).toHaveLength(2);
     expect((screen.getByLabelText("Pria") as HTMLInputElement).checked).toBe(true);
-    expect((screen.getByLabelText("Tanggal terakhir terlihat") as HTMLInputElement).value).toBe("2026-11-25");
+    expect((screen.getByLabelText("Tanggal") as HTMLInputElement).value).toBe("2026-11-25");
   });
 
   test("with two villages none is chosen; a refusal of the whole is said above the form", async () => {

@@ -1,5 +1,5 @@
 import { data, redirect } from "react-router";
-import { MissingScreen } from "../components/organisms/MissingScreen";
+import { MissingAside, MissingScreen } from "../components/organisms/MissingScreen";
 import { Page } from "../components/templates/Page";
 import { pageMeta } from "../lib/meta";
 import { actOnMissing, loadMissingPage } from "../lib/missingPage.server";
@@ -27,7 +27,12 @@ export async function action({ request, context }: Route.ActionArgs) {
 
 export default function MissingRoute({ loaderData, actionData }: Route.ComponentProps) {
   return (
-    <Page texts={loaderData.texts} publicPage={false} banner={{ title: "missing.title", lead: "missing.lead" }}>
+    <Page
+      texts={loaderData.texts}
+      publicPage={false}
+      banner={{ title: "missing.title", lead: "missing.lead" }}
+      aside={<MissingAside />}
+    >
       <MissingScreen load={loaderData} envelope={actionData?.envelope ?? null} typed={actionData?.typed} />
     </Page>
   );
