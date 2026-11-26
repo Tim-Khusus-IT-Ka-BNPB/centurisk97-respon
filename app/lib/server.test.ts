@@ -40,7 +40,12 @@ describe("copy for a page", () => {
     expect(texts["card.summary.send"]).toBeUndefined();
     const draft = pickTexts(["app."], SAMPLE_DRAFTS.chronologyStep);
     expect(draft["chronology.flood.step2.option.slowRise.label"]).toBeDefined();
-    expect(Object.keys(pickTexts(["app."], 7))).toEqual(["app.name"]);
+    expect(Object.keys(pickTexts(["app."], 7)).sort()).toEqual([
+      "app.lang",
+      "app.language.label",
+      "app.language.submit",
+      "app.name",
+    ]);
   });
 });
 

@@ -756,6 +756,8 @@ describe("desk routes", () => {
       history: [],
       reporterWords: [],
       photos: [],
+      videos: [],
+      event: null,
       nextStatuses: [],
       revision: 0,
       mayTake: false,
