@@ -35,11 +35,11 @@ export const ABOUT_POINTS = ["guided", "ticket", "ownWords"] as const;
 export const ABOUT_STEPS = [1, 2, 3, 4, 5, 6] as const;
 
 export const CONTACT_ROWS = [
-  { label: "home.contact.callCenterLabel", value: "home.contact.callCenter", link: "tel" },
-  { label: "home.contact.phoneLabel", value: "home.contact.phone", link: "tel" },
-  { label: "home.contact.emailLabel", value: "home.contact.email", link: "mail" },
-  { label: "home.contact.websiteLabel", value: "home.contact.website", link: "web" },
-  { label: "home.contact.addressLabel", value: "home.contact.address", link: null },
+  { label: "home.contact.callCenterLabel", value: "home.contact.callCenter", link: "tel", icon: "headset" },
+  { label: "home.contact.phoneLabel", value: "home.contact.phone", link: "tel", icon: "phone" },
+  { label: "home.contact.emailLabel", value: "home.contact.email", link: "mail", icon: "mail" },
+  { label: "home.contact.websiteLabel", value: "home.contact.website", link: "web", icon: "globe" },
+  { label: "home.contact.addressLabel", value: "home.contact.address", link: null, icon: "mapPin" },
 ] as const;
 
 // The link a contact value opens, made from the value itself so the two never disagree.
