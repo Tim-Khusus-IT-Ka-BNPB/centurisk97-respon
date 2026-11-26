@@ -2,10 +2,11 @@ import { createHash } from "node:crypto";
 import { readFile } from "node:fs/promises";
 import { checkContactFile } from "../../src/domain/contacts.ts";
 import { checkEducationFile } from "../../src/domain/education.ts";
+import { checkForecastFile } from "../../src/domain/forecast.ts";
 import { checkActionFile } from "../../src/domain/responseActions.ts";
 import { type Database, row, run, sql } from "../../src/platform/database.ts";
 
-export type ReferenceName = "bpbdContacts" | "education" | "responseActions";
+export type ReferenceName = "bpbdContacts" | "education" | "responseActions" | "forecast";
 
 export class ReferenceFileRefused extends Error {
   constructor(name: ReferenceName) {
@@ -22,6 +23,7 @@ const CHECKS: Readonly<Record<ReferenceName, (json: unknown) => string | null>> 
     const file = checkActionFile(json);
     return file === null ? null : `versi ${file.versi}`;
   },
+  forecast: (json) => checkForecastFile(json)?.dibuat.slice(0, 10) ?? null,
 };
 
 // Reads a small upstream file, checks it against its contract and keeps it whole as the one in

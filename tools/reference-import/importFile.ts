@@ -1,13 +1,15 @@
 import { localDatabase } from "../../scripts/db/local.ts";
 import { importReferenceFile, ReferenceFileRefused, type ReferenceName } from "./file.ts";
 
-// pnpm reference:import-file <bpbdContacts|education|responseActions> <file>: loads upstream's
+// pnpm reference:import-file <bpbdContacts|education|responseActions|forecast> <file>: loads upstream's
 // public/data/bpbd_kontak.json, public/lapor/edukasi.json or public/bencana.json into the local D1
 // database of APP_ENV.
 const [name, path] = process.argv.slice(2);
-const NAMES: readonly (string | undefined)[] = ["bpbdContacts", "education", "responseActions"];
+const NAMES: readonly (string | undefined)[] = ["bpbdContacts", "education", "responseActions", "forecast"];
 if (!NAMES.includes(name) || !path) {
-  console.error("Usage: pnpm reference:import-file <bpbdContacts|education|responseActions> <path to the file>");
+  console.error(
+    "Usage: pnpm reference:import-file <bpbdContacts|education|responseActions|forecast> <path to the file>",
+  );
   process.exit(2);
 }
 
