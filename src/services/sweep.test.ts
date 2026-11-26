@@ -126,6 +126,7 @@ describe("the scheduled sweep", () => {
       pruned: 0,
       devicesRemoved: 0,
       draftsRemoved: 0,
+      missingAnonymised: 0,
       photoFilesRemoved: 0,
       videoUploadsDropped: 0,
     });

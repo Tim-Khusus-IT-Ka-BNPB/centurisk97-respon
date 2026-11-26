@@ -50,7 +50,7 @@ export async function pruneBatch(db: Database, cutoffs: SweepCutoffs, batch: num
 }
 
 // Removes devices unseen for a year, their profiles and consents with them, then the numbers
-// nothing uses any more: no profile, no seeded session, no draft tied to a sent report.
+// nothing uses any more: no profile, no seeded session, no draft tied to a sent report, no missing person.
 export async function removeDeviceBatch(db: Database, cutoffs: SweepCutoffs, batch: number): Promise<number> {
   return counted(db, [
     sql`delete from device where id in (
@@ -59,7 +59,8 @@ export async function removeDeviceBatch(db: Database, cutoffs: SweepCutoffs, bat
     sql`delete from reporter
       where not exists (select 1 from reporter_profile p where p.reporter_id = reporter.id)
         and not exists (select 1 from seeded_session s where s.reporter_id = reporter.id)
-        and not exists (select 1 from report_draft d join report t on t.draft_id = d.id where d.reporter_id = reporter.id)`,
+        and not exists (select 1 from report_draft d join report t on t.draft_id = d.id where d.reporter_id = reporter.id)
+        and not exists (select 1 from missing_person m where m.reporter_id = reporter.id)`,
   ]);
 }
 

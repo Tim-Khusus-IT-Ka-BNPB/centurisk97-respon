@@ -48,7 +48,7 @@ export function localClock(instantMs: number, zone: Zone): string {
 const TIME = /^(\d{2}):(\d{2})$/;
 
 // A real calendar date written exactly as YYYY-MM-DD.
-function validDate(text: string): boolean {
+export function validDate(text: string): boolean {
   const [year, month, day] = text.split("-").map(Number) as [number, number, number];
   const time = Date.UTC(year, month - 1, day);
   return Number.isFinite(time) && new Date(time).toISOString().slice(0, 10) === text;

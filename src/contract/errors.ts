@@ -35,6 +35,9 @@ const ERROR_CODES = [
   "outlook.regencyNotFound",
   "warnings.closed",
   "warnings.full",
+  "missing.placeUnknown",
+  "missing.tooMany",
+  "missing.moveRefused",
 ] as const;
 
 export type ErrorCode = (typeof ERROR_CODES)[number] | `limit.${LimitId}`;
