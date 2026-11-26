@@ -7,6 +7,8 @@ import { PageBanner } from "../organisms/PageBanner";
 import { SiteFooter } from "../organisms/SiteFooter";
 import { SiteHeader } from "../organisms/SiteHeader";
 
+const SITE = "max-w-[72rem]";
+
 // A page that draws its own frame (the desk) still needs its share of the copy.
 export function WithTexts({ texts, children }: { readonly texts: Texts; readonly children: ReactNode }) {
   const text = useMemo(() => makeText(texts), [texts]);
@@ -42,12 +44,13 @@ export function Page({
   readonly languages?: boolean;
 }) {
   const text = useMemo(() => makeText(texts), [texts]);
-  // The header lines up with the column under it.
-  const width = wide || aside ? "max-w-[72rem]" : "max-w-[40rem]";
+  // The header, any band and the footer share the site's width; a page of one task keeps a narrower
+  // column under them, centred.
+  const width = wide || aside ? SITE : "max-w-[40rem]";
   return (
     <TextContext.Provider value={text}>
       <div className="flex min-h-dvh flex-col" lang={text("app.lang")}>
-        <SiteHeader nav={publicPage} width={width} />
+        <SiteHeader nav={publicPage} width={SITE} />
         {hero}
         {banner ? <PageBanner titleKey={banner.title} leadKey={banner.lead} /> : null}
         <main
@@ -69,7 +72,7 @@ export function Page({
             </aside>
           ) : null}
         </main>
-        {publicPage ? <SiteFooter width={width} /> : null}
+        {publicPage ? <SiteFooter width={SITE} /> : null}
       </div>
     </TextContext.Provider>
   );
