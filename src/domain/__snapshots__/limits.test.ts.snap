@@ -14,6 +14,12 @@ exports[`limits table > rows as agreed 1`] = `
     "subject": "address",
     "window": "clockHour",
   },
+  "address.feed": {
+    "effect": "refuse",
+    "max": 600,
+    "subject": "address",
+    "window": "clockHour",
+  },
   "address.messages": {
     "effect": "refuse",
     "max": 2000,
