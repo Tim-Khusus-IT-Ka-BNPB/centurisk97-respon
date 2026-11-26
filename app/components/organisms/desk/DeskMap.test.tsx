@@ -68,6 +68,14 @@ describe("the map view", () => {
     expect(row.getByText("Jenis belum diketahui, Sukamaju, Aceh Utara")).toBeTruthy();
   });
 
+  test("a report sent late from a phone with no signal is marked late, not as an emergency", async () => {
+    const emergency = { kind: "oneTap" as const, victims: "yes" as const };
+    await draw({ queue: queue({ items: [{ ...ITEM, emergency, offline: { savedAt: null, late: true } }], total: 1 }) });
+    const row = within(panel().getAllByRole("listitem")[0] as HTMLElement);
+    expect(row.getByText("Dikirim terlambat")).toBeTruthy();
+    expect(row.queryByText("Darurat")).toBeNull();
+  });
+
   test("news no officer has acted on is marked", async () => {
     await draw({ queue: queue({ items: [{ ...ITEM, news: true }], total: 1 }) });
     const row = within(panel().getAllByRole("listitem")[0] as HTMLElement);

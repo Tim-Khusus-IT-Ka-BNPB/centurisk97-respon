@@ -402,6 +402,16 @@ describe("a report on the desk", () => {
     expect(screen.queryByRole("region", { name: "Penanganan" })).toBeNull();
   });
 
+  test("a report kept on a phone with no signal is marked; sent late it is not an emergency", async () => {
+    const emergency = { kind: "oneTap" as const, victims: "yes" as const };
+    await renderDesk(
+      <DeskReportView report={{ ...REPORT, emergency, offline: { savedAt: null, late: true } }} summary={SUMMARY} />,
+      PATH,
+    );
+    expect(screen.getByText("Dikirim terlambat")).toBeTruthy();
+    expect(screen.queryByText("Darurat")).toBeNull();
+  });
+
   test("a report in a cluster names it beside its status and links the others, itself marked", async () => {
     const cluster = {
       tickets: ["LA-241126-01", "LA-241126-02", "LA-241126-03"],
