@@ -84,7 +84,7 @@ export function cellLevel(code: string, columns: readonly string[] | undefined, 
   }
 }
 
-export type OutlookDay = {
+type OutlookDay = {
   readonly date: string;
   // Total rain of the day in whole mm, and its level; null when not known.
   readonly rainMm: number | null;
