@@ -23,5 +23,9 @@
   "emergency.position.unsupported": "Peramban ini tidak bisa membaca lokasi. Pilih Lapor darurat dengan keterangan.",
   "emergency.noscript": "Mengirim titik lokasi perlu JavaScript. Pilih Lapor darurat dengan keterangan.",
   "emergency.start": "Lapor darurat",
-  "emergency.startLead": "Jalur singkat: lokasi, kejadian, korban, lalu kirim. Bila nyawa terancam, telepon 112 sekarang."
+  "emergency.startLead": "Jalur singkat: lokasi, kejadian, korban, lalu kirim. Bila nyawa terancam, telepon 112 sekarang.",
+  "emergency.offline.kept": "Tidak ada sinyal. Laporan tersimpan di ponsel ini dan terkirim otomatis begitu ada sinyal. Bila nyawa terancam, telepon 112.",
+  "emergency.offline.hazard": "Kejadian apa? Boleh dilewati",
+  "emergency.offline.hazardUnknown": "Belum dipilih",
+  "emergency.offline.sendNow": "Kirim sekarang"
 }

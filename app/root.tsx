@@ -1,4 +1,4 @@
-import type { ReactNode } from "react";
+import { type ReactNode, useEffect } from "react";
 import {
   Links,
   Meta,
@@ -76,7 +76,17 @@ export function Layout({ children }: { children: ReactNode }) {
   );
 }
 
+// The service worker that opens pages seen before with no signal (LR-03); built pages only, as the dev
+// server's modules change on every save.
+function useOfflinePages() {
+  useEffect(() => {
+    if (import.meta.env.PROD && "serviceWorker" in navigator)
+      void navigator.serviceWorker.register("/lapor-sw.js", { scope: "/lapor" }).catch(() => undefined);
+  }, []);
+}
+
 export default function App() {
+  useOfflinePages();
   return (
     <>
       <NavProgress />

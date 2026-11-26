@@ -2,9 +2,12 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { Link, useSearchParams } from "react-router";
 import type { OneTapSent, OneTapStart } from "../../../src/contract/emergency";
 import type { ErrorEnvelope } from "../../../src/contract/errors";
+import { hazardKey } from "../../../src/copy/hazardKey";
+import { SELECTABLE_HAZARD_TYPES } from "../../../src/domain/hazards";
 import { postJson } from "../../lib/clientApi";
 import { readPosition } from "../../lib/device";
 import { useHydrated } from "../../lib/hooks";
+import { keepReport, type OfflineReport, sendKept } from "../../lib/offline";
 import { limitText } from "../../lib/status";
 import { useText } from "../../lib/text";
 import { Button, buttonStyles } from "../atoms/Button";
@@ -14,21 +17,79 @@ import { Notice } from "../molecules/Notice";
 
 type Step =
   | { readonly kind: "ready" | "reading" | "sending" | "failed" }
+  // No signal: the report waits on this phone and goes when signal returns.
+  | { readonly kind: "kept"; readonly report: OfflineReport }
   | { readonly kind: "noPosition"; readonly reason: "denied" | "unavailable" | "unsupported" }
   | { readonly kind: "refused"; readonly envelope: ErrorEnvelope }
   | { readonly kind: "sent"; readonly sent: OneTapSent };
 
 const BUSY: readonly Step["kind"][] = ["reading", "sending"];
 
-// The phone's point to the desk. Nothing is sent without one.
+const post = (report: OfflineReport) => postJson<OneTapSent>("/emergencies", report);
+
+// The phone's point to the desk. Nothing is sent without one. With no signal it is kept on the
+// phone, with the moment it was made and an id of its own, and sent when signal returns.
 async function sendPoint(onSending: () => void): Promise<Step> {
   const read = await readPosition();
   if (read.kind !== "read") return { kind: "noPosition", reason: read.kind };
-  onSending();
   const { lat, lon, accuracy } = read.position;
-  const answer = await postJson<OneTapSent>("/emergencies", { lat, lon, accuracyM: accuracy });
+  const report = { clientId: crypto.randomUUID(), lat, lon, accuracyM: accuracy, takenAtMs: Date.now() };
+  const kept = (): Step => {
+    keepReport(report);
+    return { kind: "kept", report };
+  };
+  if (navigator.onLine === false) return kept();
+  onSending();
+  const answer = await post(report);
   if (answer.kind === "ok") return { kind: "sent", sent: answer.body };
-  return answer.kind === "refused" ? { kind: "refused", envelope: answer.envelope } : { kind: "failed" };
+  if (answer.kind === "unreachable") return kept();
+  return { kind: "refused", envelope: answer.envelope };
+}
+
+// What a kept report may still tell before it goes: its kind and whether anyone is hurt.
+function KeptDetails({
+  report,
+  onChange,
+}: {
+  readonly report: OfflineReport;
+  readonly onChange: (next: OfflineReport) => void;
+}) {
+  const t = useText();
+  return (
+    <div className="flex flex-col gap-4">
+      <label className="flex flex-col gap-1.5">
+        <span className="font-semibold">{t("emergency.offline.hazard")}</span>
+        <select
+          value={report.hazardType ?? ""}
+          onChange={(event) => onChange({ ...report, hazardType: event.target.value || undefined })}
+          className="min-h-target rounded-control border border-control bg-surface px-3 text-ink"
+        >
+          <option value="">{t("emergency.offline.hazardUnknown")}</option>
+          {SELECTABLE_HAZARD_TYPES.map((id) => (
+            <option key={id} value={id}>
+              {t(hazardKey(id))}
+            </option>
+          ))}
+        </select>
+      </label>
+      <fieldset className="flex flex-col gap-2">
+        <legend className="mb-1.5 font-semibold">{t("card.emergency.victims.title")}</legend>
+        {(["yes", "no", "unknown"] as const).map((id) => (
+          <label key={id} className="flex min-h-target-min items-center gap-3">
+            <input
+              type="radio"
+              name="victims"
+              value={id}
+              checked={(report.victims ?? "unknown") === id}
+              onChange={() => onChange({ ...report, victims: id })}
+              className="size-5"
+            />
+            {t(`card.emergency.victims.${id}`)}
+          </label>
+        ))}
+      </fieldset>
+    </div>
+  );
 }
 
 // "Darurat sekali ketuk": who to call at once, and the phone's point on its way to the desk.
@@ -43,6 +104,20 @@ export function OneTapScreen({ start }: { readonly start: OneTapStart }) {
     setStep({ kind: "reading" });
     setStep(await sendPoint(() => setStep({ kind: "sending" })));
   }, []);
+  const flush = useCallback(async () => {
+    const { sent } = await sendKept(post);
+    if (sent[0]) setStep({ kind: "sent", sent: sent[0] });
+  }, []);
+  // What waits on this phone goes as soon as there is signal: on arrival, and when it comes back.
+  useEffect(() => {
+    void flush();
+    addEventListener("online", flush);
+    return () => removeEventListener("online", flush);
+  }, [flush]);
+  const details = (report: OfflineReport) => {
+    keepReport(report);
+    setStep({ kind: "kept", report });
+  };
   // The tap was on the home: it is taken once, and a page opened again does not send.
   useEffect(() => {
     if (!tapped || started.current) return;
@@ -75,6 +150,12 @@ export function OneTapScreen({ start }: { readonly start: OneTapStart }) {
         <div role="status" className="flex flex-col gap-3">
           {step.kind === "reading" ? <p className="font-semibold">{t("emergency.reading")}</p> : null}
           {step.kind === "sending" ? <p className="font-semibold">{t("emergency.sending")}</p> : null}
+          {step.kind === "kept" ? (
+            <p className="flex items-start gap-2 font-semibold">
+              <Icon name="clock" className="mt-0.5 size-5 text-primary" />
+              {t("emergency.offline.kept")}
+            </p>
+          ) : null}
           {step.kind === "sent" ? (
             <>
               <p className="flex items-start gap-2 font-semibold">
@@ -90,6 +171,7 @@ export function OneTapScreen({ start }: { readonly start: OneTapStart }) {
             <p>{t(`emergency.position.${step.reason}`)}</p>
           </Notice>
         ) : null}
+        {step.kind === "kept" ? <KeptDetails report={step.report} onChange={details} /> : null}
         {step.kind === "failed" ? (
           <Notice kind="error">
             <p>{t("emergency.failed")}</p>
@@ -118,10 +200,16 @@ export function OneTapScreen({ start }: { readonly start: OneTapStart }) {
                 variant="danger"
                 size="main"
                 busyLabel={BUSY.includes(step.kind) ? t("emergency.busy") : null}
-                onClick={() => void send()}
+                onClick={() => void (step.kind === "kept" ? flush() : send())}
               >
                 <Icon name="mapPin" className="size-5" />
-                {t(step.kind === "ready" ? "emergency.send" : "emergency.again")}
+                {t(
+                  step.kind === "kept"
+                    ? "emergency.offline.sendNow"
+                    : step.kind === "ready"
+                      ? "emergency.send"
+                      : "emergency.again",
+                )}
               </Button>
             ) : (
               <p>{t("emergency.noscript")}</p>

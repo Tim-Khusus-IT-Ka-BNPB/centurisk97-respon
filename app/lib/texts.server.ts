@@ -26,7 +26,15 @@ export const PAGE_TEXTS = {
     ...[1, 2, 3, 4, 5, 6].map((n) => `about.step${n}.`),
     "about.emergency.",
   ],
-  emergency: [...SHELL, "emergency.", "limit.", "fieldError.emergency.", "error."],
+  emergency: [
+    ...SHELL,
+    "emergency.",
+    "limit.",
+    "fieldError.emergency.",
+    "error.",
+    "hazard.",
+    "card.emergency.victims.",
+  ],
   start: [
     ...SHELL,
     "about.steps.title",

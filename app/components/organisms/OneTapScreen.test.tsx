@@ -40,7 +40,10 @@ beforeEach(() => {
   calls.length = 0;
   device.read = Promise.resolve(READ);
 });
-afterEach(() => vi.unstubAllGlobals());
+afterEach(() => {
+  vi.unstubAllGlobals();
+  localStorage.clear();
+});
 
 describe("one tap", () => {
   test("shows who to call before the phone is read, then sends its point once", async () => {
@@ -151,3 +154,51 @@ function Served() {
     </TextContext.Provider>
   );
 }
+
+describe("with no signal", () => {
+  test("the point is kept on the phone with what it tells, and goes when signal returns", async () => {
+    vi.stubGlobal("navigator", { ...navigator, onLine: false });
+    answer(() => Response.json(SENT, { status: 201 }));
+    draw();
+    fireEvent.click(await screen.findByRole("button", { name: "Kirim titik lokasi sekarang" }));
+    expect(await screen.findByText(/^Tidak ada sinyal\. Laporan tersimpan di ponsel ini/)).toBeTruthy();
+    expect(calls).toEqual([]);
+    fireEvent.change(screen.getByLabelText("Kejadian apa? Boleh dilewati"), { target: { value: "flood" } });
+    fireEvent.click(screen.getByLabelText("Ya, ada"));
+    fireEvent.change(screen.getByLabelText("Kejadian apa? Boleh dilewati"), { target: { value: "" } });
+    const kept = JSON.parse(localStorage.getItem("lapor-offline-reports") as string);
+    expect(kept).toEqual([expect.objectContaining({ lat: 5.1, lon: 97, accuracyM: 12, victims: "yes" })]);
+    expect(kept[0].hazardType).toBeUndefined();
+    vi.stubGlobal("navigator", { ...navigator, onLine: true });
+    await act(async () => {
+      dispatchEvent(new Event("online"));
+    });
+    expect(await screen.findByText("Terkirim ke meja BNPB dengan nomor LA-241126-01.")).toBeTruthy();
+    expect(calls[0]?.body).toMatchObject({ clientId: kept[0].clientId, victims: "yes" });
+    expect(localStorage.getItem("lapor-offline-reports")).toBeNull();
+  });
+
+  test("a send the network does not carry is kept; Kirim sekarang tries again", async () => {
+    answer(() => {
+      throw new TypeError("offline");
+    });
+    draw();
+    fireEvent.click(await screen.findByRole("button", { name: "Kirim titik lokasi sekarang" }));
+    expect(await screen.findByText(/^Tidak ada sinyal/)).toBeTruthy();
+    answer(() => Response.json(SENT, { status: 201 }));
+    fireEvent.click(screen.getByRole("button", { name: "Kirim sekarang" }));
+    expect(await screen.findByText("Terkirim ke meja BNPB dengan nomor LA-241126-01.")).toBeTruthy();
+  });
+
+  test("a report kept before goes as soon as the page opens with signal", async () => {
+    localStorage.setItem(
+      "lapor-offline-reports",
+      JSON.stringify([
+        { clientId: "00000000-0000-4000-8000-000000000001", lat: 5, lon: 97, accuracyM: 9, takenAtMs: 1 },
+      ]),
+    );
+    answer(() => Response.json(SENT, { status: 201 }));
+    draw();
+    await waitFor(() => expect(screen.getByText("Terkirim ke meja BNPB dengan nomor LA-241126-01.")).toBeTruthy());
+  });
+});
