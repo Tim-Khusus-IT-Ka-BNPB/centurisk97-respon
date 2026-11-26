@@ -3,7 +3,7 @@ import { describe, expect, test, vi } from "vitest";
 import type { ErrorEnvelope } from "../../../src/contract/errors";
 import { FEED_ALONE, FEED_ENTRY } from "../../testing/feed";
 import { renderPage } from "../../testing/render";
-import { FeedScreen } from "./FeedScreen";
+import { FeedScreen, feedQuery } from "./FeedScreen";
 
 vi.mock("./FeedMap", () => ({ FeedMap: () => <div data-testid="map" /> }));
 // What this device follows, kept in memory for the test.
@@ -71,6 +71,21 @@ describe("the public feed page", () => {
     const filter = screen.getByRole("navigation", { name: "Jenis bencana" });
     expect(within(filter).getByRole("link", { name: "Semua jenis" }).getAttribute("aria-current")).toBe("true");
     expect(within(filter).getByRole("link", { name: "Banjir" }).getAttribute("href")).toBe("/lapor/feed?hazard=flood");
+  });
+
+  test("the period and the hazard each keep the other in their links", async () => {
+    renderPage(<FeedScreen load={{ kind: "feed", feed: { entries: [] } }} hazard="flood" period="3" />, {
+      path: "/lapor/feed",
+    });
+    const periods = await screen.findByRole("navigation", { name: "Saring menurut waktu" });
+    expect(within(periods).getByRole("link", { name: "3 hari" }).getAttribute("aria-current")).toBe("true");
+    expect(within(periods).getByRole("link", { name: "Semua" }).getAttribute("href")).toBe("/lapor/feed?hazard=flood");
+    expect(within(periods).getByRole("link", { name: "Hari terakhir" }).getAttribute("href")).toBe(
+      "/lapor/feed?hazard=flood&period=latest",
+    );
+    const hazards = screen.getByRole("navigation", { name: "Jenis bencana" });
+    expect(within(hazards).getAllByRole("link")[0]?.getAttribute("href")).toBe("/lapor/feed?period=3");
+    expect(feedQuery(null, "all")).toBe("");
   });
 
   test("nothing handled yet: says why and leads to a report, or back to every hazard", async () => {

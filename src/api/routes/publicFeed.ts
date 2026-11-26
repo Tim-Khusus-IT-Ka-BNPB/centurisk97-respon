@@ -1,6 +1,7 @@
 import { createRoute, z } from "@hono/zod-openapi";
 import { deskReportSchema } from "../../contract/desk";
 import { feedSchema } from "../../contract/publicFeed";
+import { FEED_PERIODS } from "../../domain/feedPeriod";
 import { SELECTABLE_HAZARD_TYPES } from "../../domain/hazards";
 import { releaseReport } from "../../services/events";
 import { feedProof, markProofPublic, publicFeed } from "../../services/publicFeed";
@@ -16,6 +17,7 @@ const feedQuery = z.strictObject({
     .string()
     .regex(/^\d{2}$/)
     .optional(),
+  period: z.enum(FEED_PERIODS).optional(),
 });
 
 export function addPublicFeedRoutes(api: Api): void {
@@ -33,10 +35,11 @@ export function addPublicFeedRoutes(api: Api): void {
       },
     }),
     async (c) => {
-      const { hazard, province } = c.req.valid("query");
+      const { hazard, province, period } = c.req.valid("query");
       const answer = await publicFeed(c.env, c.var.address, {
         hazardType: hazard ?? null,
         provinceCode: province ?? null,
+        period: period ?? "all",
       });
       if (answer.kind === "limit") return limitRefused(c, answer.refusal, null);
       return c.json(answer.feed, 200);

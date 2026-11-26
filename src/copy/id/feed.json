@@ -27,5 +27,10 @@
   "feed.follow.on": "Diikuti",
   "feed.follow.hint": "Disimpan di perangkat ini saja. Kartu ditandai bila statusnya berubah.",
   "feed.follow.changed": "Status berubah",
-  "feed.follow.only": "Hanya yang diikuti ({count})"
+  "feed.follow.only": "Hanya yang diikuti ({count})",
+  "feed.period.label": "Saring menurut waktu",
+  "feed.period.latest": "Hari terakhir",
+  "feed.period.3": "3 hari",
+  "feed.period.7": "7 hari",
+  "feed.period.all": "Semua"
 }

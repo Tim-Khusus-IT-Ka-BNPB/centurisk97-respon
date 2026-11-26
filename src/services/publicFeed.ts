@@ -1,5 +1,6 @@
 import { markProof, publicProofKey, publicProofs, type ShownRow, shownReports } from "../adapters/d1/publicFeed";
 import type { Feed, FeedEntry } from "../contract/publicFeed";
+import { type FeedPeriod, feedSince } from "../domain/feedPeriod";
 import type { EventTimeValue, PlaceValue } from "../domain/fieldState";
 import { impactOf } from "../domain/impact";
 import { parsed } from "../platform/database";
@@ -15,7 +16,11 @@ import { checkLimits, type LimitRefusal } from "./limits";
 const ENTRIES = 100;
 const PROOFS = 4;
 
-export type FeedFilter = { readonly hazardType: string | null; readonly provinceCode: string | null };
+export type FeedFilter = {
+  readonly hazardType: string | null;
+  readonly provinceCode: string | null;
+  readonly period: FeedPeriod;
+};
 
 type States = Record<string, { readonly state: string; readonly value?: unknown }>;
 
@@ -66,8 +71,9 @@ export async function publicFeed(bindings: ServiceBindings, address: string, fil
     clusterMap(bindings),
     publicProofs(bindings.db),
   ]);
+  const since = feedSince(filter.period, bindings.clock.now(), shown[0] ? Date.parse(shown[0].sent_at) : null);
   const standing = new Map<string, ShownRow>();
-  for (const row of shown) {
+  for (const row of shown.filter((one) => since === null || Date.parse(one.sent_at) >= since)) {
     const key = clusterOf.get(row.ticket_number)?.tickets[0] ?? row.ticket_number;
     if (!standing.has(key)) standing.set(key, row);
   }

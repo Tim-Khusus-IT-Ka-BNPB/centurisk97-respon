@@ -3,6 +3,7 @@ import { Link } from "react-router";
 import type { ErrorEnvelope } from "../../../src/contract/errors";
 import type { Feed, FeedEntry } from "../../../src/contract/publicFeed";
 import { hazardKey } from "../../../src/copy/hazardKey";
+import { FEED_PERIODS, type FeedPeriod } from "../../../src/domain/feedPeriod";
 import { SELECTABLE_HAZARD_TYPES } from "../../../src/domain/hazards";
 import { cn } from "../../lib/cn";
 import { isLimit } from "../../lib/envelope";
@@ -18,22 +19,50 @@ import { FeedMap } from "./FeedMap";
 const chip =
   "inline-flex min-h-target-min shrink-0 items-center gap-2 rounded-control border border-line bg-surface px-3 text-ink no-underline transition-colors duration-100 motion-reduce:transition-none hover:border-control aria-[current=true]:border-primary aria-[current=true]:bg-selected aria-[current=true]:font-semibold aria-[current=true]:text-primary";
 
-const feedLink = (hazard: string | null) => (hazard === null ? "/lapor/feed" : `/lapor/feed?hazard=${hazard}`);
+// The feed's query: a hazard, a period other than all, or neither. Each filter keeps the other.
+export function feedQuery(hazard: string | null, period: FeedPeriod): string {
+  const parts = [...(hazard === null ? [] : [`hazard=${hazard}`]), ...(period === "all" ? [] : [`period=${period}`])];
+  return parts.length === 0 ? "" : `?${parts.join("&")}`;
+}
 
-function HazardFilter({ hazard }: { readonly hazard: string | null }) {
+function Filters({ hazard, period }: { readonly hazard: string | null; readonly period: FeedPeriod }) {
   const t = useText();
   return (
-    <nav aria-label={t("feed.filter.label")} className="-mx-4 flex gap-2 overflow-x-auto px-4 pb-1 md:-mx-6 md:px-6">
-      <Link to={feedLink(null)} aria-current={hazard === null ? "true" : undefined} className={chip}>
-        {t("feed.filter.all")}
-      </Link>
-      {SELECTABLE_HAZARD_TYPES.map((id) => (
-        <Link key={id} to={feedLink(id)} aria-current={hazard === id ? "true" : undefined} className={chip}>
-          <Icon name={hazardIcon(id)} className="size-4" />
-          {t(hazardKey(id))}
+    <div className="flex flex-col gap-2">
+      <nav aria-label={t("feed.period.label")} className="-mx-4 flex gap-2 overflow-x-auto px-4 pb-1 md:-mx-6 md:px-6">
+        {FEED_PERIODS.map((id) => (
+          <Link
+            key={id}
+            to={`/lapor/feed${feedQuery(hazard, id)}`}
+            aria-current={period === id ? "true" : undefined}
+            className={chip}
+          >
+            <Icon name="clock" className="size-4" />
+            {t(`feed.period.${id}`)}
+          </Link>
+        ))}
+      </nav>
+      <nav aria-label={t("feed.filter.label")} className="-mx-4 flex gap-2 overflow-x-auto px-4 pb-1 md:-mx-6 md:px-6">
+        <Link
+          to={`/lapor/feed${feedQuery(null, period)}`}
+          aria-current={hazard === null ? "true" : undefined}
+          className={chip}
+        >
+          {t("feed.filter.all")}
         </Link>
-      ))}
-    </nav>
+        {SELECTABLE_HAZARD_TYPES.map((id) => (
+          <Link
+            key={id}
+            to={`/lapor/feed${feedQuery(id, period)}`}
+            aria-current={hazard === id ? "true" : undefined}
+            className={chip}
+          >
+            <Icon name={hazardIcon(id)} className="size-4" />
+            {t(hazardKey(id))}
+          </Link>
+        ))}
+      </nav>
+    </div>
   );
 }
 
@@ -157,7 +186,7 @@ function Empty({ hazard }: { readonly hazard: string | null }) {
       <p className="text-body text-muted">{t("feed.empty.lead")}</p>
       <div className="flex flex-wrap gap-3">
         {hazard === null ? null : (
-          <Link to={feedLink(null)} className={buttonStyles({ variant: "secondary" })}>
+          <Link to="/lapor/feed" className={buttonStyles({ variant: "secondary" })}>
             {t("feed.empty.all")}
           </Link>
         )}
@@ -190,7 +219,15 @@ export type FeedLoad =
   | { readonly kind: "feed"; readonly feed: Feed }
   | { readonly kind: "unavailable"; readonly envelope: ErrorEnvelope | null };
 
-export function FeedScreen({ load, hazard }: { readonly load: FeedLoad; readonly hazard: string | null }) {
+export function FeedScreen({
+  load,
+  hazard,
+  period = "all",
+}: {
+  readonly load: FeedLoad;
+  readonly hazard: string | null;
+  readonly period?: FeedPeriod;
+}) {
   const t = useText();
   const all = load.kind === "feed" ? load.feed.entries : [];
   // Read once the page runs in the browser: the server knows nothing of what this device follows.
@@ -206,7 +243,7 @@ export function FeedScreen({ load, hazard }: { readonly load: FeedLoad; readonly
         <h1 className="text-page font-bold tracking-[-0.01em]">{t("feed.title")}</h1>
         <p className="max-w-[65ch] text-body text-muted">{t("feed.lead")}</p>
       </header>
-      <HazardFilter hazard={hazard} />
+      <Filters hazard={hazard} period={period} />
       {mine.length > 0 ? (
         <button
           type="button"

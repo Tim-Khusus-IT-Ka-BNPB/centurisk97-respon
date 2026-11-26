@@ -157,6 +157,22 @@ describe("the public feed", () => {
       expect((await feed(refused)).status, refused).toBe(400);
   });
 
+  test("a period shows the latest day with a report, or the last 3 or 7 days, or everything", async () => {
+    const { ticket } = await sentReport();
+    await handled(ticket);
+    const all = (await feed()).feed.entries.length;
+    expect(all).toBeGreaterThan(0);
+    expect((await feed("?period=all")).feed.entries).toHaveLength(all);
+    expect((await feed("?period=7")).feed.entries).toHaveLength(all);
+    const now = clock.now();
+    clock.set(now + 10 * 86_400_000);
+    expect((await feed("?period=3")).feed.entries).toEqual([]);
+    expect((await feed("?period=7")).feed.entries).toEqual([]);
+    expect((await feed("?period=latest")).feed.entries.length).toBeGreaterThan(0);
+    expect((await feed("?period=2")).status).toBe(400);
+    clock.set(now);
+  });
+
   test("a photo of the work shows only once an officer marks it, and goes when unmarked", async () => {
     const { ticket } = await sentReport();
     await handled(ticket);
