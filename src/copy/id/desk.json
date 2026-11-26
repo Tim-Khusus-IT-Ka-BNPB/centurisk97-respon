@@ -320,5 +320,18 @@
   "desk.offline.chip": "Dari luring",
   "desk.offline.late": "Dikirim terlambat",
   "desk.offline.saved": "Disimpan di HP {date}, pukul {time} {zone}",
-  "desk.offline.noClock": "Jam HP pelapor tidak bisa dipercaya"
+  "desk.offline.noClock": "Jam HP pelapor tidak bisa dipercaya",
+  "desk.officers.title": "PIC BPBD setempat",
+  "desk.officers.hint": "Nomor dibuka satu per satu, dan setiap pembukaan tercatat.",
+  "desk.officers.role": "{position}, {agency}",
+  "desk.officers.roleProvince": "{position}, {agency}, tingkat provinsi",
+  "desk.officers.show": "Tampilkan nomor",
+  "desk.officers.showFor": "Tampilkan nomor {name}",
+  "desk.officers.busy": "Membuka nomor...",
+  "desk.officers.call": "Telepon",
+  "desk.officers.whatsapp": "WhatsApp",
+  "desk.officers.none": "Belum ada PIC aktif di BPBD kabupaten atau kota ini.",
+  "desk.officers.official": "Nomor resmi dari daftar kontak BPBD",
+  "desk.officers.national": "Call center BNPB",
+  "desk.officers.officialNone": "Nomor BPBD ini belum ada di daftar kontak"
 }

@@ -22,6 +22,7 @@ const RIGHTS: readonly (readonly [DeskCapability, boolean, boolean])[] = [
   ["downloadAggregates", true, false],
   ["pauseWarnings", true, false],
   ["releaseEvent", true, false],
+  ["callOfficers", true, false],
 ];
 
 describe("desk capabilities", () => {

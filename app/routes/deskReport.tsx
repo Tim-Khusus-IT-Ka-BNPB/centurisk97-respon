@@ -20,8 +20,13 @@ export async function action({ params, request, context }: Route.ActionArgs) {
   const acted = await actOnDeskReport(params.ticketNumber, await request.formData(), context.api);
   if (acted.kind === "redirect") return redirect(acted.location, { status: 303, headers: acted.headers });
   if (acted.kind === "done") return null;
-  if (acted.kind === "identity") return data({ envelope: null, typed: null, identity: acted.identity });
-  return data({ envelope: acted.envelope, typed: acted.typed, identity: null }, { status: acted.status });
+  if (acted.kind === "identity") return data({ envelope: null, typed: null, identity: acted.identity, officer: null });
+  if (acted.kind === "officerNumber")
+    return data({ envelope: null, typed: null, identity: null, officer: acted.officer });
+  return data(
+    { envelope: acted.envelope, typed: acted.typed, identity: null, officer: null },
+    { status: acted.status },
+  );
 }
 
 export default function DeskReportRoute({ loaderData, actionData }: Route.ComponentProps) {
@@ -35,6 +40,7 @@ export default function DeskReportRoute({ loaderData, actionData }: Route.Compon
           refusal={actionData?.envelope}
           typed={actionData?.typed}
           identity={actionData?.identity}
+          officer={actionData?.officer}
         />
       </WithTexts>
     );

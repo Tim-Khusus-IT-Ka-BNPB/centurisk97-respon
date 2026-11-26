@@ -13,7 +13,14 @@ import type { ErrorEnvelope } from "../../src/contract/errors";
 import type { WarningControl } from "../../src/contract/warnings";
 import type { Texts } from "../../src/copy/text";
 import { MISSING_STATUSES, type MissingStatus } from "../../src/domain/missingPerson";
-import { DESK_VIEWS, type DeskFilters, type DeskShown, type DeskTyped, type DeskView } from "./deskTypes";
+import {
+  DESK_VIEWS,
+  type DeskFilters,
+  type DeskShown,
+  type DeskTyped,
+  type DeskView,
+  type OfficerNumber,
+} from "./deskTypes";
 import type { DeskMissingOne } from "./missingTypes";
 import { documentOrBack } from "./ownReportPage.server";
 import { PAGE_TEXTS, pickTexts } from "./texts.server";
@@ -220,7 +227,9 @@ type DeskReportActed =
   // Nothing to show but the page as it is now.
   | { readonly kind: "done" }
   // Who reported, drawn on the page that asked and kept nowhere.
-  | { readonly kind: "identity"; readonly identity: DeskIdentity };
+  | { readonly kind: "identity"; readonly identity: DeskIdentity }
+  // A BPBD officer's number, the same way.
+  | { readonly kind: "officerNumber"; readonly officer: OfficerNumber };
 
 // The photo and the officer's reading, as the API takes them.
 function proofForm(form: FormData): FormData {
@@ -261,6 +270,8 @@ function deskPost(form: FormData): readonly [path: string, body?: unknown] {
       return ["proofs", proofForm(form)];
     case "identity":
       return ["identity"];
+    case "officerNumber":
+      return [`officers/${encodeURIComponent(text("profileId"))}/number`];
     case "take":
       return ["take"];
     case "proofPublic":
@@ -288,6 +299,7 @@ export async function actOnDeskReport(ticketNumber: string, form: FormData, api:
     return { kind: "render", status: response.status, envelope, typed: typedIn(form) };
   }
   if (path === "identity") return { kind: "identity", identity: (await response.json()) as DeskIdentity };
+  if (path.startsWith("officers/")) return { kind: "officerNumber", officer: (await response.json()) as OfficerNumber };
   if (form.get("action") === "opened") return { kind: "done" };
   const action = form.get("action");
   const saved =

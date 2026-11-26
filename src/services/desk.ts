@@ -53,6 +53,7 @@ import { clusterMap } from "./clusters";
 import { at, draftZone } from "./draftView";
 import { emergencyList } from "./emergency";
 import { checkLimits, type LimitRefusal } from "./limits";
+import { officersOf } from "./officers";
 import { summaryGroups } from "./summary";
 import { versionsOf } from "./versions";
 
@@ -316,6 +317,7 @@ async function reportBody(bindings: ServiceBindings, staff: StaffPrincipal, tick
       role: found.reporterRole,
       identity: mayUse(staff.role, "readIdentity") ? identityOf(found) : null,
     },
+    officers: await officersOf(bindings, staff, found.villageCode, place),
     point: point === undefined ? null : pointView(point),
     groups: summaryGroups(states).map((group) => ({
       ...group,

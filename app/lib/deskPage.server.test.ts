@@ -262,6 +262,15 @@ describe("a change to a ticket", () => {
     expect(calls[0]).toMatchObject({ method: "POST", path: "/desk/reports/LA-241126-01/identity" });
   });
 
+  test("opening an officer's number answers on the page too", async () => {
+    const number = { profileId: "profile a", number: "+628001108001" };
+    const { api, calls } = fakeApi(() => Response.json(number));
+    expect(
+      await actOnDeskReport("LA-241126-01", form({ action: "officerNumber", profileId: "profile a" }), api),
+    ).toEqual({ kind: "officerNumber", officer: number });
+    expect(calls[0]).toMatchObject({ method: "POST", path: "/desk/reports/LA-241126-01/officers/profile%20a/number" });
+  });
+
   test("a refused one gives back what was typed", async () => {
     const refused = await actOnDeskReport(
       "LA-241126-01",

@@ -28,6 +28,14 @@ export type OfficerProfile = {
   readonly agency: string;
 };
 
+// A BPBD officer a BNPB officer may call about a report in their region, with their WhatsApp number.
+export type Officer = OfficerProfile & {
+  readonly level: "regency" | "province";
+  readonly number: string;
+};
+
 export type IdentityPort = {
   resolve(headers: Headers): Promise<Principal>;
+  // The officers of the BPBD of this village's regency, then of its province.
+  officers(villageCode: string): Promise<readonly Officer[]>;
 };

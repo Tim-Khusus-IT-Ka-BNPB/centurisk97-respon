@@ -38,7 +38,14 @@ export const SEEDED_SESSIONS = [
       role: "regionalOfficer",
       label: "BPBD Kabupaten Uji Satu, Petugas Uji",
       scope: { level: "regency", code: "11.08" },
-      profile: { id: "profile-1108-a", name: "Uji Andi", position: "Pusdalops", agency: "BPBD Kabupaten Uji Satu" },
+      profile: {
+        id: "profile-1108-a",
+        name: "Uji Andi",
+        position: "Pusdalops",
+        agency: "BPBD Kabupaten Uji Satu",
+        // 0800 is a toll-free prefix: a synthetic number, never a person's.
+        number: "+628001108001",
+      },
     },
   },
   {
@@ -63,7 +70,13 @@ export const SEEDED_SESSIONS = [
       role: "regionalOfficer",
       label: "BPBD Kabupaten Uji Satu, Petugas Uji",
       scope: { level: "regency", code: "11.08" },
-      profile: { id: "profile-1108-b", name: "Uji Budi", position: "Kedaruratan", agency: "BPBD Kabupaten Uji Satu" },
+      profile: {
+        id: "profile-1108-b",
+        name: "Uji Budi",
+        position: "Kedaruratan",
+        agency: "BPBD Kabupaten Uji Satu",
+        number: "+628001108002",
+      },
     },
   },
 ] as const satisfies readonly {
@@ -75,6 +88,6 @@ export const SEEDED_SESSIONS = [
     role: "deskOfficer" | "regionalOfficer";
     label: string;
     scope: { level: "province" | "regency"; code: string } | null;
-    profile: { id: string; name: string; position: string; agency: string } | null;
+    profile: { id: string; name: string; position: string; agency: string; number: string } | null;
   } | null;
 }[];

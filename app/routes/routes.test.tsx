@@ -922,6 +922,7 @@ describe("desk routes", () => {
       photos: [],
       videos: [],
       event: null,
+      officers: null,
       nextStatuses: [],
       revision: 0,
       mayTake: false,
@@ -973,7 +974,7 @@ describe("desk routes", () => {
     renderPage(
       routeElement(DeskReportRoute, {
         loaderData: read.data,
-        actionData: { envelope: notAllowed, typed: null, identity: null },
+        actionData: { envelope: notAllowed, typed: null, identity: null, officer: null },
       }),
       {
         path: "/lapor/meja/LA-241126-01",
@@ -1000,7 +1001,19 @@ describe("desk routes", () => {
         context: { api: api({ "POST /desk/reports/LA-241126-01/identity": json(who) }) },
       } as Args),
     );
-    expect(asked.data).toEqual({ envelope: null, typed: null, identity: who });
+    expect(asked.data).toEqual({ envelope: null, typed: null, identity: who, officer: null });
+    const number = { profileId: "profile-a", number: "+628001108001" };
+    const opened2 = unwrap(
+      await deskReport.action({
+        params: { ticketNumber: "LA-241126-01" },
+        request: post("http://x/lapor/meja/LA-241126-01", [
+          ["action", "officerNumber"],
+          ["profileId", "profile-a"],
+        ]),
+        context: { api: api({ "POST /desk/reports/LA-241126-01/officers/profile-a/number": json(number) }) },
+      } as Args),
+    );
+    expect(opened2.data).toEqual({ envelope: null, typed: null, identity: null, officer: number });
     const limited = unwrap(
       await deskReport.action({
         params: { ticketNumber: "LA-241126-01" },

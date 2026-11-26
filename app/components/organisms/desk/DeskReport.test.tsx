@@ -412,6 +412,32 @@ describe("a report on the desk", () => {
     expect(screen.queryByText("Darurat")).toBeNull();
   });
 
+  test("BNPB sees who at the BPBD to call", async () => {
+    const officers = {
+      items: [
+        {
+          profileId: "profile-a",
+          name: "Uji Andi",
+          position: "Pusdalops",
+          agency: "BPBD Kabupaten Uji Satu",
+          level: "regency" as const,
+          masked: "0800****8001",
+        },
+      ],
+      official: null,
+    };
+    await renderDesk(
+      <DeskReportView
+        report={{ ...REPORT, officers }}
+        summary={SUMMARY}
+        officer={{ profileId: "profile-a", number: "+628001108001" }}
+      />,
+      PATH,
+    );
+    const section = screen.getByRole("region", { name: "PIC BPBD setempat" });
+    expect(within(section).getByRole("link", { name: "Telepon" }).getAttribute("href")).toBe("tel:+628001108001");
+  });
+
   test("a report in a cluster names it beside its status and links the others, itself marked", async () => {
     const cluster = {
       tickets: ["LA-241126-01", "LA-241126-02", "LA-241126-03"],

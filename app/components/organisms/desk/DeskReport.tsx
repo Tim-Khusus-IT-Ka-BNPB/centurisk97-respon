@@ -4,7 +4,7 @@ import type { DeskIdentity, DeskReport, DeskSummary } from "../../../../src/cont
 import type { ErrorEnvelope } from "../../../../src/contract/errors";
 import { hazardKey } from "../../../../src/copy/hazardKey";
 import { cn } from "../../../lib/cn";
-import type { DeskTyped } from "../../../lib/deskTypes";
+import type { DeskTyped, OfficerNumber } from "../../../lib/deskTypes";
 import { cardProblem, isLimit } from "../../../lib/envelope";
 import { limitText } from "../../../lib/status";
 import { useText } from "../../../lib/text";
@@ -16,6 +16,7 @@ import { DeskMapCanvas, SMALL } from "../DeskMapCanvas";
 import { ChangeList, FileButtons, VersionList } from "../VersionList";
 import { DeskActions } from "./DeskActions";
 import { DeskHistory } from "./DeskHistory";
+import { DeskOfficers } from "./DeskOfficers";
 import { Hazard, PhotoFigure } from "./DeskQueue";
 import { DeskShell } from "./DeskShell";
 import { DeskValues } from "./DeskValues";
@@ -360,6 +361,7 @@ export function DeskReportView({
   refusal = null,
   typed = null,
   identity = null,
+  officer = null,
 }: {
   readonly report: DeskReport;
   readonly summary: DeskSummary | null;
@@ -368,6 +370,8 @@ export function DeskReportView({
   readonly typed?: DeskTyped | null;
   // Asked for on this page just now.
   readonly identity?: DeskIdentity | null;
+  // A BPBD officer's number just opened, shown on this page only.
+  readonly officer?: OfficerNumber | null;
 }) {
   const t = useText();
   // Kept the same between renders, so the map is drawn once.
@@ -496,6 +500,11 @@ export function DeskReportView({
           <Section id="desk-reporter" title={t("desk.reporter")}>
             <Reporter report={report} identity={report.reporter.identity ?? identity} />
           </Section>
+          {report.officers === null ? null : (
+            <Section id="desk-officers" title={t("desk.officers.title")}>
+              <DeskOfficers officers={report.officers} opened={officer} />
+            </Section>
+          )}
         </div>
         <div className="flex min-w-0 flex-col gap-5 xl:col-start-2 xl:row-start-2">
           <Section id="desk-history" title={t("desk.history")}>

@@ -26,3 +26,6 @@ export type DeskFilters = {
   readonly has: string;
   readonly page: number;
 };
+
+// A BPBD officer's full number, opened from a report.
+export type OfficerNumber = { readonly profileId: string; readonly number: string };

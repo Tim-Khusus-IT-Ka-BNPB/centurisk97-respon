@@ -55,6 +55,7 @@ export const COLUMN_CLASSES: Readonly<Record<string, TableClasses>> = {
       profile_name: I,
       profile_position: I,
       agency: I,
+      profile_number: I,
     },
   },
   report_draft: {
@@ -354,6 +355,10 @@ export const COLUMN_CLASSES: Readonly<Record<string, TableClasses>> = {
       closed_at: I,
       anonymised_at: I,
     },
+  },
+  officer_number_view: {
+    retention: "with its ticket; append-only",
+    columns: { id: I, ticket_number: I, staff_id: I, staff_label: I, profile_id: I, at: I },
   },
   missing_person_history: {
     retention: "with its report; append-only",

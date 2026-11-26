@@ -71,6 +71,7 @@ export const list = (queue: DeskQueue) => ({ view: "list" as const, queue });
 export const REPORT: DeskReport = {
   event: null,
   videos: [],
+  officers: null,
   ...ITEM,
   status: "seen",
   account: { label: "Pusdalops BNPB, Petugas Uji" },

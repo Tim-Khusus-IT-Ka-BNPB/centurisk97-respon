@@ -5,7 +5,7 @@ import { CHECK_RESULTS } from "../domain/fieldCheck";
 import { photoBadgeSchema, summaryGroupSchema } from "./card";
 import { hazardTypeSchema, reporterRoleSchema, timeSchema } from "./common";
 import { reportVersionSchema } from "./ownReport";
-import { eventTimeSchema, ticketStatusSchema } from "./tracking";
+import { contactSchema, eventTimeSchema, ticketStatusSchema } from "./tracking";
 
 // A report's own figures: a count, 0 for an explicit none, null when not known.
 export const impactSchema = z.strictObject({
@@ -160,6 +160,16 @@ export const deskIdentitySchema = z.object({
 
 export type DeskIdentity = z.infer<typeof deskIdentitySchema>;
 
+// The region's BPBD officers as BNPB sees them on a report: numbers masked until opened.
+export const deskOfficerSchema = z.object({
+  profileId: z.string(),
+  name: z.string(),
+  position: z.string(),
+  agency: z.string(),
+  level: z.enum(["regency", "province"]),
+  masked: z.string(),
+});
+
 export const deskReportSchema = queueItemSchema.extend({
   account: accountSchema,
   // Videos of the scene, in the order they came; each played from its own address.
@@ -168,6 +178,9 @@ export const deskReportSchema = queueItemSchema.extend({
   event: z.object({ code: z.string(), tickets: z.array(z.string()).min(1), mayRelease: z.boolean() }).nullable(),
   // Null when the account must ask for it, each time logged.
   reporter: z.object({ role: reporterRoleSchema, identity: deskIdentitySchema.nullable() }),
+  // BNPB only: who at the BPBD to call, and the BPBD's own number when no officer of the regency
+  // is there; null for an account that may not.
+  officers: z.object({ items: z.array(deskOfficerSchema), official: contactSchema.nullable() }).nullable(),
   // Where it is on the map; null where its village has no outline to place it in.
   point: mapPointSchema.nullable(),
   groups: z.array(deskGroupSchema),

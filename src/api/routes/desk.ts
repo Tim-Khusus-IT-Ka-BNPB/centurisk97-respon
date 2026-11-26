@@ -31,6 +31,7 @@ import {
   viewDeskReport,
 } from "../../services/desk";
 import { checkLimits } from "../../services/limits";
+import { officerNumber } from "../../services/officers";
 import type { ApiContext } from "../context";
 import { refuse } from "../envelope";
 import { type Api, addRoute, jsonBody, jsonResponse, refusal } from "../route";
@@ -159,6 +160,25 @@ export function addDeskRoutes(api: Api): void {
       c.header("x-robots-tag", "noindex");
       c.header("cache-control", "no-store");
       return answered(c, await revealIdentity(c.env, staffOf(c), c.req.valid("param").ticketNumber));
+    },
+  );
+
+  addRoute(
+    api,
+    "staff",
+    createRoute({
+      method: "post",
+      path: "/desk/reports/{ticketNumber}/officers/{profileId}/number",
+      request: { params: ticketParams.extend({ profileId: z.string().min(1).max(100) }) },
+      responses: {
+        200: jsonResponse("Logged; the officer's full number", z.object({ profileId: z.string(), number: z.string() })),
+      },
+    }),
+    async (c) => {
+      c.header("x-robots-tag", "noindex");
+      c.header("cache-control", "no-store");
+      const { ticketNumber, profileId } = c.req.valid("param");
+      return answered(c, await officerNumber(c.env, staffOf(c), ticketNumber, profileId));
     },
   );
 

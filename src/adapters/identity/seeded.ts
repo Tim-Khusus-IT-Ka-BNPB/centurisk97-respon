@@ -1,9 +1,9 @@
 import { parse } from "hono/utils/cookie";
 import { DAY_MS } from "../../domain/time";
-import { type Database, row, run, sql } from "../../platform/database";
+import { type Database, row, rows, run, sql } from "../../platform/database";
 import { sha256Hex } from "../../platform/keys";
 import type { Clock } from "../../ports/clock";
-import type { IdentityPort, Principal, StaffPrincipal } from "../../ports/identity";
+import type { IdentityPort, Officer, Principal, StaffPrincipal } from "../../ports/identity";
 
 export const DEVICE_COOKIE = "device_key";
 export const SESSION_COOKIE = "seeded_session";
@@ -57,6 +57,26 @@ export async function isSeededStaffCode(db: Database, code: string): Promise<boo
 // for a typed number bound to this browser. Only fingerprints of both are stored.
 export function seededIdentity(db: Database, clock: Clock): IdentityPort {
   return {
+    async officers(villageCode) {
+      const found = await rows<{
+        id: string;
+        name: string;
+        position: string;
+        agency: string;
+        number: string;
+        level: Officer["level"];
+      }>(
+        db,
+        sql`select profile_id as id, profile_name as name, profile_position as position, agency, profile_number as number,
+            scope_level as level
+          from seeded_session
+          where kind = 'staff' and profile_number is not null
+            and ((scope_level = 'regency' and scope_code = ${villageCode.slice(0, 5)})
+              or (scope_level = 'province' and scope_code = ${villageCode.slice(0, 2)}))
+          order by scope_level = 'province', profile_name`,
+      );
+      return found;
+    },
     async resolve(headers) {
       const cookies = parse(headers.get("cookie") ?? "");
       const token = cookies[SESSION_COOKIE];
