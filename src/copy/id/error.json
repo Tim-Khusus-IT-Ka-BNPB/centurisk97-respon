@@ -22,6 +22,7 @@
   "error.send.failed": "Laporan belum terkirim karena layanan sedang terganggu. Semua jawaban tetap tersimpan. Ketuk Kirim sekali lagi.",
   "error.tracking.notFound": "Laporan tidak ditemukan.",
   "error.feed.photoNotFound": "Foto tidak ditemukan, atau tidak lagi ditampilkan di Alun-alun.",
+  "error.outlook.regencyNotFound": "Belum ada prakiraan untuk kabupaten atau kota ini.",
   "error.report.notFound": "Laporan tidak ditemukan di perangkat ini. Buka dari perangkat yang Anda pakai untuk melapor, atau lihat statusnya lewat tautan lacak.",
   "error.followUp.closed": "Kabar ini belum terkirim. {reason}",
   "error.followUp.nothingNew": "Belum ada yang berubah, jadi kabar belum dikirim. Ubah satu bagian, tulis kabarnya di kotak pesan, atau tambah foto.",

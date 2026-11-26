@@ -32,6 +32,7 @@ const ERROR_CODES = [
   "gateway.refused",
   "gateway.replayed",
   "feed.photoNotFound",
+  "outlook.regencyNotFound",
 ] as const;
 
 export type ErrorCode = (typeof ERROR_CODES)[number] | `limit.${LimitId}`;

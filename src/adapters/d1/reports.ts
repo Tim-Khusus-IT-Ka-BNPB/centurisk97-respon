@@ -127,7 +127,7 @@ export const rateReport = (reportId: string, rating: number, at: Date): Query =>
 // A small reference file as last imported, or null when none is.
 export async function referenceFile(
   db: Database,
-  name: "bpbdContacts" | "education" | "responseActions",
+  name: "bpbdContacts" | "education" | "responseActions" | "forecast",
 ): Promise<unknown | null> {
   const found = await row<{ body: string }>(db, sql`select body from reference_file where name = ${name}`);
   return found ? JSON.parse(found.body) : null;
