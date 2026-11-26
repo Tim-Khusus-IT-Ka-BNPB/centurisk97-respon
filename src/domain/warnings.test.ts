@@ -21,6 +21,10 @@ describe("a phone's push", () => {
     "https://api.push.apple.com/x",
     "https://wns2-par02p.notify.windows.com/w/?token=x",
     "https://updates.push.services.mozilla.com/wpush/v2/x",
+    "https://push.apple.com/x",
+    "https://notify.windows.com/x",
+    "https://push.services.mozilla.com/x",
+    `https://fcm.googleapis.com/${"a".repeat(1000 - 27)}`,
   ])("%s is a push service", (endpoint) => {
     expect(pushEndpointOk(endpoint)).toBe(true);
   });
@@ -32,7 +36,13 @@ describe("a phone's push", () => {
     "https://notpush.apple.comx/x",
     "https://example.test/fcm.googleapis.com",
     "not an address",
-    `https://fcm.googleapis.com/${"a".repeat(1000)}`,
+    `https://fcm.googleapis.com/${"a".repeat(1000 - 26)}`,
+    "https://xfcm.googleapis.com/x",
+    "https://xandroid.googleapis.com/x",
+    "https://android.googleapis.com.example.test/x",
+    "https://web.push.apple.com.example.test/x",
+    "https://x.notify.windows.com.example.test/x",
+    "https://updates.push.services.mozilla.com.example.test/x",
   ])("%s is not", (endpoint) => {
     expect(pushEndpointOk(endpoint)).toBe(false);
   });

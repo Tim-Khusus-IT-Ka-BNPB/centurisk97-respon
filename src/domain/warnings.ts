@@ -65,16 +65,13 @@ export function risenWarnings(file: ForecastFile, sent: ReadonlyMap<string, numb
   return file.kab.flatMap((regency) =>
     WARNING_HAZARDS.flatMap(([hazard]) => {
       const code = file.kode[hazard];
+      if (code === undefined) return [];
       const rows = regency[hazard] as readonly (readonly (number | null)[])[] | undefined;
-      return (code?.hari ?? []).flatMap((date, index) => {
-        const level = cellLevel(hazard, code?.kol, rows?.[index]);
-        const rise = {
-          regencyCode: `${regency.id.slice(0, 2)}.${regency.id.slice(2)}`,
-          regencyName: regency.nama,
-          hazard,
-          date,
-        };
-        return date >= today && level !== null && level > (sent.get(sentKey(rise)) ?? 0) && !heldAtNight(level, nowMs)
+      const regencyCode = `${regency.id.slice(0, 2)}.${regency.id.slice(2)}`;
+      return code.hari.flatMap((date, index) => {
+        const level = cellLevel(hazard, code.kol, rows?.[index]) ?? 0;
+        const rise = { regencyCode, regencyName: regency.nama, hazard, date };
+        return date >= today && level > (sent.get(sentKey(rise)) ?? 0) && !heldAtNight(level, nowMs)
           ? [{ ...rise, level }]
           : [];
       });
