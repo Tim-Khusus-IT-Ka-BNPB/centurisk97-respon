@@ -124,6 +124,7 @@ export function IdentityForm({ values, envelope, askNumber, profileId, editing, 
                 autoFocus={focus === "role" && index === 0}
                 describedBy={roleProblem ? errorIdOf("role") : undefined}
                 label={t(role === "citizen" ? "identity.role.citizen" : "identity.role.officer")}
+                icon={role === "citizen" ? "house" : "clipboardCheck"}
               />
             ))}
           </div>
@@ -133,20 +134,29 @@ export function IdentityForm({ values, envelope, askNumber, profileId, editing, 
         {askNumber ? (
           field("number", "tel-national", { type: "tel" })
         ) : (
-          <p className="text-meta text-muted">{t("identity.number.session")}</p>
+          <div className="flex flex-col gap-2">
+            <p className="text-body font-semibold">{t("identity.number.label")}</p>
+            <p className="flex items-center gap-2 rounded-control bg-sunken px-4 py-3">
+              <Icon name="circleCheck" className="text-primary" />
+              {t("identity.number.session")}
+            </p>
+          </div>
         )}
         <div className="reveal-officer flex-col gap-5">
           {field("officerRegency", "off")}
           {field("officerPosition", "organization-title")}
         </div>
-        <div className="flex flex-col rounded-control bg-sunken">
-          <p className="px-4 pt-4">{t("consent.text")}</p>
+        <div className="flex flex-col gap-1 rounded-control border border-line bg-sunken p-2">
+          <p className="flex gap-3 px-2 pt-2">
+            <Icon name="info" className="mt-0.5 text-primary" />
+            {t("consent.text")}
+          </p>
           <details className="group">
-            <summary className="flex min-h-target list-none items-center gap-1.5 px-4 pb-2 font-semibold text-primary [&::-webkit-details-marker]:hidden">
+            <summary className="flex min-h-target cursor-pointer list-none items-center gap-1.5 rounded-control px-2 ps-10 font-semibold text-primary hover:underline [&::-webkit-details-marker]:hidden">
               {t("consent.privacyOpen")}
               <Icon name="chevronRight" className="size-4 rotate-90 group-open:-rotate-90" />
             </summary>
-            <div className="flex flex-col gap-4 border-t border-line p-4">
+            <div className="mt-1 flex flex-col gap-4 border-t border-line px-2 pt-4 pb-2">
               <PrivacyText headingLevel={3} />
               <ClosePrivacy />
             </div>

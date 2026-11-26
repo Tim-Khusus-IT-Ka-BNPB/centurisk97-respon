@@ -4,6 +4,7 @@ import type { MeResponse } from "../../../src/contract/draft";
 import type { Text } from "../../../src/copy/text";
 import { clockTime } from "../../../src/copy/time";
 import { cn } from "../../lib/cn";
+import { ABOUT_STEPS } from "../../lib/docs";
 import { useBusy } from "../../lib/hooks";
 import type { IdentityValues, StartActionData, StartPageData } from "../../lib/startTypes";
 import { useText } from "../../lib/text";
@@ -202,6 +203,44 @@ function StaffSession() {
         </Form>
       </ActionRow>
     </Panel>
+  );
+}
+
+// Beside the start on a wide screen: the steps of a report with this one marked, and the life line.
+export function StartAside() {
+  const t = useText();
+  return (
+    <div className="flex flex-col gap-4">
+      <section aria-labelledby="aside-steps" className="card-surface flex flex-col gap-3 p-5">
+        <h2 id="aside-steps" className="text-meta font-semibold text-muted">
+          {t("about.steps.title")}
+        </h2>
+        <ol className="flex flex-col gap-1">
+          {ABOUT_STEPS.map((step) => (
+            <li
+              key={step}
+              aria-current={step === 1 ? "step" : undefined}
+              className={cn(
+                "flex items-center gap-3 rounded-control px-2 py-1.5",
+                step === 1 ? "bg-selected font-semibold text-ink" : "text-muted",
+              )}
+            >
+              <span
+                aria-hidden="true"
+                className={cn(
+                  "flex size-7 shrink-0 items-center justify-center rounded-full text-meta font-bold tabular-nums",
+                  step === 1 ? "bg-primary text-on-primary" : "border border-line",
+                )}
+              >
+                {step}
+              </span>
+              {t(`about.step${step}.title`)}
+            </li>
+          ))}
+        </ol>
+      </section>
+      <LifeLine />
+    </div>
   );
 }
 

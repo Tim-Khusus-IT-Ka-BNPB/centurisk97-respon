@@ -29,6 +29,8 @@ export const PAGE_TEXTS = {
   emergency: [...SHELL, "emergency.", "limit.", "fieldError.emergency.", "error."],
   start: [
     ...SHELL,
+    "about.steps.title",
+    ...[1, 2, 3, 4, 5, 6].map((n) => `about.step${n}.title`),
     "emergency.start",
     "emergency.startLead",
     "home.report",
