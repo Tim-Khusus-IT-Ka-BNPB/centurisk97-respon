@@ -207,5 +207,14 @@
   "card.sameEvent.yes.other": "Ya, kejadian yang sama",
   "card.sameEvent.yesNote": "Jenis dan waktunya diambil dari laporan itu, sisanya ditanyakan seperti biasa",
   "card.sameEvent.no": "Bukan, kejadian lain",
-  "card.sameEvent.noNote": "Isi laporan baru dari awal"
+  "card.sameEvent.noNote": "Isi laporan baru dari awal",
+  "card.video.title": "Video kejadian",
+  "card.video.lead": "Rekam langsung dengan kamera, paling lama 60 detik dan 30 MB, sampai 3 video. Bila sinyal putus, pengiriman berlanjut dari bagian yang sudah sampai.",
+  "card.video.pick": "Rekam video",
+  "card.video.kept": "Video {n}, {seconds} detik",
+  "card.video.remove": "Hapus",
+  "card.video.sending": "Mengirim video, bagian {done} dari {parts}...",
+  "card.video.broken": "Sinyal putus. {done} dari {parts} bagian sudah sampai.",
+  "card.video.resume": "Lanjutkan mengirim",
+  "card.video.failed": "Video belum terkirim. Periksa sambungan internet, lalu coba lagi."
 }

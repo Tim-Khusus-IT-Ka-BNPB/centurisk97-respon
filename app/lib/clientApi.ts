@@ -43,3 +43,10 @@ export const putJson = <T>(path: string, body: unknown) =>
 
 // A post answered with no body.
 export const postOnly = (path: string, body: unknown) => answerOf<null>(path, posted(body), async () => null);
+
+// A part of a file as the request's whole body.
+export const putBytes = <T>(path: string, bytes: Blob) =>
+  answerOf<T>(path, { method: "PUT", headers: { "x-lapor-client": "1" }, body: bytes }, json<T>);
+
+export const deleteJson = <T>(path: string) =>
+  answerOf<T>(path, { method: "DELETE", headers: { "x-lapor-client": "1" } }, json<T>);

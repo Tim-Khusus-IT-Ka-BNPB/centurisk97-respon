@@ -11,6 +11,7 @@ import { Button, buttonStyles } from "../../atoms/Button";
 import { Icon } from "../../atoms/Icon";
 import { FieldError } from "../../molecules/Field";
 import { CardShell, TurnForm, useDraftView } from "./CardShell";
+import { VideoUpload } from "./VideoUpload";
 
 type PhotosCard = Extract<Card, { kind: "photos" }>;
 type Photo = PhotosCard["photos"][number];
@@ -201,6 +202,7 @@ function PhotoForm({ card }: { readonly card: PhotosCard }) {
 export function PhotosCardView({ card }: { readonly card: PhotosCard }) {
   const t = useText();
   const { draft } = useDraftView();
+  const hydrated = useHydrated();
   return (
     <CardShell
       card={card}
@@ -216,6 +218,7 @@ export function PhotosCardView({ card }: { readonly card: PhotosCard }) {
         </ul>
       ) : null}
       <PhotoForm card={card} />
+      {hydrated ? <VideoUpload draftId={draft.draftId} /> : null}
       <TurnForm className="flex flex-col">
         {card.options.map((option) => (
           <Button
