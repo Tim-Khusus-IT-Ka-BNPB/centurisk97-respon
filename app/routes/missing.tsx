@@ -3,6 +3,7 @@ import { MissingAside, MissingScreen } from "../components/organisms/MissingScre
 import { Page } from "../components/templates/Page";
 import { pageMeta } from "../lib/meta";
 import { actOnMissing, loadMissingPage } from "../lib/missingPage.server";
+import { languageOf } from "../lib/texts.server";
 import type { Route } from "./+types/missing";
 
 export const headers = () => ({ "cache-control": "private, no-store", "x-robots-tag": "noindex" });
@@ -16,7 +17,7 @@ export const meta = (args: Route.MetaArgs) =>
   });
 
 export async function loader({ request, context }: Route.LoaderArgs) {
-  return loadMissingPage(new URL(request.url), context.api);
+  return loadMissingPage(new URL(request.url), context.api, languageOf(request));
 }
 
 export async function action({ request, context }: Route.ActionArgs) {

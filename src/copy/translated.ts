@@ -1,52 +1,12 @@
-// What a language file may change: the report pages' words, and nothing a reporter relies on. No
-// imports, so the translation tool shares these rules.
+// What a language file may change: every word a member of the public reads on the site, and nothing
+// only staff read. No imports, so the translation tool shares these rules.
 
-// The catalogue namespaces the report pages draw from (start, draft, chronology).
-export const TRANSLATED = [
-  "app.",
-  "page.",
-  "meta.",
-  "notice.",
-  "common.",
-  "help.title",
-  "nav.",
-  "home.contact.organisation",
-  "home.report",
-  "theme.",
-  "about.steps.title",
-  "about.step",
-  "about.words.",
-  "emergency.start",
-  "emergency.startLead",
-  "identity.",
-  "consent.",
-  "known.",
-  "resume.",
-  "start.",
-  "card.",
-  "chat.",
-  "chronology.",
-  "error.",
-  "fieldError.",
-  "field.",
-  "followUp.",
-  "group.",
-  "hazard.",
-  "hazardSubtype.",
-  "limit.",
-  "option.",
-  "privacy.",
-  "refusal.",
-  "reply.",
-  "stage.",
-  "state.",
-  "unit.",
-  "value.",
-  "version.change",
-] as const;
+// Staff's own words stay Indonesian: the desk, its documents and counts, the village posters it
+// prints, and the warnings the cron sends, which go out before anyone's language is known.
+export const STAFF_ONLY = ["desk.", "aggregate.", "document.", "missing.desk.", "poster.", "warn.push."] as const;
 
 // app.lang names the file's language and is never translated.
-export const isTranslated = (key: string) => key !== "app.lang" && TRANSLATED.some((prefix) => key.startsWith(prefix));
+export const isTranslated = (key: string) => key !== "app.lang" && !STAFF_ONLY.some((prefix) => key.startsWith(prefix));
 
 const placeholders = (text: string) => [...text.matchAll(/\{[a-zA-Z]+\}/g)].map((found) => found[0]).sort();
 const digits = (text: string) => [...text.matchAll(/\d+(?:[.,]\d+)*/g)].map((found) => found[0]).sort();

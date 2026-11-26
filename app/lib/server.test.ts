@@ -49,6 +49,7 @@ describe("copy for a page", () => {
         (group) => `app.language.group.${group}`,
       ),
       "app.language.label",
+      "app.language.open",
       "app.language.submit",
       "app.language.title",
       "app.name",

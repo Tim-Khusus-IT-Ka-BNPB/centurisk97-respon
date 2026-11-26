@@ -4,7 +4,7 @@ import { LanguageChooser } from "../components/molecules/LanguagePicker";
 import { Page } from "../components/templates/Page";
 import { pageMeta } from "../lib/meta";
 import { useText } from "../lib/text";
-import { PAGE_TEXTS, pickTexts } from "../lib/texts.server";
+import { languageOf, PAGE_TEXTS, pickTexts } from "../lib/texts.server";
 import { safeReturn } from "../lib/theme";
 import type { Route } from "./+types/language";
 
@@ -21,7 +21,10 @@ export const meta = (args: Route.MetaArgs) =>
 // GET /lapor/bahasa: the chooser as a page of its own, for a browser with no script; the page it
 // came from is where it goes back to.
 export function loader({ request }: Route.LoaderArgs) {
-  return { back: safeReturn(new URL(request.url).searchParams.get("back")), texts: pickTexts(PAGE_TEXTS.language) };
+  return {
+    back: safeReturn(new URL(request.url).searchParams.get("back")),
+    texts: pickTexts(PAGE_TEXTS.language, null, languageOf(request)),
+  };
 }
 
 // POST /lapor/bahasa: the language picker's form. The route keeps the choice in a cookie; the page

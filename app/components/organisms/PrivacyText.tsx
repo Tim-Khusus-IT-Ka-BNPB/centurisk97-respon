@@ -12,6 +12,7 @@ export function PrivacyText({ headingLevel }: { readonly headingLevel: 2 | 3 }) 
   return (
     <div className="flex max-w-[65ch] flex-col gap-4">
       <p className="text-meta text-muted">{t("privacy.draftNote")}</p>
+      {t("app.lang") === "id" ? null : <p className="text-meta text-muted">{t("privacy.translationNote")}</p>}
       <p>{t("privacy.intro", APP)}</p>
       <dl className="grid grid-cols-[auto_1fr] gap-x-4 gap-y-1 text-meta">
         {PRIVACY_META.map((part) => (

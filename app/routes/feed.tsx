@@ -4,7 +4,7 @@ import { SELECTABLE_HAZARD_TYPES } from "../../src/domain/hazards";
 import { type FeedLoad, FeedScreen } from "../components/organisms/FeedScreen";
 import { Page } from "../components/templates/Page";
 import { pageMeta } from "../lib/meta";
-import { PAGE_TEXTS, pickTexts } from "../lib/texts.server";
+import { languageOf, PAGE_TEXTS, pickTexts } from "../lib/texts.server";
 import type { Route } from "./+types/feed";
 
 export const headers = () => ({ "cache-control": "private, no-store" });
@@ -20,7 +20,7 @@ export async function loader({ request, context }: Route.LoaderArgs) {
   const load: FeedLoad = response.ok
     ? { kind: "feed", feed: (await response.json()) as Feed }
     : { kind: "unavailable", envelope: (await response.json().catch(() => null)) as ErrorEnvelope | null };
-  return { load, hazard, texts: pickTexts(PAGE_TEXTS.feed) };
+  return { load, hazard, texts: pickTexts(PAGE_TEXTS.feed, null, languageOf(request)) };
 }
 
 export default function FeedRoute({ loaderData: { load, hazard, texts } }: Route.ComponentProps) {

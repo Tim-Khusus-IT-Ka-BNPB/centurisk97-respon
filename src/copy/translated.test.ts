@@ -1,7 +1,7 @@
 import { describe, expect, test } from "vitest";
 import { copy } from ".";
 import { LANGUAGES, languageFrom, OFFERED } from "./languages";
-import { isTranslated, TRANSLATED, translationProblem } from "./translated";
+import { isTranslated, STAFF_ONLY, translationProblem } from "./translated";
 import { TRANSLATIONS } from "./translations";
 
 describe("a translated line", () => {
@@ -18,13 +18,26 @@ describe("a translated line", () => {
     expect(translationProblem("Di sini", "Di sini keamanan")).toBeNull();
   });
 
-  test("the report pages' words are translated; the file's own language never", () => {
-    expect(isTranslated("card.placeSearch.title")).toBe(true);
-    expect(isTranslated("about.step3.title")).toBe(true);
-    expect(isTranslated("app.lang")).toBe(false);
-    expect(isTranslated("desk.title")).toBe(false);
-    expect(isTranslated("info.title")).toBe(false);
-    expect(TRANSLATED.every((prefix) => copy.keys.some((key) => key.startsWith(prefix)))).toBe(true);
+  test("every public word is translated; staff's words and the file's own language never", () => {
+    for (const key of [
+      "card.placeSearch.title",
+      "about.step3.title",
+      "info.title",
+      "help.title",
+      "missing.title",
+      "home.report",
+    ])
+      expect(isTranslated(key), key).toBe(true);
+    for (const key of [
+      "app.lang",
+      "desk.title",
+      "missing.desk.title",
+      "document.title",
+      "poster.title",
+      "warn.push.title",
+    ])
+      expect(isTranslated(key), key).toBe(false);
+    expect(STAFF_ONLY.every((prefix) => copy.keys.some((key) => key.startsWith(prefix)))).toBe(true);
   });
 });
 

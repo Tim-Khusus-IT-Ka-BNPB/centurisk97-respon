@@ -43,7 +43,7 @@ function Failed() {
   const t = useText();
   return (
     <div className="flex min-h-dvh flex-col">
-      <SiteHeader nav={false} width="max-w-[72rem]" />
+      <SiteHeader nav={false} width="max-w-[72rem]" languages={false} />
       <main className="contours flex flex-1 flex-col text-on-hero">
         <div className="mx-auto grid w-full max-w-[72rem] grid-cols-[minmax(0,1fr)] gap-9 px-4 py-10 md:px-6 md:py-16 lg:grid-cols-[minmax(0,1fr)_23rem] lg:items-center lg:gap-20 lg:py-24">
           <div className="flex flex-col gap-5">

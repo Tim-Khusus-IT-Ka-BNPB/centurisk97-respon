@@ -60,6 +60,10 @@ const post = (url: string, entries: [string, string][]) => {
   return new Request(url, { method: "POST", body });
 };
 const unwrap = (value: unknown) => (value as { data: unknown; init: ResponseInit | null }) ?? null;
+const homeLoaderIn = (cookie: string) =>
+  home.loader({ request: visit("/lapor", cookie), context: { api: api({ "GET /me": json(SAMPLE_ME) }) } } as Args);
+// A visitor's request, in the language their cookie names.
+const visit = (path = "/lapor", cookie = "") => new Request(`http://x${path}`, cookie ? { headers: { cookie } } : {});
 
 describe("route modules", () => {
   test("report pages are never cached", () => {
@@ -69,10 +73,15 @@ describe("route modules", () => {
   test("titles come from the catalogue with the app's name", async () => {
     const meta = (route: { meta: (args: Args) => unknown[] }, loaded: unknown) =>
       route.meta({ data: loaded, matches: [] } as Args)[0];
-    const noTopics = { context: { api: api({ "GET /education": json(SAMPLE_FIELD_ERROR, 503) }) } } as Args;
+    const noTopics = {
+      request: visit(),
+      context: { api: api({ "GET /education": json(SAMPLE_FIELD_ERROR, 503) }) },
+    } as Args;
     expect(meta(help, await help.loader(noTopics))).toEqual({ title: "Bantuan, Pantau Bencana BNPB" });
-    expect(meta(about, about.loader())).toEqual({ title: "Tentang, Pantau Bencana BNPB" });
-    expect(meta(privacy, privacy.loader())).toEqual({ title: "Kebijakan privasi, Pantau Bencana BNPB" });
+    expect(meta(about, about.loader({ request: visit() } as Args))).toEqual({ title: "Tentang, Pantau Bencana BNPB" });
+    expect(meta(privacy, privacy.loader({ request: visit() } as Args))).toEqual({
+      title: "Kebijakan privasi, Pantau Bencana BNPB",
+    });
     for (const route of [draft, start, home]) expect(route.meta({ data: undefined, matches: [] } as Args)).toEqual([]);
   });
 
@@ -82,7 +91,21 @@ describe("route modules", () => {
         request: new Request("https://lapor.example.test/lapor", { headers: { cookie: "theme=dark" } }),
         context: { origin: "https://lapor.example.test" },
       } as Args),
-    ).toEqual({ origin: "https://lapor.example.test", theme: "dark" });
+    ).toEqual({ origin: "https://lapor.example.test", theme: "dark", language: "id" });
+    // The language picked is the public pages' own; the desk stays Indonesian.
+    for (const [path, language] of [
+      ["/lapor/info", "jv"],
+      ["/lapor/meja/LA-261126-01", "id"],
+    ] as const)
+      expect(
+        root.loader({
+          request: new Request(`https://lapor.example.test${path}`, { headers: { cookie: "bahasa=jv" } }),
+          context: { origin: "https://lapor.example.test" },
+        } as Args).language,
+      ).toBe(language);
+    expect(root.shouldRevalidate({ formAction: "/lapor/bahasa" } as Args)).toBe(true);
+    expect(root.shouldRevalidate({ formAction: "/lapor/theme" } as Args)).toBe(true);
+    expect(root.shouldRevalidate({ formAction: "/lapor/report" } as Args)).toBe(false);
     expect(root.links().map((link) => (link as { href: string }).href)).toEqual([
       "/favicon-32.png",
       "/apple-touch-icon.png",
@@ -91,7 +114,7 @@ describe("route modules", () => {
   });
 
   test("an unknown address answers 404, is not indexed, and leads back home", async () => {
-    const loaded = unwrap(notFound.loader());
+    const loaded = unwrap(notFound.loader({ request: visit() } as Args));
     expect(loaded.init?.status).toBe(404);
     expect(notFound.meta({ data: loaded.data, matches: [] } as Args)).toContainEqual({
       name: "robots",
@@ -360,9 +383,12 @@ describe("route modules", () => {
   });
 
   test("the home reads the open drafts on the server, and survives when it cannot", async () => {
-    const read = await home.loader({ context: { api: api({ "GET /me": json(SAMPLE_ME) }) } } as Args);
+    const read = await home.loader({ request: visit(), context: { api: api({ "GET /me": json(SAMPLE_ME) }) } } as Args);
     expect(read.me).toEqual(SAMPLE_ME);
-    const down = await home.loader({ context: { api: api({ "GET /me": json(SAMPLE_FIELD_ERROR, 503) }) } } as Args);
+    const down = await home.loader({
+      request: visit(),
+      context: { api: api({ "GET /me": json(SAMPLE_FIELD_ERROR, 503) }) },
+    } as Args);
     expect(down.me).toBeNull();
     renderPage(routeElement(HomeRoute, { loaderData: read }), { path: "/lapor" });
     expect(await screen.findByRole("link", { name: "Lapor kejadian" })).toBeTruthy();
@@ -380,7 +406,11 @@ describe("route modules", () => {
     const params = { ticketNumber: "LA-231126-01" };
     const path = "/reports/LA-231126-01";
     const loaded = unwrap(
-      await ownReport.loader({ params, context: { api: api({ [`GET ${path}`]: json(OWN_REPORT) }) } } as Args),
+      await ownReport.loader({
+        params,
+        request: visit(),
+        context: { api: api({ [`GET ${path}`]: json(OWN_REPORT) }) },
+      } as Args),
     );
     expect(loaded.init?.status).toBe(200);
     expect(ownReport.meta({ data: loaded.data, matches: [] } as Args)).toContainEqual({
@@ -392,7 +422,7 @@ describe("route modules", () => {
 
     const missing = json(apiEnvelope("report.notFound"), 404);
     const refused = unwrap(
-      await ownReport.loader({ params, context: { api: api({ [`GET ${path}`]: missing }) } } as Args),
+      await ownReport.loader({ params, request: visit(), context: { api: api({ [`GET ${path}`]: missing }) } } as Args),
     );
     expect(refused.init?.status).toBe(404);
     renderPage(routeElement(OwnReportRoute, { loaderData: refused.data }), { path: "/lapor/reports/LA-231126-01" });
@@ -431,6 +461,7 @@ describe("route modules", () => {
     const loaded = unwrap(
       await ownReport.loader({
         params,
+        request: visit(),
         context: { api: api({ "GET /reports/LA-231126-01": json(OWN_REPORT) }) },
       } as Args),
     );
@@ -473,6 +504,7 @@ describe("route modules", () => {
     expect(emergency.headers()).toEqual({ "cache-control": "private, no-store", "x-robots-tag": "noindex" });
     const start = { name: "Uji Satu", maskedNumber: "0800****0001", contact: { level: "national" } };
     const loaded = await emergency.loader({
+      request: visit(),
       context: { api: api({ "GET /emergencies/start": json(start) }) },
     } as Args);
     const titles = emergency
@@ -482,6 +514,7 @@ describe("route modules", () => {
     renderPage(routeElement(EmergencyRoute, { loaderData: loaded }), { path: "/lapor/darurat" });
     expect(await screen.findByRole("heading", { level: 1, name: "Darurat sekali ketuk" })).toBeTruthy();
     const stranger = await emergency.loader({
+      request: visit(),
       context: { api: api({ "GET /emergencies/start": json(SAMPLE_FIELD_ERROR, 401) }) },
     } as Args);
     expect((stranger as Response).headers.get("location")).toBe("/lapor/report?darurat=1");
@@ -489,7 +522,7 @@ describe("route modules", () => {
 
   test("the tracking page is never cached or indexed, and reads its report with script", async () => {
     expect(tracking.headers()).toEqual({ "cache-control": "private, no-store", "x-robots-tag": "noindex" });
-    const loaded = tracking.loader();
+    const loaded = tracking.loader({ request: visit() } as Args);
     expect(tracking.meta({ data: loaded, matches: [] } as Args)).toContainEqual({
       title: "Lacak laporan, Pantau Bencana BNPB",
     });
@@ -515,7 +548,10 @@ describe("route modules", () => {
         },
       ],
     };
-    const loaded = await help.loader({ context: { api: api({ "GET /education": json(topics) }) } } as Args);
+    const loaded = await help.loader({
+      request: visit(),
+      context: { api: api({ "GET /education": json(topics) }) },
+    } as Args);
     renderPage(routeElement(HelpRoute, { loaderData: loaded }), { path: "/lapor/help" });
     expect(await screen.findByRole("heading", { level: 2, name: "Istilah" })).toBeTruthy();
     expect(screen.getByRole("heading", { level: 2, name: "Edukasi siaga" })).toBeTruthy();
@@ -524,6 +560,7 @@ describe("route modules", () => {
     expect(screen.getByText("Topik per 19 November 2026.")).toBeTruthy();
     cleanup();
     const without = await help.loader({
+      request: visit(),
       context: { api: api({ "GET /education": json(SAMPLE_FIELD_ERROR, 503) }) },
     } as Args);
     renderPage(routeElement(HelpRoute, { loaderData: without }), { path: "/lapor/help" });
@@ -531,14 +568,31 @@ describe("route modules", () => {
     expect(screen.getByRole("link", { name: "Baca kebijakan privasi lengkap" }).getAttribute("href")).toBe(
       "/lapor/privacy",
     );
-    renderPage(routeElement(AboutRoute, { loaderData: about.loader() }), { path: "/lapor/about" });
+    renderPage(routeElement(AboutRoute, { loaderData: about.loader({ request: visit() } as Args) }), {
+      path: "/lapor/about",
+    });
     expect(await screen.findByRole("link", { name: /112 Darurat terpadu/ })).toHaveProperty("href", "tel:112");
     expect(screen.getAllByRole("listitem").length).toBeGreaterThan(6);
-    renderPage(routeElement(PrivacyRoute, { loaderData: privacy.loader() }), { path: "/lapor/privacy" });
+    renderPage(routeElement(PrivacyRoute, { loaderData: privacy.loader({ request: visit() } as Args) }), {
+      path: "/lapor/privacy",
+    });
     expect(await screen.findByRole("heading", { level: 2, name: "Hak Anda" })).toBeTruthy();
     expect(screen.getByText("26 November 2026")).toBeTruthy();
     expect(screen.getAllByRole("link", { name: "Tentang" })[0]?.getAttribute("href")).toBe("/lapor/about");
     expect(screen.getByRole("link", { name: "Hak Anda" }).getAttribute("href")).toBe("#privacy-rights-2");
+    expect(screen.queryByText(/Yang berlaku secara hukum/)).toBeNull();
+  });
+
+  test("a public page is in the visitor's language, and the privacy text says the Indonesian one binds", async () => {
+    const english = privacy.loader({ request: visit("/lapor/privacy", "bahasa=en") } as Args);
+    expect(english.texts["app.lang"]).toBe("en");
+    expect(english.texts["privacy.title"]).not.toBe(
+      privacy.loader({ request: visit() } as Args).texts["privacy.title"],
+    );
+    renderPage(routeElement(PrivacyRoute, { loaderData: english }), { path: "/lapor/privacy" });
+    expect(await screen.findByText(english.texts["privacy.translationNote"] as string)).toBeTruthy();
+    const home = await homeLoaderIn("bahasa=jv");
+    expect(home.texts["app.lang"]).toBe("jv");
   });
 
   test("the start step loads, posts, redirects with a 303, or draws the refusal", async () => {

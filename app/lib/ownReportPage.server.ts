@@ -1,6 +1,7 @@
 import type { ApiCall } from "../../src/api/bridge";
 import type { ErrorEnvelope } from "../../src/contract/errors";
 import type { OwnReportDetail } from "../../src/contract/ownReport";
+import type { LanguageId } from "../../src/copy/languages";
 import type { Texts } from "../../src/copy/text";
 import { refusedWords } from "./cards";
 import { PAGE_TEXTS, pickTexts } from "./texts.server";
@@ -10,12 +11,16 @@ export type OwnReportLoad =
   | { readonly kind: "refused"; readonly status: number; readonly texts: Texts; readonly envelope: ErrorEnvelope };
 
 // GET /lapor/reports/<ticket>, for the phone or session that sent it.
-export async function loadOwnReport(ticketNumber: string, api: ApiCall): Promise<OwnReportLoad> {
+export async function loadOwnReport(
+  ticketNumber: string,
+  api: ApiCall,
+  language: LanguageId = "id",
+): Promise<OwnReportLoad> {
   const response = await api("GET", `/reports/${encodeURIComponent(ticketNumber)}`);
   if (response.ok)
     return {
       kind: "report",
-      texts: pickTexts(PAGE_TEXTS.ownReport),
+      texts: pickTexts(PAGE_TEXTS.ownReport, null, language),
       report: (await response.json()) as OwnReportDetail,
     };
   const envelope = (await response.json()) as ErrorEnvelope;
@@ -23,7 +28,7 @@ export async function loadOwnReport(ticketNumber: string, api: ApiCall): Promise
   return {
     kind: "refused",
     status: response.status,
-    texts: pickTexts(PAGE_TEXTS.refused, [copyKey, refusedWords(code)]),
+    texts: pickTexts(PAGE_TEXTS.refused, [copyKey, refusedWords(code)], language),
     envelope,
   };
 }

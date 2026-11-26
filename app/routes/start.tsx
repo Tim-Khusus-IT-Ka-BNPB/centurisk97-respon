@@ -27,7 +27,7 @@ export async function action({ request, context }: Route.ActionArgs) {
 
 export default function StartRoute({ loaderData, actionData }: Route.ComponentProps) {
   return (
-    <Page texts={loaderData.texts} publicPage={false} aside={loaderData.emergency ? null : <StartAside />} languages>
+    <Page texts={loaderData.texts} publicPage={false} aside={loaderData.emergency ? null : <StartAside />}>
       {loaderData.emergency ? <EmergencyStart /> : <StartHeading />}
       <StartScreen page={loaderData} acted={actionData ?? null} />
     </Page>

@@ -78,15 +78,15 @@ export function LanguageChooser({ back, onClose }: { readonly back: string; read
   );
 }
 
-// The report pages' language. Closed it says the language in use; it opens the chooser in a dialog,
-// or with no script as a page of its own. Shown only when there is a choice.
+// The site's language, in the header of every public page: it says the language in use and opens the
+// chooser in a dialog, or with no script as a page of its own. Shown only when there is a choice.
 export function LanguagePicker() {
   const t = useText();
   const { pathname, search } = useLocation();
   const dialog = useRef<HTMLDialogElement>(null);
   if (OFFERED.length < 2) return null;
   const back = `${pathname}${search}`;
-  const named = new Map<string, string>(OFFERED);
+  const current = new Map<string, string>(OFFERED).get(t("app.lang")) as string;
   const open = (event: MouseEvent<HTMLAnchorElement>) => {
     if (typeof dialog.current?.showModal !== "function") return;
     event.preventDefault();
@@ -97,17 +97,11 @@ export function LanguagePicker() {
       <a
         href={`/lapor/bahasa?back=${encodeURIComponent(back)}`}
         onClick={open}
-        className="flex min-h-target items-center gap-3 card-surface px-4 py-2 text-ink no-underline hover:border-primary"
+        aria-label={t("app.language.open", { name: current })}
+        className="inline-flex min-h-target-min items-center gap-1.5 rounded-control px-2 font-semibold text-ink no-underline hover:bg-sunken"
       >
-        <Icon name="globe" className="size-5 text-primary" />
-        <span className="flex min-w-0 flex-col leading-tight">
-          <span className="text-meta text-muted">{t("app.language.label")}</span>
-          <span className="font-semibold">{named.get(t("app.lang"))}</span>
-        </span>
-        <span className="ms-auto flex items-center gap-1 font-semibold text-primary">
-          {t("app.language.change")}
-          <Icon name="chevronRight" className="size-5" />
-        </span>
+        <Icon name="globe" className="size-5" />
+        <span className="hidden sm:inline">{shortName(current)}</span>
       </a>
       <dialog
         ref={dialog}

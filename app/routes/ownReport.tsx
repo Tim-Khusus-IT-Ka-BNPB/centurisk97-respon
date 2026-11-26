@@ -4,6 +4,7 @@ import { OwnReportScreen } from "../components/organisms/OwnReportScreen";
 import { Page } from "../components/templates/Page";
 import { pageMeta } from "../lib/meta";
 import { actOnOwnReport, loadOwnReport } from "../lib/ownReportPage.server";
+import { languageOf } from "../lib/texts.server";
 import type { Route } from "./+types/ownReport";
 
 export const headers = () => ({ "cache-control": "private, no-store", "x-robots-tag": "noindex" });
@@ -16,8 +17,8 @@ export const meta = (args: Route.MetaArgs) =>
     index: false,
   });
 
-export async function loader({ params, context }: Route.LoaderArgs) {
-  const load = await loadOwnReport(params.ticketNumber, context.api);
+export async function loader({ params, request, context }: Route.LoaderArgs) {
+  const load = await loadOwnReport(params.ticketNumber, context.api, languageOf(request));
   return data(load, { status: load.kind === "refused" ? load.status : 200 });
 }
 

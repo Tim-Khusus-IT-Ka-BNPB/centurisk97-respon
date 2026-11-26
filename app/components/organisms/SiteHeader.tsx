@@ -3,6 +3,7 @@ import { cn } from "../../lib/cn";
 import { useText } from "../../lib/text";
 import { Icon } from "../atoms/Icon";
 import { BrandLockup } from "../molecules/BrandLockup";
+import { LanguagePicker } from "../molecules/LanguagePicker";
 import { ThemeSwitch } from "../molecules/ThemeSwitch";
 
 const navLink =
@@ -30,7 +31,16 @@ function NavLinks({ className }: { readonly className: string }) {
 
 // The band on every page: the way home, and on public pages help and about. Below 1024px it stays
 // one row: the links move into a menu that opens with no script, and closes on each new page.
-export function SiteHeader({ nav, width }: { readonly nav: boolean; readonly width: string }) {
+export function SiteHeader({
+  nav,
+  width,
+  languages = true,
+}: {
+  readonly nav: boolean;
+  readonly width: string;
+  // A page shown with no connection offers no language: picking one needs the service.
+  readonly languages?: boolean;
+}) {
   const t = useText();
   const { pathname } = useLocation();
   return (
@@ -47,6 +57,7 @@ export function SiteHeader({ nav, width }: { readonly nav: boolean; readonly wid
         <div className="flex items-center gap-2 sm:gap-4">
           {nav ? <NavLinks className="hidden lg:flex" /> : null}
           {/* On a phone a page with links keeps the switch in its menu, so the bar stays one row. */}
+          {languages ? <LanguagePicker /> : null}
           <ThemeSwitch className={nav ? "hidden lg:block" : undefined} />
           {nav ? (
             <details key={pathname} className="group lg:hidden">

@@ -9,6 +9,7 @@ import {
   useFetchers,
   useRouteLoaderData,
 } from "react-router";
+import { languageFrom } from "../src/copy/languages";
 import { makeText } from "../src/copy/text";
 import type { Route } from "./+types/root";
 import styles from "./app.css?url";
@@ -23,16 +24,21 @@ export const links: Route.LinksFunction = () => [
   { rel: "manifest", href: "/lapor/manifest.webmanifest" },
 ];
 
-// The site's address, so every page's canonical and share links are absolute, and the theme this
-// browser picked, so the page is drawn in it from the first paint.
+// The site's address, so every page's canonical and share links are absolute, the theme this
+// browser picked, so the page is drawn in it from the first paint, and the language its public pages
+// are in (the desk is Indonesian).
 export const loader = ({ request, context }: Route.LoaderArgs) => ({
   origin: context.origin,
   theme: themeFromCookie(request.headers.get("cookie")),
+  language: new URL(request.url).pathname.startsWith("/lapor/meja")
+    ? "id"
+    : languageFrom(request.headers.get("cookie")),
 });
 
-// Only a theme picked changes them. Left out of every other refresh, they stay when it fails, and so
-// does the theme.
-export const shouldRevalidate = ({ formAction }: ShouldRevalidateFunctionArgs) => formAction === "/lapor/theme";
+// Only a theme or a language picked changes them. Left out of every other refresh, they stay when it
+// fails, and so does the theme.
+export const shouldRevalidate = ({ formAction }: ShouldRevalidateFunctionArgs) =>
+  formAction === "/lapor/theme" || formAction === "/lapor/bahasa";
 
 // Every page has its own; this is what is left when the page cannot be shown.
 export const meta: Route.MetaFunction = () => [
@@ -53,8 +59,9 @@ function useTheme(): Theme {
 
 export function Layout({ children }: { children: ReactNode }) {
   const theme = useTheme();
+  const language = useRouteLoaderData<typeof loader>("root")?.language ?? "id";
   return (
-    <html lang="id" data-theme={theme}>
+    <html lang={language} data-theme={theme}>
       <head>
         <meta charSet="utf-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1, interactive-widget=resizes-content" />

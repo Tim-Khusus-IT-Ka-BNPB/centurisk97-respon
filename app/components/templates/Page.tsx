@@ -2,7 +2,6 @@ import { type ReactNode, useMemo } from "react";
 import { makeText, type Texts } from "../../../src/copy/text";
 import { cn } from "../../lib/cn";
 import { TextContext } from "../../lib/text";
-import { LanguagePicker } from "../molecules/LanguagePicker";
 import { PageBanner } from "../organisms/PageBanner";
 import { SiteFooter } from "../organisms/SiteFooter";
 import { SiteHeader } from "../organisms/SiteHeader";
@@ -25,7 +24,6 @@ export function Page({
   aside,
   children,
   dock,
-  languages = false,
 }: {
   readonly texts: Texts;
   // Public pages use a wide container that fills the screen; the report uses one centred column.
@@ -40,8 +38,6 @@ export function Page({
   readonly aside?: ReactNode;
   // The message box, docked under the content column.
   readonly dock?: ReactNode;
-  // The report pages offer their language above the content.
-  readonly languages?: boolean;
 }) {
   const text = useMemo(() => makeText(texts), [texts]);
   // The header, any band and the footer share the site's width; a page of one task keeps a narrower
@@ -62,7 +58,6 @@ export function Page({
           )}
         >
           <div className="flex min-w-0 flex-col gap-6">
-            {languages ? <LanguagePicker /> : null}
             {children}
             {dock}
           </div>

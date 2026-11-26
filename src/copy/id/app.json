@@ -14,5 +14,6 @@
   "app.language.group.sulawesi": "Sulawesi",
   "app.language.group.malukuPapua": "Maluku dan Papua",
   "app.language.continue": "Lanjut dalam {name}",
-  "app.language.close": "Tutup"
+  "app.language.close": "Tutup",
+  "app.language.open": "Bahasa: {name}. Ganti bahasa"
 }

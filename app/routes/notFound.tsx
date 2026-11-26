@@ -3,7 +3,7 @@ import { buttonStyles } from "../components/atoms/Button";
 import { Page } from "../components/templates/Page";
 import { pageMeta } from "../lib/meta";
 import { useText } from "../lib/text";
-import { PAGE_TEXTS, pickTexts } from "../lib/texts.server";
+import { languageOf, PAGE_TEXTS, pickTexts } from "../lib/texts.server";
 import type { Route } from "./+types/notFound";
 
 export const meta = (args: Route.MetaArgs) =>
@@ -15,7 +15,8 @@ export const meta = (args: Route.MetaArgs) =>
   });
 
 // Any address the app does not serve answers 404 with a way back.
-export const loader = () => data({ texts: pickTexts(PAGE_TEXTS.notFound) }, { status: 404 });
+export const loader = ({ request }: Route.LoaderArgs) =>
+  data({ texts: pickTexts(PAGE_TEXTS.notFound, null, languageOf(request)) }, { status: 404 });
 
 function NotFoundScreen() {
   const t = useText();

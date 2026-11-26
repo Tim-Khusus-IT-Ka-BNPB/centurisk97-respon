@@ -1,5 +1,5 @@
 import { copy } from "../../src/copy";
-import type { LanguageId } from "../../src/copy/languages";
+import { type LanguageId, languageFrom } from "../../src/copy/languages";
 import type { Texts } from "../../src/copy/text";
 import { TRANSLATIONS } from "../../src/copy/translations";
 
@@ -187,3 +187,6 @@ export function pickTexts(prefixes: readonly string[], body: unknown = null, lan
       .map((key) => [key, words[key] ?? copy.text(key)]),
   );
 }
+
+// The language a public page is drawn in: the visitor's pick, kept in a cookie for the whole site.
+export const languageOf = (request: Request): LanguageId => languageFrom(request.headers.get("cookie"));

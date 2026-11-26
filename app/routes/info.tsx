@@ -3,7 +3,7 @@ import type { OutlookView } from "../../src/contract/outlook";
 import { type InfoLoad, InfoScreen } from "../components/organisms/InfoScreen";
 import { Page } from "../components/templates/Page";
 import { pageMeta } from "../lib/meta";
-import { PAGE_TEXTS, pickTexts } from "../lib/texts.server";
+import { languageOf, PAGE_TEXTS, pickTexts } from "../lib/texts.server";
 import type { Route } from "./+types/info";
 
 export const meta = (args: Route.MetaArgs) =>
@@ -27,7 +27,7 @@ export async function loader({ request, context }: Route.LoaderArgs) {
   const search = new URL(request.url).searchParams;
   const regency = search.get("kab") ?? "";
   const query = (search.get("q") ?? "").trim();
-  const texts = pickTexts(PAGE_TEXTS.info);
+  const texts = pickTexts(PAGE_TEXTS.info, null, languageOf(request));
   let load: InfoLoad = { kind: "start", query };
   if (REGENCY.test(regency)) {
     const response = await context.api("GET", `/outlook?regency=${regency}`);
