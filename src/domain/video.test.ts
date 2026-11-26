@@ -30,7 +30,11 @@ describe("a video's own bytes", () => {
     expect(containerOf(movie())).toBe("mp4");
     expect(containerOf(movie({ brand: "qt  " }))).toBe("mov");
     expect(containerOf(WEBM)).toBe("webm");
-    expect(containerOf(new Uint8Array([0x1a, 0x45, 0xdf, 0xa4, ...new Array(8).fill(0)]))).toBeNull();
+    for (const at of [0, 1, 2, 3]) {
+      const near = [0x1a, 0x45, 0xdf, 0xa3, ...new Array(8).fill(0)];
+      near[at] = 0;
+      expect(containerOf(new Uint8Array(near)), String(at)).toBeNull();
+    }
     expect(containerOf(new Uint8Array([0xff, 0xd8, 0xff, 0xe0, ...ascii("ftyp"), 0, 0, 0, 0]))).toBe("mp4");
     expect(containerOf(new Uint8Array([0, 0, 0, 0, ...ascii("ftyq"), ...ascii("isom")]))).toBeNull();
     expect(containerOf(new Uint8Array([0, 0, 0, 0, ...ascii("ftyp"), 0, 0, 0]))).toBeNull();
@@ -43,6 +47,9 @@ describe("a video's own bytes", () => {
     expect(mp4Seconds(movie({ lead: 37 }))).toBe(12.5);
     expect(mp4Seconds(movie({ scale: 0 }))).toBeNull();
     expect(mp4Seconds(WEBM)).toBeNull();
+    // A header at the very start, and bytes with none however they read.
+    expect(mp4Seconds(movie().subarray(20))).toBe(12.5);
+    expect(mp4Seconds(new Uint8Array(100).fill(1))).toBeNull();
     // A header cut short is no length.
     expect(mp4Seconds(movie().subarray(0, movie().length - 1))).toBeNull();
     expect(mp4Seconds(movie({ version: 1 }).subarray(0, movie({ version: 1 }).length - 1))).toBeNull();

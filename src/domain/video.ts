@@ -25,8 +25,10 @@ export const partBytes = (bytes: number, n: number) =>
 const text = (bytes: Uint8Array, at: number, length: number) => String.fromCharCode(...bytes.subarray(at, at + length));
 
 // The container from its first bytes, never from a name or a type the browser gave.
+const EBML = [0x1a, 0x45, 0xdf, 0xa3];
+
 export function containerOf(head: Uint8Array): Container | null {
-  if (head[0] === 0x1a && head[1] === 0x45 && head[2] === 0xdf && head[3] === 0xa3) return "webm";
+  if (EBML.every((byte, at) => head[at] === byte)) return "webm";
   if (head.length < 12 || text(head, 4, 4) !== "ftyp") return null;
   return text(head, 8, 4) === "qt  " ? "mov" : "mp4";
 }
@@ -34,16 +36,15 @@ export function containerOf(head: Uint8Array): Container | null {
 // The length in seconds an MP4 or MOV states in its movie header (mvhd), or null when the bytes
 // hold none. Version 1 keeps its times in 64 bits.
 export function mp4Seconds(bytes: Uint8Array): number | null {
+  // One byte, one character: the header's place in the text is its place in the bytes.
+  const at = new TextDecoder("latin1").decode(bytes).indexOf("mvhd");
+  if (at < 0) return null;
+  const wide = bytes[at + 4] === 1;
+  if (at + (wide ? 36 : 24) > bytes.length) return null;
   const view = new DataView(bytes.buffer, bytes.byteOffset, bytes.byteLength);
-  for (let at = 4; at + 24 <= bytes.length; at += 1) {
-    if (text(bytes, at, 4) !== "mvhd") continue;
-    const wide = bytes[at + 4] === 1;
-    if (at + (wide ? 36 : 24) > bytes.length) return null;
-    const scale = view.getUint32(at + (wide ? 24 : 16));
-    const units = wide ? Number(view.getBigUint64(at + 28)) : view.getUint32(at + 20);
-    return scale === 0 ? null : units / scale;
-  }
-  return null;
+  const scale = view.getUint32(at + (wide ? 24 : 16));
+  const units = wide ? Number(view.getBigUint64(at + 28)) : view.getUint32(at + 20);
+  return scale === 0 ? null : units / scale;
 }
 
 export type VideoRefusal = "notVideo" | "noLength" | "tooLong" | "sizeChanged";
