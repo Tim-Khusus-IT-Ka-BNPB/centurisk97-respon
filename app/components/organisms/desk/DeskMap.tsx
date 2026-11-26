@@ -157,7 +157,7 @@ export function DeskMapView({
           {filters.status === "" ? null : (
             <p className="text-muted">{t("desk.heading.queue", { status: `stage.short.${filters.status}` })}</p>
           )}
-          <PeriodSegment filters={filters} className="w-full *:flex-1" />
+          <PeriodSegment filters={filters} className="w-full" />
           <TicketSearch filters={filters} envelope={envelope} />
           <HasTiles filters={filters} summary={summary} />
         </div>

@@ -75,21 +75,34 @@ export function HazardChips({ filters, summary, className }: Counted & { readonl
   );
 }
 
+// The period as one dropdown (upstream's desk QA round): the one in use on the closed button, the
+// others a tap away. A disclosure, so it opens with no script; a pick reloads it closed.
 export function PeriodSegment({ filters, className }: Pick<Counted, "filters"> & { readonly className?: string }) {
   const t = useText();
   return (
-    <nav aria-label={t("desk.filter.period")} className={cn(switcher, className)}>
-      {DESK_PERIODS.map((period) => (
-        <Link
-          key={period}
-          to={deskLink(filters, { period, page: 1 })}
-          aria-current={filters.period === period ? "true" : undefined}
-          className={segment}
-        >
-          {t(`desk.period.${period}`)}
-        </Link>
-      ))}
-    </nav>
+    <details key={filters.period} className={cn("group/period relative", className)}>
+      <summary className="flex min-h-target-min cursor-pointer list-none items-center gap-2 rounded-control border border-line bg-surface px-3 font-semibold text-ink hover:border-control [&::-webkit-details-marker]:hidden">
+        <Icon name="clock" className="size-4 text-muted" />
+        <span className="font-normal text-muted">{t("desk.filter.period")}</span>
+        {t(`desk.period.${filters.period}`)}
+        <Icon name="chevronRight" className="ms-auto size-4 rotate-90 text-muted group-open/period:-rotate-90" />
+      </summary>
+      <nav
+        aria-label={t("desk.filter.period")}
+        className="absolute inset-x-0 z-30 mt-1 flex min-w-40 flex-col gap-0.5 rounded-control border border-line bg-surface p-1 shadow-lg"
+      >
+        {DESK_PERIODS.map((period) => (
+          <Link
+            key={period}
+            to={deskLink(filters, { period, page: 1 })}
+            aria-current={filters.period === period ? "true" : undefined}
+            className="flex min-h-target-min items-center rounded-control px-3 text-ink no-underline hover:bg-sunken aria-[current=true]:bg-selected aria-[current=true]:font-semibold aria-[current=true]:text-primary"
+          >
+            {t(`desk.period.${period}`)}
+          </Link>
+        ))}
+      </nav>
+    </details>
   );
 }
 
