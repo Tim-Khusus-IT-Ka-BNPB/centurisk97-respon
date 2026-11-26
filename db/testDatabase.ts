@@ -22,7 +22,7 @@ async function migrate(db: Database): Promise<void> {
   }
 }
 
-const proxy = await getPlatformProxy<{ DB: Database; PHOTOS: unknown }>({
+const proxy = await getPlatformProxy<{ DB: Database; MAIN_DB: Database; PHOTOS: unknown }>({
   configPath: "wrangler.jsonc",
   persist: false,
 });
@@ -31,6 +31,8 @@ await seedPlaces(proxy.env.DB);
 await seedIdentities(proxy.env.DB);
 await seedReference(proxy.env.DB);
 (globalThis as { testD1?: Database }).testD1 = proxy.env.DB;
+// An empty database standing for the main site's, for the upstream identity adapter.
+(globalThis as { testMainD1?: Database }).testMainD1 = proxy.env.MAIN_DB;
 // The R2 bucket beside it, for the photo store (src/testing/api.ts).
 (globalThis as { testPhotos?: unknown }).testPhotos = proxy.env.PHOTOS;
 afterAll(() => proxy.dispose());

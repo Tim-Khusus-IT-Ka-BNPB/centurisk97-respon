@@ -13,6 +13,13 @@
       "database_name": "lapor-bencana",
       "database_id": "00000000-0000-0000-0000-000000000000",
       "migrations_dir": "db/migrations"
+    },
+    {
+      // The main site's database, where its sign-in lives (the upstream identity adapter). Local runs
+      // and tests get an empty one; production binds upstream's own; staging has none.
+      "binding": "MAIN_DB",
+      "database_name": "main-site-local",
+      "database_id": "00000000-0000-0000-0000-000000000001"
     }
   ],
   "r2_buckets": [

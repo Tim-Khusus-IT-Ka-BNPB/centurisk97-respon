@@ -5,7 +5,7 @@ import { createBridge } from "../../api/bridge";
 import { runSweep } from "../../services/sweep";
 import { sendWarnings } from "../../services/warningSend";
 import { createClock } from "../clock";
-import { sqlState } from "../database";
+import { type Database, sqlState } from "../database";
 import { createLogger, type Logger, type LogSink } from "../log";
 import { createServices } from "../services";
 import { parseSettings, type Settings, SettingsError } from "../settings";
@@ -14,6 +14,9 @@ type PageHandler = (request: Request, context: AppLoadContext) => Promise<Respon
 
 type Instance = { readonly settings: Settings; readonly log: Logger; readonly clock: ReturnType<typeof createClock> };
 type Started = { readonly ok: true; readonly instance: Instance } | { readonly ok: false };
+
+// The main site's database where an environment binds it (production); others have none.
+const mainDbOf = (env: Env) => (env as { MAIN_DB?: Database }).MAIN_DB;
 
 // Settings are read once per Worker instance. A bad setting refuses every request and is logged by name.
 function start(env: Env, sink: LogSink | undefined): Started {
@@ -55,7 +58,7 @@ export function createWorker(pages: PageHandler, runtime: string, sink?: LogSink
       const state = startOnce(env);
       if (!state.ok) return new Response(null, { status: 503, headers: { "referrer-policy": "no-referrer" } });
       const { settings, log, clock } = state.instance;
-      const bindings = createServices(settings, log, env.DB, env.PHOTOS, clock);
+      const bindings = createServices(settings, log, env.DB, env.PHOTOS, clock, mainDbOf(env));
       const fetchApi = async (apiRequest: Request) => api.app.fetch(apiRequest, bindings, ctx);
       if (new URL(request.url).pathname.startsWith("/api/")) return fetchApi(request);
       const context = {

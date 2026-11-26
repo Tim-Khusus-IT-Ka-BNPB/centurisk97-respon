@@ -1,4 +1,5 @@
-import { seededIdentity, upstreamIdentity } from "../adapters/identity/seeded";
+import { mainSiteIdentity } from "../adapters/identity/mainSite";
+import { seededIdentity } from "../adapters/identity/seeded";
 import { httpModel } from "../adapters/model/http";
 import { modelOff } from "../adapters/model/off";
 import { type Bucket, r2PhotoStore } from "../adapters/r2/photoStore";
@@ -22,7 +23,14 @@ export function createServices(
   db: Database,
   photos: Bucket,
   clock: Clock,
+  // The main site's own database, where its sign-in lives; bound in production only.
+  mainDb?: Database,
 ): ServiceBindings {
-  const identity = settings.identityAdapter === "seeded" ? seededIdentity(db, clock) : upstreamIdentity();
+  if (settings.identityAdapter === "upstream" && mainDb === undefined)
+    throw new Error("The upstream identity needs the main site's database (MAIN_DB)");
+  const identity =
+    settings.identityAdapter === "seeded"
+      ? seededIdentity(db, clock)
+      : mainSiteIdentity(db, mainDb as Database, clock, settings.keyHmacSecret);
   return { settings, log, db, clock, identity, model: modelFor(settings), photos: r2PhotoStore(photos) };
 }

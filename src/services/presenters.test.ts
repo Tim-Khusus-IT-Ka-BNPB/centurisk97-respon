@@ -1,5 +1,5 @@
 import { describe, expect, test } from "vitest";
-import { seededIdentity, upstreamIdentity } from "../adapters/identity/seeded";
+import { seededIdentity } from "../adapters/identity/seeded";
 import { httpModel } from "../adapters/model/http";
 import { modelOff } from "../adapters/model/off";
 import type { Card } from "../contract/card";
@@ -159,17 +159,14 @@ describe("ports chosen by the settings", () => {
       bindings.clock,
     );
     expect(live.model).not.toBe(modelOff);
-    expect(Object.keys(seededIdentity(bindings.db, bindings.clock))).toEqual(["resolve"]);
-    expect(() => upstreamIdentity()).toThrow("not built");
-    expect(() =>
-      createServices(
-        { ...bindings.settings, identityAdapter: "upstream" },
-        bindings.log,
-        bindings.db,
-        testBucket(),
-        bindings.clock,
-      ),
-    ).toThrow("not built");
+    expect(Object.keys(seededIdentity(bindings.db, bindings.clock)).sort()).toEqual(["officers", "resolve"]);
+    const upstream = { ...bindings.settings, identityAdapter: "upstream" as const };
+    expect(() => createServices(upstream, bindings.log, bindings.db, testBucket(), bindings.clock)).toThrow("MAIN_DB");
+    expect(
+      Object.keys(
+        createServices(upstream, bindings.log, bindings.db, testBucket(), bindings.clock, bindings.db).identity,
+      ).sort(),
+    ).toEqual(["officers", "resolve"]);
   });
 });
 

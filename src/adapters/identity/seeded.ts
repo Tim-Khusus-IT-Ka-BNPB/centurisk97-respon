@@ -90,23 +90,22 @@ export function seededIdentity(db: Database, clock: Clock): IdentityPort {
         if (session?.kind === "reporter") return { kind: "session", reporterId: session.reporter_id as string };
         if (session?.kind === "staff") return staffOf(session);
       }
-      const key = cookies[DEVICE_COOKIE];
-      if (!key) return { kind: "anonymous" };
-      const device = await row<{ id: string; last_seen_at: string }>(
-        db,
-        sql`select id, last_seen_at from device where key_fingerprint = ${await sha256Hex(key)}`,
-      );
-      if (!device) return { kind: "anonymous" };
-      // Seen is kept to the day: it only decides the 365 day removal, so a page load does not write.
-      const nowMs = clock.now();
-      if (nowMs - Date.parse(device.last_seen_at) >= DAY_MS)
-        await run(db, sql`update device set last_seen_at = ${new Date(nowMs)} where id = ${device.id}`);
-      return { kind: "device", deviceId: device.id } satisfies Principal;
+      return deviceOf(db, clock, cookies[DEVICE_COOKIE]);
     },
   };
 }
 
-// The main-site adapter is not built in this release, so production cannot start.
-export function upstreamIdentity(): IdentityPort {
-  throw new Error("The upstream identity adapter is not built");
+// A typed number bound to this browser by its device key, on either adapter; anyone else is anonymous.
+export async function deviceOf(db: Database, clock: Clock, key: string | undefined): Promise<Principal> {
+  if (!key) return { kind: "anonymous" };
+  const device = await row<{ id: string; last_seen_at: string }>(
+    db,
+    sql`select id, last_seen_at from device where key_fingerprint = ${await sha256Hex(key)}`,
+  );
+  if (!device) return { kind: "anonymous" };
+  // Seen is kept to the day: it only decides the 365 day removal, so a page load does not write.
+  const nowMs = clock.now();
+  if (nowMs - Date.parse(device.last_seen_at) >= DAY_MS)
+    await run(db, sql`update device set last_seen_at = ${new Date(nowMs)} where id = ${device.id}`);
+  return { kind: "device", deviceId: device.id };
 }
