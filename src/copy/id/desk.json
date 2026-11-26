@@ -333,5 +333,7 @@
   "desk.officers.none": "Belum ada PIC aktif di BPBD kabupaten atau kota ini.",
   "desk.officers.official": "Nomor resmi dari daftar kontak BPBD",
   "desk.officers.national": "Call center BNPB",
-  "desk.officers.officialNone": "Nomor BPBD ini belum ada di daftar kontak"
+  "desk.officers.officialNone": "Nomor BPBD ini belum ada di daftar kontak",
+  "desk.overdue": "Lewat seminggu",
+  "desk.overdue.hint": "Sudah lebih dari seminggu di status ini"
 }

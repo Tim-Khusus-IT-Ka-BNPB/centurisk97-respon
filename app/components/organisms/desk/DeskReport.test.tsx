@@ -412,6 +412,11 @@ describe("a report on the desk", () => {
     expect(screen.queryByText("Darurat")).toBeNull();
   });
 
+  test("a report a week in one status says so beside its status", async () => {
+    await renderDesk(<DeskReportView report={{ ...REPORT, overdue: true }} summary={SUMMARY} />, PATH);
+    expect(screen.getByText("Lewat seminggu").getAttribute("title")).toBe("Sudah lebih dari seminggu di status ini");
+  });
+
   test("BNPB sees who at the BPBD to call", async () => {
     const officers = {
       items: [

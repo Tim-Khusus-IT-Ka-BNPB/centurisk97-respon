@@ -19,6 +19,7 @@ import {
   isFiltered,
   NewsChip,
   OfflineChip,
+  OverdueChip,
   StatusChip,
   whenShort,
 } from "./parts";
@@ -63,6 +64,7 @@ function PanelItem({ item, onPoint }: { readonly item: Item; readonly onPoint: (
               {item.emergency === null || item.offline?.late ? null : <EmergencyChip />}
               {item.offline === null ? null : <OfflineChip offline={item.offline} />}
               {item.news ? <NewsChip /> : null}
+              {item.overdue ? <OverdueChip /> : null}
               <StatusChip status={item.status} />
             </span>
           </span>

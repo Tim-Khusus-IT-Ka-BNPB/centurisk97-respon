@@ -47,6 +47,21 @@ test("a report that came through WhatsApp is marked in the table and the cards",
   expect(screen.queryByText("Nomor belum diverifikasi")).toBeNull();
 });
 
+test("a report a week in one status is marked late in the table and the cards", async () => {
+  const [item] = queue().items as [ReturnType<typeof queue>["items"][number]];
+  await renderDesk(
+    <DeskQueueView
+      shown={list(queue({ items: [{ ...item, overdue: true }], total: 1 }))}
+      summary={SUMMARY}
+      filters={FILTERS}
+      envelope={null}
+    />,
+    { path: "/lapor/meja" },
+  );
+  expect(within(screen.getByRole("table")).getByText("Lewat seminggu")).toBeTruthy();
+  expect(screen.getAllByText("Lewat seminggu")).toHaveLength(2);
+});
+
 test("a report in a cluster is marked in the table and the cards, never as verified", async () => {
   const [item] = queue().items as [ReturnType<typeof queue>["items"][number]];
   const cluster = { tickets: [item.ticketNumber, "LA-241126-09"], reporters: 2, strong: false, sameVillage: true };

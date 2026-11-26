@@ -50,6 +50,8 @@ const queueItemSchema = z.object({
   taker: z.string().nullable(),
   // The reporter added news that no officer has acted on yet.
   news: z.boolean(),
+  // Still open after a week in one status (Q40).
+  overdue: z.boolean(),
   impact: impactSchema,
   // Reports of the same hazard close in place and time from two numbers or more (A9): its tickets,
   // oldest first, this one among them. Never called verified, and its figures are never added up.

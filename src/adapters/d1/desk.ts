@@ -55,6 +55,8 @@ export type QueueRow = {
   readonly taker: string | null;
   // The reporter added news that no officer has acted on yet.
   readonly news: boolean;
+  // When it came into the status it is in.
+  readonly statusSince: Date;
 };
 
 type QueueRecord = {
@@ -78,6 +80,7 @@ type QueueRecord = {
   offline_late: number | null;
   taker: string | null;
   news: number;
+  status_since: string;
 };
 
 // What the desk is told of a report kept on a phone with no signal.
@@ -94,6 +97,10 @@ const NEWS = sql`exists (select 1 from ticket_history n where n.ticket_number = 
     and not exists (select 1 from staff_action a where a.ticket_number = n.ticket_number and a.at > n.at
       and a.action not in ('view', 'identityView', 'document')))`;
 
+// When a ticket came into its status: the newest history row that moved it, not one telling work.
+const STATUS_SINCE = sql`(select max(h.at) from ticket_history h where h.ticket_number = r.ticket_number
+    and h.event is null) as status_since`;
+
 // A number typed by somebody is never confirmed by the list (D101).
 const CONFIRMED = sql`(v.reporter_role = 'claimedOfficer' and r.number_unverified = 0 and exists (
     select 1 from pilot_number a where a.number_key = r.number_key and a.officer_regency is not null))`;
@@ -101,7 +108,7 @@ const CONFIRMED = sql`(v.reporter_role = 'claimedOfficer' and r.number_unverifie
 const SELECT = sql`select r.ticket_number, t.status, r.hazard_type, r.village_code, r.sent_at, v.fields,
     v.complete_percent, v.reporter_name, v.reporter_role, r.number_unverified, r.door, ${CONFIRMED} as officer_confirmed, r.emergency, r.emergency_victims, ${OFFLINE},
     (select k.label from report_taker k where k.ticket_number = r.ticket_number) as taker, ${NEWS} as news,
-    (select count(*) from draft_photo p where p.draft_id = r.draft_id) as photo_count
+    (select count(*) from draft_photo p where p.draft_id = r.draft_id) as photo_count, ${STATUS_SINCE}
   from report r
   join ticket t on t.report_id = r.id
   join report_version v on v.report_id = r.id and v.version = ${LATEST}`;
@@ -158,6 +165,7 @@ const queueRow = (found: QueueRecord): QueueRow => ({
   officerConfirmed: found.officer_confirmed === 1,
   taker: found.taker,
   news: found.news === 1,
+  statusSince: new Date(found.status_since),
   emergency:
     found.emergency === null ? null : { kind: found.emergency, victims: found.emergency_victims as VictimAnswer },
   offline:
@@ -245,7 +253,7 @@ export async function deskReport(
         v.complete_percent, v.reporter_name, v.reporter_role, r.number_unverified, r.door, ${CONFIRMED} as officer_confirmed, r.emergency, r.emergency_victims, ${OFFLINE},
     (select k.label from report_taker k where k.ticket_number = r.ticket_number) as taker, ${NEWS} as news, r.draft_id, r.id as report_id, t.revision,
         v.reporter_number, v.officer_regency, v.officer_position,
-        (select count(*) from draft_photo p where p.draft_id = r.draft_id) as photo_count
+        (select count(*) from draft_photo p where p.draft_id = r.draft_id) as photo_count, ${STATUS_SINCE}
       from report r
       join ticket t on t.report_id = r.id
       join report_version v on v.report_id = r.id and v.version = ${LATEST}

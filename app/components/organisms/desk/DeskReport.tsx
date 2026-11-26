@@ -28,6 +28,7 @@ import {
   ImpactStrip,
   NewsChip,
   OfflineChip,
+  OverdueChip,
   roleText,
   StatusChip,
   spacedNumber,
@@ -415,6 +416,7 @@ export function DeskReportView({
               {report.emergency === null || report.offline?.late ? null : <EmergencyChip />}
               {report.offline === null ? null : <OfflineChip offline={report.offline} />}
               {report.news ? <NewsChip /> : null}
+              {report.overdue ? <OverdueChip /> : null}
               {report.numberUnverified ? <UnverifiedChip /> : null}
               {report.door === "chat" ? <ChatChip /> : null}
               {report.cluster === null ? null : <ClusterChip cluster={report.cluster} />}

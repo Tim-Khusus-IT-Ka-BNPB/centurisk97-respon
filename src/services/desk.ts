@@ -34,6 +34,7 @@ import {
   type DeskHas,
   type DeskPeriod,
   GALLERY_PHOTOS,
+  isOverdue,
   MAP_POINTS,
   periodStart,
 } from "../domain/deskQueue";
@@ -85,6 +86,7 @@ function queueItem(
   staff: StaffPrincipal,
   found: QueueRow,
   clusters: ReadonlyMap<string, Cluster>,
+  nowMs: number,
 ): DeskQueue["items"][number] {
   const zone = draftZone(found.villageCode);
   const place = fieldValue<PlaceValue>(found.states, "place");
@@ -113,6 +115,7 @@ function queueItem(
           },
     taker: found.taker,
     news: found.news,
+    overdue: isOverdue(found.status, found.statusSince.getTime(), nowMs),
     impact: impactOf(found.states),
     cluster: clusterView(clusters.get(found.ticketNumber)),
   };
@@ -266,7 +269,7 @@ export async function deskQueue(
     kind: "ok",
     body: {
       account: { label: staff.label },
-      items: found.rows.map((row) => queueItem(staff, row, clusters)),
+      items: found.rows.map((row) => queueItem(staff, row, clusters, bindings.clock.now())),
       total: found.total,
       page: query.page,
       pageCount: Math.ceil(found.total / DESK_PAGE_SIZE),
@@ -309,7 +312,7 @@ async function reportBody(bindings: ServiceBindings, staff: StaffPrincipal, tick
   const delivery = await deskDelivery(bindings, ticketNumber, found.villageCode);
   const [point] = await mapPoints(bindings.db, { scope: staff.scope, ...only }, 1);
   const body: DeskReport = {
-    ...queueItem(staff, found, await clusterMap(bindings, staff.scope)),
+    ...queueItem(staff, found, await clusterMap(bindings, staff.scope), bindings.clock.now()),
     account: { label: staff.label },
     event: await eventView(bindings, staff, ticketNumber),
     videos: [...(await reportVideos(bindings.db, ticketNumber))],

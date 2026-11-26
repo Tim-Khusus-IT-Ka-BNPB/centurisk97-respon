@@ -28,6 +28,7 @@ import {
   isFiltered,
   NewsChip,
   OfflineChip,
+  OverdueChip,
   roleText,
   StatusChip,
   Taker,
@@ -154,6 +155,7 @@ function QueueTable({ items }: { readonly items: readonly Item[] }) {
                       {item.emergency === null || item.offline?.late ? null : <EmergencyChip />}
                       {item.offline === null ? null : <OfflineChip offline={item.offline} />}
                       {item.news ? <NewsChip /> : null}
+                      {item.overdue ? <OverdueChip /> : null}
                       {item.cluster === null ? null : <ClusterChip cluster={item.cluster} />}
                     </span>
                   </span>
@@ -217,6 +219,7 @@ function QueueCards({ items }: { readonly items: readonly Item[] }) {
                 {item.emergency === null || item.offline?.late ? null : <EmergencyChip />}
                 {item.offline === null ? null : <OfflineChip offline={item.offline} />}
                 {item.news ? <NewsChip /> : null}
+                {item.overdue ? <OverdueChip /> : null}
                 {item.cluster === null ? null : <ClusterChip cluster={item.cluster} />}
                 <StatusChip status={item.status} />
               </span>

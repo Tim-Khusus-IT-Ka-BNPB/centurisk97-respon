@@ -76,10 +76,11 @@ describe("the map view", () => {
     expect(row.queryByText("Darurat")).toBeNull();
   });
 
-  test("news no officer has acted on is marked", async () => {
-    await draw({ queue: queue({ items: [{ ...ITEM, news: true }], total: 1 }) });
+  test("news no officer has acted on is marked, and so is a week in one status", async () => {
+    await draw({ queue: queue({ items: [{ ...ITEM, news: true, overdue: true }], total: 1 }) });
     const row = within(panel().getAllByRole("listitem")[0] as HTMLElement);
     expect(row.getByText("Kabar baru")).toBeTruthy();
+    expect(row.getByText("Lewat seminggu")).toBeTruthy();
   });
 
   test("a report with no figures and no photo shows none", async () => {

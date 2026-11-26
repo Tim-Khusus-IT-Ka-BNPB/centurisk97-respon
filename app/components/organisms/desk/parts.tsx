@@ -147,6 +147,20 @@ export function NewsChip() {
   );
 }
 
+// Still open after a week in one status (Q40): the word says it, the colour only repeats it.
+export function OverdueChip() {
+  const t = useText();
+  return (
+    <span
+      title={t("desk.overdue.hint")}
+      className="inline-flex items-center gap-1 rounded-chip bg-warn-tint px-1.5 py-0.5 text-meta font-semibold whitespace-nowrap text-ink"
+    >
+      <Icon name="clock" className="size-4 text-warn-icon" />
+      {t("desk.overdue")}
+    </span>
+  );
+}
+
 // The report is one of a cluster: the same hazard close in place and time from other numbers. A
 // cluster is never called verified.
 export function ClusterChip({ cluster }: { readonly cluster: NonNullable<Item["cluster"]> }) {

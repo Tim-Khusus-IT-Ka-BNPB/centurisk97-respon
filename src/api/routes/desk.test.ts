@@ -103,6 +103,18 @@ describe("who reaches the desk", () => {
 });
 
 describe("the queue", () => {
+  test("a ticket a week in one status is late; a move to another status starts it again", async () => {
+    const ticket = await typedReport();
+    const now = clock.now();
+    expect((await detail(deskOfficer(), ticket)).overdue).toBe(false);
+    clock.set(now + 8 * 86_400_000);
+    expect((await detail(deskOfficer(), ticket)).overdue).toBe(true);
+    expect((await queue(deskOfficer(), `?ticket=${ticket}`)).items[0]?.overdue).toBe(true);
+    await deskOfficer().call("POST", `/desk/reports/${ticket}/view`);
+    expect((await detail(deskOfficer(), ticket)).overdue).toBe(false);
+    clock.set(now);
+  });
+
   test("lists every sent report newest first, counted as the database counts, and marks typed numbers", async () => {
     const typed = await typedReport();
     tick();
