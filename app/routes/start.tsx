@@ -1,4 +1,5 @@
 import { data, redirect } from "react-router";
+import { languageFrom } from "../../src/copy/languages";
 import { EmergencyStart } from "../components/organisms/EmergencyPanel";
 import { StartAside, StartHeading, StartScreen } from "../components/organisms/StartScreen";
 import { Page } from "../components/templates/Page";
@@ -12,7 +13,7 @@ export const meta = (args: Route.MetaArgs) =>
   pageMeta(args, { title: "page.report.title", description: "meta.report.description", path: "/lapor/report" });
 
 export async function loader({ request, context }: Route.LoaderArgs) {
-  return loadStartPage(new URL(request.url), context.api);
+  return loadStartPage(new URL(request.url), context.api, languageFrom(request.headers.get("cookie")));
 }
 
 export async function action({ request, context }: Route.ActionArgs) {
@@ -24,7 +25,7 @@ export async function action({ request, context }: Route.ActionArgs) {
 
 export default function StartRoute({ loaderData, actionData }: Route.ComponentProps) {
   return (
-    <Page texts={loaderData.texts} publicPage={false} aside={loaderData.emergency ? null : <StartAside />}>
+    <Page texts={loaderData.texts} publicPage={false} aside={loaderData.emergency ? null : <StartAside />} languages>
       {loaderData.emergency ? <EmergencyStart /> : <StartHeading />}
       <StartScreen page={loaderData} acted={actionData ?? null} />
     </Page>

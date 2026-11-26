@@ -2,6 +2,7 @@ import type { ApiCall } from "../../src/api/bridge";
 import { startStepAction } from "../../src/api/pageActions";
 import type { DraftBody, MeResponse } from "../../src/contract/draft";
 import type { ErrorEnvelope } from "../../src/contract/errors";
+import type { LanguageId } from "../../src/copy/languages";
 import type { StartActionData, StartPageData, StartView } from "./startTypes";
 import { PAGE_TEXTS, pickTexts } from "./texts.server";
 
@@ -11,7 +12,7 @@ async function readMe(api: ApiCall): Promise<MeResponse | null> {
 }
 
 // GET /lapor/report: the numbers known here, a picked one, "Ganti" on one, or the form.
-export async function loadStartPage(url: URL, api: ApiCall): Promise<StartPageData> {
+export async function loadStartPage(url: URL, api: ApiCall, language: LanguageId = "id"): Promise<StartPageData> {
   const me = await readMe(api);
   const known = me?.knownReporters ?? [];
   const has = (id: string | null) => id !== null && known.some((profile) => profile.profileId === id);
@@ -36,7 +37,7 @@ export async function loadStartPage(url: URL, api: ApiCall): Promise<StartPageDa
     profileId,
     editing: view === "form" && profileId !== null,
     emergency: isEmergency(url),
-    texts: pickTexts(PAGE_TEXTS.start),
+    texts: pickTexts(PAGE_TEXTS.start, null, language),
   };
 }
 

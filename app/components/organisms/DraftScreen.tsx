@@ -90,6 +90,7 @@ export function DraftScreen({ page, acted }: { readonly page: Loaded; readonly a
         wide={view.draft.card.kind === "sent"}
         aside={open ? <DraftAside draft={view.draft} /> : null}
         dock={open ? <MessageBox key={view.draft.revision} /> : null}
+        languages={open}
       >
         <DraftBodyView view={view} quiet={quiet} />
       </Page>

@@ -1,4 +1,5 @@
 import { data, redirect, type ShouldRevalidateFunctionArgs } from "react-router";
+import { languageFrom } from "../../src/copy/languages";
 import { DraftScreen, RefusedScreen } from "../components/organisms/DraftScreen";
 import { Page } from "../components/templates/Page";
 import { actOnDraft, loadDraftPage } from "../lib/draftPage.server";
@@ -19,7 +20,13 @@ export const meta = (args: Route.MetaArgs) =>
   });
 
 export async function loader({ params, request, context }: Route.LoaderArgs) {
-  const page = await loadDraftPage(params.draftId, new URL(request.url), context.api, () => crypto.randomUUID());
+  const page = await loadDraftPage(
+    params.draftId,
+    new URL(request.url),
+    context.api,
+    () => crypto.randomUUID(),
+    languageFrom(request.headers.get("cookie")),
+  );
   const card = page.data.kind === "draft" ? page.data.draft.card : null;
   // News that is sent or dropped is told on its report's own page.
   if (card?.kind === "followUpEnded") throw redirect(`/lapor/reports/${card.ticketNumber}?saved=${card.outcome}`, 303);

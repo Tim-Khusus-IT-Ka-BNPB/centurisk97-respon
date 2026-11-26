@@ -1,6 +1,7 @@
 import type { ApiCall } from "../../src/api/bridge";
 import { draftPageAction } from "../../src/api/pageActions";
 import { draftPageLoad } from "../../src/api/pageLoaders";
+import type { LanguageId } from "../../src/copy/languages";
 import { refusedWords } from "./cards";
 import type { DraftActionData, DraftPageData } from "./draftTypes";
 import { PAGE_TEXTS, pickTexts } from "./texts.server";
@@ -11,6 +12,7 @@ export async function loadDraftPage(
   url: URL,
   api: ApiCall,
   newKey: () => string,
+  language: LanguageId = "id",
 ): Promise<{ readonly status: number; readonly data: DraftPageData }> {
   const load = await draftPageLoad(draftId, url.searchParams, api);
   if (load.kind === "refused")
@@ -19,7 +21,11 @@ export async function loadDraftPage(
       data: {
         kind: "refused",
         envelope: load.envelope,
-        texts: pickTexts(PAGE_TEXTS.refused, [load.envelope.error.copyKey, refusedWords(load.envelope.error.code)]),
+        texts: pickTexts(
+          PAGE_TEXTS.refused,
+          [load.envelope.error.copyKey, refusedWords(load.envelope.error.code)],
+          language,
+        ),
       },
     };
   return {
@@ -31,7 +37,7 @@ export async function loadDraftPage(
       turnKey: newKey(),
       searching: url.searchParams.has("q") || url.searchParams.has("area"),
       origin: url.origin,
-      texts: pickTexts(PAGE_TEXTS.draft, load.draft),
+      texts: pickTexts(PAGE_TEXTS.draft, load.draft, language),
     },
   };
 }

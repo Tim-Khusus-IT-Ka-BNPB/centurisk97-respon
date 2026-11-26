@@ -2,6 +2,7 @@ import { type ReactNode, useMemo } from "react";
 import { makeText, type Texts } from "../../../src/copy/text";
 import { cn } from "../../lib/cn";
 import { TextContext } from "../../lib/text";
+import { LanguagePicker } from "../molecules/LanguagePicker";
 import { PageBanner } from "../organisms/PageBanner";
 import { SiteFooter } from "../organisms/SiteFooter";
 import { SiteHeader } from "../organisms/SiteHeader";
@@ -22,6 +23,7 @@ export function Page({
   aside,
   children,
   dock,
+  languages = false,
 }: {
   readonly texts: Texts;
   // Public pages use a wide container that fills the screen; the report uses one centred column.
@@ -36,13 +38,15 @@ export function Page({
   readonly aside?: ReactNode;
   // The message box, docked under the content column.
   readonly dock?: ReactNode;
+  // The report pages offer their language above the content.
+  readonly languages?: boolean;
 }) {
   const text = useMemo(() => makeText(texts), [texts]);
   // The header lines up with the column under it.
   const width = wide || aside ? "max-w-[72rem]" : "max-w-[40rem]";
   return (
     <TextContext.Provider value={text}>
-      <div className="flex min-h-dvh flex-col">
+      <div className="flex min-h-dvh flex-col" lang={text.has("app.lang") ? text("app.lang") : undefined}>
         <SiteHeader nav={publicPage} width={width} />
         {hero}
         {banner ? <PageBanner titleKey={banner.title} leadKey={banner.lead} /> : null}
@@ -55,6 +59,7 @@ export function Page({
           )}
         >
           <div className="flex min-w-0 flex-col gap-6">
+            {languages ? <LanguagePicker /> : null}
             {children}
             {dock}
           </div>

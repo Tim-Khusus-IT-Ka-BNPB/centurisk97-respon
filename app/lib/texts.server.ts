@@ -1,4 +1,5 @@
 import { copy } from "../../src/copy";
+import { type LanguageId, TRANSLATIONS } from "../../src/copy/languages";
 import type { Texts } from "../../src/copy/text";
 
 // Every page needs the shell's words; each page adds the namespaces it draws from.
@@ -173,9 +174,13 @@ function keysIn(value: unknown, found: Set<string>): Set<string> {
   return found;
 }
 
-export function pickTexts(prefixes: readonly string[], body: unknown = null): Texts {
+// The page's words, in the reporter's language where its file has them; Indonesian otherwise.
+export function pickTexts(prefixes: readonly string[], body: unknown = null, language: LanguageId = "id"): Texts {
   const extra = keysIn(body, new Set());
+  const words = TRANSLATIONS.get(language) ?? {};
   return Object.fromEntries(
-    copy.keys.filter((key) => extra.has(key) || matches(key, prefixes)).map((key) => [key, copy.text(key)]),
+    copy.keys
+      .filter((key) => extra.has(key) || matches(key, prefixes))
+      .map((key) => [key, words[key] ?? copy.text(key)]),
   );
 }

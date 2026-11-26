@@ -1,4 +1,7 @@
 {
   "app.name": "Pantau Bencana BNPB",
-  "home.contact.organisation": "Badan Nasional Penanggulangan Bencana"
+  "home.contact.organisation": "Badan Nasional Penanggulangan Bencana",
+  "app.lang": "id",
+  "app.language.label": "Bahasa",
+  "app.language.submit": "Ganti bahasa"
 }

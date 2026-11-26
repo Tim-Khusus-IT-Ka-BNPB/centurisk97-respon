@@ -26,6 +26,7 @@ import HelpRoute, * as help from "./help";
 import HomeRoute, * as home from "./home";
 import * as rootIndex from "./index";
 import InfoRoute, * as info from "./info";
+import * as language from "./language";
 import * as manifest from "./manifest";
 import NotFoundRoute, * as notFound from "./notFound";
 import * as ownDocument from "./ownDocument";
@@ -871,6 +872,29 @@ describe("theme route", () => {
       context: { api: answer },
     } as Args)) as Response;
     expect(away.headers.get("location")).toBe("/lapor");
+  });
+});
+
+describe("language route", () => {
+  test("keeps the choice through the API and returns to the report page", async () => {
+    const calls: unknown[] = [];
+    const answer: ApiCall = async (_method, path, body) => {
+      calls.push([path, body]);
+      return new Response(null, { status: 204, headers: { "set-cookie": "bahasa=ace; Path=/" } });
+    };
+    const done = (await language.action({
+      request: post("http://x/lapor/bahasa", [
+        ["language", "ace"],
+        ["back", "/lapor/report?desa=1108012005"],
+      ]),
+      context: { api: answer },
+    } as Args)) as Response;
+    expect(calls).toEqual([["/preferences/language", { language: "ace" }]]);
+    expect([done.status, done.headers.get("location"), done.headers.get("set-cookie")]).toEqual([
+      303,
+      "/lapor/report?desa=1108012005",
+      "bahasa=ace; Path=/",
+    ]);
   });
 });
 
