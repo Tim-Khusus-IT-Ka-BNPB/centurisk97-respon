@@ -23,8 +23,9 @@ export const subscriptionsOf = (db: Database, endpoint: string) =>
       where endpoint = ${endpoint} order by district_code`,
   );
 
+// A count always answers one row.
 export const subscriberCount = async (db: Database) =>
-  (await row<{ n: number }>(db, sql`select count(distinct endpoint) as n from warning_subscription`))?.n ?? 0;
+  ((await row(db, sql`select count(distinct endpoint) as n from warning_subscription`)) as { n: number }).n;
 
 // The phone's whole choice replaces what it had: districts left out are dropped.
 export async function keepChoice(db: Database, choice: WarningChoice, at: Date): Promise<void> {

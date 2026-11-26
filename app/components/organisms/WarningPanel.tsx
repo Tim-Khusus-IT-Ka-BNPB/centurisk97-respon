@@ -19,7 +19,9 @@ type Panel =
 
 type Said = "stopped" | "failed" | "needDistrict" | "needHazard" | "denied" | null;
 
-const districtsOf = (items: PlaceResults["items"]): District[] => [
+type Found = District & { readonly regencyName: string };
+
+const districtsOf = (items: PlaceResults["items"]): Found[] => [
   ...new Map(
     items
       .filter((item) => item.level !== "regency")
@@ -34,7 +36,7 @@ const districtsOf = (items: PlaceResults["items"]): District[] => [
 function DistrictSearch({ onPick, full }: { readonly onPick: (district: District) => void; readonly full: boolean }) {
   const t = useText();
   const [query, setQuery] = useState("");
-  const [found, setFound] = useState<District[] | null>(null);
+  const [found, setFound] = useState<Found[] | null>(null);
   const search = async () => {
     if (query.trim().length < 3) return;
     const answer = await getJson<PlaceResults>(`/places/search?q=${encodeURIComponent(query.trim())}`);
@@ -73,7 +75,7 @@ function DistrictSearch({ onPick, full }: { readonly onPick: (district: District
               key={district.code}
               className="flex items-center justify-between gap-3 rounded-control border border-line px-3 py-1.5"
             >
-              {t("info.warn.district", { name: district.name, regency: district.regencyName ?? "" })}
+              {t("info.warn.district", { name: district.name, regency: district.regencyName })}
               <Button type="button" variant="secondary" size="min" onClick={() => onPick(district)}>
                 <Icon name="plus" className="size-4" />
                 {t("info.warn.add")}
@@ -238,13 +240,19 @@ export function WarningPanel({ push = pushBrowser }: { readonly push?: PushBrows
     else setSaid("failed");
   };
 
+  // A phone that lost its subscription some other way is warned of nothing already.
   const stop = async () => {
     setBusy(true);
     const current = await push.current();
-    const stopped = current ? await postOnly("/warnings/stop", { endpoint: current.phone.endpoint }) : null;
-    if (current && stopped?.kind === "ok") await current.stop();
+    if (current !== null) {
+      const stopped = await postOnly("/warnings/stop", { endpoint: current.phone.endpoint });
+      if (stopped.kind !== "ok") {
+        setBusy(false);
+        return setSaid("failed");
+      }
+      await current.stop();
+    }
     setBusy(false);
-    if (current && stopped?.kind !== "ok") return setSaid("failed");
     setSaid("stopped");
     setPanel({ kind: "picking", before: null });
   };

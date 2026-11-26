@@ -46,7 +46,7 @@ export function Page({
   const width = wide || aside ? "max-w-[72rem]" : "max-w-[40rem]";
   return (
     <TextContext.Provider value={text}>
-      <div className="flex min-h-dvh flex-col" lang={text.has("app.lang") ? text("app.lang") : undefined}>
+      <div className="flex min-h-dvh flex-col" lang={text("app.lang")}>
         <SiteHeader nav={publicPage} width={width} />
         {hero}
         {banner ? <PageBanner titleKey={banner.title} leadKey={banner.lead} /> : null}

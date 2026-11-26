@@ -15,10 +15,9 @@ export type KeptVideo = { readonly id: string; readonly seconds: number; readonl
 export const uploadOf = (db: Database, draftId: string, id: string) =>
   row<UploadRow>(db, sql`select * from video_upload where id = ${id} and draft_id = ${draftId}`);
 
+// A count always answers one row.
 export async function openUploads(db: Database, draftId: string): Promise<number> {
-  return (
-    (await row<{ n: number }>(db, sql`select count(*) as n from video_upload where draft_id = ${draftId}`))?.n ?? 0
-  );
+  return ((await row(db, sql`select count(*) as n from video_upload where draft_id = ${draftId}`)) as { n: number }).n;
 }
 
 export const openUpload = (db: Database, upload: Omit<UploadRow, "parts"> & { readonly at: Date }) =>
@@ -29,14 +28,15 @@ export const openUpload = (db: Database, upload: Omit<UploadRow, "parts"> & { re
         ${upload.browser_seconds}, ${upload.at}, ${upload.at})`,
   );
 
-// A part's tag, set in place so two parts landing at once never write over each other.
+// A part's tag, set in place so two parts landing at once never write over each other. The upload
+// was read just before; one ended in between is a fault, answered as one.
 export async function keepPart(db: Database, id: string, n: number, etag: string, at: Date): Promise<string> {
   const kept = await row<{ parts: string }>(
     db,
     sql`update video_upload set parts = json_set(parts, ${`$."${n}"`}, ${etag}), touched_at = ${at}
       where id = ${id} returning parts`,
   );
-  return kept?.parts ?? "{}";
+  return (kept as { parts: string }).parts;
 }
 
 export const dropUpload = (db: Database, id: string) => run(db, sql`delete from video_upload where id = ${id}`);
