@@ -199,6 +199,11 @@ export const COLUMN_CLASSES: Readonly<Record<string, TableClasses>> = {
     retention: "with the report",
     columns: { client_id: I, ticket_number: I, at: I },
   },
+  report_event: {
+    retention: "with the report",
+    columns: { ticket_number: I, code: I, at: I },
+  },
+  event_day_counter: { retention: "kept, one row a day", columns: { wib_date: I, last_n: I } },
   report_link: {
     retention: "with the report",
     columns: { ticket_number: I, same_as: I, at: I },

@@ -16,7 +16,7 @@ import type { FieldId } from "../domain/fields/catalogue";
 import { LIMITS, rollingRetryAt } from "../domain/limits";
 import { formatTicketNumber, ticketDay } from "../domain/ticketNumber";
 import type { DraftContent } from "../domain/turn/content";
-import { atomically, decide, holds, sql } from "../platform/database";
+import { atomically, decide, holds, row, sql } from "../platform/database";
 import { sha256Hex } from "../platform/keys";
 import type { Principal } from "../ports/identity";
 import type { ServiceBindings } from "./bindings";
@@ -79,6 +79,11 @@ async function sendOnce(
   const consent = await latestConsent(db, profile.id);
   // Removed with its number between the reads: decide again on what is there now.
   if (consent === null) return null;
+  const joined = content.sameEvent?.joined ?? null;
+  const joinedAt =
+    joined === null
+      ? null
+      : await row<{ sent_at: string }>(db, sql`select sent_at from report where ticket_number = ${joined}`);
   const done = await atomically(db, [
     // The draft is still the summary that was read, its binding is still there, and the limit still holds.
     sql`update report_draft set revision = revision where id = ${draft.id} and revision = ${revision}
@@ -116,7 +121,9 @@ async function sendOnce(
       completePercent: completePercent(states),
     }),
     ...endDraft(draft.id, "sent", at),
-    ...(content.sameEvent?.joined ? [linkReport(reportId, content.sameEvent.joined, at)] : []),
+    ...(joined !== null && joinedAt !== null
+      ? linkReport(reportId, joined, ticketDay(Date.parse(joinedAt.sent_at)), at)
+      : []),
     storeTicketReply(draft.id, turnKey, requestHash, ticketNumber, at),
     ...(bindings.settings.faultSend ? [ROLL_BACK] : []),
   ]);

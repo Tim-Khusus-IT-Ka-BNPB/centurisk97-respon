@@ -109,8 +109,25 @@ export const storeTicketReply = (
     values (${draftId}, ${turnKey}, ${requestHash}, 201,
       json_object('ticketNumber', ${ticketNumber}, 'sentAt', json_object('utc', ${sentAt}, 'zone', 'WIB')), ${sentAt})`;
 
-// The report just sent is of the same event as one sent before, when that one is still there.
-export const linkReport = (reportId: string, sameAs: string, at: Date): Query =>
-  sql`insert into report_link (ticket_number, same_as, at)
-    select r.ticket_number, ${sameAs}, ${at} from report r
-    where r.id = ${reportId} and exists (select 1 from ticket t where t.ticket_number = ${sameAs})`;
+// The report just sent is of the same event as one sent before, when that one is still there. The
+// event takes a code when it first holds two reports: KJ-, the first report's WIB date as ddmmyy,
+// and the day's next number (`day` is that date as YYYY-MM-DD).
+export function linkReport(reportId: string, sameAs: string, day: string, at: Date): Query[] {
+  const ddmmyy = `${day.slice(8, 10)}${day.slice(5, 7)}${day.slice(2, 4)}`;
+  const uncoded = sql`not exists (select 1 from report_event where ticket_number = ${sameAs})
+    and exists (select 1 from ticket where ticket_number = ${sameAs})`;
+  return [
+    sql`insert into report_link (ticket_number, same_as, at)
+      select r.ticket_number, ${sameAs}, ${at} from report r
+      where r.id = ${reportId} and exists (select 1 from ticket t where t.ticket_number = ${sameAs})`,
+    sql`insert into event_day_counter (wib_date, last_n) select ${day}, 1 where ${uncoded}
+      on conflict (wib_date) do update set last_n = last_n + 1`,
+    sql`insert into report_event (ticket_number, code, at)
+      select ${sameAs}, 'KJ-' || ${ddmmyy} || '-' || printf('%02d', (select last_n from event_day_counter where wib_date = ${day})),
+        ${at}
+      where ${uncoded}`,
+    sql`insert into report_event (ticket_number, code, at)
+      select r.ticket_number, (select code from report_event where ticket_number = ${sameAs}), ${at} from report r
+      where r.id = ${reportId} and exists (select 1 from report_event where ticket_number = ${sameAs})`,
+  ];
+}
