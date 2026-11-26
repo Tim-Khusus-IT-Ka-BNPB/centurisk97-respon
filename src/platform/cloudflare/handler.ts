@@ -75,7 +75,7 @@ export function createWorker(pages: PageHandler, runtime: string, sink?: LogSink
         await runSweep(env.DB, r2PhotoStore(env.PHOTOS), clock, log);
         step = "warnings";
         const started = Date.now();
-        await sendWarnings({ db: env.DB, settings, clock }, (request) => fetch(request));
+        await sendWarnings({ db: env.DB, settings, clock }, fetch.bind(globalThis));
         log.info({ event: "warnings.done", durationMs: Date.now() - started });
       } catch (error) {
         // The driver's message may quote values, so only its SQLite code leaves this run.
