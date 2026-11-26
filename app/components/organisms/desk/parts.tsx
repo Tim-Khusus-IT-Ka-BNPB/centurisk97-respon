@@ -130,6 +130,18 @@ export function NewsChip() {
   );
 }
 
+// The report is one of a cluster: the same hazard close in place and time from other numbers. A
+// cluster is never called verified.
+export function ClusterChip({ cluster }: { readonly cluster: NonNullable<Item["cluster"]> }) {
+  const t = useText();
+  return (
+    <span className="inline-flex items-center gap-1 rounded-chip border border-line bg-surface px-2 py-0.5 text-meta whitespace-nowrap">
+      <Icon name="users" className="size-4" />
+      {t(cluster.strong ? "desk.cluster.strong" : "desk.cluster.chip", { count: cluster.tickets.length })}
+    </span>
+  );
+}
+
 // The report came through a WhatsApp chat, so its number is the reporter's own.
 export function ChatMark() {
   const t = useText();

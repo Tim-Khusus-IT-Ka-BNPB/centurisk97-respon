@@ -402,6 +402,20 @@ describe("a report on the desk", () => {
     expect(screen.queryByRole("region", { name: "Penanganan" })).toBeNull();
   });
 
+  test("a report in a cluster names it beside its status and links the others, itself marked", async () => {
+    const cluster = { tickets: ["LA-241126-01", "LA-241126-02", "LA-241126-03"], reporters: 3, strong: true };
+    await renderDesk(<DeskReportView report={{ ...REPORT, cluster }} summary={SUMMARY} />, PATH);
+    expect(screen.getByText("Gugus kuat, 3 laporan")).toBeTruthy();
+    const section = screen.getByRole("region", { name: "Gugus laporan" });
+    expect(within(section).getByText(/dari 3 nomor berbeda. Gugus bukan tanda terverifikasi/)).toBeTruthy();
+    expect(
+      within(section)
+        .getAllByRole("link")
+        .map((link) => link.getAttribute("href")),
+    ).toEqual(["/lapor/meja/LA-241126-02", "/lapor/meja/LA-241126-03"]);
+    expect(within(section).getByText("LA-241126-01").getAttribute("aria-current")).toBe("page");
+  });
+
   test("each photo of the work is shown on the Alun-alun or taken off it by its own button", async () => {
     const proofs = [
       { proofId: "p1", hasPoint: true, at: SENT, actor: "Petugas Uji", public: true },

@@ -2,6 +2,7 @@ import { type ReactNode, useEffect, useMemo } from "react";
 import { Form, Link, useFetcher, useNavigation, useSearchParams } from "react-router";
 import type { DeskIdentity, DeskReport, DeskSummary } from "../../../../src/contract/desk";
 import type { ErrorEnvelope } from "../../../../src/contract/errors";
+import { hazardKey } from "../../../../src/copy/hazardKey";
 import { cn } from "../../../lib/cn";
 import type { DeskTyped } from "../../../lib/deskTypes";
 import { cardProblem, isLimit } from "../../../lib/envelope";
@@ -21,6 +22,7 @@ import { DeskValues } from "./DeskValues";
 import {
   ALL_FILTERS,
   ChatChip,
+  ClusterChip,
   EmergencyChip,
   ImpactStrip,
   NewsChip,
@@ -156,6 +158,41 @@ function Handling({ report }: { readonly report: DeskReport }) {
           ))}
         </ul>
       )}
+    </Section>
+  );
+}
+
+// The other reports of its cluster, each a link. Its figures are never added to theirs.
+function Cluster({ report }: { readonly report: DeskReport }) {
+  const t = useText();
+  if (report.cluster === null) return null;
+  return (
+    <Section id="desk-cluster" title={t("desk.cluster.title")}>
+      <p className="text-meta text-muted">
+        {t("desk.cluster.lead", { hazard: hazardKey(report.hazardType), reporters: report.cluster.reporters })}
+      </p>
+      <ul className="flex flex-wrap gap-2">
+        {report.cluster.tickets.map((ticket) => (
+          <li key={ticket}>
+            {ticket === report.ticketNumber ? (
+              <span
+                aria-current="page"
+                className="inline-flex min-h-target-min items-center rounded-control border border-primary bg-selected px-3 font-semibold tabular-nums text-primary"
+              >
+                {ticket}
+                <span className="sr-only">, {t("desk.cluster.this")}</span>
+              </span>
+            ) : (
+              <Link
+                to={`/lapor/meja/${ticket}`}
+                className="inline-flex min-h-target-min items-center rounded-control border border-line bg-surface px-3 tabular-nums text-ink no-underline hover:border-control"
+              >
+                {ticket}
+              </Link>
+            )}
+          </li>
+        ))}
+      </ul>
     </Section>
   );
 }
@@ -313,6 +350,7 @@ export function DeskReportView({
               {report.news ? <NewsChip /> : null}
               {report.numberUnverified ? <UnverifiedChip /> : null}
               {report.door === "chat" ? <ChatChip /> : null}
+              {report.cluster === null ? null : <ClusterChip cluster={report.cluster} />}
             </div>
             <Hazard item={report} />
             <div className="flex flex-col gap-0.5">
@@ -382,6 +420,7 @@ export function DeskReportView({
             </Section>
           </div>
           <Handling report={report} />
+          <Cluster report={report} />
           <DeskValues report={report} />
         </div>
         <div className="flex min-w-0 flex-col gap-5 xl:col-start-2 xl:row-start-1">

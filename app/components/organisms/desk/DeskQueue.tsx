@@ -16,6 +16,7 @@ import { DeskMapView } from "./DeskMap";
 import { DeskShell } from "./DeskShell";
 import {
   ChatMark,
+  ClusterChip,
   clearedLink,
   deskLink,
   EmergencyChip,
@@ -116,6 +117,7 @@ function QueueTable({ items }: { readonly items: readonly Item[] }) {
                     <StatusChip status={item.status} />
                     {item.emergency === null ? null : <EmergencyChip />}
                     {item.news ? <NewsChip /> : null}
+                    {item.cluster === null ? null : <ClusterChip cluster={item.cluster} />}
                   </span>
                 </span>
               </td>
@@ -169,6 +171,7 @@ function QueueCards({ items }: { readonly items: readonly Item[] }) {
               <span className="flex flex-wrap justify-end gap-1.5">
                 {item.emergency === null ? null : <EmergencyChip />}
                 {item.news ? <NewsChip /> : null}
+                {item.cluster === null ? null : <ClusterChip cluster={item.cluster} />}
                 <StatusChip status={item.status} />
               </span>
             </span>

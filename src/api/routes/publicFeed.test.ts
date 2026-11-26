@@ -131,6 +131,15 @@ describe("the public feed", () => {
     const together = (await feed()).feed;
     expect(together.entries.filter((one) => one.id === alone?.id)).toHaveLength(1);
     expect(together.entries[0]).toMatchObject({ id: alone?.id, reporters: 2 });
+    // The desk sees the cluster on each of its reports; another region's account sees none of it.
+    const queued = (await desk().call("GET", `/desk/reports/${second.ticket}`)).json as { cluster: unknown };
+    expect(queued.cluster).toEqual({ tickets: [first.ticket, second.ticket], reporters: 2, strong: false });
+    const list = (await desk().call("GET", `/desk/reports?ticket=${first.ticket}`)).json as {
+      items: { cluster: unknown }[];
+    };
+    expect(list.items[0]?.cluster).toEqual(queued.cluster);
+    const elsewhere = (await otherProvince().call("GET", "/desk/reports")).json as { items: { cluster: unknown }[] };
+    expect(elsewhere.items.every((item) => item.cluster === null)).toBe(true);
   });
 
   test("filters by hazard and province, and refuses any other query", async () => {

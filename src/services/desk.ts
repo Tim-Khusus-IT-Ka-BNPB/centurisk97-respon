@@ -26,6 +26,7 @@ import type {
   DeskReport,
   DeskSummary,
 } from "../contract/desk";
+import type { Cluster } from "../domain/clusters";
 import {
   DESK_PAGE_SIZE,
   type DeskHas,
@@ -46,6 +47,7 @@ import { checkMove, checkReply, moveCapability, noteRule, offeredStatuses } from
 import type { StaffPrincipal } from "../ports/identity";
 import type { ServiceBindings } from "./bindings";
 import { deskDelivery } from "./chatNews";
+import { clusterMap } from "./clusters";
 import { at, draftZone } from "./draftView";
 import { emergencyList } from "./emergency";
 import { checkLimits, type LimitRefusal } from "./limits";
@@ -76,7 +78,11 @@ const fieldValue = <T>(states: QueueRow["states"], field: string): T =>
   (states[field] as { readonly value: unknown }).value as T;
 
 // A reporter's name, number and post are for those who may read identity; others ask each time.
-function queueItem(staff: StaffPrincipal, found: QueueRow): DeskQueue["items"][number] {
+function queueItem(
+  staff: StaffPrincipal,
+  found: QueueRow,
+  clusters: ReadonlyMap<string, Cluster>,
+): DeskQueue["items"][number] {
   const zone = draftZone(found.villageCode);
   const place = fieldValue<PlaceValue>(found.states, "place");
   return {
@@ -98,8 +104,14 @@ function queueItem(staff: StaffPrincipal, found: QueueRow): DeskQueue["items"][n
     taker: found.taker,
     news: found.news,
     impact: impactOf(found.states),
+    cluster: clusterView(clusters.get(found.ticketNumber)),
   };
 }
+
+const clusterView = (cluster: Cluster | undefined): DeskQueue["items"][number]["cluster"] =>
+  cluster === undefined
+    ? null
+    : { tickets: [...cluster.tickets], reporters: cluster.reporters, strong: cluster.strong };
 
 export type QueueQuery = {
   readonly status: TicketStatus | null;
@@ -231,12 +243,15 @@ export async function deskQueue(
   const refused = await admitted(bindings, staff, "readQueue", "desk.read");
   if (refused) return refused;
   const filters = filtersOf(bindings, staff, query);
-  const found = await queuePage(bindings.db, filters, (query.page - 1) * DESK_PAGE_SIZE, DESK_PAGE_SIZE);
+  const [found, clusters] = await Promise.all([
+    queuePage(bindings.db, filters, (query.page - 1) * DESK_PAGE_SIZE, DESK_PAGE_SIZE),
+    clusterMap(bindings, staff.scope),
+  ]);
   return {
     kind: "ok",
     body: {
       account: { label: staff.label },
-      items: found.rows.map((row) => queueItem(staff, row)),
+      items: found.rows.map((row) => queueItem(staff, row, clusters)),
       total: found.total,
       page: query.page,
       pageCount: Math.ceil(found.total / DESK_PAGE_SIZE),
@@ -272,7 +287,7 @@ async function reportBody(bindings: ServiceBindings, staff: StaffPrincipal, tick
   const delivery = await deskDelivery(bindings, ticketNumber, found.villageCode);
   const [point] = await mapPoints(bindings.db, { scope: staff.scope, ...only }, 1);
   const body: DeskReport = {
-    ...queueItem(staff, found),
+    ...queueItem(staff, found, await clusterMap(bindings, staff.scope)),
     account: { label: staff.label },
     reporter: {
       role: found.reporterRole,

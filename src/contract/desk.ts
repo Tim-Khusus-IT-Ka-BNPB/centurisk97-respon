@@ -48,6 +48,15 @@ const queueItemSchema = z.object({
   // The reporter added news that no officer has acted on yet.
   news: z.boolean(),
   impact: impactSchema,
+  // Reports of the same hazard close in place and time from two numbers or more (A9): its tickets,
+  // oldest first, this one among them. Never called verified, and its figures are never added up.
+  cluster: z
+    .object({
+      tickets: z.array(z.string()).min(2),
+      reporters: z.number().int().min(2),
+      strong: z.boolean(),
+    })
+    .nullable(),
 });
 
 export const deskQueueSchema = z.object({

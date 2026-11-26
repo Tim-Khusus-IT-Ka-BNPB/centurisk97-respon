@@ -41,6 +41,7 @@ export const ITEM: DeskQueue["items"][number] = {
   taker: null,
   news: false,
   impact: { dead: 2, missing: null, injured: 0, displaced: null, houses: { count: 3, partial: true } },
+  cluster: null,
 };
 
 export const queue = (overrides: Partial<DeskQueue> = {}): DeskQueue => ({

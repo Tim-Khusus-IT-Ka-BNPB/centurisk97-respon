@@ -292,5 +292,10 @@
   "desk.aggregates.download": "Unduh CSV",
   "desk.aggregates.refused": "Berkas belum bisa diunduh: batas unduhan per jam sudah tercapai, atau layanan sedang terganggu. Coba lagi beberapa menit lagi.",
   "desk.proof.showLabel": "Tampilkan foto penanganan {n} di Alun-alun",
-  "desk.proof.hideLabel": "Sembunyikan foto penanganan {n} dari Alun-alun"
+  "desk.proof.hideLabel": "Sembunyikan foto penanganan {n} dari Alun-alun",
+  "desk.cluster.chip": "Gugus, {count} laporan",
+  "desk.cluster.strong": "Gugus kuat, {count} laporan",
+  "desk.cluster.title": "Gugus laporan",
+  "desk.cluster.lead": "Laporan {hazard} lain di dekatnya dalam beberapa jam, dari {reporters} nomor berbeda. Gugus bukan tanda terverifikasi, dan angka tiap laporan tidak dijumlah.",
+  "desk.cluster.this": "Laporan ini"
 }
