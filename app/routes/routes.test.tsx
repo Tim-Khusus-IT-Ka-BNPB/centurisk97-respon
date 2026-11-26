@@ -280,10 +280,8 @@ describe("route modules", () => {
     renderPage(routeElement(HomeRoute, { loaderData: read }), { path: "/lapor" });
     expect(await screen.findByRole("link", { name: "Lapor kejadian" })).toBeTruthy();
     expect(screen.getByRole("link", { name: "Lapor darurat" }).getAttribute("href")).toBe("/lapor/report?darurat=1");
-    // One tap is offered only where a reporter is known.
-    expect(screen.getByRole("link", { name: "Darurat sekali ketuk" }).getAttribute("href")).toBe(
-      "/lapor/darurat?ketuk=1",
-    );
+    // One tap is no longer offered on the home page, even where a reporter is known.
+    expect(screen.queryByRole("link", { name: "Darurat sekali ketuk" })).toBeNull();
     cleanup();
     renderPage(routeElement(HomeRoute, { loaderData: down }), { path: "/lapor" });
     expect(await screen.findByRole("link", { name: "Lapor darurat" })).toBeTruthy();

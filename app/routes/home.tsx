@@ -20,11 +20,7 @@ export async function loader({ context }: Route.LoaderArgs) {
 
 export default function HomeRoute({ loaderData: { me, texts } }: Route.ComponentProps) {
   return (
-    <Page
-      texts={texts}
-      wide
-      hero={<HomeHero known={Boolean(me?.knownReporters.length)} sent={Boolean(me?.reports.length)} />}
-    >
+    <Page texts={texts} wide hero={<HomeHero sent={Boolean(me?.reports.length)} />}>
       <HomeScreen me={me} />
     </Page>
   );

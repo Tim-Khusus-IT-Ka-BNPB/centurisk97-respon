@@ -6,7 +6,7 @@ import { EmergencyPanel } from "./EmergencyPanel";
 
 // The opening band: what the service is for, the ways in, and the numbers to call when a life is at
 // risk. Who has sent a report is led to it; anyone else to how reporting goes.
-export function HomeHero({ known, sent }: { readonly known: boolean; readonly sent: boolean }) {
+export function HomeHero({ sent }: { readonly sent: boolean }) {
   const t = useText();
   return (
     <section aria-labelledby="home-heading" className="contours text-on-hero">
@@ -35,7 +35,7 @@ export function HomeHero({ known, sent }: { readonly known: boolean; readonly se
             </a>
           </div>
         </div>
-        <EmergencyPanel known={known} />
+        <EmergencyPanel />
       </div>
     </section>
   );

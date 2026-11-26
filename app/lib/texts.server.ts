@@ -19,7 +19,6 @@ export const PAGE_TEXTS = {
   home: [
     ...SHELL,
     "home.",
-    "emergency.oneTap",
     "resume.",
     "hazard.",
     "stage.",

@@ -1,6 +1,4 @@
-import { Link } from "react-router";
 import { useText } from "../../lib/text";
-import { buttonStyles } from "../atoms/Button";
 import { Icon } from "../atoms/Icon";
 import { CallRow } from "../molecules/CallRow";
 
@@ -21,9 +19,10 @@ export function EmergencyStart() {
   );
 }
 
-// When a life is at risk a report waits too long: the number to call now, BNPB's call center, and
-// for a reporter known on this phone one tap that sends its point.
-export function EmergencyPanel({ known = false }: { readonly known?: boolean }) {
+// When a life is at risk a report waits too long: the number to call now and BNPB's call center.
+// One tap is no longer offered here (upstream, 25 Nov; owner, 26 Nov): "Lapor darurat" asks the
+// little it needs, and the one-tap page stays for a report kept with no signal.
+export function EmergencyPanel() {
   const t = useText();
   return (
     <aside
@@ -38,12 +37,6 @@ export function EmergencyPanel({ known = false }: { readonly known?: boolean }) 
       </div>
       <CallRow number={t("about.emergency.112")} label={t("about.emergency.112Label")} first />
       <CallRow number={t("about.emergency.117")} label={t("about.emergency.117Label")} />
-      {known ? (
-        <Link to="/lapor/darurat?ketuk=1" className={buttonStyles({ variant: "danger", size: "main" })}>
-          <Icon name="mapPin" className="size-5" />
-          {t("emergency.oneTap")}
-        </Link>
-      ) : null}
     </aside>
   );
 }

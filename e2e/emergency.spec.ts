@@ -110,8 +110,10 @@ test("one tap shows who to call before the phone is read, and is for a reporter 
   await startEmergency(page);
   await context.grantPermissions(["geolocation"]);
   await context.setGeolocation(HERE);
+  // One tap is no longer offered on the home page; its page opens it.
   await page.goto("/lapor");
-  await page.getByRole("link", { name: "Darurat sekali ketuk" }).click();
+  await expect(page.getByRole("link", { name: "Darurat sekali ketuk" })).toHaveCount(0);
+  await page.goto("/lapor/darurat?ketuk=1");
   for (const phone of ["112", "117"]) await expect(page.locator(`a[href="tel:${phone}"]`).first()).toBeVisible();
   await expect(page.getByText(/Terkirim ke meja BNPB dengan nomor LA-/)).toBeVisible({ timeout: 40_000 });
   await expect(page.getByRole("link", { name: /^BPBD Aceh Utara/ })).toBeVisible();
