@@ -1,5 +1,13 @@
 import { describe, expect, test } from "vitest";
-import { checkEventTime, localClock, localDate, parseEventTimeText, provinceZone, zoneOffsetMs } from "./eventTime";
+import {
+  checkEventTime,
+  eventInstantMs,
+  localClock,
+  localDate,
+  parseEventTimeText,
+  provinceZone,
+  zoneOffsetMs,
+} from "./eventTime";
 
 // 14.30 WIB on 19 November 2026.
 const now = Date.UTC(2026, 10, 19, 7, 30);
@@ -89,6 +97,16 @@ describe("event time from the time card", () => {
     expect(
       checkEventTime({ kind: "dateTime", localDate: "2026-11-19", localTime: "00:00", zone: "WIB" }, now),
     ).toBeNull();
+  });
+});
+
+describe("the instant of an event time", () => {
+  test("a date with its hour is an instant in its zone; a date alone or an old event is none", () => {
+    expect(eventInstantMs({ kind: "dateTime", localDate: "2026-11-25", localTime: "10:30", zone: "WITA" })).toBe(
+      Date.UTC(2026, 10, 25, 2, 30),
+    );
+    expect(eventInstantMs({ kind: "dateOnly", localDate: "2026-11-25", zone: "WIB" })).toBeNull();
+    expect(eventInstantMs({ kind: "olderThan30Days" })).toBeNull();
   });
 });
 

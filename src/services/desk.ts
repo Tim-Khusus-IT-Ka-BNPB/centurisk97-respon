@@ -314,6 +314,7 @@ async function reportBody(bindings: ServiceBindings, staff: StaffPrincipal, tick
       hasPoint: one.hasPoint,
       at: at(one.atMs, zone),
       actor: one.staffLabel,
+      public: one.public,
     })),
     replies: found.replies.map((one, index) => ({
       text: one.text,

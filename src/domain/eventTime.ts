@@ -78,6 +78,12 @@ export function checkEventTime(value: EventTimeValue, nowMs: number): EventTimeE
   return null;
 }
 
+// The instant of an event time with its hour; null for a date alone or an old event.
+export function eventInstantMs(value: EventTimeValue): number | null {
+  if (value.kind !== "dateTime") return null;
+  return Date.parse(`${value.localDate}T${value.localTime}:00Z`) - zoneOffsetMs(value.zone);
+}
+
 const MONTHS = [
   "januari",
   "februari",

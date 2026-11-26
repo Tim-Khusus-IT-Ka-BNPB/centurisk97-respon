@@ -21,6 +21,7 @@
   "error.place.unavailable": "Pencarian tempat belum bisa dipakai karena data wilayah tidak terbaca. Laporan Anda tetap tersimpan di langkah ini. Cari lagi dalam beberapa menit.",
   "error.send.failed": "Laporan belum terkirim karena layanan sedang terganggu. Semua jawaban tetap tersimpan. Ketuk Kirim sekali lagi.",
   "error.tracking.notFound": "Laporan tidak ditemukan.",
+  "error.feed.photoNotFound": "Foto tidak ditemukan, atau tidak lagi ditampilkan di Alun-alun.",
   "error.report.notFound": "Laporan tidak ditemukan di perangkat ini. Buka dari perangkat yang Anda pakai untuk melapor, atau lihat statusnya lewat tautan lacak.",
   "error.followUp.closed": "Kabar ini belum terkirim. {reason}",
   "error.followUp.nothingNew": "Belum ada yang berubah, jadi kabar belum dikirim. Ubah satu bagian, tulis kabarnya di kotak pesan, atau tambah foto.",

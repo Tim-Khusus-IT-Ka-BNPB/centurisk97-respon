@@ -100,7 +100,9 @@ describe("moving a ticket", () => {
     expect(screen.getByLabelText("Alasan bila tanpa foto penanganan")).toBeTruthy();
     expect(screen.getByText(/karena belum ada foto penanganan/)).toBeTruthy();
     view.unmount();
-    await draw({ report: { ...WORKING, proofs: [{ proofId: "1", hasPoint: true, at: SENT, actor: "Petugas" }] } });
+    await draw({
+      report: { ...WORKING, proofs: [{ proofId: "1", hasPoint: true, at: SENT, actor: "Petugas", public: false }] },
+    });
     fireEvent.click(screen.getByRole("radio", { name: "Selesai ditangani" }));
     expect(screen.getByText(/^Boleh dikosongkan. Hanya petugas/)).toBeTruthy();
   });
@@ -168,7 +170,7 @@ describe("what is being done", () => {
   });
 
   test("more is added while the work goes on, what was told left out; a refusal opens its fold", async () => {
-    const told = [{ label: "Evakuasi warga", at: SENT, actor: "Petugas" }];
+    const told = [{ label: "Evakuasi warga", at: SENT, actor: "Petugas", public: false }];
     const view = await draw({ report: { ...WORKING, actions: told } });
     expect(fold("Tambah tindakan").open).toBe(false);
     expect(screen.queryByLabelText("Evakuasi warga")).toBeNull();
@@ -258,6 +260,7 @@ describe("photos of the work", () => {
       hasPoint: false,
       at: SENT,
       actor: "Petugas",
+      public: false,
     }));
     await draw({ report: { ...WORKING, proofs } });
     expect(screen.getByText(/^Sudah 10 foto penanganan/)).toBeTruthy();

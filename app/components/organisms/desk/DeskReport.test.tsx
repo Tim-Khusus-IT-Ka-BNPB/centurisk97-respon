@@ -366,8 +366,8 @@ describe("a report on the desk", () => {
           ],
           actions: [{ label: "Evakuasi warga", at: SENT, actor: "Petugas Uji" }],
           proofs: [
-            { proofId: "p1", hasPoint: true, at: SENT, actor: "Petugas Uji" },
-            { proofId: "p2", hasPoint: false, at: SENT, actor: "Petugas Uji" },
+            { proofId: "p1", hasPoint: true, at: SENT, actor: "Petugas Uji", public: false },
+            { proofId: "p2", hasPoint: false, at: SENT, actor: "Petugas Uji", public: false },
           ],
         }}
         summary={SUMMARY}
@@ -390,11 +390,11 @@ describe("a report on the desk", () => {
   });
 
   test("photos with no action told, and actions with no photo, are each shown alone", async () => {
-    const proofs = [{ proofId: "p1", hasPoint: true, at: SENT, actor: "Petugas Uji" }];
+    const proofs = [{ proofId: "p1", hasPoint: true, at: SENT, actor: "Petugas Uji", public: false }];
     const view = await renderDesk(<DeskReportView report={{ ...REPORT, proofs }} summary={SUMMARY} />, PATH);
     expect(within(screen.getByRole("region", { name: "Penanganan" })).getAllByRole("img")).toHaveLength(1);
     view.unmount();
-    const actions = [{ label: "Evakuasi warga", at: SENT, actor: "Petugas Uji" }];
+    const actions = [{ label: "Evakuasi warga", at: SENT, actor: "Petugas Uji", public: false }];
     const other = await renderDesk(<DeskReportView report={{ ...REPORT, actions }} summary={SUMMARY} />, PATH);
     expect(within(screen.getByRole("region", { name: "Penanganan" })).queryByRole("img")).toBeNull();
     other.unmount();

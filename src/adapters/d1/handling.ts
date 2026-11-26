@@ -16,6 +16,8 @@ export type Handling = {
     readonly hasPoint: boolean;
     readonly atMs: number;
     readonly staffLabel: string;
+    // Shown on the public feed while its report is handled (D88).
+    readonly public: boolean;
   }[];
 };
 
@@ -26,10 +28,12 @@ export async function handlingOf(db: Database, ticketNumber: string): Promise<Ha
       db,
       sql`select label, staff_label, at from handling_action where ticket_number = ${ticketNumber} order by id`,
     ),
-    rows<{ id: string; lat: number | null; staff_label: string; received_at: string }>(
+    rows<{ id: string; lat: number | null; staff_label: string; received_at: string; public: number | null }>(
       db,
-      sql`select id, lat, staff_label, received_at from handling_proof where ticket_number = ${ticketNumber}
-        order by received_at, id`,
+      sql`select p.id, p.lat, p.staff_label, p.received_at,
+          (select u.public from proof_publication u where u.proof_id = p.id order by u.id desc limit 1) as public
+        from handling_proof p where p.ticket_number = ${ticketNumber}
+        order by p.received_at, p.id`,
     ),
   ]);
   return {
@@ -39,6 +43,7 @@ export async function handlingOf(db: Database, ticketNumber: string): Promise<Ha
       hasPoint: one.lat !== null,
       atMs: Date.parse(one.received_at),
       staffLabel: one.staff_label,
+      public: one.public === 1,
     })),
   };
 }

@@ -12,7 +12,7 @@ type ClusterRule =
   | { readonly reach: "regency"; readonly hours: number };
 
 // Drought and abrasion last for days and are not clustered until upstream Q18 is answered.
-export const CLUSTER_RULES: Partial<Record<HazardTypeId, ClusterRule>> = {
+const CLUSTER_RULES: Partial<Record<HazardTypeId, ClusterRule>> = {
   flood: { reach: "local", km: 3, hours: 6 },
   landslide: { reach: "local", km: 3, hours: 6 },
   buildingFire: { reach: "local", km: 3, hours: 6 },

@@ -31,6 +31,7 @@ const ERROR_CODES = [
   "ticket.taken",
   "gateway.refused",
   "gateway.replayed",
+  "feed.photoNotFound",
 ] as const;
 
 export type ErrorCode = (typeof ERROR_CODES)[number] | `limit.${LimitId}`;

@@ -8,7 +8,7 @@ import { DAY_MS, MINUTE_MS } from "./time";
 // guessed. The gap to the official record stays "not yet available" until reports are matched to
 // it upstream (LA-25): never zero.
 
-export const SMALL_CELL = 3;
+const SMALL_CELL = 3;
 
 export type AggregateInput = {
   readonly provinceCode: string;

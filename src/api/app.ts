@@ -14,6 +14,7 @@ import { addOwnReportRoutes } from "./routes/ownReports";
 import { addPhotoRoutes } from "./routes/photos";
 import { addPlaceRoutes } from "./routes/places";
 import { addPreferenceRoutes } from "./routes/preferences";
+import { addPublicFeedRoutes } from "./routes/publicFeed";
 import { addReporterRoutes } from "./routes/reporters";
 import { addTrackingRoutes } from "./routes/tracking";
 
@@ -61,3 +62,4 @@ addDeskPilotRoutes(api);
 addEmergencyRoutes(api);
 addPreferenceRoutes(api);
 addGatewayRoutes(api);
+addPublicFeedRoutes(api);
