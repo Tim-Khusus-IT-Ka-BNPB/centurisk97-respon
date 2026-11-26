@@ -22,5 +22,10 @@
   "feed.unavailable.title": "Alun-alun belum bisa dimuat",
   "feed.unavailable.lead": "Coba muat ulang halaman ini sebentar lagi.",
   "feed.unavailable.retry": "Muat ulang",
-  "feed.report": "Lapor kejadian"
+  "feed.report": "Lapor kejadian",
+  "feed.follow.off": "Ikuti kejadian",
+  "feed.follow.on": "Diikuti",
+  "feed.follow.hint": "Disimpan di perangkat ini saja. Kartu ditandai bila statusnya berubah.",
+  "feed.follow.changed": "Status berubah",
+  "feed.follow.only": "Hanya yang diikuti ({count})"
 }

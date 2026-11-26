@@ -33,7 +33,9 @@
         "!app/lib/offline.ts",
         "!app/lib/offline.test.ts",
         "!app/components/organisms/OneTapScreen.test.tsx",
-        "!app/testing/setup.ts"
+        "!app/testing/setup.ts",
+        "!app/lib/follow.ts",
+        "!app/lib/follow.test.ts"
       ],
       "plugins": ["./tools/lint/web-storage.grit"],
       "linter": {

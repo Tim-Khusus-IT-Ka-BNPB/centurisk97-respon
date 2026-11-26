@@ -1,3 +1,4 @@
+import { useEffect, useState } from "react";
 import { Link } from "react-router";
 import type { ErrorEnvelope } from "../../../src/contract/errors";
 import type { Feed, FeedEntry } from "../../../src/contract/publicFeed";
@@ -5,6 +6,7 @@ import { hazardKey } from "../../../src/copy/hazardKey";
 import { SELECTABLE_HAZARD_TYPES } from "../../../src/domain/hazards";
 import { cn } from "../../lib/cn";
 import { isLimit } from "../../lib/envelope";
+import { type Followed, followed, toggleFollow } from "../../lib/follow";
 import { hazardIcon } from "../../lib/hazardIcons";
 import { limitText } from "../../lib/status";
 import { useText } from "../../lib/text";
@@ -35,8 +37,42 @@ function HazardFilter({ hazard }: { readonly hazard: string | null }) {
   );
 }
 
-function FeedCard({ entry }: { readonly entry: FeedEntry }) {
+// Follow an event on this device (D86); a status changed since it was followed is marked.
+function FollowButton({
+  entry,
+  follows,
+  onToggle,
+}: {
+  readonly entry: FeedEntry;
+  readonly follows: Followed;
+  readonly onToggle: (next: Followed) => void;
+}) {
   const t = useText();
+  const on = follows[entry.id] !== undefined;
+  return (
+    <button
+      type="button"
+      aria-pressed={on}
+      title={t("feed.follow.hint")}
+      onClick={() => onToggle(toggleFollow(entry.id, entry.status))}
+      className={buttonStyles({ variant: "secondary", size: "min", className: "self-start px-3" })}
+    >
+      <Icon name={on ? "check" : "plus"} className="size-4" />
+      {on ? t("feed.follow.on") : t("feed.follow.off")}
+    </button>
+  );
+}
+
+function FeedCard({
+  entry,
+  follow,
+}: {
+  readonly entry: FeedEntry;
+  readonly follow: { readonly follows: Followed; readonly onToggle: (next: Followed) => void } | null;
+}) {
+  const t = useText();
+  const changed =
+    follow !== null && follow.follows[entry.id] !== undefined && follow.follows[entry.id] !== entry.status;
   const hazard = t(hazardKey(entry.hazardType));
   const subtype = entry.hazardSubtype ? t(`hazardSubtype.${entry.hazardType}.${entry.hazardSubtype}.label`) : null;
   return (
@@ -66,9 +102,16 @@ function FeedCard({ entry }: { readonly entry: FeedEntry }) {
               })}
             </p>
           </div>
-          <span className="inline-flex shrink-0 items-center gap-1.5 rounded-chip border border-line bg-surface px-2 py-0.5 text-meta font-semibold">
-            <StatusDot status={entry.status} />
-            {t(`feed.status.${entry.status}`)}
+          <span className="flex shrink-0 flex-col items-end gap-1">
+            <span className="inline-flex items-center gap-1.5 rounded-chip border border-line bg-surface px-2 py-0.5 text-meta font-semibold">
+              <StatusDot status={entry.status} />
+              {t(`feed.status.${entry.status}`)}
+            </span>
+            {changed ? (
+              <span className="rounded-chip bg-warn-tint px-2 py-0.5 text-meta font-semibold">
+                {t("feed.follow.changed")}
+              </span>
+            ) : null}
           </span>
         </div>
         <Impact impact={entry.impact} />
@@ -98,6 +141,7 @@ function FeedCard({ entry }: { readonly entry: FeedEntry }) {
             </div>
           </figure>
         ) : null}
+        {follow === null ? null : <FollowButton entry={entry} follows={follow.follows} onToggle={follow.onToggle} />}
       </article>
     </li>
   );
@@ -148,7 +192,14 @@ export type FeedLoad =
 
 export function FeedScreen({ load, hazard }: { readonly load: FeedLoad; readonly hazard: string | null }) {
   const t = useText();
-  const entries = load.kind === "feed" ? load.feed.entries : [];
+  const all = load.kind === "feed" ? load.feed.entries : [];
+  // Read once the page runs in the browser: the server knows nothing of what this device follows.
+  const [follows, setFollows] = useState<Followed | null>(null);
+  const [onlyFollowed, setOnlyFollowed] = useState(false);
+  useEffect(() => setFollows(followed()), []);
+  const mine = follows === null ? [] : all.filter((entry) => follows[entry.id] !== undefined);
+  const entries = onlyFollowed && mine.length > 0 ? mine : all;
+  const follow = follows === null ? null : { follows, onToggle: setFollows };
   return (
     <div className="flex flex-col gap-6">
       <header className="flex flex-col gap-2">
@@ -156,6 +207,17 @@ export function FeedScreen({ load, hazard }: { readonly load: FeedLoad; readonly
         <p className="max-w-[65ch] text-body text-muted">{t("feed.lead")}</p>
       </header>
       <HazardFilter hazard={hazard} />
+      {mine.length > 0 ? (
+        <button
+          type="button"
+          aria-pressed={onlyFollowed}
+          onClick={() => setOnlyFollowed(!onlyFollowed)}
+          className={buttonStyles({ variant: "secondary", size: "min", className: "self-start px-3" })}
+        >
+          <Icon name="check" className="size-4" />
+          {t("feed.follow.only", { count: mine.length })}
+        </button>
+      ) : null}
       {load.kind === "unavailable" ? (
         <Unavailable envelope={load.envelope} />
       ) : entries.length === 0 ? (
@@ -176,7 +238,7 @@ export function FeedScreen({ load, hazard }: { readonly load: FeedLoad; readonly
             </h2>
             <ul className="flex flex-col gap-3">
               {entries.map((entry) => (
-                <FeedCard key={entry.id} entry={entry} />
+                <FeedCard key={entry.id} entry={entry} follow={follow} />
               ))}
             </ul>
           </section>

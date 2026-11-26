@@ -1,4 +1,4 @@
-import { screen, within } from "@testing-library/react";
+import { fireEvent, screen, within } from "@testing-library/react";
 import { describe, expect, test, vi } from "vitest";
 import type { ErrorEnvelope } from "../../../src/contract/errors";
 import { FEED_ALONE, FEED_ENTRY } from "../../testing/feed";
@@ -6,6 +6,40 @@ import { renderPage } from "../../testing/render";
 import { FeedScreen } from "./FeedScreen";
 
 vi.mock("./FeedMap", () => ({ FeedMap: () => <div data-testid="map" /> }));
+// What this device follows, kept in memory for the test.
+const kept = vi.hoisted(() => ({ follows: {} as Record<string, string> }));
+vi.mock("../../lib/follow", () => ({
+  followed: () => kept.follows,
+  toggleFollow: (id: string, status: string) => {
+    const { [id]: was, ...rest } = kept.follows;
+    kept.follows = was === undefined ? { ...rest, [id]: status } : rest;
+    return kept.follows;
+  },
+}));
+
+describe("following an event on this device", () => {
+  test("a followed event whose status moved on is marked; follow, let go, and show only those followed", async () => {
+    kept.follows = { [FEED_ENTRY.id]: "in_handling" };
+    renderPage(<FeedScreen load={{ kind: "feed", feed: { entries: [FEED_ENTRY, FEED_ALONE] } }} hazard={null} />, {
+      path: "/lapor/feed",
+    });
+    const cards = () => screen.getAllByRole("article");
+    const first = within((await screen.findAllByRole("article"))[0] as HTMLElement);
+    expect(await first.findByText("Status berubah")).toBeTruthy();
+    expect(first.getByRole("button", { name: "Diikuti" }).getAttribute("aria-pressed")).toBe("true");
+    expect(within(cards()[1] as HTMLElement).queryByText("Status berubah")).toBeNull();
+    fireEvent.click(within(cards()[1] as HTMLElement).getByRole("button", { name: "Ikuti kejadian" }));
+    expect(kept.follows).toEqual({ [FEED_ENTRY.id]: "in_handling", [FEED_ALONE.id]: FEED_ALONE.status });
+    fireEvent.click(first.getByRole("button", { name: "Diikuti" }));
+    const only = screen.getByRole("button", { name: "Hanya yang diikuti (1)" });
+    fireEvent.click(only);
+    expect(only.getAttribute("aria-pressed")).toBe("true");
+    expect(cards()).toHaveLength(1);
+    fireEvent.click(within(cards()[0] as HTMLElement).getByRole("button", { name: "Diikuti" }));
+    expect(cards()).toHaveLength(2);
+    expect(screen.queryByRole("button", { name: /^Hanya yang diikuti/ })).toBeNull();
+  });
+});
 
 describe("the public feed page", () => {
   test("each event a card: its place, status, figures, times, how many reported and the photos of the work", async () => {
