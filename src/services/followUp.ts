@@ -111,11 +111,13 @@ export async function sendFollowUp(
       return stored.requestHash === requestHash
         ? { kind: "ok", status: 200, body: stored.body }
         : { kind: "keyReused" };
+    // The report before the draft: a send landing between the two reads then shows as sent, never
+    // as a draft with nothing new on a report that already holds it.
+    const ticketNumber = draft.followUpOf as string;
+    const report = await followUpState(db, ticketNumber);
     const now = await loadDraft(db, draft.id);
     // Removed with its number while this send was decided.
     if (now === null) return { kind: "notFound" };
-    const ticketNumber = now.followUpOf as string;
-    const report = await followUpState(db, ticketNumber);
     if (now.state === "sent") return { kind: "ok", status: 200, body: sentBody(ticketNumber, report.sentAt) };
     const view = () => viewOf(bindings, now, [], turnKey);
     if (now.state !== "summary" || now.revision !== revision) return { kind: "changed", draft: await view() };
