@@ -8,7 +8,6 @@ export const CASE_KINDS = ["house", "infrastructure", "shelter", "evacuee", "vic
 export type CaseKind = (typeof CASE_KINDS)[number];
 
 export const DAMAGE = ["heavy", "moderate", "light"] as const;
-type Damage = (typeof DAMAGE)[number];
 // Infrastructure reaching the desk's vital-service and basic-service columns (upstream VITAL, LAYANAN).
 export const VITAL = ["power", "water", "signal", "irrigation", "transport", "fuelStation"] as const;
 export const SERVICES = ["school", "healthFacility", "worship", "office", "market"] as const;

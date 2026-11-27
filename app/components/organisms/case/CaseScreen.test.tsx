@@ -270,7 +270,7 @@ describe("what is being saved", () => {
     fireEvent.click(cut as HTMLElement);
     expect(await screen.findByText("Menyimpan...")).toBeTruthy();
     remove.unmount();
-    const photo = draw(CASE_VIEW, { kind: "house", editing: "a000000000000001" });
+    draw(CASE_VIEW, { kind: "house", editing: "a000000000000001" });
     const [house] = (await screen.findAllByRole("article")) as [HTMLElement];
     expect((screen.getByLabelText("Lintang") as HTMLInputElement).value).toBe("5.1");
     expect(within(house).getByRole("button", { name: "Unggah foto" })).toBeTruthy();
