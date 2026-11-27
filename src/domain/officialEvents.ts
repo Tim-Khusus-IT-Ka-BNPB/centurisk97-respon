@@ -43,7 +43,7 @@ const isCount = (value: unknown) => value === null || (Number.isInteger(value) &
 const isEvent = (value: unknown) => {
   const one = value as Partial<KabarEvent> | null;
   const point = one?.titik as { lat?: unknown; lon?: unknown } | null | undefined;
-  const figures = one?.angka as Partial<Figures> | null | undefined;
+  const figures = (one?.angka ?? {}) as Partial<Figures>;
   return (
     typeof one?.id === "string" &&
     typeof one.jenis === "string" &&
@@ -54,9 +54,9 @@ const isEvent = (value: unknown) => {
     isDate(one.mulai) &&
     isDate(one.lap_terakhir) &&
     typeof one.selesai_lama === "boolean" &&
-    isCount(figures?.kk) &&
-    isCount(figures?.mengungsi) &&
-    isCount(figures?.rumah_dampak) &&
+    isCount(figures.kk) &&
+    isCount(figures.mengungsi) &&
+    isCount(figures.rumah_dampak) &&
     Array.isArray(one.berita) &&
     one.berita.every(
       (news) =>
@@ -132,7 +132,7 @@ export function officialEvents(file: KabarFile): readonly OfficialEvent[] {
 export const regencyKey = (name: string) =>
   name
     .toLowerCase()
-    .replace(/^kota administrasi\s+/, "kota ")
-    .replace(/^(kabupaten|kab\.)\s+/, "")
     .replace(/\s+/g, " ")
-    .trim();
+    .trim()
+    .replace(/^kota administrasi /, "kota ")
+    .replace(/^(kabupaten|kab\.) /, "");

@@ -29,6 +29,7 @@ test("the seed passes; a file or an event out of shape does not", () => {
   expect(checkKabarFile(SEED)).not.toBeNull();
   expect(checkKabarFile(file())).not.toBeNull();
   expect(checkKabarFile(file(event({ titik: null })))).not.toBeNull();
+  expect(checkKabarFile(file(event({ angka: { kk: 0, mengungsi: 0, rumah_dampak: 0 } })))).not.toBeNull();
   for (const broken of [
     null,
     { ...file(event()), dibuat: "kemarin" },
@@ -40,16 +41,21 @@ test("the seed passes; a file or an event out of shape does not", () => {
     file(event({ jenis: null })),
     file(event({ kab: 1 })),
     file(event({ prov: 32 })),
+    file(event({ titik: undefined })),
     file(event({ titik: { lat: "1", lon: 2 } })),
     file(event({ titik: { lat: 1, lon: "2" } })),
     file(event({ status: "tanpa" })),
     file(event({ mulai: "24-11-2026" })),
+    file(event({ mulai: ["2026-11-24"] })),
+    file(event({ mulai: "x2026-11-24" })),
+    file(event({ mulai: "2026-11-24x" })),
     file(event({ lap_terakhir: null })),
     file(event({ selesai_lama: "tidak" })),
     file(event({ angka: { kk: -1, mengungsi: null, rumah_dampak: null } })),
     file(event({ angka: { kk: null, mengungsi: 1.5, rumah_dampak: null } })),
     file(event({ angka: { kk: null, mengungsi: null, rumah_dampak: "3" } })),
     file(event({ angka: null })),
+    file(event({ angka: undefined })),
     file(event({ berita: "x" })),
     file(event({ berita: [null] })),
     file(event({ berita: [{ ...news(1), judul: 1 }] })),
@@ -69,7 +75,7 @@ test("ongoing first, then by the latest report; long finished and unknown kinds 
         event({
           id: "c",
           lap_terakhir: "2026-11-24",
-          berita: [news(1), news(2, "http://plain.id/x"), news(3), news(4), news(5)],
+          berita: [news(1), news(2, "http://plain.id/?u=https://x.id"), news(3), news(4), news(5)],
         }),
         event({ id: "d", lap_terakhir: "2026-11-26", jenis: "longsor" }),
         event({ id: "e", selesai_lama: true }),
@@ -101,8 +107,30 @@ test("ongoing first, then by the latest report; long finished and unknown kinds 
   expect(officialEvents(checkKabarFile(SEED) as KabarFile).length).toBeGreaterThan(50);
 });
 
+test("each of upstream's kinds is ours by name", () => {
+  const kinds = {
+    banjir: "flood",
+    longsor: "landslide",
+    cuaca: "extremeWeather",
+    gempa: "earthquake",
+    kebakaran_gedung: "buildingFire",
+    kekeringan: "drought",
+    karhutla: "forestFire",
+    erupsi: "volcanicEruption",
+    abrasi: "tidalWaveAbrasion",
+    tsunami: "tsunami",
+  };
+  const events = officialEvents(
+    checkKabarFile(file(...Object.keys(kinds).map((jenis) => event({ id: jenis, jenis })))) as KabarFile,
+  );
+  expect(Object.fromEntries(events.map((one) => [one.id, one.hazardType]))).toEqual(kinds);
+});
+
 test("regency names compare as BNPB's report and our place data write them", () => {
   expect(regencyKey("Kabupaten  Aceh Utara")).toBe("aceh utara");
+  expect(regencyKey("  Kab.  Bogor  Barat  Daya ")).toBe("bogor barat daya");
+  expect(regencyKey("Bogor Kab. Lama")).toBe("bogor kab. lama");
+  expect(regencyKey("Bukan Kota Administrasi Uji")).toBe("bukan kota administrasi uji");
   expect(regencyKey("Kab. Bogor")).toBe("bogor");
   expect(regencyKey("Kota Administrasi Jakarta Timur")).toBe("kota jakarta timur");
   expect(regencyKey("Kota Bogor")).not.toBe(regencyKey("Bogor"));
