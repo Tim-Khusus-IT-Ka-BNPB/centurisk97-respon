@@ -381,7 +381,8 @@ test("on a report, BNPB opens a local BPBD officer's number, and can call or wri
   await expect(card.getByText("Uji Andi")).toBeVisible();
   await expect(card.locator('a[href^="tel:"]')).toHaveCount(0);
   await card.getByRole("button", { name: "Tampilkan nomor Uji Andi" }).click();
-  await expect(card.locator('a[href="tel:+628001108001"]')).toBeVisible();
+  // The number is posted for and drawn again; a slow WebKit on CI takes longer than the default.
+  await expect(card.locator('a[href="tel:+628001108001"]')).toBeVisible({ timeout: 15_000 });
   await expect(card.locator('a[href="https://wa.me/628001108001"]')).toBeVisible();
   await noSidewaysScroll(page);
 });
