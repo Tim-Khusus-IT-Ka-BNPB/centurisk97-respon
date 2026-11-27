@@ -19,12 +19,12 @@ const open = (number?: string) => chat(fetchApi, { now: clock.now }, number);
 const machine = gateway(fetchApi, { now: clock.now });
 
 type One = ReturnType<typeof chatOf>;
-type Kabar = { id: string; wa: string; jenis: string; teks: string; url: string | null; nomor: string };
+type Kabar = { id: string; number: string; kind: string; text: string; url: string | null; ticketNumber: string };
 const waiting = async (one: One): Promise<Kabar[]> => {
-  const { json } = await machine.call("GET", "/kabar");
-  return (json.kabar as Kabar[]).filter((item) => `+${item.wa}` === one.number);
+  const { json } = await machine.call("GET", "/gateway/news");
+  return (json.news as Kabar[]).filter((item) => `+${item.number}` === one.number);
 };
-const mark = async (id: string) => (await machine.call("POST", `/kabar/${id}/terkirim`, {})).status;
+const mark = async (id: string) => (await machine.call("POST", `/gateway/news/${id}/delivered`, {})).status;
 const path = (item: Kabar | undefined) => new URL(item?.url as string).pathname.replace("/api", "");
 const file = async (item: Kabar | undefined, options = {}) => machine.request("GET", path(item), undefined, options);
 const drain = async (one: One) => {
@@ -101,10 +101,10 @@ describe("the document (AC-02, AC-06)", () => {
     const [item, ...rest] = await waiting(one);
     expect(rest).toEqual([]);
     expect(item).toMatchObject({
-      wa: one.number.slice(1),
-      jenis: "pdf",
-      nomor: ticket,
-      teks: `*Dokumen laporan ${ticket}, versi 1*\nNama dan nomor Anda tidak dimuat.`,
+      number: one.number.slice(1),
+      kind: "document",
+      ticketNumber: ticket,
+      text: `*Dokumen laporan ${ticket}, versi 1*\nNama dan nomor Anda tidak dimuat.`,
     });
     const answer = await file(item);
     expect(answer.headers.get("content-type")).toBe("application/pdf");
@@ -126,9 +126,9 @@ describe("the document (AC-02, AC-06)", () => {
     expect(await query`select gateway_id from notice_delivery where notice_id = ${Number(item?.id)}`).toEqual([
       { gateway_id: "uji-1" },
     ]);
-    expect((await machine.call("GET", "/kabar/999999/berkas")).status).toBe(404);
+    expect((await machine.call("GET", "/gateway/news/999999/document")).status).toBe(404);
     expect(await mark("999999")).toBe(404);
-    expect((await machine.call("GET", "/kabar/x/berkas")).status).toBe(400);
+    expect((await machine.call("GET", "/gateway/news/x/document")).status).toBe(400);
   });
 
   test("is asked for whatever was chosen, once while it waits", async () => {
@@ -171,7 +171,7 @@ describe("the document (AC-02, AC-06)", () => {
     expect((await one.send("1")).text).toBe(
       `*Kabar terkirim*\nLaporan ${ticket} sekarang versi 2.\n\nDokumen ${ticket} versi 2 menyusul di chat ini.`,
     );
-    expect((await waiting(one)).map((item) => item.teks)).toEqual([
+    expect((await waiting(one)).map((item) => item.text)).toEqual([
       `*Dokumen laporan ${ticket}, versi 2*\nNama dan nomor Anda tidak dimuat.`,
     ]);
   });
@@ -184,14 +184,14 @@ describe("what staff do (AC-03, AC-05)", () => {
     await onDesk(ticket, "replies", { text: "Terima kasih, kami cek." });
     const [seen, reply, ...rest] = await waiting(one);
     expect(rest).toEqual([]);
-    expect([seen?.jenis, seen?.url]).toEqual(["status", null]);
-    expect(seen?.teks).toMatch(
+    expect([seen?.kind, seen?.url]).toEqual(["status", null]);
+    expect(seen?.text).toMatch(
       new RegExp(
         `^\\*Kabar laporan ${ticket}\\*\\n25 November 2026, pukul \\d\\d\\.\\d\\d WIB\\n\\nStatus: Sudah dilihat petugas\\n\\nKetik \\*berhenti kabar\\* untuk berhenti\\.$`,
       ),
     );
-    expect(reply?.jenis).toBe("balasan");
-    expect(reply?.teks).toContain("Status: Sedang ditelaah\n\n*Balasan petugas*\nTerima kasih, kami cek.");
+    expect(reply?.kind).toBe("reply");
+    expect(reply?.text).toContain("Status: Sedang ditelaah\n\n*Balasan petugas*\nTerima kasih, kami cek.");
     expect((await read(ticket)).replies[0]?.chat).toEqual({ state: "waiting" });
     expect((await read(ticket)).chatNews).toMatchObject({ wanted: true, waiting: 3 });
     await drain(one);
@@ -202,13 +202,13 @@ describe("what staff do (AC-03, AC-05)", () => {
     await onDesk(ticket, "status", { to: "in_handling", note: "Tim berangkat", actions, otherAction: "Dapur umum" });
     await onDesk(ticket, "status", { to: "closed", note: "Sudah surut semuanya" });
     const [handled, closed] = await waiting(one);
-    expect(handled?.teks).toContain("Status: Ditindaklanjuti\n\n*Tindakan petugas*\n• ");
-    expect(handled?.teks).toContain("• Dapur umum");
-    expect(closed?.teks).toMatch(/Status: Selesai ditangani\n\nLacak laporan: http:\/\/localhost:5173\/track#t=/);
+    expect(handled?.text).toContain("Status: Ditindaklanjuti\n\n*Tindakan petugas*\n• ");
+    expect(handled?.text).toContain("• Dapur umum");
+    expect(closed?.text).toMatch(/Status: Selesai ditangani\n\nLacak laporan: http:\/\/localhost:5173\/track#t=/);
     for (const item of [handled, closed]) {
-      expect(item?.teks).not.toContain("Petugas Uji");
-      expect(item?.teks).not.toContain("Tim berangkat");
-      expect(item?.teks).not.toContain("Sudah surut");
+      expect(item?.text).not.toContain("Petugas Uji");
+      expect(item?.text).not.toContain("Tim berangkat");
+      expect(item?.text).not.toContain("Sudah surut");
     }
     const status = (await one.send(`status ${ticket}`)).text;
     expect(status).toMatch(/Status: Selesai ditangani[\s\S]*Dapur umum[\s\S]*\*Balasan petugas\*\nTerima kasih/);
@@ -220,7 +220,7 @@ describe("what staff do (AC-03, AC-05)", () => {
     await drain(one);
     await onDesk(ticket, "status", { to: "invalid", note: "Kejadian tahun lalu" });
     const [item] = await waiting(one);
-    expect(item?.teks).toContain("Status: Tidak dapat ditindaklanjuti\nAlasan: Kejadian tahun lalu");
+    expect(item?.text).toContain("Status: Tidak dapat ditindaklanjuti\nAlasan: Kejadian tahun lalu");
     expect((await one.send(`status ${ticket}`)).text).toContain("Alasan: Kejadian tahun lalu");
   });
 
@@ -234,9 +234,9 @@ describe("what staff do (AC-03, AC-05)", () => {
     await onDesk(ticket, "checks", { result: "partly", note: "Dua di lokasi", boxes: { ...boxes, dead: "2" } });
     const [item, ...rest] = await waiting(one);
     expect(rest).toEqual([]);
-    expect(item?.jenis).toBe("pdf");
-    expect(item?.teks).toContain("*Koreksi petugas di lapangan*\n• Meninggal: 3 orang menjadi 2 orang");
-    expect(item?.teks).not.toContain("Dua di lokasi");
+    expect(item?.kind).toBe("document");
+    expect(item?.text).toContain("*Koreksi petugas di lapangan*\n• Meninggal: 3 orang menjadi 2 orang");
+    expect(item?.text).not.toContain("Dua di lokasi");
     const words = pdfText(new Uint8Array(await (await file(item)).arrayBuffer()));
     expect(words).toContain("2 orang");
     expect((await one.send(`status ${ticket}`)).text).toContain("Meninggal: 3 orang menjadi 2 orang");
@@ -258,7 +258,7 @@ describe("what staff do (AC-03, AC-05)", () => {
       select ${ticket}, 'actions', max(id), ${new Date(clock.now())} from ticket_history where ticket_number = ${ticket}`;
     expect(history?.id).toBeGreaterThan(0);
     const [item] = await waiting(one);
-    expect(item?.teks).toContain("• Tindakan 8\n• dan 2 lagi");
+    expect(item?.text).toContain("• Tindakan 8\n• dan 2 lagi");
   });
 });
 
@@ -277,7 +277,7 @@ describe("stopped and started (AC-04)", () => {
     expect(await waiting(one)).toEqual([]);
     await onDesk(ticket, "replies", { text: "Sesudah menyala" });
     const items = await waiting(one);
-    expect(items.map((item) => item.teks.includes("Sesudah menyala"))).toEqual([true]);
+    expect(items.map((item) => item.text.includes("Sesudah menyala"))).toEqual([true]);
     await one.send("lapor");
     expect((await one.send("berhenti kabar")).text).toMatch(/^Tidak ada kabar[\s\S]*\*Lokasi kejadian\*/);
   });

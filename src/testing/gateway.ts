@@ -46,7 +46,7 @@ export function gateway(fetchApi: Fetch, defaults: GatewayOptions = {}) {
   const call = async (method: string, path: string, body?: unknown, options: GatewayOptions = {}) => {
     const response = await request(method, path, body, options);
     const json = (await response.json()) as Record<string, unknown>;
-    return { status: response.status, json, text: String(json.teksWa ?? ""), headers: response.headers };
+    return { status: response.status, json, text: String(json.reply ?? ""), headers: response.headers };
   };
   return { request, call };
 }
@@ -66,7 +66,7 @@ export async function allow(number: string, officerRegency: string | null = null
 export function chat(fetchApi: Fetch, options: GatewayOptions = {}, number = freshNumber().stored) {
   const machine = gateway(fetchApi, options);
   // The gateway writes a number as 62 and the rest.
-  const wa = number.slice(1);
+  const gatewayNumber = number.slice(1);
   let allowed: Promise<void> | null = null;
   const call = async (method: string, path: string, body: unknown) => {
     allowed ??= allow(number);
@@ -75,10 +75,11 @@ export function chat(fetchApi: Fetch, options: GatewayOptions = {}, number = fre
   };
   return {
     number,
-    send: (teks: string) => call("POST", "/pesan", { wa, saluran: "wa", teks }),
+    send: (text: string) => call("POST", "/gateway/messages", { number: gatewayNumber, channel: "wa", text }),
     share: (lat: number, lon: number) =>
-      call("POST", "/pesan", { wa, saluran: "wa", lokasi: { lat, lon, sumber: "wa" } }),
-    photo: (bytes: Uint8Array, waktu?: number) => call("POST", "/foto", { wa, data: base64(bytes), waktu }),
+      call("POST", "/gateway/messages", { number: gatewayNumber, channel: "wa", location: { lat, lon, source: "wa" } }),
+    photo: (bytes: Uint8Array, sentAt?: number) =>
+      call("POST", "/gateway/photos", { number: gatewayNumber, data: base64(bytes), sentAt }),
   };
 }
 

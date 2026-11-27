@@ -23,7 +23,6 @@ describe("route list", () => {
       { key: "DELETE /api/drafts/:draftId/photos/:photoId", policy: "reporter" },
       { key: "DELETE /api/drafts/:draftId/videos/:videoId", policy: "reporter" },
       { key: "DELETE /api/me/profiles/:profileId", policy: "reporter" },
-      { key: "GET /api/bahasa", policy: "gateway" },
       { key: "GET /api/cases/:fileId", policy: "caseTeam" },
       { key: "GET /api/cases/:fileId/media/:mediaId", policy: "caseTeam" },
       { key: "GET /api/cases/:fileId/records/:recordId/videos", policy: "caseTeam" },
@@ -55,10 +54,11 @@ describe("route list", () => {
       { key: "GET /api/feed/official", policy: "public" },
       { key: "GET /api/feed/proofs/:proofId", policy: "public" },
       { key: "GET /api/feed/watch", policy: "public" },
+      { key: "GET /api/gateway/languages", policy: "gateway" },
+      { key: "GET /api/gateway/news", policy: "gateway" },
+      { key: "GET /api/gateway/news/:id/document", policy: "gateway" },
+      { key: "GET /api/gateway/pilot-numbers", policy: "gateway" },
       { key: "GET /api/health", policy: "public" },
-      { key: "GET /api/izin", policy: "gateway" },
-      { key: "GET /api/kabar", policy: "gateway" },
-      { key: "GET /api/kabar/:id/berkas", policy: "gateway" },
       { key: "GET /api/me", policy: "public" },
       { key: "GET /api/missing/mine", policy: "reporter" },
       { key: "GET /api/outlook", policy: "public" },
@@ -118,11 +118,11 @@ describe("route list", () => {
       { key: "POST /api/emergencies/:clientId/photos", policy: "reporter" },
       { key: "POST /api/feed/cards/:cardId/comments", policy: "reporter" },
       { key: "POST /api/feed/comments/:commentId/report", policy: "reporter" },
-      { key: "POST /api/foto", policy: "gateway" },
-      { key: "POST /api/izin", policy: "gateway" },
-      { key: "POST /api/kabar/:id/terkirim", policy: "gateway" },
+      { key: "POST /api/gateway/messages", policy: "gateway" },
+      { key: "POST /api/gateway/news/:id/delivered", policy: "gateway" },
+      { key: "POST /api/gateway/photos", policy: "gateway" },
+      { key: "POST /api/gateway/pilot-numbers", policy: "gateway" },
       { key: "POST /api/missing", policy: "reporter" },
-      { key: "POST /api/pesan", policy: "gateway" },
       { key: "POST /api/preferences/language", policy: "public" },
       { key: "POST /api/preferences/theme", policy: "public" },
       { key: "POST /api/reports/:ticketNumber/follow-ups", policy: "reporter" },
@@ -144,8 +144,8 @@ describe("route list", () => {
       const path = (key.split(" ")[1] as string).replace(/:\w+/g, "x");
       expect(isGatewayPath(path), key).toBe(policy === "gateway");
     }
-    expect(isGatewayPath("/api/pesan/x")).toBe(false);
-    expect(isGatewayPath("/api/desk/pesan")).toBe(false);
+    expect(isGatewayPath("/api/gateway/messages/x")).toBe(false);
+    expect(isGatewayPath("/api/desk/gateway/messages")).toBe(false);
   });
 
   test("a route added without the helper shows up with no policy", () => {
@@ -375,7 +375,6 @@ describe("response schemas and the OpenAPI document", () => {
     expect(document.openapi).toBe("3.1.0");
     const paths = Object.keys(document.paths ?? {}).sort();
     expect(paths).toEqual([
-      "/api/bahasa",
       "/api/case-links/{token}",
       "/api/cases/{fileId}",
       "/api/cases/{fileId}/accept",
@@ -453,18 +452,19 @@ describe("response schemas and the OpenAPI document", () => {
       "/api/feed/official",
       "/api/feed/proofs/{proofId}",
       "/api/feed/watch",
-      "/api/foto",
+      "/api/gateway/languages",
+      "/api/gateway/messages",
+      "/api/gateway/news",
+      "/api/gateway/news/{id}/delivered",
+      "/api/gateway/news/{id}/document",
+      "/api/gateway/photos",
+      "/api/gateway/pilot-numbers",
       "/api/health",
-      "/api/izin",
-      "/api/kabar",
-      "/api/kabar/{id}/berkas",
-      "/api/kabar/{id}/terkirim",
       "/api/me",
       "/api/me/profiles/{profileId}",
       "/api/missing",
       "/api/missing/mine",
       "/api/outlook",
-      "/api/pesan",
       "/api/places/districts/{code}/villages",
       "/api/places/regencies/{code}/villages",
       "/api/places/search",

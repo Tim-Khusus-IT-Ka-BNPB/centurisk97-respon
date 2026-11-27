@@ -50,23 +50,23 @@ export async function waitingNews(bindings: ServiceBindings): Promise<WaitingNew
   const messages = newsMessages(rows);
   // The last act read may go on past what was read: it is told whole the next time.
   const whole = rows.length < PULL ? messages : messages.slice(0, -1);
-  const kabar = await Promise.all(
+  const waiting = await Promise.all(
     whole.map(async (news) => {
       const of = rows.find((row) => row.id === news.id) as WaitingNotice;
       const file = news.corrected !== null || news.document !== null;
-      const words = news.reply === null ? ("status" as const) : ("balasan" as const);
+      const words = news.reply === null ? ("status" as const) : ("reply" as const);
       return {
         id: String(news.id),
         // The gateway writes a number as 62 and the rest.
-        wa: of.number.slice(1),
-        jenis: file ? ("pdf" as const) : words,
-        teks: await worded(bindings, news, of),
-        url: file ? `${bindings.settings.appOrigin}/api/kabar/${news.id}/berkas` : null,
-        nomor: news.ticketNumber,
+        number: of.number.slice(1),
+        kind: file ? ("document" as const) : words,
+        text: await worded(bindings, news, of),
+        url: file ? `${bindings.settings.appOrigin}/api/gateway/news/${news.id}/document` : null,
+        ticketNumber: news.ticketNumber,
       };
     }),
   );
-  return { kabar };
+  return { news: waiting };
 }
 
 export const newsSent = (bindings: ServiceBindings, gatewayId: string, id: number): Promise<boolean> =>

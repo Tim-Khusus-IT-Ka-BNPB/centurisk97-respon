@@ -775,7 +775,7 @@ describe("limits and time", () => {
     );
     for (let count = 0; count < 20; count += 1) expect((await one.send("halo")).status).toBe(200);
     const refused = await one.send("halo");
-    expect(refused).toMatchObject({ status: 429, json: { sisaDetik: 60 } });
+    expect(refused).toMatchObject({ status: 429, json: { retryAfterSeconds: 60 } });
     expect(refused.headers.get("retry-after")).toBe("60");
     expect(refused.text).toBe(
       "Batas pesan untuk nomor ini tercapai. Laporan Anda tetap tersimpan. Lanjutkan lagi pukul 10.01 WIB. Bila nyawa terancam, telepon 112.",

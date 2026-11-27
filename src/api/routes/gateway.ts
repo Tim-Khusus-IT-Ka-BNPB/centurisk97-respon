@@ -22,26 +22,26 @@ import { documentFile, documentSent } from "./shared";
 const refusedWith = (description: string) => jsonResponse(description, chatRefusalSchema);
 
 const malformed = (c: ApiContext, why: "number" | "photo"): Response =>
-  c.json({ galat: copy.text(`whatsapp.refused.${why}`) }, 400);
+  c.json({ error: copy.text(`whatsapp.refused.${why}`) }, 400);
 
 function answered(c: ApiContext, answer: ChatAnswer): Response {
   switch (answer.kind) {
     // Nothing for the reporter: the gateway sends no words of its own either.
     case "notAllowed":
-      return c.json({ galat: copy.text("whatsapp.refused.pilot") }, 403);
+      return c.json({ error: copy.text("whatsapp.refused.pilot") }, 403);
     case "reply":
-      return c.json({ teksWa: answer.text }, 200);
+      return c.json({ reply: answer.text }, 200);
     case "notNow":
-      return c.json({ galat: answer.text, teksWa: answer.text }, 409);
+      return c.json({ error: answer.text, reply: answer.text }, 409);
     default: {
-      const sisaDetik = Math.ceil((answer.retryAtMs - c.env.clock.now()) / 1000);
-      c.header("retry-after", String(sisaDetik));
-      return c.json({ galat: answer.text, teksWa: answer.text, sisaDetik }, 429);
+      const retryAfterSeconds = Math.ceil((answer.retryAtMs - c.env.clock.now()) / 1000);
+      c.header("retry-after", String(retryAfterSeconds));
+      return c.json({ error: answer.text, reply: answer.text, retryAfterSeconds }, 429);
     }
   }
 }
 
-const unknownNews = (c: ApiContext): Response => c.json({ galat: copy.text("whatsapp.refused.news") }, 404);
+const unknownNews = (c: ApiContext): Response => c.json({ error: copy.text("whatsapp.refused.news") }, 404);
 
 const newsId = z.object({ id: z.coerce.number().int().positive() });
 
@@ -61,7 +61,7 @@ export function addGatewayRoutes(api: Api): void {
     "gateway",
     createRoute({
       method: "post",
-      path: "/pesan",
+      path: "/gateway/messages",
       request: { body: jsonBody(chatMessageSchema) },
       responses: {
         200: jsonResponse("What to send back", chatReplySchema),
@@ -72,11 +72,11 @@ export function addGatewayRoutes(api: Api): void {
     }),
     async (c) => {
       const body = c.req.valid("json");
-      const number = normaliseNumber(body.wa);
+      const number = normaliseNumber(body.number);
       if (number === null) return malformed(c, "number");
-      const sent = body.lokasi
-        ? { point: { lat: body.lokasi.lat, lon: body.lokasi.lon } }
-        : { text: (body.teks ?? "").trim() };
+      const sent = body.location
+        ? { point: { lat: body.location.lat, lon: body.location.lon } }
+        : { text: (body.text ?? "").trim() };
       if ("text" in sent && sent.text === "") return malformed(c, "number");
       return answered(c, await chatMessage(c.env, number, sent));
     },
@@ -87,7 +87,7 @@ export function addGatewayRoutes(api: Api): void {
     "gateway",
     createRoute({
       method: "post",
-      path: "/foto",
+      path: "/gateway/photos",
       request: { body: jsonBody(chatPhotoSchema) },
       responses: {
         200: jsonResponse("What to send back", chatReplySchema),
@@ -99,11 +99,11 @@ export function addGatewayRoutes(api: Api): void {
     }),
     async (c) => {
       const body = c.req.valid("json");
-      const number = normaliseNumber(body.wa);
+      const number = normaliseNumber(body.number);
       if (number === null) return malformed(c, "number");
       const bytes = photoBytes(body.data);
       if (bytes === null) return malformed(c, "photo");
-      return answered(c, await chatPhoto(c.env, number, bytes, body.waktu ?? c.env.clock.now()));
+      return answered(c, await chatPhoto(c.env, number, bytes, body.sentAt ?? c.env.clock.now()));
     },
   );
 
@@ -112,10 +112,10 @@ export function addGatewayRoutes(api: Api): void {
     "gateway",
     createRoute({
       method: "get",
-      path: "/izin",
+      path: "/gateway/pilot-numbers",
       responses: { 200: jsonResponse("The numbers the pilot serves", pilotListSchema) },
     }),
-    async (c) => c.json({ wa: await pilotList(c.env) }, 200),
+    async (c) => c.json({ numbers: await pilotList(c.env) }, 200),
   );
 
   addRoute(
@@ -123,7 +123,7 @@ export function addGatewayRoutes(api: Api): void {
     "gateway",
     createRoute({
       method: "post",
-      path: "/izin",
+      path: "/gateway/pilot-numbers",
       request: { body: jsonBody(pilotChangeSchema) },
       responses: {
         200: jsonResponse("Allowed, or taken away", okSchema),
@@ -131,11 +131,11 @@ export function addGatewayRoutes(api: Api): void {
       },
     }),
     async (c) => {
-      const { wa, peran, kab, cabut } = c.req.valid("json");
-      const regency = peran === "bpbd" ? (kab ?? "") : "";
+      const { number, role, regency: named, revoke } = c.req.valid("json");
+      const regency = role === "bpbd" ? (named ?? "") : "";
       // A BPBD number with no regency confirms nothing.
-      if (cabut !== true && peran === "bpbd" && regency.trim() === "") return malformed(c, "number");
-      const change = { number: wa, regency, remove: cabut === true };
+      if (revoke !== true && role === "bpbd" && regency.trim() === "") return malformed(c, "number");
+      const change = { number, regency, remove: revoke === true };
       const done = await changeByGateway(c.env, c.var.gatewayId, change);
       return done === "done" ? c.json({ ok: true as const }, 200) : malformed(c, "number");
     },
@@ -146,7 +146,7 @@ export function addGatewayRoutes(api: Api): void {
     "gateway",
     createRoute({
       method: "get",
-      path: "/kabar",
+      path: "/gateway/news",
       responses: { 200: jsonResponse("News and documents that wait to be sent", waitingNewsSchema) },
     }),
     async (c) => c.json(await waitingNews(c.env), 200),
@@ -157,7 +157,7 @@ export function addGatewayRoutes(api: Api): void {
     "gateway",
     createRoute({
       method: "get",
-      path: "/kabar/{id}/berkas",
+      path: "/gateway/news/{id}/document",
       request: { params: newsId },
       responses: {
         200: documentFile("The document of news that waits"),
@@ -175,7 +175,7 @@ export function addGatewayRoutes(api: Api): void {
     "gateway",
     createRoute({
       method: "post",
-      path: "/kabar/{id}/terkirim",
+      path: "/gateway/news/{id}/delivered",
       request: { params: newsId },
       responses: {
         200: jsonResponse("Marked as sent", okSchema),
@@ -193,9 +193,9 @@ export function addGatewayRoutes(api: Api): void {
     "gateway",
     createRoute({
       method: "get",
-      path: "/bahasa",
+      path: "/gateway/languages",
       responses: { 200: jsonResponse("The languages a chat may be held in", languagesSchema) },
     }),
-    (c) => c.json({ bahasa: [{ kode: "id", nama: copy.text("whatsapp.language") }] }, 200),
+    (c) => c.json({ languages: [{ code: "id", name: copy.text("whatsapp.language") }] }, 200),
   );
 }

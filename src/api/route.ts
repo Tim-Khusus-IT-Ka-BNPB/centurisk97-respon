@@ -26,12 +26,13 @@ const MAX_BODY_BYTES = 16 * 1024;
 const PHOTO_BODY_BYTES = 12 * 1024 * 1024;
 const isPhotoUpload = (method: string, path: string) =>
   (method === "POST" &&
-    /\/(?:(?:drafts|emergencies)\/[^/]+\/photos|desk\/reports\/[^/]+\/proofs|cases\/[^/]+\/records\/[^/]+\/media|foto|missing)$/.test(
+    /\/(?:(?:drafts|emergencies)\/[^/]+\/photos|desk\/reports\/[^/]+\/proofs|cases\/[^/]+\/records\/[^/]+\/media|gateway\/photos|missing)$/.test(
       path,
     )) ||
   (method === "PUT" && /\/(?:drafts\/[^/]+|cases\/[^/]+\/records\/[^/]+)\/videos\/[^/]+\/parts\/\d+$/.test(path));
-// Upstream's route shapes for its gateway (ROADMAP section 7), kept as they are.
-export const isGatewayPath = (path: string) => /^\/api\/(?:pesan|foto|izin|bahasa|kabar(?:\/.+)?)$/.test(path);
+// The WhatsApp gateway's own calls, signed by the gateway rather than sent from the page.
+export const isGatewayPath = (path: string) =>
+  /^\/api\/gateway\/(?:messages|photos|languages|pilot-numbers|news(?:\/[^/]+\/(?:document|delivered))?)$/.test(path);
 const READ_METHODS = new Set(["GET", "HEAD"]);
 
 export type Api = {

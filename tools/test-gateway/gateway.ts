@@ -27,23 +27,28 @@ export type Settings = {
   readonly owner: string;
 };
 
-type OwnerCommand = { readonly wa: string; readonly peran?: "bpbd"; readonly kab?: string; readonly cabut?: true };
+type OwnerCommand = {
+  readonly number: string;
+  readonly role?: "bpbd";
+  readonly regency?: string;
+  readonly revoke?: true;
+};
 
-// "lapor izin 0800 ... [bpbd Kab. X]" or "lapor cabut 0800 ...", in upstream's words.
+// "lapor izin 0800 ... [bpbd Kab. X]" or "lapor cabut 0800 ...", as the owner types them.
 function ownerCommand(text: string): OwnerCommand | null {
   const match = /^lapor (izin|cabut) (\+?[\d .-]+\d)(?: bpbd (.+))?$/i.exec(text.trim());
-  const wa = match && numberOf(match[2] as string);
-  if (!wa) return null;
-  if (match[1]?.toLowerCase() === "cabut") return { wa, cabut: true };
-  return match[3] === undefined ? { wa } : { wa, peran: "bpbd", kab: match[3].trim() };
+  const number = match && numberOf(match[2] as string);
+  if (!number) return null;
+  if (match[1]?.toLowerCase() === "cabut") return { number, revoke: true };
+  return match[3] === undefined ? { number } : { number, role: "bpbd", regency: match[3].trim() };
 }
 
 type News = {
   readonly id: string;
-  readonly wa: string;
-  readonly teks: string;
+  readonly number: string;
+  readonly text: string;
   readonly url: string | null;
-  readonly nomor: string;
+  readonly ticketNumber: string;
 };
 
 const DOWN = "Layanan lapor sedang gangguan, coba lagi beberapa menit lagi.";
@@ -102,10 +107,10 @@ export function createGateway(settings: Settings) {
   async function answer(number: string, path: string, body: unknown, messageId?: string): Promise<number> {
     try {
       const response = await call("POST", path, body, messageId);
-      const { teksWa } = (await response.json().catch(() => ({}))) as { teksWa?: string };
+      const { reply } = (await response.json().catch(() => ({}))) as { reply?: string };
       // A number that is not allowed, and a message already taken, get nothing.
-      if (response.status === 403 || (response.status === 409 && !teksWa)) return response.status;
-      keep(number, { from: "service", kind: "text", text: teksWa || DOWN });
+      if (response.status === 403 || (response.status === 409 && !reply)) return response.status;
+      keep(number, { from: "service", kind: "text", text: reply || DOWN });
       return response.status;
     } catch {
       keep(number, { from: "service", kind: "text", text: DOWN });
@@ -115,8 +120,8 @@ export function createGateway(settings: Settings) {
 
   // The owner's command, which only their own number may give.
   async function command(number: string, said: OwnerCommand): Promise<number> {
-    const response = await call("POST", "/api/izin", said);
-    const done = said.cabut ? "taken away" : "allowed";
+    const response = await call("POST", "/api/gateway/pilot-numbers", said);
+    const done = said.revoke ? "taken away" : "allowed";
     keep(number, {
       from: "service",
       kind: "text",
@@ -130,13 +135,13 @@ export function createGateway(settings: Settings) {
       keep(number, { from: "reporter", kind: "text", text });
       const said = number === settings.owner ? ownerCommand(text) : null;
       if (said) return command(number, said);
-      return answer(number, "/api/pesan", { wa: number, saluran: "wa", teks: text }, messageId);
+      return answer(number, "/api/gateway/messages", { number, channel: "wa", text }, messageId);
     });
 
   const share = (number: string, lat: number, lon: number) =>
     inTurn(number, () => {
       keep(number, { from: "reporter", kind: "location", text: `${lat}, ${lon}` });
-      return answer(number, "/api/pesan", { wa: number, saluran: "wa", lokasi: { lat, lon, sumber: "wa" } });
+      return answer(number, "/api/gateway/messages", { number, channel: "wa", location: { lat, lon, source: "wa" } });
     });
 
   const photo = (number: string, base64: string, caption: string) =>
@@ -148,9 +153,9 @@ export function createGateway(settings: Settings) {
         text: caption,
         file: keepFile({ bytes, mime: "image/jpeg", name: "photo.jpg" }),
       });
-      const status = await answer(number, "/api/foto", { wa: number, data: base64, waktu: Date.now() });
+      const status = await answer(number, "/api/gateway/photos", { number, data: base64, sentAt: Date.now() });
       if (caption === "") return status;
-      return answer(number, "/api/pesan", { wa: number, saluran: "wa", teks: caption });
+      return answer(number, "/api/gateway/messages", { number, channel: "wa", text: caption });
     });
 
   // One document of news, read with a signature of our own.
@@ -165,16 +170,16 @@ export function createGateway(settings: Settings) {
 
   // Sends what waits and marks each as sent, as the gateway does every minute.
   async function pull(): Promise<number> {
-    const response = await call("GET", "/api/kabar");
+    const response = await call("GET", "/api/gateway/news");
     if (!response.ok) return 0;
-    const { kabar } = (await response.json()) as { kabar: News[] };
+    const { news: waiting } = (await response.json()) as { news: News[] };
     let sent = 0;
-    for (const news of kabar) {
-      const file = news.url === null ? undefined : ((await document(news.url, news.nomor)) ?? undefined);
+    for (const news of waiting) {
+      const file = news.url === null ? undefined : ((await document(news.url, news.ticketNumber)) ?? undefined);
       if (news.url !== null && file === undefined) continue;
       const kind = file === undefined ? "text" : "document";
-      keep(news.wa, { from: "service", kind, text: news.teks, ...(file === undefined ? {} : { file }) });
-      await call("POST", `/api/kabar/${encodeURIComponent(news.id)}/terkirim`, {});
+      keep(news.number, { from: "service", kind, text: news.text, ...(file === undefined ? {} : { file }) });
+      await call("POST", `/api/gateway/news/${encodeURIComponent(news.id)}/delivered`, {});
       sent += 1;
     }
     return sent;

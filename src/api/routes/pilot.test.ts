@@ -37,12 +37,15 @@ describe("a number that is not allowed (AC-01)", () => {
       (select count(*) from rate_counter) as counters, (select count(*) from news_choice) as choices`;
     const before = await counts();
     for (const answer of [
-      await machine.call("POST", "/pesan", { wa, teks: "banjir" }),
-      await machine.call("POST", "/pesan", { wa, lokasi: { lat: 5.1, lon: 97.1 } }),
-      await machine.call("POST", "/foto", { wa, data: btoa(String.fromCharCode(...cameraJpeg().subarray(0, 2000))) }),
+      await machine.call("POST", "/gateway/messages", { number: wa, text: "banjir" }),
+      await machine.call("POST", "/gateway/messages", { number: wa, location: { lat: 5.1, lon: 97.1 } }),
+      await machine.call("POST", "/gateway/photos", {
+        number: wa,
+        data: btoa(String.fromCharCode(...cameraJpeg().subarray(0, 2000))),
+      }),
     ]) {
       expect(answer.status).toBe(403);
-      expect(answer.json).toEqual({ galat: "Nomor ini belum diizinkan memakai layanan lapor (masa uji)." });
+      expect(answer.json).toEqual({ error: "Nomor ini belum diizinkan memakai layanan lapor (masa uji)." });
     }
     expect(await counts()).toEqual(before);
   });
@@ -52,7 +55,9 @@ describe("a number that is not allowed (AC-01)", () => {
     const ticket = await sent(one);
     await one.send("ya");
     const waiting = async () =>
-      ((await machine.call("GET", "/kabar")).json.kabar as { nomor: string }[]).filter((item) => item.nomor === ticket);
+      ((await machine.call("GET", "/gateway/news")).json.news as { ticketNumber: string }[]).filter(
+        (item) => item.ticketNumber === ticket,
+      );
     expect(await waiting()).toHaveLength(1);
     await desk().call("DELETE", `/desk/pilot/${await numberKey(one.number)}`, { confirm: true });
     expect((await one.send("status")).status).toBe(403);
@@ -78,14 +83,18 @@ describe("the list on the desk (AC-02, AC-04)", () => {
       reports: 0,
       lastReportAt: null,
     });
-    expect((await machine.call("GET", "/izin")).json.wa).toContain(stored.slice(1));
-    expect((await machine.call("POST", "/pesan", { wa: stored.slice(1), teks: "lapor" })).text).toContain("1. Setuju");
+    expect((await machine.call("GET", "/gateway/pilot-numbers")).json.numbers).toContain(stored.slice(1));
+    expect(
+      (await machine.call("POST", "/gateway/messages", { number: stored.slice(1), text: "lapor" })).text,
+    ).toContain("1. Setuju");
     const again = await desk().call("POST", "/desk/pilot", { number: typed });
     expect([again.status, again.error.fields[0]?.copyKey]).toEqual([422, "fieldError.pilot.exists"]);
     const removed = await desk().call("DELETE", `/desk/pilot/${item?.key}`, { confirm: true });
     expect(deskPilotSchema.parse(removed.json).items.map((one) => one.key)).not.toContain(item?.key);
-    expect((await machine.call("POST", "/pesan", { wa: stored.slice(1), teks: "lapor" })).status).toBe(403);
-    expect((await machine.call("GET", "/izin")).json.wa).not.toContain(stored.slice(1));
+    expect((await machine.call("POST", "/gateway/messages", { number: stored.slice(1), text: "lapor" })).status).toBe(
+      403,
+    );
+    expect((await machine.call("GET", "/gateway/pilot-numbers")).json.numbers).not.toContain(stored.slice(1));
     // Once more changes nothing and is logged nowhere.
     expect((await desk().call("DELETE", `/desk/pilot/${item?.key}`, { confirm: true })).status).toBe(200);
     expect((await actions()).slice(before)).toEqual([
@@ -129,7 +138,7 @@ describe("the list on the desk (AC-02, AC-04)", () => {
       "fieldError.pilot.full",
       { max: 500 },
     ]);
-    expect((await machine.call("POST", "/izin", { wa: freshNumber().stored })).status).toBe(400);
+    expect((await machine.call("POST", "/gateway/pilot-numbers", { number: freshNumber().stored })).status).toBe(400);
     await query`delete from pilot_number where number_key like 'full-%'`;
   });
 });
@@ -170,16 +179,27 @@ describe("the owner's command through a gateway", () => {
   test("allows, words anew and takes away, each named as that gateway's", async () => {
     const { typed, stored } = freshNumber();
     const before = (await actions()).length;
-    expect(await machine.call("POST", "/izin", { wa: typed })).toMatchObject({ status: 200, json: { ok: true } });
-    expect((await machine.call("POST", "/izin", { wa: stored.slice(1), peran: "bpbd", kab: "Kab. Uji" })).status).toBe(
-      200,
-    );
+    expect(await machine.call("POST", "/gateway/pilot-numbers", { number: typed })).toMatchObject({
+      status: 200,
+      json: { ok: true },
+    });
+    expect(
+      (
+        await machine.call("POST", "/gateway/pilot-numbers", {
+          number: stored.slice(1),
+          role: "bpbd",
+          regency: "Kab. Uji",
+        })
+      ).status,
+    ).toBe(200);
     expect((await list()).items.find((item) => item.number === stored)).toMatchObject({
       officerRegency: "Kab. Uji",
       addedBy: "uji-1",
     });
-    expect((await machine.call("POST", "/izin", { wa: stored, cabut: true, kab: "x" })).status).toBe(200);
-    expect((await machine.call("POST", "/izin", { wa: stored, cabut: true })).status).toBe(200);
+    expect(
+      (await machine.call("POST", "/gateway/pilot-numbers", { number: stored, revoke: true, regency: "x" })).status,
+    ).toBe(200);
+    expect((await machine.call("POST", "/gateway/pilot-numbers", { number: stored, revoke: true })).status).toBe(200);
     expect(await changes(stored)).toEqual([
       { change: "allowed", by_kind: "gateway", by_id: "uji-1" },
       { change: "allowed", by_kind: "gateway", by_id: "uji-1" },
@@ -190,19 +210,19 @@ describe("the owner's command through a gateway", () => {
 
   test("what cannot be read is refused", async () => {
     for (const body of [
-      { wa: "12" },
-      { wa: "12", cabut: true },
-      { wa: freshNumber().stored, peran: "bpbd" },
-      { wa: freshNumber().stored, peran: "bpbd", kab: " " },
-      { wa: freshNumber().stored, peran: "bpbd", kab: "ab" },
-      { wa: freshNumber().stored, peran: "polisi" },
+      { number: "12" },
+      { number: "12", revoke: true },
+      { number: freshNumber().stored, role: "bpbd" },
+      { number: freshNumber().stored, role: "bpbd", regency: " " },
+      { number: freshNumber().stored, role: "bpbd", regency: "ab" },
+      { number: freshNumber().stored, role: "polisi" },
     ])
-      expect((await machine.call("POST", "/izin", body)).status, JSON.stringify(body)).toBe(400);
+      expect((await machine.call("POST", "/gateway/pilot-numbers", body)).status, JSON.stringify(body)).toBe(400);
   });
 
   test("a regency with no role allows it as anyone's", async () => {
     const { stored } = freshNumber();
-    await machine.call("POST", "/izin", { wa: stored, kab: "Kab. Uji" });
+    await machine.call("POST", "/gateway/pilot-numbers", { number: stored, regency: "Kab. Uji" });
     expect((await list()).items.find((item) => item.number === stored)?.officerRegency).toBeNull();
   });
 });
