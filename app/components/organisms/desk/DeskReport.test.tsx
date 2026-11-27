@@ -475,6 +475,24 @@ describe("a report on the desk", () => {
     expect(screen.getByRole("status").textContent).toContain("Kabar warga itu disembunyikan dari Alun-alun.");
   });
 
+  test("a figure taken from a comment is told in the history with what it changed", async () => {
+    const history = [
+      ...REPORT.history,
+      {
+        status: REPORT.status,
+        at: SENT,
+        actor: "Pusdalops BNPB, Petugas Uji",
+        note: 'Kabar warga diterima Pusdalops BNPB, Petugas Uji: "dua orang meninggal"',
+        forwardedTo: null,
+        event: "commentFigure" as const,
+        detail: { changes: [{ fieldId: "dead", from: 3, to: 2 }] },
+      },
+    ];
+    await renderDesk(<DeskReportView report={{ ...REPORT, history }} summary={SUMMARY} />, PATH);
+    expect(screen.getByText("Angka dari kabar warga diterima")).toBeTruthy();
+    expect(screen.getByText('Kabar warga diterima Pusdalops BNPB, Petugas Uji: "dua orang meninggal"')).toBeTruthy();
+  });
+
   test("with the today page open, its five conditions, and a pull named on the page after", async () => {
     const today = { conditions: { valid: true, bpbd: true, ticket: true, version: true, pull: true }, shown: true };
     await renderDesk(<DeskReportView report={{ ...REPORT, today }} summary={SUMMARY} />, {
