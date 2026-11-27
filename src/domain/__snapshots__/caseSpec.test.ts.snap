@@ -1,0 +1,785 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`a record checked against its kind > every kind's form as agreed 1`] = `
+{
+  "business": [
+    {
+      "field": {
+        "type": "choice",
+        "values": [
+          "rice",
+          "plantation",
+          "pond",
+          "livestock",
+          "shop",
+          "other",
+        ],
+      },
+      "id": "type",
+      "personal": false,
+      "required": true,
+    },
+    {
+      "field": {
+        "max": 120,
+        "type": "text",
+      },
+      "id": "village",
+      "personal": false,
+      "required": true,
+    },
+    {
+      "field": {
+        "decimal": true,
+        "max": 10000000,
+        "min": 0,
+        "type": "number",
+      },
+      "id": "amount",
+      "personal": false,
+      "required": true,
+    },
+    {
+      "field": {
+        "type": "choice",
+        "values": [
+          "hectare",
+          "head",
+          "unit",
+        ],
+      },
+      "id": "unit",
+      "personal": false,
+      "required": true,
+    },
+  ],
+  "evacuee": [
+    {
+      "field": {
+        "type": "record",
+      },
+      "id": "shelter",
+      "personal": false,
+      "required": true,
+    },
+    {
+      "field": {
+        "max": 120,
+        "type": "text",
+      },
+      "id": "name",
+      "personal": true,
+      "required": true,
+    },
+    {
+      "field": {
+        "decimal": false,
+        "max": 120,
+        "min": 0,
+        "type": "number",
+      },
+      "id": "age",
+      "personal": false,
+      "required": true,
+    },
+    {
+      "field": {
+        "type": "choice",
+        "values": [
+          "male",
+          "female",
+        ],
+      },
+      "id": "sex",
+      "personal": false,
+      "required": true,
+    },
+    {
+      "field": {
+        "max": 120,
+        "type": "text",
+      },
+      "id": "homeVillage",
+      "personal": false,
+      "required": true,
+    },
+    {
+      "field": {
+        "type": "date",
+      },
+      "id": "entered",
+      "personal": false,
+      "required": true,
+    },
+    {
+      "field": {
+        "max": 16,
+        "type": "text",
+      },
+      "id": "head",
+      "personal": false,
+      "required": true,
+    },
+    {
+      "field": {
+        "type": "phone",
+      },
+      "id": "phone",
+      "personal": true,
+      "required": "depends",
+    },
+    {
+      "field": {
+        "type": "nik",
+      },
+      "id": "nik",
+      "personal": true,
+      "required": false,
+    },
+    {
+      "field": {
+        "type": "many",
+        "values": [
+          "toddler",
+          "pregnant1",
+          "pregnant2",
+          "pregnant3",
+          "breastfeeding",
+          "elderly",
+          "physicalDisability",
+          "sensoryDisability",
+          "intellectualDisability",
+          "mentalDisability",
+          "sick",
+        ],
+      },
+      "id": "vulnerable",
+      "personal": true,
+      "required": false,
+    },
+    {
+      "field": {
+        "max": 300,
+        "type": "text",
+      },
+      "id": "specialNeeds",
+      "personal": true,
+      "required": false,
+    },
+    {
+      "field": {
+        "type": "yesNo",
+      },
+      "id": "refusesPhoto",
+      "personal": false,
+      "required": false,
+    },
+    {
+      "field": {
+        "type": "date",
+      },
+      "id": "left",
+      "personal": false,
+      "required": false,
+    },
+  ],
+  "house": [
+    {
+      "field": {
+        "max": 120,
+        "type": "text",
+      },
+      "id": "headOfFamily",
+      "personal": true,
+      "required": true,
+    },
+    {
+      "field": {
+        "max": 120,
+        "type": "text",
+      },
+      "id": "owner",
+      "personal": true,
+      "required": false,
+    },
+    {
+      "field": {
+        "type": "nik",
+      },
+      "id": "familyNik",
+      "personal": true,
+      "required": false,
+    },
+    {
+      "field": {
+        "max": 120,
+        "type": "text",
+      },
+      "id": "village",
+      "personal": false,
+      "required": true,
+    },
+    {
+      "field": {
+        "max": 120,
+        "type": "text",
+      },
+      "id": "district",
+      "personal": false,
+      "required": true,
+    },
+    {
+      "field": {
+        "max": 200,
+        "type": "text",
+      },
+      "id": "address",
+      "personal": false,
+      "required": true,
+    },
+    {
+      "field": {
+        "type": "choice",
+        "values": [
+          "heavy",
+          "moderate",
+          "light",
+          "none",
+        ],
+      },
+      "id": "damage",
+      "personal": false,
+      "required": true,
+    },
+    {
+      "field": {
+        "type": "yesNo",
+      },
+      "id": "flooded",
+      "personal": false,
+      "required": true,
+    },
+    {
+      "field": {
+        "type": "choice",
+        "values": [
+          "occupied",
+          "displaced",
+          "flattened",
+          "unknown",
+        ],
+      },
+      "id": "occupancy",
+      "personal": false,
+      "required": true,
+    },
+    {
+      "field": {
+        "decimal": false,
+        "max": 100,
+        "min": 0,
+        "type": "number",
+      },
+      "id": "people",
+      "personal": false,
+      "required": true,
+    },
+    {
+      "field": {
+        "max": 400,
+        "type": "text",
+      },
+      "id": "note",
+      "personal": false,
+      "required": false,
+    },
+  ],
+  "infrastructure": [
+    {
+      "field": {
+        "type": "choice",
+        "values": [
+          "bridge",
+          "road",
+          "school",
+          "healthFacility",
+          "worship",
+          "office",
+          "market",
+          "power",
+          "water",
+          "signal",
+          "irrigation",
+          "transport",
+          "fuelStation",
+          "other",
+        ],
+      },
+      "id": "type",
+      "personal": false,
+      "required": true,
+    },
+    {
+      "field": {
+        "max": 120,
+        "type": "text",
+      },
+      "id": "name",
+      "personal": false,
+      "required": true,
+    },
+    {
+      "field": {
+        "max": 120,
+        "type": "text",
+      },
+      "id": "village",
+      "personal": false,
+      "required": true,
+    },
+    {
+      "field": {
+        "type": "choice",
+        "values": [
+          "heavy",
+          "moderate",
+          "light",
+        ],
+      },
+      "id": "damage",
+      "personal": false,
+      "required": true,
+    },
+    {
+      "field": {
+        "type": "choice",
+        "values": [
+          "cut",
+          "limited",
+          "working",
+        ],
+      },
+      "id": "function",
+      "personal": false,
+      "required": true,
+    },
+    {
+      "field": {
+        "decimal": true,
+        "max": 1000000,
+        "min": 0,
+        "type": "number",
+      },
+      "id": "lengthM",
+      "personal": false,
+      "required": "depends",
+    },
+    {
+      "field": {
+        "type": "choice",
+        "values": [
+          "none",
+          "motorcycle",
+          "car",
+          "truck",
+          "unknown",
+        ],
+      },
+      "id": "vehicles",
+      "personal": false,
+      "required": "depends",
+    },
+    {
+      "field": {
+        "max": 200,
+        "type": "text",
+      },
+      "id": "alternative",
+      "personal": false,
+      "required": false,
+    },
+  ],
+  "need": [
+    {
+      "field": {
+        "type": "record",
+      },
+      "id": "shelter",
+      "personal": false,
+      "required": false,
+    },
+    {
+      "field": {
+        "max": 120,
+        "type": "text",
+      },
+      "id": "village",
+      "personal": false,
+      "required": "depends",
+    },
+    {
+      "field": {
+        "type": "choice",
+        "values": [
+          "logistics",
+          "water",
+          "medicine",
+          "tents",
+          "heavyEquipment",
+          "other",
+        ],
+      },
+      "id": "item",
+      "personal": false,
+      "required": true,
+    },
+    {
+      "field": {
+        "decimal": true,
+        "max": 10000000,
+        "min": 0,
+        "type": "number",
+      },
+      "id": "amount",
+      "personal": false,
+      "required": true,
+    },
+    {
+      "field": {
+        "max": 30,
+        "type": "text",
+      },
+      "id": "unit",
+      "personal": false,
+      "required": true,
+    },
+    {
+      "field": {
+        "type": "yesNo",
+      },
+      "id": "urgent",
+      "personal": false,
+      "required": true,
+    },
+    {
+      "field": {
+        "max": 120,
+        "type": "text",
+      },
+      "id": "aidFrom",
+      "personal": false,
+      "required": false,
+    },
+    {
+      "field": {
+        "max": 200,
+        "type": "text",
+      },
+      "id": "aidWhat",
+      "personal": false,
+      "required": false,
+    },
+    {
+      "field": {
+        "decimal": true,
+        "max": 10000000,
+        "min": 0,
+        "type": "number",
+      },
+      "id": "aidAmount",
+      "personal": false,
+      "required": false,
+    },
+  ],
+  "shelter": [
+    {
+      "field": {
+        "max": 120,
+        "type": "text",
+      },
+      "id": "name",
+      "personal": false,
+      "required": true,
+    },
+    {
+      "field": {
+        "max": 120,
+        "type": "text",
+      },
+      "id": "village",
+      "personal": false,
+      "required": true,
+    },
+    {
+      "field": {
+        "type": "choice",
+        "values": [
+          "concentrated",
+          "dispersed",
+        ],
+      },
+      "id": "placeKind",
+      "personal": false,
+      "required": true,
+    },
+    {
+      "field": {
+        "type": "choice",
+        "values": [
+          "publicFacility",
+          "openField",
+          "privateBuilding",
+          "worship",
+          "privateHome",
+        ],
+      },
+      "id": "placeType",
+      "personal": false,
+      "required": true,
+    },
+    {
+      "field": {
+        "type": "date",
+      },
+      "id": "openedOn",
+      "personal": false,
+      "required": true,
+    },
+    {
+      "field": {
+        "type": "yesNo",
+      },
+      "id": "needWater",
+      "personal": false,
+      "required": true,
+    },
+    {
+      "field": {
+        "type": "yesNo",
+      },
+      "id": "needFood",
+      "personal": false,
+      "required": true,
+    },
+    {
+      "field": {
+        "type": "yesNo",
+      },
+      "id": "needClothing",
+      "personal": false,
+      "required": true,
+    },
+    {
+      "field": {
+        "type": "yesNo",
+      },
+      "id": "needHealth",
+      "personal": false,
+      "required": true,
+    },
+    {
+      "field": {
+        "type": "yesNo",
+      },
+      "id": "needHousing",
+      "personal": false,
+      "required": true,
+    },
+    {
+      "field": {
+        "type": "yesNo",
+      },
+      "id": "needEducation",
+      "personal": false,
+      "required": true,
+    },
+    {
+      "field": {
+        "type": "yesNo",
+      },
+      "id": "toilets",
+      "personal": false,
+      "required": false,
+    },
+    {
+      "field": {
+        "type": "yesNo",
+      },
+      "id": "kitchen",
+      "personal": false,
+      "required": false,
+    },
+    {
+      "field": {
+        "type": "yesNo",
+      },
+      "id": "power",
+      "personal": false,
+      "required": false,
+    },
+    {
+      "field": {
+        "decimal": false,
+        "max": 100000,
+        "min": 0,
+        "type": "number",
+      },
+      "id": "capacity",
+      "personal": false,
+      "required": false,
+    },
+  ],
+  "victim": [
+    {
+      "field": {
+        "type": "choice",
+        "values": [
+          "dead",
+          "missing",
+          "badlyHurt",
+          "lightlyHurt",
+        ],
+      },
+      "id": "status",
+      "personal": false,
+      "required": true,
+    },
+    {
+      "field": {
+        "max": 120,
+        "type": "text",
+      },
+      "id": "name",
+      "personal": true,
+      "required": true,
+    },
+    {
+      "field": {
+        "decimal": false,
+        "max": 120,
+        "min": 0,
+        "type": "number",
+      },
+      "id": "age",
+      "personal": false,
+      "required": true,
+    },
+    {
+      "field": {
+        "type": "choice",
+        "values": [
+          "male",
+          "female",
+        ],
+      },
+      "id": "sex",
+      "personal": false,
+      "required": true,
+    },
+    {
+      "field": {
+        "max": 120,
+        "type": "text",
+      },
+      "id": "village",
+      "personal": false,
+      "required": true,
+    },
+    {
+      "field": {
+        "max": 120,
+        "type": "text",
+      },
+      "id": "contactName",
+      "personal": true,
+      "required": true,
+    },
+    {
+      "field": {
+        "type": "phone",
+      },
+      "id": "contactPhone",
+      "personal": true,
+      "required": true,
+    },
+    {
+      "field": {
+        "max": 200,
+        "type": "text",
+      },
+      "id": "lastSeenPlace",
+      "personal": false,
+      "required": "depends",
+    },
+    {
+      "field": {
+        "type": "date",
+      },
+      "id": "lastSeenOn",
+      "personal": false,
+      "required": "depends",
+    },
+    {
+      "field": {
+        "type": "choice",
+        "values": [
+          "searching",
+          "foundAlive",
+          "foundDead",
+        ],
+      },
+      "id": "search",
+      "personal": false,
+      "required": "depends",
+    },
+    {
+      "field": {
+        "max": 120,
+        "type": "text",
+      },
+      "id": "treatedAt",
+      "personal": false,
+      "required": false,
+    },
+    {
+      "field": {
+        "max": 120,
+        "type": "text",
+      },
+      "id": "deathPlace",
+      "personal": false,
+      "required": false,
+    },
+    {
+      "field": {
+        "type": "choice",
+        "values": [
+          "hospital",
+          "family",
+          "officials",
+        ],
+      },
+      "id": "confirmedBy",
+      "personal": false,
+      "required": false,
+    },
+    {
+      "field": {
+        "max": 300,
+        "type": "text",
+      },
+      "id": "traits",
+      "personal": true,
+      "required": false,
+    },
+    {
+      "field": {
+        "type": "nik",
+      },
+      "id": "nik",
+      "personal": true,
+      "required": false,
+    },
+  ],
+}
+`;
