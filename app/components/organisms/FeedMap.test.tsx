@@ -9,6 +9,8 @@ import { FeedMap } from "./FeedMap";
 const made = vi.hoisted(() => ({ maps: [] as FakeMap[], markers: [] as FakeMarker[], noWebGl: false }));
 
 class FakeMap {
+  zoom = 4;
+  zoomed: (() => void) | null = null;
   fitted: unknown[] = [];
   removed = false;
   styles: string[] = [];
@@ -27,6 +29,12 @@ class FakeMap {
     this[event] = listener;
   }
   resize() {}
+  getZoom() {
+    return this.zoom;
+  }
+  on(_event: "zoom", listener: () => void) {
+    this.zoomed = listener;
+  }
   fitBounds(bounds: unknown, options: unknown) {
     this.fitted.push([bounds, options]);
   }
@@ -56,10 +64,10 @@ vi.mock("maplibre-gl", () => ({
 }));
 vi.mock("maplibre-gl/dist/maplibre-gl-worker.mjs?url", () => ({ default: "/assets/worker.mjs" }));
 
-const draw = (entries = [FEED_ENTRY, FEED_ALONE]) =>
+const draw = (entries = [FEED_ENTRY, FEED_ALONE], rings: Parameters<typeof FeedMap>[0]["rings"] = []) =>
   render(
     <TextContext.Provider value={makeText(ALL_TEXTS)}>
-      <FeedMap entries={entries} />
+      <FeedMap entries={entries} rings={rings} />
       <article id={`feed-${FEED_ENTRY.id}`} tabIndex={-1} />
     </TextContext.Provider>,
   );
@@ -98,6 +106,38 @@ describe("the feed map", () => {
     document.documentElement.dataset.theme = "light";
     view.unmount();
     expect(map.removed).toBe(true);
+  });
+
+  test("zoomed out a ring per province with its hazards in words and a legend; zoomed in the points", async () => {
+    made.maps.length = 0;
+    made.markers.length = 0;
+    const rings = [
+      {
+        provinceName: "Aceh",
+        point: { lat: 5, lon: 97 },
+        total: 3,
+        slices: [
+          { hazardType: "flood", count: 2 },
+          { hazardType: "landslide", count: 1 },
+        ],
+      },
+    ];
+    const view = draw([FEED_ENTRY], rings);
+    expect(view.getByRole("list", { name: "Warna jenis kejadian" }).textContent).toBe("BanjirTanah longsor");
+    await waitFor(() => expect(made.maps).toHaveLength(1));
+    const map = made.maps[0] as FakeMap;
+    map.load?.();
+    const [ring, point] = made.markers.map((marker) => marker.options.element);
+    expect(made.markers[0]?.at).toEqual([97, 5]);
+    expect(ring?.getAttribute("aria-label")).toBe("Aceh: 3 kejadian, 2 banjir, 1 tanah longsor");
+    expect(ring?.textContent).toBe("3");
+    expect(ring?.style.getPropertyValue("--ring")).toBe("conic-gradient(#2563eb 0deg 240deg, #a16207 240deg 360deg)");
+    expect(ring?.style.width).toBe("40px");
+    expect([ring?.style.display, point?.style.display]).toEqual(["", "none"]);
+    map.zoom = 8;
+    map.zoomed?.();
+    expect([ring?.style.display, point?.style.display]).toEqual(["none", ""]);
+    view.unmount();
   });
 
   test("with no village centre the map stays on Indonesia, and a card gone is no trouble", async () => {

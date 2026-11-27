@@ -83,6 +83,8 @@ export const officialSchema = z.strictObject({
       hazardType: hazardTypeSchema,
       regencyName: z.string(),
       provinceCode: z.string(),
+      // Null where our place data has no province by that code.
+      provinceName: z.string().nullable(),
       point: z.strictObject({ lat: z.number(), lon: z.number() }).nullable(),
       status: z.enum(["berjalan", "belum", "selesai"]),
       startedOn: z.string(),

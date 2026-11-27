@@ -1299,6 +1299,8 @@
   "feed.mode.label": "Tampilan",
   "feed.mode.events": "Na masa",
   "feed.mode.watch": "Pangingoton",
+  "feed.map.ring": "{province}: {total} ulaon na masa, {parts}",
+  "feed.map.legend": "Warna ni jenis ni ulaon na masa",
   "field.place.label": "Lokasi",
   "field.place.question": "Cari goar ni desa manang kelurahan, kecamatan, manang kabupaten/kota ingananna masa.",
   "field.neighbourhood.label": "RT dohot RW",

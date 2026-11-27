@@ -1299,6 +1299,8 @@
   "feed.mode.label": "View",
   "feed.mode.events": "Events",
   "feed.mode.watch": "Alerts",
+  "feed.map.ring": "{province}: {total} incidents, {parts}",
+  "feed.map.legend": "Colors by incident type",
   "field.place.label": "Location",
   "field.place.question": "Search for the name of the village or kelurahan, the kecamatan, or the regency/city where it happened.",
   "field.neighbourhood.label": "RT and RW",

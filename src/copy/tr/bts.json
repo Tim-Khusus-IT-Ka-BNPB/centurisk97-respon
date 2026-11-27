@@ -1299,6 +1299,8 @@
   "feed.mode.label": "Tampilan",
   "feed.mode.events": "Kejadian",
   "feed.mode.watch": "Peringatan",
+  "feed.map.ring": "{province}: {total} kejadian, {parts}",
+  "feed.map.legend": "Warna ni jenis kejadian",
   "field.place.label": "Lokasi",
   "field.place.question": "Cari goran ni desa atap kelurahan, kecamatan, atap kabupaten/kota tempat kejadian.",
   "field.neighbourhood.label": "RT pakon RW",

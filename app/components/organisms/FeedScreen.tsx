@@ -5,6 +5,7 @@ import type { Feed, FeedEntry, Official } from "../../../src/contract/publicFeed
 import { hazardKey } from "../../../src/copy/hazardKey";
 import { FEED_PERIODS, type FeedPeriod } from "../../../src/domain/feedPeriod";
 import { SELECTABLE_HAZARD_TYPES } from "../../../src/domain/hazards";
+import { provinceRings } from "../../../src/domain/provinceRings";
 import { cn } from "../../lib/cn";
 import { isLimit } from "../../lib/envelope";
 import { type Followed, followed, toggleFollow } from "../../lib/follow";
@@ -262,6 +263,22 @@ export function FeedHeader({ mode }: { readonly mode: "events" | "watch" }) {
   );
 }
 
+// The map's province rings: the handled reports shown, and BNPB's events whose province we know.
+export function ringsOf(entries: readonly FeedEntry[], official: Official | null) {
+  return provinceRings([
+    ...entries.map((entry) => ({
+      provinceName: entry.place.provinceName,
+      hazardType: entry.hazardType,
+      point: entry.centre,
+    })),
+    ...(official?.events ?? []).flatMap((event) =>
+      event.provinceName === null
+        ? []
+        : [{ provinceName: event.provinceName, hazardType: event.hazardType, point: event.point }],
+    ),
+  ]);
+}
+
 export type FeedLoad =
   | { readonly kind: "feed"; readonly feed: Feed }
   | { readonly kind: "unavailable"; readonly envelope: ErrorEnvelope | null };
@@ -314,7 +331,7 @@ export function FeedScreen({
               "lg:sticky lg:top-6 lg:order-2 lg:h-[calc(100dvh-8rem)]",
             )}
           >
-            <FeedMap entries={entries} />
+            <FeedMap entries={entries} rings={ringsOf(entries, official)} />
           </div>
           <section aria-labelledby="feed-count" className="flex min-w-0 flex-col gap-3 lg:order-1">
             <h2 id="feed-count" className="text-meta font-semibold text-muted">

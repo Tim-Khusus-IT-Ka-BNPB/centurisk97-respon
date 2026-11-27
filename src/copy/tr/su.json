@@ -1299,6 +1299,8 @@
   "feed.mode.label": "Témbong",
   "feed.mode.events": "Kajadian",
   "feed.mode.watch": "Émutan",
+  "feed.map.ring": "{province}: {total} kajadian, {parts}",
+  "feed.map.legend": "Warna jenis kajadian",
   "field.place.label": "Lokasi",
   "field.place.question": "Teangan nami désa atanapi kelurahan, kacamatan, atanapi kabupatén/kota tempat kajadian.",
   "field.neighbourhood.label": "RT sareng RW",

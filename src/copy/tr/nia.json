@@ -1299,6 +1299,8 @@
   "feed.mode.label": "Famaigi",
   "feed.mode.events": "Kejadian",
   "feed.mode.watch": "Peringatan",
+  "feed.map.ring": "{province}: {total} kejadian, {parts}",
+  "feed.map.legend": "Warna ba jenis kejadian",
   "field.place.label": "Lokasi",
   "field.place.question": "Cari töi desa ma kelurahan, kecamatan, ma kabupaten/kota ba wa'ahöli.",
   "field.neighbourhood.label": "RT ba RW",

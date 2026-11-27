@@ -1299,6 +1299,8 @@
   "feed.mode.label": "Tampilan",
   "feed.mode.events": "Kejadian",
   "feed.mode.watch": "Paringatan",
+  "feed.map.ring": "{province}: {total} kajadian, {parts}",
+  "feed.map.legend": "Warna jenis kajadian",
   "field.place.label": "Lokasi",
   "field.place.question": "Cari namo desa atau kelurahan, kecamatan, atau kabupaten/kota tampek kejadian.",
   "field.neighbourhood.label": "RT jo RW",

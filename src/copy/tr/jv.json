@@ -1299,6 +1299,8 @@
   "feed.mode.label": "Tampilan",
   "feed.mode.events": "Kedadosan",
   "feed.mode.watch": "Pepeling",
+  "feed.map.ring": "{province}: {total} kejadian, {parts}",
+  "feed.map.legend": "Warna jenis kejadian",
   "field.place.label": "Lokasi",
   "field.place.question": "Golèkana jeneng desa utawi kelurahan, kecamatan, utawi kabupatèn/kitha papan kedadosan.",
   "field.neighbourhood.label": "RT lan RW",

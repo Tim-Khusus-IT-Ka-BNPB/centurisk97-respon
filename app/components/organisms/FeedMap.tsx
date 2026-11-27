@@ -3,19 +3,32 @@ import workerUrl from "maplibre-gl/dist/maplibre-gl-worker.mjs?url";
 import { useEffect, useRef, useState } from "react";
 import type { FeedEntry } from "../../../src/contract/publicFeed";
 import { hazardKey } from "../../../src/copy/hazardKey";
+import type { ProvinceRing } from "../../../src/domain/provinceRings";
+import { cn } from "../../lib/cn";
 import { boundsOf, INDONESIA, iconElement, localStyle, STATUS_GROUPS, tileStyle } from "../../lib/deskMap";
+import { hazardDot, ringGradient } from "../../lib/hazardColors";
 import { hazardIcon } from "../../lib/hazardIcons";
 import { useText } from "../../lib/text";
 
 type Placed = FeedEntry & { readonly centre: NonNullable<FeedEntry["centre"]> };
 
+// Zoomed out past this, a ring per province stands in for the points (upstream's map, row 27).
+const RING_ZOOM = 6;
+const ringSize = (total: number) => 34 + Math.min(total, 20) * 2;
+
 // The feed on a map, drawn in the browser only: the list beside it works with no script. Each
-// marker stands at its village's centre and leads to its card.
-export function FeedMap({ entries }: { readonly entries: readonly FeedEntry[] }) {
+// marker stands at its village's centre and leads to its card; zoomed out, a ring per province.
+export function FeedMap({
+  entries,
+  rings = [],
+}: {
+  readonly entries: readonly FeedEntry[];
+  readonly rings?: readonly ProvinceRing[];
+}) {
   const t = useText();
   const container = useRef<HTMLElement>(null);
-  const latest = useRef({ entries, t });
-  latest.current = { entries, t };
+  const latest = useRef({ entries, rings, t });
+  latest.current = { entries, rings, t };
   // A browser with no WebGL2 cannot draw it: the list beside it still holds every entry.
   const [failed, setFailed] = useState(false);
   useEffect(() => {
@@ -42,8 +55,32 @@ export function FeedMap({ entries }: { readonly entries: readonly FeedEntry[] })
       });
       map.once("load", () => {
         map.resize();
-        const { entries: all, t: text } = latest.current;
+        const { entries: all, rings: provinces, t: text } = latest.current;
         const placed = all.filter((entry): entry is Placed => entry.centre !== null);
+        const points: HTMLElement[] = [];
+        const circles: HTMLElement[] = [];
+        for (const ring of provinces) {
+          const circle = document.createElement("div");
+          circle.className = "feed-ring";
+          circle.setAttribute("role", "img");
+          circle.setAttribute(
+            "aria-label",
+            text("feed.map.ring", {
+              province: ring.provinceName,
+              total: ring.total,
+              parts: ring.slices
+                .map((one) => `${one.count} ${text(hazardKey(one.hazardType)).toLowerCase()}`)
+                .join(", "),
+            }),
+          );
+          circle.style.setProperty("--ring", ringGradient(ring.slices));
+          circle.style.width = circle.style.height = `${ringSize(ring.total)}px`;
+          const count = document.createElement("span");
+          count.textContent = String(ring.total);
+          circle.appendChild(count);
+          circles.push(circle);
+          new maplibre.Marker({ element: circle }).setLngLat([ring.point.lon, ring.point.lat]).addTo(map);
+        }
         for (const entry of placed) {
           const button = document.createElement("button");
           button.type = "button";
@@ -62,10 +99,19 @@ export function FeedMap({ entries }: { readonly entries: readonly FeedEntry[] })
             card?.scrollIntoView({ behavior: "smooth", block: "center" });
             card?.focus({ preventScroll: true });
           });
+          points.push(button);
           new maplibre.Marker({ element: button }).setLngLat([entry.centre.lon, entry.centre.lat]).addTo(map);
         }
         const bounds = boundsOf(placed.map((entry) => entry.centre));
         if (bounds !== null) map.fitBounds(bounds, { padding: 48, maxZoom: 11, duration: 0 });
+        // Far out the rings, near in the points; with no rings the points always.
+        const show = () => {
+          const far = circles.length > 0 && map.getZoom() < RING_ZOOM;
+          for (const circle of circles) circle.style.display = far ? "" : "none";
+          for (const point of points) point.style.display = far ? "none" : "";
+        };
+        map.on("zoom", show);
+        show();
       });
       remove = () => {
         theme.disconnect();
@@ -77,6 +123,7 @@ export function FeedMap({ entries }: { readonly entries: readonly FeedEntry[] })
       remove();
     };
   }, []);
+  const hazards = [...new Set(rings.flatMap((ring) => ring.slices.map((one) => one.hazardType)))];
   return (
     <div className="absolute inset-0">
       <section ref={container} aria-label={t("feed.map.label")} className="size-full">
@@ -86,6 +133,19 @@ export function FeedMap({ entries }: { readonly entries: readonly FeedEntry[] })
           </p>
         ) : null}
       </section>
+      {failed || hazards.length === 0 ? null : (
+        <ul
+          aria-label={t("feed.map.legend")}
+          className="absolute start-2 top-2 z-10 flex max-w-[calc(100%-1rem)] flex-wrap gap-1.5 rounded-control bg-surface/90 p-2 text-meta shadow-sm"
+        >
+          {hazards.map((hazard) => (
+            <li key={hazard} className="flex items-center gap-1.5">
+              <span aria-hidden="true" className={cn("size-3 rounded-full", hazardDot(hazard))} />
+              {t(hazardKey(hazard))}
+            </li>
+          ))}
+        </ul>
+      )}
     </div>
   );
 }

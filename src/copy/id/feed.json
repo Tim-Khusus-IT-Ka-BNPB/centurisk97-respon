@@ -35,5 +35,7 @@
   "feed.period.all": "Semua",
   "feed.mode.label": "Tampilan",
   "feed.mode.events": "Kejadian",
-  "feed.mode.watch": "Peringatan"
+  "feed.mode.watch": "Peringatan",
+  "feed.map.ring": "{province}: {total} kejadian, {parts}",
+  "feed.map.legend": "Warna jenis kejadian"
 }

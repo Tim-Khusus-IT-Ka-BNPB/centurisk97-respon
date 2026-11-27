@@ -1299,6 +1299,8 @@
   "feed.mode.label": "Tampilen",
   "feed.mode.events": "Kejadin",
   "feed.mode.watch": "Peringatan",
+  "feed.map.ring": "{province}: {total} kejadin, {parts}",
+  "feed.map.legend": "Warna jenis kejadin",
   "field.place.label": "Ingan",
   "field.place.question": "Cari gelar desa atau kelurahan, kecamatan, atau kabupaten/kota ingan kejadin.",
   "field.neighbourhood.label": "RT ras RW",

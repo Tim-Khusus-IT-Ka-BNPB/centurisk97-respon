@@ -1,3 +1,4 @@
+import { provinceNames } from "../adapters/d1/places";
 import { markProof, publicProofKey, publicProofs, type ShownRow, shownReports } from "../adapters/d1/publicFeed";
 import { referenceFile } from "../adapters/d1/reports";
 import type { Feed, FeedEntry, Official, Watch } from "../contract/publicFeed";
@@ -164,7 +165,10 @@ export type OfficialAnswer =
 export async function officialView(bindings: ServiceBindings, address: string): Promise<OfficialAnswer> {
   const refusal = await checkLimits(bindings, [["address.feed", { kind: "address", bucket: address }]]);
   if (refusal) return { kind: "limit", refusal };
-  const file = checkKabarFile(await referenceFile(bindings.db, "officialEvents"));
+  const [file, provinces] = await Promise.all([
+    referenceFile(bindings.db, "officialEvents").then(checkKabarFile),
+    provinceNames(bindings.db),
+  ]);
   return {
     kind: "ok",
     official:
@@ -174,6 +178,7 @@ export async function officialView(bindings: ServiceBindings, address: string): 
             day: file.hari,
             events: officialEvents(file).map((one) => ({
               ...one,
+              provinceName: provinces.get(one.provinceCode) ?? null,
               hazardType: one.hazardType as Official["events"][number]["hazardType"],
               news: [...one.news],
             })),

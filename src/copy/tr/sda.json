@@ -1299,6 +1299,8 @@
   "feed.mode.label": "Pa'tiroan",
   "feed.mode.events": "Kejadian",
   "feed.mode.watch": "Pa'ingngaran",
+  "feed.map.ring": "{province}: {total} kajadian, {parts}",
+  "feed.map.legend": "Warna jenis kajadian",
   "field.place.label": "Lokasi",
   "field.place.question": "Cari aran desa ba'tu kelurahan, kecamatan, ba'tu kabupaten/kota tempat kejadian.",
   "field.neighbourhood.label": "RT sia RW",

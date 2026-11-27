@@ -1299,6 +1299,8 @@
   "feed.mode.label": "Pakkitta",
   "feed.mode.events": "Kajariang",
   "feed.mode.watch": "Peringatan",
+  "feed.map.ring": "{province}: {total} kajariang, {parts}",
+  "feed.map.legend": "Warna jenisna kajariang",
   "field.place.label": "Tampa'",
   "field.place.question": "Cidongi areng desa atau kelurahan, kecamatan, atau kabupaten/kota tampa' kajariang.",
   "field.neighbourhood.label": "RT siagang RW",

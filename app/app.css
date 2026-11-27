@@ -629,3 +629,25 @@
     animation: sigap-hop 520ms ease-out;
   }
 }
+
+/* The feed map's province ring (row 27): its hazards as slices round a hole holding the count. */
+.feed-ring {
+  display: grid;
+  place-items: center;
+  border-radius: 9999px;
+  background: var(--ring);
+  box-shadow: 0 1px 4px rgb(0 0 0 / 0.3);
+  cursor: default;
+}
+
+.feed-ring span {
+  display: grid;
+  place-items: center;
+  width: 62%;
+  height: 62%;
+  border-radius: 9999px;
+  background: var(--surface);
+  color: var(--ink);
+  font-weight: 800;
+  font-size: 0.8rem;
+}

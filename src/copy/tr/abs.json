@@ -1299,6 +1299,8 @@
   "feed.mode.label": "Tampilan",
   "feed.mode.events": "Kejadian",
   "feed.mode.watch": "Paringatan",
+  "feed.map.ring": "{province}: {total} kejadian, {parts}",
+  "feed.map.legend": "Warna par jenis kejadian",
   "field.place.label": "Lokasi",
   "field.place.question": "Cari nama desa atau kelurahan, kecamatan, atau kabupaten/kota tempat kejadian.",
   "field.neighbourhood.label": "RT deng RW",

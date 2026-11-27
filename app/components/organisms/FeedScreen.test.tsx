@@ -1,9 +1,9 @@
 import { fireEvent, screen, within } from "@testing-library/react";
 import { describe, expect, test, vi } from "vitest";
 import type { ErrorEnvelope } from "../../../src/contract/errors";
-import { FEED_ALONE, FEED_ENTRY } from "../../testing/feed";
+import { FEED_ALONE, FEED_ENTRY, OFFICIAL } from "../../testing/feed";
 import { renderPage } from "../../testing/render";
-import { FeedScreen, feedQuery } from "./FeedScreen";
+import { FeedScreen, feedQuery, ringsOf } from "./FeedScreen";
 
 vi.mock("./FeedMap", () => ({ FeedMap: () => <div data-testid="map" /> }));
 // What this device follows, kept in memory for the test.
@@ -121,4 +121,9 @@ describe("the public feed page", () => {
     renderPage(<FeedScreen load={{ kind: "unavailable", envelope }} hazard={null} />, { path: "/lapor/feed" });
     expect(await screen.findByText(/^Alun-alun sudah dibuka 600 kali dalam satu jam/)).toBeTruthy();
   });
+});
+
+test("the map's rings hold the reports shown and BNPB's events whose province is known", () => {
+  expect(ringsOf([FEED_ENTRY], OFFICIAL).map((ring) => [ring.provinceName, ring.total])).toEqual([["Aceh", 2]]);
+  expect(ringsOf([FEED_ENTRY], null).map((ring) => ring.total)).toEqual([1]);
 });

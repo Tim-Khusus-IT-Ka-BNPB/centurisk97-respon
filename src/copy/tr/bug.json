@@ -1299,6 +1299,8 @@
   "feed.mode.label": "Tampilan",
   "feed.mode.events": "Kajajiang",
   "feed.mode.watch": "Pappaingerang",
+  "feed.map.ring": "{province}: {total} kejadian, {parts}",
+  "feed.map.legend": "Warana jenis kejadian",
   "field.place.label": "Onrong",
   "field.place.question": "Sappa asenna desa aga kelurahan, kecamatan, aga kabupaten/kota onrong kajajiang.",
   "field.neighbourhood.label": "RT sibawa RW",

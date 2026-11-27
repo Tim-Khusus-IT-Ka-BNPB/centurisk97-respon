@@ -282,6 +282,9 @@ describe("BNPB's daily report on the Alun-alun", () => {
     expect(official.day).toBe("2026-11-26");
     expect(official.events.length).toBeGreaterThan(50);
     expect(official.events[0]?.status).toBe("berjalan");
+    // Named where our place data knows the province; the seed holds only some.
+    expect(official.events.some((one) => one.provinceName === "Aceh")).toBe(true);
+    expect(official.events.some((one) => one.provinceName === null)).toBe(true);
     expect(official.events.every((one) => one.news.length <= 3)).toBe(true);
     const key = await hmacKey(bindings.settings.keyHmacSecret, "address", addressBucket(phone.address) as string);
     const window = new Date(windowStart("clockHour", clock.now())).toISOString();
