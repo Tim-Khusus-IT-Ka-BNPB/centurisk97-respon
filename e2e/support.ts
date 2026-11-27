@@ -25,17 +25,21 @@ export const liveCard = (page: Page): Locator => page.locator("[data-card-kind]"
 
 export async function noSidewaysScroll(page: Page): Promise<void> {
   const width = await page.evaluate(() => document.documentElement.scrollWidth);
-  // What sticks out, named, so a failure says where to look.
+  const screen = page.viewportSize()?.width ?? 0;
+  // What sticks out past the screen, named, so a failure says where to look. A phone widens its own
+  // viewport to fit what is too wide, so the screen's width is the measure, not the page's.
   const wide =
-    width <= (page.viewportSize()?.width ?? 0)
+    width <= screen
       ? []
-      : await page.evaluate(() =>
-          [...document.querySelectorAll("body *")]
-            .filter((one) => one.getBoundingClientRect().right > innerWidth)
-            .slice(0, 6)
-            .map((one) => `${one.tagName.toLowerCase()}.${one.className.toString().slice(0, 80)}`),
+      : await page.evaluate(
+          (limit) =>
+            [...document.querySelectorAll("body *")]
+              .filter((one) => one.getBoundingClientRect().right > limit)
+              .slice(-6)
+              .map((one) => `${one.tagName.toLowerCase()}.${one.className.toString().slice(0, 80)}`),
+          screen,
         );
-  expect(width, wide.join(" | ")).toBeLessThanOrEqual(page.viewportSize()?.width ?? 0);
+  expect(width, wide.join(" | ")).toBeLessThanOrEqual(screen);
 }
 
 // Fills the identity and consent form and stores it through the read-back.
