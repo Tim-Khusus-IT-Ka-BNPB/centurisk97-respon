@@ -2,10 +2,10 @@
 
 This repo rebuilds the Lapor module of `poskokarhutla`, which moves much faster. This file records what we reviewed upstream, whether it affects us, and what each milestone is synced against, so we always know what is stale.
 
-- **Upstream:** `terasurbannetwork/poskokarhutla`, branch `main`, expected at `../poskokarhutla`
+- **Upstream:** `terasurbannetwork/poskokarhutla`, branch `main`, expected at `../../poskokarhutla`
 - **Last reviewed:** `44adc772` (24 Nov 2026)
 
-**We only monitor upstream.** Nothing here writes to `../poskokarhutla`: no edits, commits, pulls or fetches. Every command in this file only reads. Fixes upstream are for its owner to make.
+**We only monitor upstream.** Nothing here writes to `../../poskokarhutla`: no edits, commits, pulls or fetches. Every command in this file only reads. Fixes upstream are for its owner to make.
 
 ## When to review
 
@@ -29,49 +29,49 @@ RANGE=44adc772..origin/main
 **1. Did Lapor change?** Commits per file in the paths Lapor owns upstream.
 
 ```bash
-git -C ../poskokarhutla log --no-merges --name-only --format= $RANGE -- 'src/lapor_*.js' 'src/pw_*.js' public/lapor public/sw-lapor.js scripts/lapor 'scripts/wa/lapor_*' tests/lapor 'tests/wa/lapor_*' | sort | uniq -c | sort -rn
+git -C ../../poskokarhutla log --no-merges --name-only --format= $RANGE -- 'src/lapor_*.js' 'src/pw_*.js' public/lapor public/sw-lapor.js scripts/lapor 'scripts/wa/lapor_*' tests/lapor 'tests/wa/lapor_*' | sort | uniq -c | sort -rn
 ```
 
 Lapor's SQL and page routing sit in two shared files. This counts their changed lines that mention Lapor:
 
 ```bash
-git -C ../poskokarhutla diff $RANGE -- src/hak.js src/worker.js | grep -icE '^[+-].*(lapor([^a]|$)|lj_|pw_)'
+git -C ../../poskokarhutla diff $RANGE -- src/hak.js src/worker.js | grep -icE '^[+-].*(lapor([^a]|$)|lj_|pw_)'
 ```
 
 **2. Anything new?** New routes, tables, files and migrations. Each new one gets a ledger row, or a `skip` note in the log. A line starting with `>` was added, `<` was removed.
 
 ```bash
-diff <(git -C ../poskokarhutla grep -hoE '"(GET|POST|PUT|PATCH|DELETE) /api/lapor[^"]*"' ${RANGE%%..*} -- src | sort -u) <(git -C ../poskokarhutla grep -hoE '"(GET|POST|PUT|PATCH|DELETE) /api/lapor[^"]*"' origin/main -- src | sort -u)
+diff <(git -C ../../poskokarhutla grep -hoE '"(GET|POST|PUT|PATCH|DELETE) /api/lapor[^"]*"' ${RANGE%%..*} -- src | sort -u) <(git -C ../../poskokarhutla grep -hoE '"(GET|POST|PUT|PATCH|DELETE) /api/lapor[^"]*"' origin/main -- src | sort -u)
 ```
 
 ```bash
-diff <(git -C ../poskokarhutla grep -hoE 'CREATE TABLE IF NOT EXISTS (lapor_|lj_|pw_)[a-z0-9_]+' ${RANGE%%..*} -- migrations | sort -u) <(git -C ../poskokarhutla grep -hoE 'CREATE TABLE IF NOT EXISTS (lapor_|lj_|pw_)[a-z0-9_]+' origin/main -- migrations | sort -u)
+diff <(git -C ../../poskokarhutla grep -hoE 'CREATE TABLE IF NOT EXISTS (lapor_|lj_|pw_)[a-z0-9_]+' ${RANGE%%..*} -- migrations | sort -u) <(git -C ../../poskokarhutla grep -hoE 'CREATE TABLE IF NOT EXISTS (lapor_|lj_|pw_)[a-z0-9_]+' origin/main -- migrations | sort -u)
 ```
 
 ```bash
-git -C ../poskokarhutla diff --diff-filter=A --name-only $RANGE -- 'src/lapor_*.js' 'src/pw_*.js' public/lapor scripts/lapor 'scripts/wa/lapor_*' tests/lapor
+git -C ../../poskokarhutla diff --diff-filter=A --name-only $RANGE -- 'src/lapor_*.js' 'src/pw_*.js' public/lapor scripts/lapor 'scripts/wa/lapor_*' tests/lapor
 ```
 
 ```bash
-git -C ../poskokarhutla diff --diff-filter=A --name-only $RANGE -- migrations | while read -r f; do git -C ../poskokarhutla grep -qE 'lapor_|lj_|pw_' origin/main -- "$f" && echo "$f"; done
+git -C ../../poskokarhutla diff --diff-filter=A --name-only $RANGE -- migrations | while read -r f; do git -C ../../poskokarhutla grep -qE 'lapor_|lj_|pw_' origin/main -- "$f" && echo "$f"; done
 ```
 
 **3. Did the owner decide something?** Decision files rank above everything else.
 
 ```bash
-git -C ../poskokarhutla log --no-merges --date=short --format='%h %ad %s' $RANGE -- data/kajian-bnpb/lapor-ai data/kajian-bnpb/lapor-lanjutan data/kajian-bnpb/lapor-luring data/kajian-bnpb/lapor-kejadian data/kajian-bnpb/pwa-peringatan
+git -C ../../poskokarhutla log --no-merges --date=short --format='%h %ad %s' $RANGE -- data/kajian-bnpb/lapor-ai data/kajian-bnpb/lapor-lanjutan data/kajian-bnpb/lapor-luring data/kajian-bnpb/lapor-kejadian data/kajian-bnpb/pwa-peringatan
 ```
 
 **4. Did something around Lapor change?** First, code Lapor borrows. A change here can break our adapters, which is `drift`.
 
 ```bash
-git -C ../poskokarhutla log --no-merges --name-only --format= $RANGE -- src/masuk_sesi.js src/staf.js src/posko.js src/kemitraan.js src/bnpb.js src/samarkan.js src/media_bersih.js src/media_berkas.js src/push.js public/inti/tema.css public/inti/antre.js public/inti/exif.js public/inti/foto_kecil.js public/bnpb/bnpb.css public/bagi.js public/bencana.json public/prediksi/besok_inti.js | sort | uniq -c | sort -rn
+git -C ../../poskokarhutla log --no-merges --name-only --format= $RANGE -- src/masuk_sesi.js src/staf.js src/posko.js src/kemitraan.js src/bnpb.js src/samarkan.js src/media_bersih.js src/media_berkas.js src/push.js public/inti/tema.css public/inti/antre.js public/inti/exif.js public/inti/foto_kecil.js public/bnpb/bnpb.css public/bagi.js public/bencana.json public/prediksi/besok_inti.js | sort | uniq -c | sort -rn
 ```
 
 Then, other upstream code that calls Lapor. Compare the output with the callers table below. A new name is a new dependency on Lapor, and it must keep working at the switch.
 
 ```bash
-git -C ../poskokarhutla grep -lE 'lapor_(sesi|tiket|pesan|foto|kelompok|versi)|/api/lapor/' origin/main -- src scripts public tests ':(exclude)src/lapor_*' ':(exclude)src/pw_*' ':(exclude)src/hak.js' ':(exclude)src/worker.js' ':(exclude)public/lapor' ':(exclude)public/sw-lapor.js' ':(exclude)scripts/lapor' ':(exclude)scripts/wa' ':(exclude)tests/lapor' ':(exclude)tests/wa'
+git -C ../../poskokarhutla grep -lE 'lapor_(sesi|tiket|pesan|foto|kelompok|versi)|/api/lapor/' origin/main -- src scripts public tests ':(exclude)src/lapor_*' ':(exclude)src/pw_*' ':(exclude)src/hak.js' ':(exclude)src/worker.js' ':(exclude)public/lapor' ':(exclude)public/sw-lapor.js' ':(exclude)scripts/lapor' ':(exclude)scripts/wa' ':(exclude)tests/lapor' ':(exclude)tests/wa'
 ```
 
 Data shapes are not tracked by git diff. The contract tests catch them from M01.
@@ -90,7 +90,7 @@ Do this after the four checks.
 Drill down on that milestone only, using its ledger paths. `--stat` makes "gas" commits readable.
 
 ```bash
-git -C ../poskokarhutla log --no-merges --date=short --format='%h %ad %s' --stat <synced-sha>..origin/main -- <upstream paths>
+git -C ../../poskokarhutla log --no-merges --date=short --format='%h %ad %s' --stat <synced-sha>..origin/main -- <upstream paths>
 ```
 
 When the milestone closes, set **Synced at** to the upstream commit whose behaviour it matches.

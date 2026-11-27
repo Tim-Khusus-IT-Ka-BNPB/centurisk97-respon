@@ -66,9 +66,9 @@ Needs Node 26.3 (see `.nvmrc`) and pnpm 10.34.5 (the `packageManager` field; `np
    Place data. The seed loads a small pinned cut of the village file and the outlines of those villages, which GPS reads a point against. To cover the whole country, import upstream's `public/data/desa_cari.json`; its outlines are read from `public/geo/desa/` beside it, or from a folder given as a second argument. A file under 80,000 villages or 500 regencies, or outlines for fewer than 80,000 of its villages, is refused, and the same files twice write nothing.
 
    ```bash
-   pnpm reference:import ../poskokarhutla/public/data/desa_cari.json
-   pnpm reference:import-file bpbdContacts ../poskokarhutla/public/data/bpbd_kontak.json
-   pnpm reference:import-file education ../poskokarhutla/public/lapor/edukasi.json
+   pnpm reference:import ../../poskokarhutla/public/data/desa_cari.json
+   pnpm reference:import-file bpbdContacts ../../poskokarhutla/public/data/bpbd_kontak.json
+   pnpm reference:import-file education ../../poskokarhutla/public/lapor/edukasi.json
    pnpm reference:timing    # times the search on the active snapshot of the local database
    pnpm db:seed             # makes the pinned seed file the active snapshot again
    pnpm openapi             # writes the API document generated from the routes to build/openapi.json
