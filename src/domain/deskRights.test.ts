@@ -23,6 +23,8 @@ const RIGHTS: readonly (readonly [DeskCapability, boolean, boolean])[] = [
   ["pauseWarnings", true, false],
   ["releaseEvent", true, false],
   ["callOfficers", true, false],
+  ["pullToday", true, true],
+  ["moderateComments", true, true],
 ];
 
 describe("desk capabilities", () => {
