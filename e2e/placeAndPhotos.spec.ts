@@ -83,15 +83,14 @@ test("photos taken at the scene show their badges and time, and the summary coun
   if (script) cardId = await placeByGps(page);
   else {
     cardId = await liveCard(page).getAttribute("data-card-id");
-    await page.getByLabel("Cari tempat").fill("cot seumiyong");
+    // The number's read-back may still be landing: typed into the page before it, the words were lost
+    // and an empty search went out (WebKit with no script, on CI).
+    await page.waitForLoadState();
+    const search = page.getByLabel("Cari tempat");
+    await search.fill("cot seumiyong");
+    await expect(search).toHaveValue("cot seumiyong");
     await page.getByRole("button", { name: "Cari tempat" }).click();
-    const village = liveCard(page).locator('button[name="villageCode"]').first();
-    // With no village to pick, say what the card shows instead, so a failure names its cause.
-    await village.waitFor({ timeout: 30_000 }).catch(async (error: unknown) => {
-      const said = (await liveCard(page).innerText()).replace(/\s+/g, " ").slice(0, 300);
-      throw new Error(`No village to pick at ${page.url()}; the card says: ${said}`, { cause: error });
-    });
-    await paced(() => village.click());
+    await paced(() => liveCard(page).locator('button[name="villageCode"]').first().click());
     cardId = await nextCard(page, cardId);
   }
   for (let step = 0; step < 60; step++) {
