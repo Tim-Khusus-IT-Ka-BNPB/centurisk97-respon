@@ -141,4 +141,24 @@ describe("after sending", () => {
     expect(calls).toEqual(["tel:112", "tel:117", "tel:115", "tel:119", "tel:110", "tel:113"]);
     expect(within(section).getByText("Basarnas, pencarian dan pertolongan")).toBeTruthy();
   });
+
+  test("then the places with a number nearest the report, each named with its kind and distance", async () => {
+    draw(withCard({ rating: 4 }));
+    const section = await screen.findByRole("region", { name: "Nomor terdekat dari lokasi laporan" });
+    expect(
+      within(section)
+        .getAllByRole("link")
+        .map((link) => [link.getAttribute("href"), link.textContent]),
+    ).toEqual([
+      ["tel:080011080001", expect.stringContaining("RSUD Uji, rumah sakit, 2,4 km")],
+      ["tel:110", expect.stringContaining("Polsek Uji, polisi, 3 km")],
+    ]);
+    expect(within(section).getByText(/OpenStreetMap dan Overture Maps/)).toBeTruthy();
+  });
+
+  test("none near, none shown", async () => {
+    draw(withCard({ rating: 4, nearest: [] }));
+    await screen.findByRole("region", { name: "Nomor penting" });
+    expect(screen.queryByRole("region", { name: "Nomor terdekat dari lokasi laporan" })).toBeNull();
+  });
 });

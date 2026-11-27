@@ -223,3 +223,37 @@ describe("one lock order", () => {
     expect(statuses.every((pair) => /^(201|409|404)\/(201|204)$/.test(pair))).toBe(true);
   }, 180_000);
 });
+
+describe("the numbers near a sent report", () => {
+  test("from its village's centre, two of each kind within 30 km; none with no centre or no file", async () => {
+    const w = world(await unusedDay(0));
+    const sentIn = async (code: string) => {
+      const phone = browser(w.fetchApi);
+      const start = await phone.call("POST", "/consent", {
+        role: "citizen",
+        name: "Uji Satu",
+        number: freshNumber().typed,
+        privacyVersion: 2,
+        agree: true,
+      });
+      const { draft } = await walkTo(phone, start.draft, code, { tick: () => w.clock.advance(4000) });
+      expect((await send(phone, draft)).status).toBe(201);
+      const read = (await phone.call("GET", `/drafts/${draft.draftId}`)).json as {
+        card: { nearest: { kind: string; km: number }[] };
+      };
+      return read.card.nearest;
+    };
+    // Cot Seumiyong, Aceh Utara, has an outline and so a centre.
+    const near = await sentIn("11.08.03.2031");
+    expect(near.length).toBeGreaterThan(0);
+    expect(near.every((one) => one.km <= 30)).toBe(true);
+    const order = ["rs", "puskesmas", "polisi", "damkar"];
+    const kinds = near.map((one) => order.indexOf(one.kind));
+    expect(kinds).toEqual([...kinds].sort((a, b) => a - b));
+    // A village with no outline has no centre to measure from.
+    await query`delete from place_village_shape where code = '11.08.01.2002'`;
+    expect(await sentIn("11.08.01.2002")).toEqual([]);
+    await query`delete from reference_file where name = 'facilityNumbers'`;
+    expect(await sentIn("11.08.03.2031")).toEqual([]);
+  });
+});

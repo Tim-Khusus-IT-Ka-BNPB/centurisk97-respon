@@ -13,4 +13,6 @@ export default async function seedReference(db: Database): Promise<void> {
   await importReferenceFile(db, "forecast", "db/reference/forecast.json", "seed");
   // Upstream's copy of MAGMA's public volcano status, as it was on its date.
   await importReferenceFile(db, "volcanoes", "db/reference/volcanoes.json", "seed");
+  // Upstream's facility numbers for all of Indonesia, as built on its date (pnpm reference:facilities).
+  await importReferenceFile(db, "facilityNumbers", "db/reference/facility-numbers.json", "seed");
 }

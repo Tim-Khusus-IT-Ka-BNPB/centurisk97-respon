@@ -20,6 +20,7 @@
     "reference:import-file": "tsx --env-file-if-exists=.env tools/reference-import/importFile.ts",
     "push:keys": "tsx tools/push-keys/make.ts",
     "copy:translate": "tsx tools/copy-translate/translate.ts",
+    "reference:facilities": "tsx tools/reference-import/buildFacilities.ts",
     "openapi": "vitest run --project server src/api/route.test.ts -t \"OpenAPI document\"",
     "reference:timing": "tsx --env-file-if-exists=.env tools/reference-import/timing.ts",
     "db:migrate": "tsx --env-file-if-exists=.env scripts/db/migrate.ts",

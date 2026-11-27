@@ -7,6 +7,7 @@ import { isFinal } from "../domain/draftStates";
 import { provinceZone, type Zone } from "../domain/eventTime";
 import { completePercent } from "../domain/fields/applicable";
 import type { ReporterRole } from "../domain/identityForm";
+import type { NearFacility } from "../domain/nearFacilities";
 import { EMPTY_CONTENT } from "../domain/turn/content";
 import { currentQuestion } from "../domain/turn/engine";
 import { cardFor } from "./cards";
@@ -34,6 +35,7 @@ export type SentTicket = {
   readonly rating: number | null;
   readonly trackingToken: string;
   readonly tracking: Tracking;
+  readonly nearest: readonly NearFacility[];
 };
 
 type ViewInput = {
@@ -72,6 +74,7 @@ function endedCard(draft: DraftRecord, ticket: SentTicket | null, cardId: string
       rating: ticket.rating,
       trackingToken: ticket.trackingToken,
       tracking: ticket.tracking,
+      nearest: [...ticket.nearest],
     };
   return { cardId, kind: "cancelled", titleKey: "card.cancelled.title", promptKey: "card.cancelled.body", params: {} };
 }

@@ -10,7 +10,7 @@ import { buttonStyles } from "../../atoms/Button";
 import { Icon } from "../../atoms/Icon";
 import { FieldError } from "../../molecules/Field";
 import { ActionRow } from "../../molecules/layout";
-import { NationalNumbers } from "../../molecules/NationalNumbers";
+import { NationalNumbers, NearestNumbers } from "../../molecules/NationalNumbers";
 import { headingIdOf, useDraftView } from "./CardShell";
 
 type SentCardData = Extract<Card, { kind: "sent" }>;
@@ -276,8 +276,9 @@ export function TicketCard({ card }: { readonly card: SentCardData }) {
             <ContactBlock contact={card.tracking.contact} />
           </div>
         </div>
-        <div className="border-t border-line pt-4">
+        <div className="flex flex-col gap-6 border-t border-line pt-4">
           <NationalNumbers />
+          <NearestNumbers nearest={card.nearest} />
         </div>
         <div className="flex flex-col border-t border-line pt-4 @actions:items-start">
           <Link to="/lapor/report" className={buttonStyles({ variant: "secondary", size: "main" })}>

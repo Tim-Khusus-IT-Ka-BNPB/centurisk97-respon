@@ -348,6 +348,10 @@ export const SAMPLE_DRAFTS: Readonly<Record<CardKind, DraftBody>> = {
       rating: null,
       trackingToken: "0123456789abcdef0123456789abcdef",
       tracking: SAMPLE_TRACKING,
+      nearest: [
+        { kind: "rs", name: "RSUD Uji", phone: "+6280011080001", km: 2.4 },
+        { kind: "polisi", name: "Polsek Uji", phone: "110", km: 3 },
+      ],
     },
     { canGoBack: false },
   ),

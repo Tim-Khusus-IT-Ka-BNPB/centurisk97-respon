@@ -16,14 +16,17 @@ import {
   updateDraft,
 } from "../adapters/d1/drafts";
 import { draftPhotos, type PhotoRecord } from "../adapters/d1/photos";
-import { activeVillage } from "../adapters/d1/places";
-import { type ReportRecord, reportByDraft } from "../adapters/d1/reports";
+import { activeVillage, villageCentre } from "../adapters/d1/places";
+import { type ReportRecord, referenceFile, reportByDraft } from "../adapters/d1/reports";
 import type { DraftBody } from "../contract/draft";
 import { isFinal } from "../domain/draftStates";
+import { checkFacilityFile } from "../domain/facilities";
+import type { PlaceValue } from "../domain/fieldState";
 import { chosenHazardType } from "../domain/fields/applicable";
 import type { GroupId } from "../domain/fields/catalogue";
 import type { FieldError, ReporterRole } from "../domain/identityForm";
 import { maskText } from "../domain/masking";
+import { nearestFacilities } from "../domain/nearFacilities";
 import { ownsDraft } from "../domain/ownership";
 import type { DraftContent, PlaceReading, Question } from "../domain/turn/content";
 import {
@@ -94,10 +97,20 @@ export async function ownedDraft(bindings: ServiceBindings, principal: Principal
   return { kind: "owned", draft };
 }
 
-// What the sent card shows: the ticket, the thank-you name, the rating, the tracking link and view.
+// The numbers near a sent report's point, or its village's centre; none when the file is not read.
+async function nearestOf(bindings: ServiceBindings, report: ReportRecord) {
+  const place = (report.states.place as { readonly value: PlaceValue }).value;
+  const point = place.point ?? (await villageCentre(bindings.db, place.snapshotId, place.villageCode));
+  const file = checkFacilityFile(await referenceFile(bindings.db, "facilityNumbers"));
+  return file === null || point === null ? [] : nearestFacilities(file, point);
+}
+
+// What the sent card shows: the ticket, the thank-you name, the rating, the tracking link and view,
+// and the numbers to call near the report.
 async function sentDetails(bindings: ServiceBindings, draftId: string): Promise<SentTicket> {
   const report = (await reportByDraft(bindings.db, draftId)) as ReportRecord;
   return {
+    nearest: await nearestOf(bindings, report),
     ticketNumber: report.ticketNumber,
     sentAt: report.sentAt,
     firstName: report.reporterName.split(" ")[0] as string,

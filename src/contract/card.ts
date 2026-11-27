@@ -279,6 +279,15 @@ export const cardSchema = z.discriminatedUnion("kind", [
     // The secret of the tracking link, which travels in the link's fragment.
     trackingToken: z.string(),
     tracking: trackingSchema,
+    // The hospitals, health centres, police and fire stations with a number near the report's place.
+    nearest: z.array(
+      z.strictObject({
+        kind: z.enum(["rs", "puskesmas", "polisi", "damkar"]),
+        name: z.string(),
+        phone: z.string(),
+        km: z.number(),
+      }),
+    ),
   }),
   z.object({ ...base, kind: z.literal("cancelled") }),
   // News for a sent report that is sent or dropped; the report itself is as it was.
