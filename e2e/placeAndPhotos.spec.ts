@@ -85,7 +85,13 @@ test("photos taken at the scene show their badges and time, and the summary coun
     cardId = await liveCard(page).getAttribute("data-card-id");
     await page.getByLabel("Cari tempat").fill("cot seumiyong");
     await page.getByRole("button", { name: "Cari tempat" }).click();
-    await paced(() => liveCard(page).locator('button[name="villageCode"]').first().click());
+    const village = liveCard(page).locator('button[name="villageCode"]').first();
+    // With no village to pick, say what the card shows instead, so a failure names its cause.
+    await village.waitFor({ timeout: 30_000 }).catch(async (error: unknown) => {
+      const said = (await liveCard(page).innerText()).replace(/\s+/g, " ").slice(0, 300);
+      throw new Error(`No village to pick at ${page.url()}; the card says: ${said}`, { cause: error });
+    });
+    await paced(() => village.click());
     cardId = await nextCard(page, cardId);
   }
   for (let step = 0; step < 60; step++) {
