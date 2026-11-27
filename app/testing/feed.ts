@@ -1,4 +1,4 @@
-import type { FeedEntry, Watch } from "../../src/contract/publicFeed";
+import type { FeedEntry, Official, Watch } from "../../src/contract/publicFeed";
 
 // A feed entry as the public feed sends it: a closed flood in a cluster of three, two photos marked public.
 export const FEED_ENTRY: FeedEntry = {
@@ -52,4 +52,41 @@ export const WATCH: Watch = {
       { name: "Dua", province: "Bali", level: 3, radiusKm: null, report: null },
     ],
   },
+};
+
+// BNPB's daily report: an ongoing flood in Aceh Utara with figures and news, a finished landslide.
+export const OFFICIAL: Official = {
+  day: "2026-11-26",
+  events: [
+    {
+      id: "banjir|11|Aceh Utara|2026-11-24",
+      hazardType: "flood",
+      regencyName: "Kabupaten Aceh Utara",
+      provinceCode: "11",
+      point: { lat: 5.1, lon: 97.1 },
+      status: "berjalan",
+      startedOn: "2026-11-24",
+      lastReportOn: "2026-11-26",
+      families: 120,
+      displaced: null,
+      houses: 45,
+      news: [{ title: "Banjir Aceh Utara", outlet: "Media Uji", date: "2026-11-25", url: "https://example.id/banjir" }],
+      moreNews: 2,
+    },
+    {
+      id: "longsor|32|Bogor|2026-11-20",
+      hazardType: "landslide",
+      regencyName: "Bogor",
+      provinceCode: "32",
+      point: null,
+      status: "selesai",
+      startedOn: "2026-11-20",
+      lastReportOn: "2026-11-22",
+      families: null,
+      displaced: null,
+      houses: null,
+      news: [],
+      moreNews: 0,
+    },
+  ],
 };

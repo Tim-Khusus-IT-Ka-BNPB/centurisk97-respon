@@ -18,6 +18,7 @@
     "src/domain/forecast.ts",
     "src/domain/volcano.ts",
     "src/domain/facilities.ts",
+    "src/domain/officialEvents.ts",
     "src/platform/webPush.ts",
     "src/copy/translated.ts",
     "src/testing/jpegs.ts",

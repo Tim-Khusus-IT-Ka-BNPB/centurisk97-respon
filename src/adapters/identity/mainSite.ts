@@ -1,5 +1,6 @@
 import { parse } from "hono/utils/cookie";
 import type { StaffScope } from "../../domain/deskRights";
+import { regencyKey } from "../../domain/officialEvents";
 import { type Database, row, rows, sql } from "../../platform/database";
 import { hmacKey, sha256Hex } from "../../platform/keys";
 import type { Clock } from "../../ports/clock";
@@ -22,13 +23,7 @@ const BPBD_KINDS = ["pemkab", "pemkot", "pemprov"];
 const ROLE_NAMES: Readonly<Record<string, string>> = { pusdalops: "Pusdalops", koordalops: "Koordinator Pusdalops" };
 
 // "Kabupaten Bogor", "Kab. Bogor" and "Bogor" are one regency; "Kota Administrasi X" is "Kota X".
-export const regencyKey = (name: string) =>
-  name
-    .toLowerCase()
-    .replace(/^kota administrasi\s+/, "kota ")
-    .replace(/^(kabupaten|kab\.)\s+/, "")
-    .replace(/\s+/g, " ")
-    .trim();
+export { regencyKey } from "../../domain/officialEvents";
 
 // Upstream keeps numbers as "62..." digits; ours carry the plus.
 const stored = (wa: string) => `+${wa}`;

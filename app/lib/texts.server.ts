@@ -97,6 +97,7 @@ export const PAGE_TEXTS = {
     ...SHELL,
     "feed.",
     "watch.",
+    "official.",
     "info.level.",
     "hazard.",
     "hazardSubtype.",

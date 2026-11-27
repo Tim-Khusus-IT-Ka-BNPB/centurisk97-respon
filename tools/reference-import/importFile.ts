@@ -12,6 +12,7 @@ const NAMES: readonly (string | undefined)[] = [
   "forecast",
   "volcanoes",
   "facilityNumbers",
+  "officialEvents",
 ];
 if (!NAMES.includes(name) || !path) {
   console.error(

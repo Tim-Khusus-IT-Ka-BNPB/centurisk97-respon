@@ -71,3 +71,29 @@ export const watchSchema = z.strictObject({
 });
 
 export type Watch = z.infer<typeof watchSchema>;
+
+// The events of BNPB's daily report on the Alun-alun (upstream kabar-alun, row 26): each with the
+// report's status and figures, and a few headlines from the news. The day is null when the file is
+// missing or broken: cannot know.
+export const officialSchema = z.strictObject({
+  day: z.string().nullable(),
+  events: z.array(
+    z.strictObject({
+      id: z.string(),
+      hazardType: hazardTypeSchema,
+      regencyName: z.string(),
+      provinceCode: z.string(),
+      point: z.strictObject({ lat: z.number(), lon: z.number() }).nullable(),
+      status: z.enum(["berjalan", "belum", "selesai"]),
+      startedOn: z.string(),
+      lastReportOn: z.string(),
+      families: z.number().int().nullable(),
+      displaced: z.number().int().nullable(),
+      houses: z.number().int().nullable(),
+      news: z.array(z.strictObject({ title: z.string(), outlet: z.string(), date: z.string(), url: z.string() })),
+      moreNews: z.number().int().nonnegative(),
+    }),
+  ),
+});
+
+export type Official = z.infer<typeof officialSchema>;

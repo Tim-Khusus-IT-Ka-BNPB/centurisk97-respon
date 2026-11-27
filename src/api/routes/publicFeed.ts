@@ -1,10 +1,10 @@
 import { createRoute, z } from "@hono/zod-openapi";
 import { deskReportSchema } from "../../contract/desk";
-import { feedSchema, watchSchema } from "../../contract/publicFeed";
+import { feedSchema, officialSchema, watchSchema } from "../../contract/publicFeed";
 import { FEED_PERIODS } from "../../domain/feedPeriod";
 import { SELECTABLE_HAZARD_TYPES } from "../../domain/hazards";
 import { releaseReport } from "../../services/events";
-import { feedProof, markProofPublic, publicFeed, watchView } from "../../services/publicFeed";
+import { feedProof, markProofPublic, officialView, publicFeed, watchView } from "../../services/publicFeed";
 import { refuse } from "../envelope";
 import { type Api, addRoute, jsonBody, jsonResponse, refusal } from "../route";
 import { changeAnswered, staffOf, ticketParams } from "./desk";
@@ -43,6 +43,24 @@ export function addPublicFeedRoutes(api: Api): void {
       });
       if (answer.kind === "limit") return limitRefused(c, answer.refusal, null);
       return c.json(answer.feed, 200);
+    },
+  );
+
+  addRoute(
+    api,
+    "public",
+    createRoute({
+      method: "get",
+      path: "/feed/official",
+      responses: {
+        200: jsonResponse("The events of BNPB's daily report, with their figures and a few headlines", officialSchema),
+        429: refusal("Too many opens from this address"),
+      },
+    }),
+    async (c) => {
+      const answer = await officialView(c.env, c.var.address);
+      if (answer.kind === "limit") return limitRefused(c, answer.refusal, null);
+      return c.json(answer.official, 200);
     },
   );
 

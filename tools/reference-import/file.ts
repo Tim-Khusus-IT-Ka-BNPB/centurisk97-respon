@@ -4,11 +4,12 @@ import { checkContactFile } from "../../src/domain/contacts.ts";
 import { checkEducationFile } from "../../src/domain/education.ts";
 import { checkFacilityFile } from "../../src/domain/facilities.ts";
 import { checkForecastFile } from "../../src/domain/forecast.ts";
+import { checkKabarFile } from "../../src/domain/officialEvents.ts";
 import { checkActionFile } from "../../src/domain/responseActions.ts";
 import { checkVolcanoFile } from "../../src/domain/volcano.ts";
 import { type Database, row, run, sql } from "../../src/platform/database.ts";
 
-export type ReferenceName = "bpbdContacts" | "education" | "responseActions" | "forecast" | "volcanoes" | "facilityNumbers";
+export type ReferenceName = "bpbdContacts" | "education" | "responseActions" | "forecast" | "volcanoes" | "facilityNumbers" | "officialEvents";
 
 export class ReferenceFileRefused extends Error {
   constructor(name: ReferenceName) {
@@ -28,6 +29,7 @@ const CHECKS: Readonly<Record<ReferenceName, (json: unknown) => string | null>> 
   forecast: (json) => checkForecastFile(json)?.dibuat.slice(0, 10) ?? null,
   volcanoes: (json) => checkVolcanoFile(json)?.dibuat.slice(0, 10) ?? null,
   facilityNumbers: (json) => checkFacilityFile(json)?.dibuat ?? null,
+  officialEvents: (json) => checkKabarFile(json)?.hari ?? null,
 };
 
 // Reads a small upstream file, checks it against its contract and keeps it whole as the one in

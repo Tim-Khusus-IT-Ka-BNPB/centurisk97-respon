@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router";
 import type { ErrorEnvelope } from "../../../src/contract/errors";
-import type { Feed, FeedEntry } from "../../../src/contract/publicFeed";
+import type { Feed, FeedEntry, Official } from "../../../src/contract/publicFeed";
 import { hazardKey } from "../../../src/copy/hazardKey";
 import { FEED_PERIODS, type FeedPeriod } from "../../../src/domain/feedPeriod";
 import { SELECTABLE_HAZARD_TYPES } from "../../../src/domain/hazards";
@@ -16,6 +16,7 @@ import { Icon } from "../atoms/Icon";
 import { SigapSays } from "../molecules/Sigap";
 import { eventShort, Impact, StatusDot, whenShort } from "./desk/parts";
 import { FeedMap } from "./FeedMap";
+import { OfficialEvents } from "./OfficialEvents";
 
 const chip =
   "inline-flex min-h-target-min shrink-0 items-center gap-2 rounded-control border border-line bg-surface px-3 text-ink no-underline transition-colors duration-100 motion-reduce:transition-none hover:border-control aria-[current=true]:border-primary aria-[current=true]:bg-selected aria-[current=true]:font-semibold aria-[current=true]:text-primary";
@@ -269,10 +270,13 @@ export function FeedScreen({
   load,
   hazard,
   period = "all",
+  official = null,
 }: {
   readonly load: FeedLoad;
   readonly hazard: string | null;
   readonly period?: FeedPeriod;
+  // BNPB's daily report with its news (row 26); null when it could not be read.
+  readonly official?: Official | null;
 }) {
   const t = useText();
   const all = load.kind === "feed" ? load.feed.entries : [];
@@ -324,6 +328,7 @@ export function FeedScreen({
           </section>
         </div>
       )}
+      <OfficialEvents official={official} entries={all} hazard={hazard} />
     </div>
   );
 }

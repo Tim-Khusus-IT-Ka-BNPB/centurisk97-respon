@@ -1,7 +1,7 @@
 import { beforeAll, describe, expect, test, vi } from "vitest";
 import { SEEDED_SESSIONS } from "../../../db/synthetic/reporters";
 import { deskReportSchema } from "../../contract/desk";
-import { type Feed, feedSchema, watchSchema } from "../../contract/publicFeed";
+import { type Feed, feedSchema, officialSchema, watchSchema } from "../../contract/publicFeed";
 import { windowStart } from "../../domain/limits";
 import { addressBucket } from "../../platform/address";
 import { hmacKey } from "../../platform/keys";
@@ -272,5 +272,23 @@ describe("what is on watch", () => {
   test("a file missing is cannot know, never calm", async () => {
     await query`delete from reference_file where name in ('forecast', 'volcanoes')`;
     expect((await browser(fetchApi).call("GET", "/feed/watch")).json).toEqual({ forecast: null, volcanoes: null });
+  });
+});
+
+describe("BNPB's daily report on the Alun-alun", () => {
+  test("its events, ongoing first, each with its figures and a few headlines; missing it is cannot know", async () => {
+    const phone = browser(fetchApi);
+    const official = officialSchema.parse((await phone.call("GET", "/feed/official")).json);
+    expect(official.day).toBe("2026-11-26");
+    expect(official.events.length).toBeGreaterThan(50);
+    expect(official.events[0]?.status).toBe("berjalan");
+    expect(official.events.every((one) => one.news.length <= 3)).toBe(true);
+    const key = await hmacKey(bindings.settings.keyHmacSecret, "address", addressBucket(phone.address) as string);
+    const window = new Date(windowStart("clockHour", clock.now())).toISOString();
+    await query`insert into rate_counter (limit_id, subject_key, window_start, count) values ('address.feed', ${key}, ${window}, 600)
+      on conflict do update set count = 600`;
+    expect((await phone.call("GET", "/feed/official")).status).toBe(429);
+    await query`delete from reference_file where name = 'officialEvents'`;
+    expect((await browser(fetchApi).call("GET", "/feed/official")).json).toEqual({ day: null, events: [] });
   });
 });

@@ -1,10 +1,11 @@
 import { markProof, publicProofKey, publicProofs, type ShownRow, shownReports } from "../adapters/d1/publicFeed";
 import { referenceFile } from "../adapters/d1/reports";
-import type { Feed, FeedEntry, Watch } from "../contract/publicFeed";
+import type { Feed, FeedEntry, Official, Watch } from "../contract/publicFeed";
 import { type FeedPeriod, feedSince } from "../domain/feedPeriod";
 import type { EventTimeValue, PlaceValue } from "../domain/fieldState";
 import { checkForecastFile, warningsOf } from "../domain/forecast";
 import { impactOf } from "../domain/impact";
+import { checkKabarFile, officialEvents } from "../domain/officialEvents";
 import { checkVolcanoFile, volcanoSummary } from "../domain/volcano";
 import { parsed } from "../platform/database";
 import { hmacKey } from "../platform/keys";
@@ -152,5 +153,30 @@ export async function watchView(bindings: ServiceBindings, address: string): Pro
       volcanoes:
         volcanoes === null ? null : { ...volcanoSummary(volcanoes), raised: [...volcanoSummary(volcanoes).raised] },
     },
+  };
+}
+
+export type OfficialAnswer =
+  | { readonly kind: "ok"; readonly official: Official }
+  | { readonly kind: "limit"; readonly refusal: LimitRefusal };
+
+// BNPB's daily report on the Alun-alun, as upstream gathered it with its news (row 26).
+export async function officialView(bindings: ServiceBindings, address: string): Promise<OfficialAnswer> {
+  const refusal = await checkLimits(bindings, [["address.feed", { kind: "address", bucket: address }]]);
+  if (refusal) return { kind: "limit", refusal };
+  const file = checkKabarFile(await referenceFile(bindings.db, "officialEvents"));
+  return {
+    kind: "ok",
+    official:
+      file === null
+        ? { day: null, events: [] }
+        : {
+            day: file.hari,
+            events: officialEvents(file).map((one) => ({
+              ...one,
+              hazardType: one.hazardType as Official["events"][number]["hazardType"],
+              news: [...one.news],
+            })),
+          },
   };
 }
