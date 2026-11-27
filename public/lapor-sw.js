@@ -1,7 +1,7 @@
 // The service worker of /lapor (LR-03): a page seen before opens again with no signal, from the copy
 // kept here. Pages: the network first, the kept copy when it fails. Built files, whose names carry
 // their content's hash: the kept copy first. The API is never kept. Raise VERSION when this file changes.
-const VERSION = "lapor-3";
+const VERSION = "lapor-4";
 const KEPT = `${VERSION}-pages`;
 // Kept at install: the home and the emergency page, so a report can be made with no signal.
 const FIRST = ["/lapor", "/lapor/darurat"];
@@ -16,10 +16,11 @@ const KEEPABLE = new Set([
   "/lapor/lacak",
 ]);
 
-// Kept at install with them: the emblem every page draws, so a page with no signal is drawn whole.
+// Kept at install with them: the emblem and the shield every page draws, so a page with no signal is
+// drawn whole.
 // Built files are kept as they are asked for, never all at install: fetching them all there held up
 // a phone's first map.
-const SHELL = ["/lambang-bnpb.png", "/icons/192.png"];
+const SHELL = ["/lambang-bnpb.png", "/logo-pantau.svg", "/icons/192.png"];
 
 self.addEventListener("install", (event) => {
   event.waitUntil(
