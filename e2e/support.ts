@@ -31,14 +31,20 @@ export async function noSidewaysScroll(page: Page): Promise<void> {
   const wide =
     width <= screen
       ? []
-      : await page.evaluate(
-          (limit) =>
-            [...document.querySelectorAll("body *")]
-              .filter((one) => one.getBoundingClientRect().right > limit)
-              .slice(-6)
-              .map((one) => `${one.tagName.toLowerCase()}.${one.className.toString().slice(0, 80)}`),
-          screen,
-        );
+      : await page.evaluate((limit) => {
+          // A box past the screen, or one whose own content runs past it, text that will not wrap too.
+          const past = (one: Element) => {
+            const box = one.getBoundingClientRect();
+            return box.right > limit || box.left + one.scrollWidth > limit + 1;
+          };
+          return [...document.querySelectorAll("body *")]
+            .filter(past)
+            .slice(-6)
+            .map(
+              (one) =>
+                `${one.tagName.toLowerCase()}.${one.className.toString().slice(0, 60)} ${Math.round(one.getBoundingClientRect().left + one.scrollWidth)}px "${(one.textContent ?? "").trim().slice(0, 40)}"`,
+            );
+        }, screen);
   expect(width, wide.join(" | ")).toBeLessThanOrEqual(screen);
 }
 
