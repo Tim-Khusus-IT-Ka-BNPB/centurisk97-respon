@@ -25,7 +25,17 @@ export const liveCard = (page: Page): Locator => page.locator("[data-card-kind]"
 
 export async function noSidewaysScroll(page: Page): Promise<void> {
   const width = await page.evaluate(() => document.documentElement.scrollWidth);
-  expect(width).toBeLessThanOrEqual(page.viewportSize()?.width ?? 0);
+  // What sticks out, named, so a failure says where to look.
+  const wide =
+    width <= (page.viewportSize()?.width ?? 0)
+      ? []
+      : await page.evaluate(() =>
+          [...document.querySelectorAll("body *")]
+            .filter((one) => one.getBoundingClientRect().right > innerWidth)
+            .slice(0, 6)
+            .map((one) => `${one.tagName.toLowerCase()}.${one.className.toString().slice(0, 80)}`),
+        );
+  expect(width, wide.join(" | ")).toBeLessThanOrEqual(page.viewportSize()?.width ?? 0);
 }
 
 // Fills the identity and consent form and stores it through the read-back.
