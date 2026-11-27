@@ -8,6 +8,7 @@ import {
   noSidewaysScroll,
   ownAddress,
   paced,
+  searchPlace,
   startReport,
   syntheticNumber,
 } from "./support.ts";
@@ -83,13 +84,7 @@ test("photos taken at the scene show their badges and time, and the summary coun
   if (script) cardId = await placeByGps(page);
   else {
     cardId = await liveCard(page).getAttribute("data-card-id");
-    // The number's read-back may still be landing: typed into the page before it, the words were lost
-    // and an empty search went out (WebKit with no script, on CI).
-    await page.waitForLoadState();
-    const search = page.getByLabel("Cari tempat");
-    await search.fill("cot seumiyong");
-    await expect(search).toHaveValue("cot seumiyong");
-    await page.getByRole("button", { name: "Cari tempat" }).click();
+    await searchPlace(page, "cot seumiyong");
     await paced(() => liveCard(page).locator('button[name="villageCode"]').first().click());
     cardId = await nextCard(page, cardId);
   }

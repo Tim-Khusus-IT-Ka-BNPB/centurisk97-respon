@@ -9,6 +9,7 @@ import {
   noSidewaysScroll,
   ownAddress,
   paced,
+  searchPlace,
   syntheticNumber,
 } from "./support.ts";
 
@@ -57,8 +58,7 @@ test("an emergency takes a place, what happened, victims and a send, and the des
   await startEmergency(page);
   await noSidewaysScroll(page);
   let cardId = await liveCard(page).getAttribute("data-card-id");
-  await page.getByLabel("Cari tempat").fill("cot seumiyong");
-  await page.getByRole("button", { name: "Cari tempat" }).click();
+  await searchPlace(page, "cot seumiyong");
   await paced(() => liveCard(page).locator('button[name="villageCode"]').first().click());
   cardId = await nextCard(page, cardId);
   await expect(liveCard(page).getByText("Kejadian apa yang sedang terjadi?")).toBeVisible();

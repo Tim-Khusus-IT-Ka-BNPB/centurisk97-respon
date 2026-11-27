@@ -62,6 +62,16 @@ export async function startReport(page: Page, name: string, number: string): Pro
   await expect(liveCard(page)).toHaveAttribute("data-card-kind", "placeSearch");
 }
 
+// A place searched for once the page has settled: typed while the number's read-back was still
+// landing, the words were lost and an empty search went out (WebKit with no script, on CI).
+export async function searchPlace(page: Page, words: string): Promise<void> {
+  await page.waitForLoadState();
+  const search = page.getByLabel("Cari tempat");
+  await search.fill(words);
+  await expect(search).toHaveValue(words);
+  await page.getByRole("button", { name: "Cari tempat" }).click();
+}
+
 // Turns are paced so the 20-a-minute message limit is never reached on one number.
 const PACE_MS = 3100;
 let lastTurn = 0;

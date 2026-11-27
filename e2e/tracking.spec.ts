@@ -6,6 +6,7 @@ import {
   noSidewaysScroll,
   ownAddress,
   paced,
+  searchPlace,
   startReport,
   syntheticNumber,
 } from "./support.ts";
@@ -21,8 +22,7 @@ test("a sent report thanks, asks a rating, shows its ticket, and its link opens 
   const number = syntheticNumber();
   await startReport(page, "Uji Satu", number);
   let cardId = await liveCard(page).getAttribute("data-card-id");
-  await page.getByLabel("Cari tempat").fill("sukamaju");
-  await page.getByRole("button", { name: "Cari tempat" }).click();
+  await searchPlace(page, "sukamaju");
   await paced(() => liveCard(page).locator('button[name="villageCode"]').first().click());
   cardId = await nextCard(page, cardId);
   for (let step = 0; step < 60; step++) {
