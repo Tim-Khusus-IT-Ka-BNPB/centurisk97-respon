@@ -1,7 +1,7 @@
 import { beforeAll, describe, expect, test, vi } from "vitest";
 import { SEEDED_SESSIONS } from "../../../db/synthetic/reporters";
 import { deskReportSchema } from "../../contract/desk";
-import { type Feed, feedSchema } from "../../contract/publicFeed";
+import { type Feed, feedSchema, watchSchema } from "../../contract/publicFeed";
 import { windowStart } from "../../domain/limits";
 import { addressBucket } from "../../platform/address";
 import { hmacKey } from "../../platform/keys";
@@ -248,5 +248,29 @@ describe("the public feed at the edge", () => {
     expect((await read("?hazard=flood")).entries[0]?.status).toBe("in_handling");
     kept.advance(60_000);
     expect((await read()).entries).toHaveLength(first.entries.length + 1);
+  });
+});
+
+describe("what is on watch", () => {
+  test("the outlook's regencies at Waspada or above and the volcanoes at Siaga or Awas, each from its file", async () => {
+    const phone = browser(fetchApi);
+    const watch = watchSchema.parse((await phone.call("GET", "/feed/watch")).json);
+    expect(watch.forecast?.regencies.map((one) => [one.regencyName, one.level])).toEqual([
+      ["Kab. Bogor", 3],
+      ["Kab. Aceh Utara", 2],
+    ]);
+    expect(watch.volcanoes?.counts).toEqual([42, 24, 3, 0]);
+    expect(watch.volcanoes?.raised.map((one) => one.name)).toEqual(["Anak Krakatau", "Merapi", "Semeru"]);
+    expect(watch.volcanoes?.source).toMatch(/^MAGMA Indonesia/);
+    const key = await hmacKey(bindings.settings.keyHmacSecret, "address", addressBucket(phone.address) as string);
+    const window = new Date(windowStart("clockHour", clock.now())).toISOString();
+    await query`insert into rate_counter (limit_id, subject_key, window_start, count) values ('address.feed', ${key}, ${window}, 600)
+      on conflict do update set count = 600`;
+    expect((await phone.call("GET", "/feed/watch")).status).toBe(429);
+  });
+
+  test("a file missing is cannot know, never calm", async () => {
+    await query`delete from reference_file where name in ('forecast', 'volcanoes')`;
+    expect((await browser(fetchApi).call("GET", "/feed/watch")).json).toEqual({ forecast: null, volcanoes: null });
   });
 });

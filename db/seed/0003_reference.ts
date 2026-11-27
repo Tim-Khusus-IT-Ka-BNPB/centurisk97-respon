@@ -11,4 +11,6 @@ export default async function seedReference(db: Database): Promise<void> {
   await importReferenceFile(db, "responseActions", "db/reference/response-actions.json", "seed");
   // A made-up outlook in upstream's shape for two seeded regencies: never a real forecast.
   await importReferenceFile(db, "forecast", "db/reference/forecast.json", "seed");
+  // Upstream's copy of MAGMA's public volcano status, as it was on its date.
+  await importReferenceFile(db, "volcanoes", "db/reference/volcanoes.json", "seed");
 }

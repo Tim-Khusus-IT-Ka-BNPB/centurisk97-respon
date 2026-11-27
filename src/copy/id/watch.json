@@ -1,0 +1,20 @@
+{
+  "watch.lead": "Daerah yang prakiraan 3 harinya Waspada atau lebih, dan gunung api berstatus Siaga atau Awas.",
+  "watch.unavailable": "Peringatan belum bisa dimuat. Coba lagi sebentar lagi.",
+  "watch.forecast.title": "Status prakiraan 3 hari",
+  "watch.forecast.lead": "Prakiraan {time}. Ini prakiraan, bukan peringatan resmi. Peringatan resmi cuaca tetap dari BMKG.",
+  "watch.forecast.none": "Tidak ada kabupaten atau kota yang prakiraannya Waspada atau lebih.",
+  "watch.forecast.unavailable": "Prakiraan belum bisa dibaca, jadi status daerah belum bisa ditampilkan.",
+  "watch.volcano.title": "Status gunung api",
+  "watch.volcano.source": "Sumber {source}, data {time}.",
+  "watch.volcano.level.1": "Normal",
+  "watch.volcano.level.2": "Waspada",
+  "watch.volcano.level.3": "Siaga",
+  "watch.volcano.level.4": "Awas",
+  "watch.volcano.name": "Gunung {name}",
+  "watch.volcano.radius": "Jauhi radius {km} km dari kawah.",
+  "watch.volcano.noRadius": "Ikuti imbauan petugas setempat.",
+  "watch.volcano.report": "Laporan MAGMA",
+  "watch.volcano.none": "Tidak ada gunung api berstatus Siaga atau Awas.",
+  "watch.volcano.unavailable": "Status gunung api belum bisa dibaca."
+}

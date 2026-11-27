@@ -1,6 +1,6 @@
 import { describe, expect, test } from "vitest";
 import SEED from "../../db/reference/forecast.json";
-import { cellLevel, checkForecastFile, outlookOf } from "./forecast";
+import { cellLevel, checkForecastFile, type ForecastFile, outlookOf, warningsOf } from "./forecast";
 
 describe("the outlook file", () => {
   test("the seed passes its contract; a file without rain, regencies or a date does not", () => {
@@ -118,6 +118,40 @@ describe("a regency's three days", () => {
     expect(outlookOf(last as never, "11.08")?.advice).toEqual([
       { date: "2026-11-28", text: "lusa" },
       { date: "2026-11-27", text: "besok" },
+    ]);
+  });
+});
+
+describe("the regencies on watch", () => {
+  const regency = (id: string, nama: string, BNJ: number[], LSR: number[]) => ({
+    id,
+    nama,
+    prov: id.slice(0, 2),
+    pn: "Uji",
+    HJN: [[0, 0, 0, 1, 0, null, null, 0]],
+    BNJ: BNJ.map((lv) => [lv, 0]),
+    LSR: LSR.map((lv) => [lv, 0]),
+  });
+  const file = (...kab: ReturnType<typeof regency>[]) => checkForecastFile({ ...SEED, kab }) as ForecastFile;
+
+  test("each regency at Waspada or above on any day, by its highest level and the threats at it", () => {
+    expect(warningsOf(SEED as unknown as ForecastFile).map((one) => [one.regencyCode, one.level])).toEqual([
+      ["32.01", 3],
+      ["11.08", 2],
+    ]);
+    expect(
+      warningsOf(
+        file(
+          regency("1101", "Kab. Calm", [0, 0, 0], [0, 0, 0]),
+          regency("1102", "Kab. Beta", [1, 0, 0], [0, 1, 0]),
+          regency("1103", "Kab. Alfa", [1, 0, 0], [0, 0, 0]),
+          regency("1104", "Kab. Zeta", [0, 3, 3], [0, 0, 3]),
+        ),
+      ),
+    ).toEqual([
+      { regencyCode: "11.04", regencyName: "Kab. Zeta", provinceName: "Uji", level: 3, threats: ["Banjir", "Longsor"] },
+      { regencyCode: "11.03", regencyName: "Kab. Alfa", provinceName: "Uji", level: 1, threats: ["Banjir"] },
+      { regencyCode: "11.02", regencyName: "Kab. Beta", provinceName: "Uji", level: 1, threats: ["Banjir", "Longsor"] },
     ]);
   });
 });

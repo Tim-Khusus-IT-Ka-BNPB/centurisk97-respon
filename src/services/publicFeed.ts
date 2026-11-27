@@ -1,8 +1,11 @@
 import { markProof, publicProofKey, publicProofs, type ShownRow, shownReports } from "../adapters/d1/publicFeed";
-import type { Feed, FeedEntry } from "../contract/publicFeed";
+import { referenceFile } from "../adapters/d1/reports";
+import type { Feed, FeedEntry, Watch } from "../contract/publicFeed";
 import { type FeedPeriod, feedSince } from "../domain/feedPeriod";
 import type { EventTimeValue, PlaceValue } from "../domain/fieldState";
+import { checkForecastFile, warningsOf } from "../domain/forecast";
 import { impactOf } from "../domain/impact";
+import { checkVolcanoFile, volcanoSummary } from "../domain/volcano";
 import { parsed } from "../platform/database";
 import { hmacKey } from "../platform/keys";
 import type { StaffPrincipal } from "../ports/identity";
@@ -121,4 +124,33 @@ export function markProofPublic(
   return changeTicket(bindings, staff, "addHandling", ticketNumber, async (_found, at) =>
     (await markProof(bindings.db, staff, ticketNumber, proofId, shown, at)) ? null : { kind: "notFound" },
   );
+}
+
+export type WatchAnswer =
+  | { readonly kind: "ok"; readonly watch: Watch }
+  | { readonly kind: "limit"; readonly refusal: LimitRefusal };
+
+// What is on watch, for anyone: the outlook's regencies at Waspada or above, and the volcanoes at
+// Siaga or Awas, each from its upstream file as imported.
+export async function watchView(bindings: ServiceBindings, address: string): Promise<WatchAnswer> {
+  const refusal = await checkLimits(bindings, [["address.feed", { kind: "address", bucket: address }]]);
+  if (refusal) return { kind: "limit", refusal };
+  const [forecast, volcanoes] = await Promise.all([
+    referenceFile(bindings.db, "forecast").then(checkForecastFile),
+    referenceFile(bindings.db, "volcanoes").then(checkVolcanoFile),
+  ]);
+  return {
+    kind: "ok",
+    watch: {
+      forecast:
+        forecast === null
+          ? null
+          : {
+              madeAt: forecast.dibuat,
+              regencies: warningsOf(forecast).map((one) => ({ ...one, threats: [...one.threats] })),
+            },
+      volcanoes:
+        volcanoes === null ? null : { ...volcanoSummary(volcanoes), raised: [...volcanoSummary(volcanoes).raised] },
+    },
+  };
 }

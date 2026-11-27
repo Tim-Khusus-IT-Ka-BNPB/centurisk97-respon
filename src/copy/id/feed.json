@@ -32,5 +32,8 @@
   "feed.period.latest": "Hari terakhir",
   "feed.period.3": "3 hari",
   "feed.period.7": "7 hari",
-  "feed.period.all": "Semua"
+  "feed.period.all": "Semua",
+  "feed.mode.label": "Tampilan",
+  "feed.mode.events": "Kejadian",
+  "feed.mode.watch": "Peringatan"
 }

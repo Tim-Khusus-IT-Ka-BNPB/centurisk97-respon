@@ -1,4 +1,4 @@
-import type { FeedEntry } from "../../src/contract/publicFeed";
+import type { FeedEntry, Watch } from "../../src/contract/publicFeed";
 
 // A feed entry as the public feed sends it: a closed flood in a cluster of three, two photos marked public.
 export const FEED_ENTRY: FeedEntry = {
@@ -27,4 +27,29 @@ export const FEED_ALONE: FeedEntry = {
   impact: { dead: null, missing: null, injured: null, displaced: null, houses: null },
   reporters: null,
   proofs: [],
+};
+
+// What is on watch: one regency at Siaga, and one volcano at Awas with its radius.
+export const WATCH: Watch = {
+  forecast: {
+    madeAt: "2026-11-26T06:00:00+07:00",
+    regencies: [
+      {
+        regencyCode: "11.08",
+        regencyName: "Kab. Aceh Utara",
+        provinceName: "Aceh",
+        level: 2,
+        threats: ["Banjir", "Longsor"],
+      },
+    ],
+  },
+  volcanoes: {
+    source: "MAGMA Indonesia",
+    madeAt: "2026-11-10T15:47:44+07:00",
+    counts: [42, 24, 2, 1],
+    raised: [
+      { name: "Uji", province: "Jawa Timur", level: 4, radiusKm: 7, report: "https://magma.esdm.go.id/v1/x" },
+      { name: "Dua", province: "Bali", level: 3, radiusKm: null, report: null },
+    ],
+  },
 };

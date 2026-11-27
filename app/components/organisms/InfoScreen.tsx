@@ -28,7 +28,7 @@ const LEVEL_STYLE: Record<Level, string> = {
 const dayName = new Intl.DateTimeFormat("id-ID", { weekday: "long", day: "numeric", month: "long", timeZone: "UTC" });
 const madeTime = new Intl.DateTimeFormat("id-ID", { dateStyle: "long", timeStyle: "short", timeZone: "Asia/Jakarta" });
 
-function LevelTag({ level }: { readonly level: Level }) {
+export function LevelTag({ level }: { readonly level: Level }) {
   const t = useText();
   return (
     <span

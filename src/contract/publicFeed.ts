@@ -34,3 +34,40 @@ export const feedSchema = z.strictObject({ entries: z.array(feedEntrySchema) });
 
 export type FeedEntry = z.infer<typeof feedEntrySchema>;
 export type Feed = z.infer<typeof feedSchema>;
+
+// The feed's Peringatan view (upstream DP-11): the regencies the three-day outlook puts at Waspada or
+// above, and the volcanoes at Siaga or Awas. Null where its file is missing or broken: cannot know.
+export const watchSchema = z.strictObject({
+  forecast: z
+    .strictObject({
+      madeAt: z.string(),
+      regencies: z.array(
+        z.strictObject({
+          regencyCode: z.string().regex(/^\d{2}\.\d{2}$/),
+          regencyName: z.string(),
+          provinceName: z.string(),
+          level: z.union([z.literal(1), z.literal(2), z.literal(3)]),
+          threats: z.array(z.string()),
+        }),
+      ),
+    })
+    .nullable(),
+  volcanoes: z
+    .strictObject({
+      source: z.string(),
+      madeAt: z.string(),
+      counts: z.tuple([z.number().int(), z.number().int(), z.number().int(), z.number().int()]),
+      raised: z.array(
+        z.strictObject({
+          name: z.string(),
+          province: z.string(),
+          level: z.union([z.literal(3), z.literal(4)]),
+          radiusKm: z.number().nullable(),
+          report: z.string().nullable(),
+        }),
+      ),
+    })
+    .nullable(),
+});
+
+export type Watch = z.infer<typeof watchSchema>;

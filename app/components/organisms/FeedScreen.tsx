@@ -216,6 +216,51 @@ function Unavailable({ envelope }: { readonly envelope: ErrorEnvelope | null }) 
   );
 }
 
+const MODES = [
+  { id: "events", to: "/lapor/feed", icon: "map" },
+  { id: "watch", to: "/lapor/feed?mode=peringatan", icon: "bell" },
+] as const;
+
+// The Alun-alun's title, Sigap, and its two views (upstream DP-11): what is happening, and what is
+// on watch.
+export function FeedHeader({ mode }: { readonly mode: "events" | "watch" }) {
+  const t = useText();
+  return (
+    <header className="flex flex-col gap-4">
+      <div className="grid items-end gap-4 md:grid-cols-[minmax(0,1fr)_22rem]">
+        <div className="flex flex-col gap-2">
+          <h1 className="text-page font-bold tracking-[-0.01em]">{t("feed.title")}</h1>
+          <p className="max-w-[65ch] text-body text-muted">{t(mode === "events" ? "feed.lead" : "watch.lead")}</p>
+        </div>
+        <SigapSays
+          key={mode}
+          scene={mode === "events" ? "info" : "warning"}
+          title={t(mode === "events" ? "sigap.feed.title" : "sigap.watch.title")}
+          text={t(mode === "events" ? "sigap.feed.text" : "sigap.watch.text")}
+        />
+      </div>
+      <nav aria-label={t("feed.mode.label")} className="flex gap-2">
+        {MODES.map(({ id, to, icon }) => (
+          <Link
+            key={id}
+            to={to}
+            aria-current={id === mode ? "page" : undefined}
+            className={cn(
+              "inline-flex min-h-target-min items-center gap-2 rounded-full border px-4 font-semibold no-underline",
+              id === mode
+                ? "border-primary bg-primary text-on-primary"
+                : "border-line bg-surface text-ink hover:border-primary",
+            )}
+          >
+            <Icon name={icon} className="size-4" />
+            {t(`feed.mode.${id}`)}
+          </Link>
+        ))}
+      </nav>
+    </header>
+  );
+}
+
 export type FeedLoad =
   | { readonly kind: "feed"; readonly feed: Feed }
   | { readonly kind: "unavailable"; readonly envelope: ErrorEnvelope | null };
@@ -240,13 +285,7 @@ export function FeedScreen({
   const follow = follows === null ? null : { follows, onToggle: setFollows };
   return (
     <div className="flex flex-col gap-6">
-      <header className="grid items-end gap-4 md:grid-cols-[minmax(0,1fr)_22rem]">
-        <div className="flex flex-col gap-2">
-          <h1 className="text-page font-bold tracking-[-0.01em]">{t("feed.title")}</h1>
-          <p className="max-w-[65ch] text-body text-muted">{t("feed.lead")}</p>
-        </div>
-        <SigapSays scene="info" title={t("sigap.feed.title")} text={t("sigap.feed.text")} />
-      </header>
+      <FeedHeader mode="events" />
       <Filters hazard={hazard} period={period} />
       {mine.length > 0 ? (
         <button

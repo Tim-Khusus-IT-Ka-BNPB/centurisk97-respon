@@ -5,7 +5,13 @@ import { importReferenceFile, ReferenceFileRefused, type ReferenceName } from ".
 // public/data/bpbd_kontak.json, public/lapor/edukasi.json or public/bencana.json into the local D1
 // database of APP_ENV.
 const [name, path] = process.argv.slice(2);
-const NAMES: readonly (string | undefined)[] = ["bpbdContacts", "education", "responseActions", "forecast"];
+const NAMES: readonly (string | undefined)[] = [
+  "bpbdContacts",
+  "education",
+  "responseActions",
+  "forecast",
+  "volcanoes",
+];
 if (!NAMES.includes(name) || !path) {
   console.error(
     "Usage: pnpm reference:import-file <bpbdContacts|education|responseActions|forecast> <path to the file>",

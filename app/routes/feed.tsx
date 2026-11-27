@@ -1,8 +1,9 @@
 import type { ErrorEnvelope } from "../../src/contract/errors";
-import type { Feed } from "../../src/contract/publicFeed";
+import type { Feed, Watch } from "../../src/contract/publicFeed";
 import { FEED_PERIODS } from "../../src/domain/feedPeriod";
 import { SELECTABLE_HAZARD_TYPES } from "../../src/domain/hazards";
 import { type FeedLoad, FeedScreen, feedQuery } from "../components/organisms/FeedScreen";
+import { type WatchLoad, WatchScreen } from "../components/organisms/WatchScreen";
 import { Page } from "../components/templates/Page";
 import { pageMeta } from "../lib/meta";
 import { languageOf, PAGE_TEXTS, pickTexts } from "../lib/texts.server";
@@ -16,6 +17,15 @@ export const meta = (args: Route.MetaArgs) =>
 // Read on the server, so the list shows with no script; an unknown filter shows every hazard.
 export async function loader({ request, context }: Route.LoaderArgs) {
   const search = new URL(request.url).searchParams;
+  const texts = pickTexts(PAGE_TEXTS.feed, null, languageOf(request));
+  // The Peringatan view (DP-11): what is on watch rather than what happened.
+  if (search.get("mode") === "peringatan") {
+    const response = await context.api("GET", "/feed/watch");
+    const watch: WatchLoad = response.ok
+      ? { kind: "watch", watch: (await response.json()) as Watch }
+      : { kind: "unavailable", envelope: (await response.json().catch(() => null)) as ErrorEnvelope | null };
+    return { mode: "watch" as const, watch, texts };
+  }
   const asked = search.get("hazard");
   const hazard = SELECTABLE_HAZARD_TYPES.find((id) => id === asked) ?? null;
   const period = FEED_PERIODS.find((id) => id === search.get("period")) ?? "all";
@@ -23,13 +33,17 @@ export async function loader({ request, context }: Route.LoaderArgs) {
   const load: FeedLoad = response.ok
     ? { kind: "feed", feed: (await response.json()) as Feed }
     : { kind: "unavailable", envelope: (await response.json().catch(() => null)) as ErrorEnvelope | null };
-  return { load, hazard, period, texts: pickTexts(PAGE_TEXTS.feed, null, languageOf(request)) };
+  return { mode: "events" as const, load, hazard, period, texts };
 }
 
-export default function FeedRoute({ loaderData: { load, hazard, period, texts } }: Route.ComponentProps) {
+export default function FeedRoute({ loaderData }: Route.ComponentProps) {
   return (
-    <Page texts={texts} wide>
-      <FeedScreen load={load} hazard={hazard} period={period} />
+    <Page texts={loaderData.texts} wide>
+      {loaderData.mode === "watch" ? (
+        <WatchScreen load={loaderData.watch} />
+      ) : (
+        <FeedScreen load={loaderData.load} hazard={loaderData.hazard} period={loaderData.period} />
+      )}
     </Page>
   );
 }

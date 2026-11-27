@@ -129,3 +129,35 @@ export function outlookOf(file: ForecastFile, regencyCode: string): Outlook | nu
       .map((one) => ({ date: rain.hari[one.tenggang - 1] as string, text: one.maka })),
   };
 }
+
+export type RegencyWarning = {
+  readonly regencyCode: string;
+  readonly regencyName: string;
+  readonly provinceName: string;
+  // The highest level of its threats over the days, and the threats at that level.
+  readonly level: Exclude<Level, 0>;
+  readonly threats: readonly string[];
+};
+
+// Upstream's Peringatan view (DP-11): every regency whose threats reach Waspada or above on any of
+// the days, highest first, then by name.
+export function warningsOf(file: ForecastFile): readonly RegencyWarning[] {
+  return file.kab
+    .flatMap((regency) => {
+      const code = `${regency.id.slice(0, 2)}.${regency.id.slice(2)}`;
+      const threats = (outlookOf(file, code) as Outlook).days.flatMap((day) => day.threats);
+      const level = Math.max(0, ...threats.map((one) => one.level));
+      if (level === 0) return [];
+      const top = [...new Set(threats.filter((one) => one.level === level).map((one) => one.label))];
+      return [
+        {
+          regencyCode: code,
+          regencyName: regency.nama,
+          provinceName: regency.pn,
+          level: level as Exclude<Level, 0>,
+          threats: top,
+        },
+      ];
+    })
+    .sort((a, b) => b.level - a.level || a.regencyName.localeCompare(b.regencyName, "id"));
+}

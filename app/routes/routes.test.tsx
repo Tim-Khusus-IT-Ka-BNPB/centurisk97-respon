@@ -8,7 +8,7 @@ import { LOST } from "../lib/network";
 import { PAGE_TEXTS, pickTexts } from "../lib/texts.server";
 import * as root from "../root";
 import { SUMMARY } from "../testing/desk";
-import { FEED_ENTRY } from "../testing/feed";
+import { FEED_ENTRY, WATCH } from "../testing/feed";
 import { OUTLOOK } from "../testing/outlook";
 import { OWN_REPORT } from "../testing/ownReport";
 import { never, renderPage } from "../testing/render";
@@ -381,6 +381,20 @@ describe("route modules", () => {
       context: { api: answering(() => new Response("down", { status: 503 })) },
     } as Args);
     expect(broken.load).toEqual({ kind: "unavailable", envelope: null });
+    // The Peringatan view reads what is on watch instead.
+    const watch = await feed.loader({
+      request: new Request("http://localhost/lapor/feed?mode=peringatan"),
+      context: { api: answering(json(WATCH)) },
+    } as Args);
+    expect(watch).toMatchObject({ mode: "watch", watch: { kind: "watch", watch: WATCH } });
+    const watchDown = await feed.loader({
+      request: new Request("http://localhost/lapor/feed?mode=peringatan"),
+      context: { api: answering(() => new Response("down", { status: 503 })) },
+    } as Args);
+    expect(watchDown).toMatchObject({ watch: { kind: "unavailable", envelope: null } });
+    const watchView = renderPage(routeElement(FeedRoute, { loaderData: watch }), { path: "/lapor/feed" });
+    expect(await screen.findByRole("heading", { name: "Status gunung api" })).toBeTruthy();
+    watchView.unmount();
     expect(feed.meta({ data: read, matches: [] } as Args)).toContainEqual({ title: "Alun-alun, Pantau Bencana BNPB" });
     renderPage(routeElement(FeedRoute, { loaderData: read }), { path: "/lapor/feed" });
     expect(await screen.findByRole("heading", { level: 1, name: "Alun-alun" })).toBeTruthy();
