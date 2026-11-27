@@ -8,6 +8,18 @@ exports[`limits table > rows as agreed 1`] = `
     "subject": "address",
     "window": "clockHour",
   },
+  "address.commentReports": {
+    "effect": "refuse",
+    "max": 30,
+    "subject": "address",
+    "window": "clockHour",
+  },
+  "address.comments": {
+    "effect": "refuse",
+    "max": 30,
+    "subject": "address",
+    "window": "clockHour",
+  },
   "address.draftReads": {
     "effect": "refuse",
     "max": 2000,
@@ -54,6 +66,18 @@ exports[`limits table > rows as agreed 1`] = `
     "effect": "refuse",
     "max": 30,
     "subject": "address",
+    "window": "clockHour",
+  },
+  "comment.hour": {
+    "effect": "refuse",
+    "max": 10,
+    "subject": "numberSlot",
+    "window": "clockHour",
+  },
+  "comment.reports": {
+    "effect": "refuse",
+    "max": 20,
+    "subject": "numberSlot",
     "window": "clockHour",
   },
   "desk.alarm": {

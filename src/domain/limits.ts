@@ -30,6 +30,11 @@ export const LIMITS = {
   "address.tracking": { subject: "address", window: "clockHour", max: 300, effect: "refuse" },
   "address.feed": { subject: "address", window: "clockHour", max: 600, effect: "refuse" },
   "address.warnings": { subject: "address", window: "clockHour", max: 30, effect: "refuse" },
+  // Comments on the Alun-alun's cards (D137): writing and reporting, per network and per number.
+  "address.comments": { subject: "address", window: "clockHour", max: 30, effect: "refuse" },
+  "comment.hour": { subject: "numberSlot", window: "clockHour", max: 10, effect: "refuse" },
+  "address.commentReports": { subject: "address", window: "clockHour", max: 30, effect: "refuse" },
+  "comment.reports": { subject: "numberSlot", window: "clockHour", max: 20, effect: "refuse" },
   "rating.hour": { subject: "numberSlot", window: "clockHour", max: 30, effect: "refuse" },
   "document.hour": { subject: "numberSlot", window: "clockHour", max: 120, effect: "refuse" },
   "news.hour": { subject: "numberSlot", window: "clockHour", max: 120, effect: "refuse" },

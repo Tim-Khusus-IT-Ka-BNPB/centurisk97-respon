@@ -51,6 +51,7 @@ import type { StaffPrincipal } from "../ports/identity";
 import type { ServiceBindings } from "./bindings";
 import { deskDelivery } from "./chatNews";
 import { clusterMap } from "./clusters";
+import { commentsFor } from "./comments";
 import { at, draftZone } from "./draftView";
 import { emergencyList } from "./emergency";
 import { checkLimits, type LimitRefusal } from "./limits";
@@ -331,6 +332,7 @@ async function reportBody(bindings: ServiceBindings, staff: StaffPrincipal, tick
     },
     officers: await officersOf(bindings, staff, found.villageCode, place),
     today: await todayFor(bindings, ticketNumber),
+    comments: await commentsFor(bindings, ticketNumber),
     point: point === undefined ? null : pointView(point),
     groups: summaryGroups(states).map((group) => ({
       ...group,

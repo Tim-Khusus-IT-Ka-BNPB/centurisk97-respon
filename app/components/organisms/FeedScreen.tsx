@@ -88,7 +88,7 @@ function FollowButton({
       aria-pressed={on}
       title={t("feed.follow.hint")}
       onClick={() => onToggle(toggleFollow(entry.id, entry.status))}
-      className={buttonStyles({ variant: "secondary", size: "min", className: "self-start px-3" })}
+      className={buttonStyles({ variant: "secondary", size: "min", className: "px-3" })}
     >
       <Icon name={on ? "check" : "plus"} className="size-4" />
       {on ? t("feed.follow.on") : t("feed.follow.off")}
@@ -96,12 +96,15 @@ function FollowButton({
   );
 }
 
-function FeedCard({
+// One event's card; on the list it leads to its own page with the residents' news (row 30).
+export function FeedCard({
   entry,
   follow,
+  commentsLink = true,
 }: {
   readonly entry: FeedEntry;
   readonly follow: { readonly follows: Followed; readonly onToggle: (next: Followed) => void } | null;
+  readonly commentsLink?: boolean;
 }) {
   const t = useText();
   const changed =
@@ -174,7 +177,18 @@ function FeedCard({
             </div>
           </figure>
         ) : null}
-        {follow === null ? null : <FollowButton entry={entry} follows={follow.follows} onToggle={follow.onToggle} />}
+        <div className="flex flex-wrap items-center gap-3">
+          {follow === null ? null : <FollowButton entry={entry} follows={follow.follows} onToggle={follow.onToggle} />}
+          {commentsLink ? (
+            <Link
+              to={`/lapor/feed/${entry.id}`}
+              className={buttonStyles({ variant: "secondary", size: "min", className: "px-3 no-underline" })}
+            >
+              <Icon name="messageSquare" className="size-4" />
+              {t("feed.comments.link")}
+            </Link>
+          ) : null}
+        </div>
       </article>
     </li>
   );
@@ -314,7 +328,7 @@ export function FeedScreen({
           type="button"
           aria-pressed={onlyFollowed}
           onClick={() => setOnlyFollowed(!onlyFollowed)}
-          className={buttonStyles({ variant: "secondary", size: "min", className: "self-start px-3" })}
+          className={buttonStyles({ variant: "secondary", size: "min", className: "px-3" })}
         >
           <Icon name="check" className="size-4" />
           {t("feed.follow.only", { count: mine.length })}

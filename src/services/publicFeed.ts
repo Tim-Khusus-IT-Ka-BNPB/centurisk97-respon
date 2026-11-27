@@ -2,6 +2,7 @@ import { provinceNames } from "../adapters/d1/places";
 import { markProof, publicProofKey, publicProofs, type ShownRow, shownReports } from "../adapters/d1/publicFeed";
 import { referenceFile } from "../adapters/d1/reports";
 import type { Feed, FeedEntry, Official, Watch } from "../contract/publicFeed";
+import type { Cluster } from "../domain/clusters";
 import { type FeedPeriod, feedSince } from "../domain/feedPeriod";
 import type { EventTimeValue, PlaceValue } from "../domain/fieldState";
 import { checkForecastFile, warningsOf } from "../domain/forecast";
@@ -65,6 +66,42 @@ export function entryOf(row: ShownRow, id: string, reporters: number | null, pro
   };
 }
 
+// One card per cluster, told by its newest handled report; the rows come newest first.
+function standingOf(shown: readonly ShownRow[], clusterOf: ReadonlyMap<string, Cluster>): Map<string, ShownRow> {
+  const standing = new Map<string, ShownRow>();
+  for (const row of shown) {
+    const key = clusterOf.get(row.ticket_number)?.tickets[0] ?? row.ticket_number;
+    if (!standing.has(key)) standing.set(key, row);
+  }
+  return standing;
+}
+
+// A card's id: made from its cluster's first ticket, so it names no ticket.
+const cardIdOf = async (bindings: ServiceBindings, key: string) =>
+  (await hmacKey(bindings.settings.keyHmacSecret, "feed", key)).slice(0, 16);
+
+export type ShownCard = {
+  readonly cardId: string;
+  readonly tickets: readonly string[];
+  // The report whose values the card shows.
+  readonly ticketNumber: string;
+};
+
+// Every card the Alun-alun shows now, of every kind and time.
+export async function shownCards(bindings: ServiceBindings): Promise<ShownCard[]> {
+  const [shown, clusterOf] = await Promise.all([
+    shownReports(bindings.db, { hazardType: null, provinceCode: null }),
+    clusterMap(bindings),
+  ]);
+  return Promise.all(
+    [...standingOf(shown, clusterOf).entries()].slice(0, ENTRIES).map(async ([key, row]) => ({
+      cardId: await cardIdOf(bindings, key),
+      tickets: clusterOf.get(row.ticket_number)?.tickets ?? [row.ticket_number],
+      ticketNumber: row.ticket_number,
+    })),
+  );
+}
+
 export type FeedAnswer =
   | { readonly kind: "ok"; readonly feed: Feed }
   | { readonly kind: "limit"; readonly refusal: LimitRefusal };
@@ -82,16 +119,15 @@ export async function publicFeed(bindings: ServiceBindings, address: string, fil
     publicProofs(bindings.db),
   ]);
   const since = feedSince(filter.period, bindings.clock.now(), shown[0] ? Date.parse(shown[0].sent_at) : null);
-  const standing = new Map<string, ShownRow>();
-  for (const row of shown.filter((one) => since === null || Date.parse(one.sent_at) >= since)) {
-    const key = clusterOf.get(row.ticket_number)?.tickets[0] ?? row.ticket_number;
-    if (!standing.has(key)) standing.set(key, row);
-  }
+  const standing = standingOf(
+    shown.filter((one) => since === null || Date.parse(one.sent_at) >= since),
+    clusterOf,
+  );
   const entries = await Promise.all(
     [...standing.entries()].slice(0, ENTRIES).map(async ([key, row]) => {
       const cluster = clusterOf.get(row.ticket_number);
       const members = new Set(cluster?.tickets ?? [row.ticket_number]);
-      const id = (await hmacKey(bindings.settings.keyHmacSecret, "feed", key)).slice(0, 16);
+      const id = await cardIdOf(bindings, key);
       const own = proofs.filter((proof) => members.has(proof.ticket_number)).map((proof) => proof.id);
       return entryOf(row, id, cluster?.reporters ?? null, own);
     }),

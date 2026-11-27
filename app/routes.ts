@@ -8,6 +8,7 @@ export default [
   route("lapor/darurat", "routes/emergency.tsx"),
   route("lapor/lacak", "routes/tracking.tsx"),
   route("lapor/feed", "routes/feed.tsx"),
+  route("lapor/feed/:cardId", "routes/feedCard.tsx"),
   route("lapor/hari-ini", "routes/today.tsx"),
   route("lapor/info", "routes/info.tsx"),
   route("lapor/orang-hilang", "routes/missing.tsx"),

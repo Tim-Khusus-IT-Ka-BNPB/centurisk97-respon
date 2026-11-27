@@ -199,7 +199,7 @@ export async function queuePage(
   return { rows: found.map(queueRow), total: (counted as { total: number }).total };
 }
 
-type HistoryEvent = "fieldCheck" | "actions" | "take" | "followUp" | "released";
+type HistoryEvent = "fieldCheck" | "actions" | "take" | "followUp" | "released" | "commentFigure";
 
 // What a check found and put right, what was done, or what the reporter added.
 type HistoryDetail = {

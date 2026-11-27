@@ -16,5 +16,6 @@
   "page.missing.title": "Lapor orang hilang, {appName}",
   "page.language.title": "Pilih bahasa, {appName}",
   "page.numbers.title": "Nomor penting, {appName}",
-  "page.today.title": "Kejadian hari ini, {appName}"
+  "page.today.title": "Kejadian hari ini, {appName}",
+  "page.feedCard.title": "Kabar warga, {appName}"
 }

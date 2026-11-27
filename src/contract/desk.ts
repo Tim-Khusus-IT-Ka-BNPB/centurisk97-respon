@@ -4,6 +4,7 @@ import { VICTIM_ANSWERS } from "../domain/emergency";
 import { CHECK_RESULTS } from "../domain/fieldCheck";
 import { GPS_DOUBTS } from "../domain/gpsDoubts";
 import { photoBadgeSchema, summaryGroupSchema } from "./card";
+import { deskCommentsSchema } from "./comments";
 import { hazardTypeSchema, reporterRoleSchema, timeSchema } from "./common";
 import { reportVersionSchema } from "./ownReport";
 import { contactSchema, eventTimeSchema, ticketStatusSchema } from "./tracking";
@@ -209,6 +210,8 @@ export const deskReportSchema = queueItemSchema.extend({
       shown: z.boolean(),
     })
     .nullable(),
+  // The comments on the Alun-alun card this report shows on; null when there are none.
+  comments: deskCommentsSchema.nullable(),
   // Where it is on the map; null where its village has no outline to place it in.
   point: mapPointSchema.nullable(),
   groups: z.array(deskGroupSchema),
@@ -222,7 +225,7 @@ export const deskReportSchema = queueItemSchema.extend({
       // The regency whose desk it went to.
       forwardedTo: z.string().nullable(),
       // Work told in the history: what a check found and put right, or what was done.
-      event: z.enum(["fieldCheck", "actions", "take", "followUp", "released"]).nullable(),
+      event: z.enum(["fieldCheck", "actions", "take", "followUp", "released", "commentFigure"]).nullable(),
       detail: z
         .object({
           result: z.enum(CHECK_RESULTS).optional(),

@@ -23,6 +23,7 @@ import DeskResponseRoute, * as deskResponse from "./deskResponse";
 import DraftRoute, * as draft from "./draft";
 import EmergencyRoute, * as emergency from "./emergency";
 import FeedRoute, * as feed from "./feed";
+import FeedCardRoute, * as feedCard from "./feedCard";
 import HelpRoute, * as help from "./help";
 import HomeRoute, * as home from "./home";
 import * as rootIndex from "./index";
@@ -399,6 +400,111 @@ describe("route modules", () => {
     expect(feed.meta({ data: read, matches: [] } as Args)).toContainEqual({ title: "Alun-alun, Pantau Bencana BNPB" });
     renderPage(routeElement(FeedRoute, { loaderData: read }), { path: "/lapor/feed" });
     expect(await screen.findByRole("heading", { level: 1, name: "Alun-alun" })).toBeTruthy();
+  });
+
+  test("a card's page reads the card, its news and whether this phone may write; posts are answered on it", async () => {
+    expect(feedCard.headers()).toEqual({ "cache-control": "private, no-store" });
+    const card = FEED_ENTRY.id;
+    const comments = { comments: [{ id: "0123456789abcdef", text: "Air surut", at: FEED_ENTRY.sentAt }] };
+    const reading = (me: () => Response, list = json(comments)) =>
+      api({ "GET /feed": json({ entries: [FEED_ENTRY] }), [`GET /feed/cards/${card}/comments`]: list, "GET /me": me });
+    const args = (url: string, answers: ApiCall) =>
+      ({ request: new Request(url), params: { cardId: card }, context: { api: answers } }) as Args;
+    const read = await feedCard.loader(
+      args(`http://localhost/lapor/feed/${card}?terkirim=1`, reading(json(SAMPLE_ME))),
+    );
+    expect(read).toMatchObject({
+      kind: "card",
+      entry: FEED_ENTRY,
+      comments: comments.comments,
+      known: true,
+      done: "sent",
+    });
+    expect(
+      await feedCard.loader(
+        args(`http://localhost/lapor/feed/${card}?dilaporkan=1`, reading(json(SAMPLE_FIELD_ERROR, 401))),
+      ),
+    ).toMatchObject({ known: false, done: "reported" });
+    expect(await feedCard.loader(args(`http://localhost/lapor/feed/${card}`, reading(json(SAMPLE_ME))))).toMatchObject({
+      done: null,
+    });
+    const gone = (await feedCard.loader(
+      args(`http://localhost/lapor/feed/${card}`, reading(json(SAMPLE_ME), json(SAMPLE_FIELD_ERROR, 429))),
+    )) as unknown as { data: { kind: string }; init: ResponseInit };
+    expect([gone.data.kind, gone.init.status]).toEqual(["gone", 404]);
+    const elsewhere = (await feedCard.loader(
+      args(
+        `http://localhost/lapor/feed/${card}`,
+        api({
+          "GET /feed": json({ entries: [{ ...FEED_ENTRY, id: "ffffffffffffffff" }] }),
+          [`GET /feed/cards/${card}/comments`]: json(comments),
+          "GET /me": json(SAMPLE_ME),
+        }),
+      ),
+    )) as unknown as { data: { kind: string } };
+    expect(elsewhere.data.kind).toBe("gone");
+    const downFeed = (await feedCard.loader(
+      args(
+        `http://localhost/lapor/feed/${card}`,
+        api({
+          "GET /feed": () => new Response("down", { status: 503 }),
+          [`GET /feed/cards/${card}/comments`]: json(comments),
+          "GET /me": json(SAMPLE_ME),
+        }),
+      ),
+    )) as unknown as { data: { kind: string } };
+    expect(downFeed.data.kind).toBe("gone");
+    expect(feedCard.meta({ data: read, matches: [], params: { cardId: card } } as Args)).toContainEqual({
+      title: "Kabar warga, Pantau Bencana BNPB",
+    });
+
+    const acting = (answers: Record<string, () => Response>, entries: [string, string][]) =>
+      feedCard.action({
+        request: post(`http://localhost/lapor/feed/${card}`, entries),
+        params: { cardId: card },
+        context: { api: api(answers) },
+      } as Args);
+    const sent = (await acting({ [`POST /feed/cards/${card}/comments`]: json({}, 201) }, [
+      ["intent", "comment"],
+      ["text", "Air surut"],
+    ])) as Response;
+    expect(sent.headers.get("location")).toBe(`/lapor/feed/${card}?terkirim=1#kabar`);
+    const reported = (await acting({ "POST /feed/comments/0123456789abcdef/report": json({ counted: true }) }, [
+      ["intent", "report"],
+      ["commentId", "0123456789abcdef"],
+    ])) as Response;
+    expect(reported.headers.get("location")).toBe(`/lapor/feed/${card}?dilaporkan=1#kabar`);
+    const refused = (await acting({ [`POST /feed/cards/${card}/comments`]: json(SAMPLE_FIELD_ERROR, 422) }, [
+      ["intent", "comment"],
+      ["text", "x"],
+    ])) as unknown as { data: { typed: string }; init: ResponseInit };
+    expect([refused.data.typed, refused.init.status]).toEqual(["x", 422]);
+    const own = (await acting({ "POST /feed/comments/0123456789abcdef/report": json(SAMPLE_FIELD_ERROR, 400) }, [
+      ["intent", "report"],
+      ["commentId", "0123456789abcdef"],
+    ])) as unknown as { data: { typed: string } };
+    expect(own.data.typed).toBe("");
+    const noId = (await acting({ "POST /feed/comments//report": json(SAMPLE_FIELD_ERROR, 404) }, [
+      ["intent", "report"],
+    ])) as unknown as { init: ResponseInit };
+    expect(noId.init.status).toBe(404);
+
+    const view = renderPage(routeElement(FeedCardRoute, { loaderData: read }), { path: `/lapor/feed/${card}` });
+    expect(await screen.findByRole("heading", { level: 2, name: "Kabar warga" })).toBeTruthy();
+    expect(screen.getByRole("status").textContent).toBe("Kabar Anda sudah tampil di bawah.");
+    view.unmount();
+    const answered = renderPage(routeElement(FeedCardRoute, { loaderData: read, actionData: refused.data }), {
+      path: `/lapor/feed/${card}`,
+    });
+    expect(((await screen.findByRole("textbox")) as HTMLTextAreaElement).value).toBe("x");
+    expect(screen.queryByRole("status")).toBeNull();
+    answered.unmount();
+    const fresh = renderPage(routeElement(FeedCardRoute, { loaderData: read }), { path: `/lapor/feed/${card}` });
+    expect(await screen.findByRole("heading", { level: 2, name: "Kabar warga" })).toBeTruthy();
+    expect(screen.queryByRole("link", { name: "Kabar warga" })).toBeNull();
+    fresh.unmount();
+    renderPage(routeElement(FeedCardRoute, { loaderData: gone.data }), { path: `/lapor/feed/${card}` });
+    expect(await screen.findByRole("heading", { name: "Kejadian ini sudah tidak tampil di Alun-alun" })).toBeTruthy();
   });
 
   test("the today page is read on the server, a kind picked from it; shut it answers 404", async () => {
@@ -1049,6 +1155,7 @@ describe("desk routes", () => {
       event: null,
       officers: null,
       today: null,
+      comments: null,
       nextStatuses: [],
       revision: 0,
       mayTake: false,

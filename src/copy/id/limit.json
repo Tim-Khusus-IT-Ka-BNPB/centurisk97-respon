@@ -22,5 +22,9 @@
   "limit.oneTap.number": "Nomor ini sudah mengirim {limit} darurat sekali ketuk dalam 24 jam. Bisa lagi mulai {retryTime}. Bila nyawa terancam, telepon 112 sekarang.",
   "limit.address.oneTap": "Dari jaringan ini sudah {limit} darurat sekali ketuk dalam satu jam. Bisa lagi mulai {retryTime}. Bila nyawa terancam, telepon 112 sekarang.",
   "limit.desk.alarm": "Pembaruan alarm darurat terlalu sering untuk akun ini. Alarm diperbarui lagi mulai {retryTime}.",
-  "limit.address.warnings": "Peringatan sudah diatur {limit} kali dalam satu jam dari jaringan ini. Coba lagi mulai {retryTime}."
+  "limit.address.warnings": "Peringatan sudah diatur {limit} kali dalam satu jam dari jaringan ini. Coba lagi mulai {retryTime}.",
+  "limit.address.comments": "Sudah {limit} komentar dalam satu jam dari jaringan ini. Kirim lagi mulai {retryTime}.",
+  "limit.comment.hour": "Anda sudah mengirim {limit} komentar dalam satu jam. Kirim lagi mulai {retryTime}.",
+  "limit.address.commentReports": "Sudah {limit} laporan komentar dalam satu jam dari jaringan ini. Coba lagi mulai {retryTime}.",
+  "limit.comment.reports": "Anda sudah melaporkan {limit} komentar dalam satu jam. Coba lagi mulai {retryTime}."
 }

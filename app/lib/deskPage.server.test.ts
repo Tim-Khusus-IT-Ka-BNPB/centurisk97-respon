@@ -208,6 +208,27 @@ describe("a change to a ticket", () => {
     ]);
   });
 
+  test("a comment hidden or shown and a figure taken or turned down are posted and named on the page after", async () => {
+    const { api, calls } = fakeApi(() => Response.json({}));
+    const ticket = "LA-241126-01";
+    const posted = [
+      [form({ action: "commentShown", commentId: "c1", shown: "0", reason: "hoaks" }), "commentHidden"],
+      [form({ action: "commentShown", commentId: "c1", shown: "1", reason: "" }), "commentShown"],
+      [form({ action: "figure", figureId: "7", accept: "1", field: "housesHeavy", reason: "" }), "figureAccepted"],
+      [form({ action: "figure", figureId: "8", accept: "0", reason: "keliru" }), "figureRejected"],
+    ] as const;
+    for (const [body, saved] of posted)
+      expect(await actOnDeskReport(ticket, body, api)).toMatchObject({
+        location: `/lapor/meja/${ticket}?saved=${saved}`,
+      });
+    expect(calls.map((call) => [call.path, call.body])).toEqual([
+      [`/desk/reports/${ticket}/comments/c1`, { shown: false, reason: "hoaks" }],
+      [`/desk/reports/${ticket}/comments/c1`, { shown: true, reason: "" }],
+      [`/desk/reports/${ticket}/comment-figures/7`, { accept: true, reason: "", field: "housesHeavy" }],
+      [`/desk/reports/${ticket}/comment-figures/8`, { accept: false, reason: "keliru" }],
+    ]);
+  });
+
   test("a report taken out of its event is posted to its route and named on the page after", async () => {
     const { api, calls } = fakeApi(() => Response.json({}));
     const done = await actOnDeskReport("LA-241126-01", form({ action: "release" }), api);

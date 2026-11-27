@@ -189,6 +189,33 @@ export const COLUMN_CLASSES: Readonly<Record<string, TableClasses>> = {
     retention: "with the report; append-only",
     columns: { id: I, ticket_number: I, pulled: I, staff_id: I, staff_label: I, at: I },
   },
+  feed_comment: {
+    retention: "kept with the Alun-alun; the author is a key, never a number",
+    columns: { id: I, card_id: I, author_key: I, text: PUB, status: I, reports: I, created_at: I },
+  },
+  feed_comment_report: {
+    retention: "with its comment",
+    columns: { comment_id: I, reporter_key: I, at: I },
+  },
+  feed_comment_figure: {
+    retention: "with its comment",
+    columns: { id: I, comment_id: I, figure: I, value: I, quote: PUB, status: I },
+  },
+  feed_comment_decision: {
+    retention: "with its comment; append-only",
+    columns: {
+      id: I,
+      comment_id: I,
+      figure_id: I,
+      action: I,
+      ticket_number: I,
+      field_id: I,
+      reason: I,
+      staff_id: I,
+      staff_label: I,
+      at: I,
+    },
+  },
   handling_action: {
     retention: "with the report; append-only",
     columns: { id: I, ticket_number: I, code: I, label: I, staff_id: I, staff_label: I, at: I },

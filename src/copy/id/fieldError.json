@@ -64,5 +64,11 @@
   "fieldError.missing.time": "Tulis jam seperti 14:30, atau kosongkan.",
   "fieldError.missing.number": "Nomor belum sah. Contoh 0812 3456 7890.",
   "fieldError.missing.waitPlace": "Tulis tempat Anda menunggu, misalnya nama posko atau alamat dengan nama jalan.",
-  "fieldError.missing.photo": "Foto tidak terbaca. Kirim foto JPEG paling besar 5 MB, atau lewati."
+  "fieldError.missing.photo": "Foto tidak terbaca. Kirim foto JPEG paling besar 5 MB, atau lewati.",
+  "fieldError.comment.empty": "Tulis komentar Anda dulu.",
+  "fieldError.comment.tooLong": "Komentar paling panjang 500 huruf, termasuk penanda nomor dan alamat yang dibuang. Persingkat komentar Anda.",
+  "fieldError.comment.rude": "Komentar memuat kata kasar. Tulis ulang dengan kata yang sopan.",
+  "fieldError.comment.repeated": "Komentar berisi huruf atau tanda yang diulang terlalu banyak.",
+  "fieldError.comments.housesLevel": "Pilih tingkat kerusakan rumah: berat, sedang, atau ringan.",
+  "fieldError.comments.fieldNotUsed": "Isian ini tidak dipakai untuk jenis kejadian laporan itu."
 }

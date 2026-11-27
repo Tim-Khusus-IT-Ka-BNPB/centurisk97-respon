@@ -15,6 +15,7 @@ import { Notice } from "../../molecules/Notice";
 import { DeskMapCanvas, SMALL } from "../DeskMapCanvas";
 import { ChangeList, FileButtons, VersionList } from "../VersionList";
 import { DeskActions } from "./DeskActions";
+import { DeskComments } from "./DeskComments";
 import { DeskHistory } from "./DeskHistory";
 import { DeskOfficers } from "./DeskOfficers";
 import { Hazard, PhotoFigure } from "./DeskQueue";
@@ -50,6 +51,10 @@ const SAVED = [
   "released",
   "todayPulled",
   "todayRestored",
+  "commentHidden",
+  "commentShown",
+  "figureAccepted",
+  "figureRejected",
 ];
 
 // With script the open is posted once per visit, beside the page: a navigation would take what the
@@ -529,6 +534,11 @@ export function DeskReportView({
           {report.officers === null ? null : (
             <Section id="desk-officers" title={t("desk.officers.title")}>
               <DeskOfficers officers={report.officers} opened={officer} />
+            </Section>
+          )}
+          {report.comments === null ? null : (
+            <Section id="desk-comments" title={t("desk.comments.title")}>
+              <DeskComments comments={report.comments} />
             </Section>
           )}
           {report.today === null ? null : (

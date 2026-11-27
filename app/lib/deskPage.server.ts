@@ -280,6 +280,20 @@ function deskPost(form: FormData): readonly [path: string, body?: unknown] {
       return ["event/release"];
     case "today":
       return ["today", { pulled: text("pulled") === "1" }];
+    case "commentShown":
+      return [
+        `comments/${encodeURIComponent(text("commentId"))}`,
+        { shown: text("shown") === "1", reason: text("reason") },
+      ];
+    case "figure":
+      return [
+        `comment-figures/${encodeURIComponent(text("figureId"))}`,
+        {
+          accept: text("accept") === "1",
+          reason: text("reason"),
+          ...(form.has("field") ? { field: text("field") } : {}),
+        },
+      ];
     default:
       return ["view"];
   }
@@ -289,6 +303,18 @@ const typedIn = (form: FormData): DeskTyped => ({
   values: Object.fromEntries([...form].flatMap(([name, value]) => (typeof value === "string" ? [[name, value]] : []))),
   actions: form.getAll("actions").map(String),
 });
+
+// A form that turns something one way or the other names which way on the page after: [off, on].
+const TOGGLE_FIELD: Readonly<Record<string, string>> = {
+  today: "pulled",
+  commentShown: "shown",
+  figure: "accept",
+};
+const TOGGLED: Readonly<Record<string, readonly [string, string]>> = {
+  today: ["todayRestored", "todayPulled"],
+  commentShown: ["commentHidden", "commentShown"],
+  figure: ["figureRejected", "figureAccepted"],
+};
 
 // POST /lapor/meja/<ticket>: one of the page's forms. A change kept is named on the page after;
 // asking who reported is answered on the page itself.
@@ -311,11 +337,7 @@ export async function actOnDeskReport(ticketNumber: string, form: FormData, api:
         : "proofHidden"
       : action === "release"
         ? "released"
-        : action === "today"
-          ? formText(form, "pulled") === "1"
-            ? "todayPulled"
-            : "todayRestored"
-          : path;
+        : (TOGGLED[String(action)]?.[formText(form, TOGGLE_FIELD[String(action)] as string) === "1" ? 1 : 0] ?? path);
   return redirectTo(`/lapor/meja/${ticket}${path === "view" ? "" : `?saved=${saved}`}`, response);
 }
 

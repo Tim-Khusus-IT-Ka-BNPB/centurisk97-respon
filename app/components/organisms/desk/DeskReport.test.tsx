@@ -451,6 +451,30 @@ describe("a report on the desk", () => {
     expect(within(section).getByRole("link", { name: "Telepon" }).getAttribute("href")).toBe("tel:+628001108001");
   });
 
+  test("the residents' news on its Alun-alun card, and a decision named on the page after", async () => {
+    const comments = {
+      items: [
+        {
+          id: "0123456789abcdef",
+          text: "Air surut",
+          status: "shown" as const,
+          reports: 0,
+          at: { utc: "2026-11-24T03:00:00.000Z", zone: "WIB" as const },
+          authorHidden: 0,
+          figures: [],
+          decisions: [],
+        },
+      ],
+    };
+    await renderDesk(<DeskReportView report={{ ...REPORT, comments }} summary={SUMMARY} />, {
+      ...PATH,
+      entry: `${PATH.path}?saved=commentHidden`,
+    });
+    const section = screen.getByRole("region", { name: "Kabar warga di Alun-alun" });
+    expect(within(section).getByText("Air surut")).toBeTruthy();
+    expect(screen.getByRole("status").textContent).toContain("Kabar warga itu disembunyikan dari Alun-alun.");
+  });
+
   test("with the today page open, its five conditions, and a pull named on the page after", async () => {
     const today = { conditions: { valid: true, bpbd: true, ticket: true, version: true, pull: true }, shown: true };
     await renderDesk(<DeskReportView report={{ ...REPORT, today }} summary={SUMMARY} />, {
