@@ -1,4 +1,5 @@
 import {
+  acceptCase,
   addMedia,
   addMember,
   addRecord,
@@ -10,15 +11,22 @@ import {
   casesIn,
   changeFile,
   changeRecord,
+  closeCase,
+  erasePersonal,
   exchangeLink,
+  filesToErase,
   logAccess,
   mediaKey,
   memberBySession,
   membersOf,
   openCase,
+  personalMedia,
   recordsOf,
   removeMember,
   renewLink,
+  reopenCase,
+  type VersionRow,
+  versionsOf,
 } from "../adapters/d1/cases";
 import { deskReport } from "../adapters/d1/desk";
 import type { CaseView } from "../contract/cases";
@@ -31,10 +39,12 @@ import {
   NIL_METRICS,
   recapOf,
   recordPoint,
+  sealedBody,
 } from "../domain/caseRecap";
 import {
   type CaseKind,
   type CaseValues,
+  checkClosing,
   checkFileFields,
   checkRecord,
   faceAllowed,
@@ -158,9 +168,10 @@ export async function caseView(
   const who = whoOf(actor);
   const now = new Date(bindings.clock.now());
   await logAccess(bindings.db, { fileId, recordId: null, action: "open", whoId: who.id, whoLabel: who.label }, now);
-  const [stored, report] = await Promise.all([
+  const [stored, report, versions] = await Promise.all([
     recordsOf(bindings.db, fileId),
     deskReport(bindings.db, { level: "national" }, file.ticketNumber),
+    versionsOf(bindings.db, fileId),
   ]);
   const records = stored.map(asRecord);
   const day = today(bindings);
@@ -206,6 +217,20 @@ export async function caseView(
           media: one.media.map((item) => ({ id: item.id, kind: item.kind, badge: item.badge })),
           flags: flagsOf(record, { others: records, media: one.media, eventMs, inRegency: () => true }),
           missingPhotos: photosMissing(one.kind, one.data, one.media),
+        };
+      }),
+      versions: versions.map((one) => {
+        const sealed = JSON.parse(one.body) as {
+          final: CaseView["final"];
+          closing: { endedOn: string; note: string | null };
+        };
+        return {
+          version: one.version,
+          at: at(one.atMs, "WIB"),
+          by: one.sealedBy,
+          fingerprint: one.fingerprint,
+          final: sealed.final,
+          closing: sealed.closing,
         };
       }),
       members: members.map((one) => ({
@@ -658,4 +683,97 @@ export async function caseList(bindings: ServiceBindings, staff: StaffPrincipal)
       })),
     },
   };
+}
+
+// The keepers close the file (K3, D13): its totals on the day the event ended, the state it ends in,
+// sealed as a version with no personal value, waiting for BNPB to accept (Q2).
+export async function closeCaseFile(
+  bindings: ServiceBindings,
+  staff: StaffPrincipal,
+  fileId: string,
+  input: { readonly endedOn: string; readonly note: string; readonly revision: number },
+): Promise<LeadAnswer<{ readonly fileId: string }>> {
+  const file = await leadFile(bindings, staff, fileId);
+  if (!("id" in file)) return file;
+  if (file.status !== "open") return { kind: "closed" };
+  const checked = checkClosing(input, localDate(file.openedAtMs, "WIB"), today(bindings));
+  if (checked.errors.length > 0) return { kind: "invalid", errors: checked.errors };
+  const records = (await recordsOf(bindings.db, fileId)).map(asRecord);
+  const recap = recapOf(records, new Set(file.nil), checked.closing.endedOn);
+  const final = finalState(recap);
+  const body = await sealedBody(file, records, { recap, final, closing: checked.closing }, async (text: string) =>
+    hmacKey(bindings.settings.keyHmacSecret, "case", text),
+  );
+  const done = await closeCase(
+    bindings.db,
+    {
+      fileId,
+      revision: input.revision,
+      body,
+      fingerprint: await sha256Hex(body),
+      closing: { ...checked.closing, status: final.status },
+      by: staff.label,
+    },
+    new Date(bindings.clock.now()),
+  );
+  return done ? { kind: "ok", body: { fileId } } : { kind: "changed" };
+}
+
+// BNPB accepts a closing as sealed: the file ends in its sealed state and its report's ticket closes.
+export async function acceptCaseFile(
+  bindings: ServiceBindings,
+  staff: StaffPrincipal,
+  fileId: string,
+): Promise<LeadAnswer<{ readonly fileId: string }>> {
+  const refused = await admitted(bindings, staff, "acceptCase", "desk.write");
+  if (refused) return refused;
+  const file = await caseById(bindings.db, fileId);
+  if (file === null) return { kind: "notFound" };
+  if (file.status !== "proposed") return { kind: "changed" };
+  const sealed = (await versionsOf(bindings.db, fileId)).at(-1) as VersionRow;
+  const { final } = JSON.parse(sealed.body) as { final: { status: "done" | "doneNoted" } };
+  const done = await acceptCase(
+    bindings.db,
+    { fileId, ticketNumber: file.ticketNumber, status: final.status, staffId: staff.staffId, by: staff.label },
+    new Date(bindings.clock.now()),
+  );
+  return done ? { kind: "ok", body: { fileId } } : { kind: "changed" };
+}
+
+// BNPB opens a proposed or closed file again, with its reason: a mistyped closing, or a person
+// found after (K11, ALUR 8). The versions sealed before stay.
+export async function reopenCaseFile(
+  bindings: ServiceBindings,
+  staff: StaffPrincipal,
+  fileId: string,
+  typedReason: string,
+): Promise<LeadAnswer<{ readonly fileId: string }>> {
+  const refused = await admitted(bindings, staff, "acceptCase", "desk.write");
+  if (refused) return refused;
+  const reason = typedReason.trim().replace(/\s+/g, " ");
+  if (reason.length < 3 || reason.length > 300) return { kind: "invalid", errors: ["reason"] };
+  if ((await caseById(bindings.db, fileId)) === null) return { kind: "notFound" };
+  const done = await reopenCase(bindings.db, { fileId, reason, by: staff.label }, new Date(bindings.clock.now()));
+  return done ? { kind: "ok", body: { fileId } } : { kind: "changed" };
+}
+
+// Five years after a closing was accepted, a file's personal values and its faces and photos of the
+// missing go (K9, D23), a few files each run; its other values, totals, trail and versions stay.
+export const ERASE_AFTER_MS = 5 * 365 * DAY_MS;
+const ERASE_BATCH = 20;
+
+export async function erasePersonalData(bindings: Pick<ServiceBindings, "db" | "photos" | "clock">): Promise<number> {
+  const now = bindings.clock.now();
+  const files = await filesToErase(bindings.db, new Date(now - ERASE_AFTER_MS), ERASE_BATCH);
+  for (const { id } of files) {
+    const media = await personalMedia(bindings.db, id);
+    if (media.length > 0) await bindings.photos.delete(media.map((one) => one.object_key));
+    await erasePersonal(
+      bindings.db,
+      id,
+      media.map((one) => one.id),
+      new Date(now),
+    );
+  }
+  return files.length;
 }

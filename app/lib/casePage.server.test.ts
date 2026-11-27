@@ -96,6 +96,9 @@ describe("the follow-up file's page", () => {
     });
     await acted({ intent: "fields", revision: "3", personnel: "", postName: "" });
     await acted({ intent: "fields", revision: "3", personnel: "empat" });
+    await acted({ intent: "close", revision: "4", endedOn: "2026-11-26", note: "Air surut" });
+    await acted({ intent: "accept" });
+    await acted({ intent: "reopen", reason: "salah tutup" });
     expect(calls.map((call) => [call.path, call.body])).toEqual([
       [`/cases/${FILE}/records`, { kind: "house", values: { village: "Uji" }, point: { lat: 5.1, lon: 97.2 } }],
       [`/cases/${FILE}/records`, { kind: "house", values: { village: "Uji" }, point: undefined }],
@@ -140,6 +143,9 @@ describe("the follow-up file's page", () => {
           },
         },
       ],
+      [`/cases/${FILE}/close`, { endedOn: "2026-11-26", note: "Air surut", revision: 4 }],
+      [`/cases/${FILE}/accept`, {}],
+      [`/cases/${FILE}/reopen`, { reason: "salah tutup" }],
     ]);
   });
 

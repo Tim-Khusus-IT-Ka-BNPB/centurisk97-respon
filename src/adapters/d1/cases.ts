@@ -1,5 +1,6 @@
 import type { CaseKind } from "../../domain/caseSpec";
 import { atomically, changedOne, type Database, holds, type Query, row, rows, sql } from "../../platform/database";
+import { historyNotice, IF_WRITTEN } from "./news";
 
 // The BPBD's follow-up files (M09) as kept: files, their team, records, media, trail and access log.
 
@@ -439,4 +440,121 @@ export const logAccess = (
   atomically(db, [
     sql`insert into case_access (file_id, record_id, action, who_id, who_label, at)
       values (${access.fileId}, ${access.recordId}, ${access.action}, ${access.whoId}, ${access.whoLabel}, ${at})`,
+  ]);
+
+// A closing sealed as the file's next version, from the revision read, while the file is open (D14).
+export async function closeCase(
+  db: Database,
+  close: {
+    readonly fileId: string;
+    readonly revision: number;
+    readonly body: string;
+    readonly fingerprint: string;
+    readonly closing: unknown;
+    readonly by: string;
+  },
+  at: Date,
+): Promise<boolean> {
+  const done = await atomically(db, [
+    sql`update case_file set status = 'proposed', revision = revision + 1
+      where id = ${close.fileId} and revision = ${close.revision} and status = 'open'`,
+    changedOne,
+    sql`insert into case_version (file_id, version, body, fingerprint, sealed_by, at)
+      values (${close.fileId},
+        (select coalesce(max(version), 0) + 1 from case_version where file_id = ${close.fileId}),
+        ${close.body}, ${close.fingerprint}, ${close.by}, ${at})`,
+    trailRow(close.fileId, null, "close", close.closing, close.by, at),
+  ]);
+  return done !== null;
+}
+
+export type VersionRow = {
+  readonly version: number;
+  readonly body: string;
+  readonly fingerprint: string;
+  readonly sealedBy: string;
+  readonly atMs: number;
+};
+
+export async function versionsOf(db: Database, fileId: string): Promise<VersionRow[]> {
+  const found = await rows<{ version: number; body: string; fingerprint: string; sealed_by: string; at: string }>(
+    db,
+    sql`select version, body, fingerprint, sealed_by, at from case_version where file_id = ${fileId} order by version`,
+  );
+  return found.map((one) => ({
+    version: one.version,
+    body: one.body,
+    fingerprint: one.fingerprint,
+    sealedBy: one.sealed_by,
+    atMs: Date.parse(one.at),
+  }));
+}
+
+// BNPB accepts a closing (Q2): the file ends in the state its version sealed, five years of personal
+// data start now (D23), and the report's ticket closes with it.
+export async function acceptCase(
+  db: Database,
+  accept: {
+    readonly fileId: string;
+    readonly ticketNumber: string;
+    readonly status: "done" | "doneNoted";
+    readonly staffId: string;
+    readonly by: string;
+  },
+  at: Date,
+): Promise<boolean> {
+  const { ticketNumber } = accept;
+  const done = await atomically(db, [
+    sql`update case_file set status = ${accept.status}, accepted_at = ${at}
+      where id = ${accept.fileId} and status = 'proposed'`,
+    changedOne,
+    trailRow(accept.fileId, null, "accept", { status: accept.status }, accept.by, at),
+    sql`insert into ticket_history (ticket_number, from_status, to_status, actor, actor_id, actor_label, note, at)
+      select ticket_number, status, 'closed', 'staff', ${accept.staffId}, ${accept.by}, 'Ditutup dari data lanjutan BPBD', ${at}
+      from ticket where ticket_number = ${ticketNumber} and status not in ('closed', 'invalid')`,
+    historyNotice(ticketNumber, "status", at, IF_WRITTEN),
+    sql`update ticket set status = 'closed', revision = revision + 1, updated_at = ${at}
+      where ticket_number = ${ticketNumber} and status not in ('closed', 'invalid')`,
+  ]);
+  return done !== null;
+}
+
+// A closed or proposed file opened again by BNPB, with its reason; its old versions stay (D14).
+export async function reopenCase(
+  db: Database,
+  reopen: { readonly fileId: string; readonly reason: string; readonly by: string },
+  at: Date,
+): Promise<boolean> {
+  const done = await atomically(db, [
+    sql`update case_file set status = 'open', accepted_at = null, revision = revision + 1
+      where id = ${reopen.fileId} and status <> 'open'`,
+    changedOne,
+    trailRow(reopen.fileId, null, "reopen", { reason: reopen.reason }, reopen.by, at),
+  ]);
+  return done !== null;
+}
+
+// The files whose closing was accepted before the cutoff and whose personal data is still kept.
+export const filesToErase = (db: Database, cutoff: Date, limit: number) =>
+  rows<{ id: string }>(
+    db,
+    sql`select id from case_file where accepted_at < ${cutoff} and erased_at is null order by accepted_at limit ${limit}`,
+  );
+
+// Faces, and photos of the missing, of a file: deleted with its personal values (D23).
+export const personalMedia = (db: Database, fileId: string) =>
+  rows<{ id: string; object_key: string }>(
+    db,
+    sql`select m.id, m.object_key from case_media m join case_record r on r.id = m.record_id
+      where m.file_id = ${fileId} and m.erased_at is null and (m.kind = 'face' or r.kind = 'victim')`,
+  );
+
+// A file's personal values cleared, its personal media marked gone, and the clearing told in its trail.
+export const erasePersonal = (db: Database, fileId: string, mediaIds: readonly string[], at: Date) =>
+  atomically(db, [
+    sql`update case_record set personal = '{}' where file_id = ${fileId}`,
+    sql`update case_member set number = '', link_hash = null, session_hash = null where file_id = ${fileId}`,
+    sql`update case_media set erased_at = ${at} where id in (select value from json_each(${JSON.stringify(mediaIds)}))`,
+    sql`update case_file set erased_at = ${at} where id = ${fileId}`,
+    trailRow(fileId, null, "erase", { media: mediaIds.length }, "Sistem", at),
   ]);

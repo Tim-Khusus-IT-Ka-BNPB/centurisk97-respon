@@ -361,3 +361,22 @@ const maskOne = (value: unknown): unknown => {
 
 export const maskPersonal = (values: CaseValues): CaseValues =>
   Object.fromEntries(Object.entries(values).map(([id, value]) => [id, maskOne(value)]));
+
+export type CheckedClosing = {
+  readonly errors: readonly string[];
+  readonly closing: { readonly endedOn: string; readonly note: string | null };
+};
+
+// A closing (D13): the day the event ended, from the file's opening to today, and a note if any.
+export function checkClosing(
+  typed: { readonly endedOn: string; readonly note: string },
+  openedOn: string,
+  today: string,
+): CheckedClosing {
+  const note = typed.note.trim().replace(/\s+/g, " ");
+  const errors = [
+    ...(isDate(typed.endedOn) && typed.endedOn >= openedOn && typed.endedOn <= today ? [] : ["endedOn"]),
+    ...(note.length > 500 ? ["note"] : []),
+  ];
+  return { errors, closing: { endedOn: typed.endedOn, note: note === "" ? null : note } };
+}

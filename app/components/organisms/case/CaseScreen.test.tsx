@@ -229,7 +229,7 @@ describe("the follow-up file's screen", () => {
 
   test("a closed file takes no change", async () => {
     draw({ ...CASE_VIEW, file: { ...CASE_VIEW.file, status: "proposed" } }, { kind: "house", editing: null });
-    expect(await screen.findByText("Menunggu diterima BNPB")).toBeTruthy();
+    expect(await screen.findAllByText("Menunggu diterima BNPB")).toHaveLength(2);
     expect(screen.queryByRole("region", { name: "Tambah Rumah" })).toBeNull();
     expect(screen.queryByRole("button", { name: "Tandai nihil" })).toBeNull();
     expect(screen.queryByRole("link", { name: "Ubah" })).toBeNull();
@@ -286,5 +286,87 @@ describe("what is being saved", () => {
     draw(clean, { kind: "house", editing: null });
     const [house] = (await screen.findAllByRole("article")) as [HTMLElement];
     expect(within(house).queryByRole("list", { name: "Foto" })).toBeNull();
+  });
+});
+
+describe("closing the file", () => {
+  const VERSION = {
+    version: 1,
+    at: { utc: "2026-11-26T03:00:00.000Z", zone: "WIB" as const },
+    by: "Petugas Uji",
+    fingerprint: "a".repeat(64),
+    final: { status: "doneNoted" as const, reasons: [{ metric: "missing", value: 2 }], notRecorded: [] },
+    closing: { endedOn: "2026-11-26", note: "Air surut" },
+  };
+
+  test("its keeper is asked if the event ended, shown what keeps it noted, and closes it", async () => {
+    draw(CASE_VIEW, { kind: "house", editing: null }, NOTHING, "/lapor/data/f000000000000001?saved=close");
+    expect((await screen.findByRole("status")).textContent).toBe("Berkas ditutup dan menunggu diterima BNPB.");
+    const closing = await screen.findByRole("region", { name: "Kejadian sudah selesai?" });
+    expect(within(closing).getByText(/selesai dengan catatan/)).toBeTruthy();
+    expect(within(closing).getByText("Hilang: belum didata")).toBeTruthy();
+    expect((within(closing).getByLabelText("Tanggal kejadian selesai") as HTMLInputElement).value).toBe("2026-11-24");
+    const close = within(closing).getByRole("button", { name: "Tutup berkas" });
+    expect(fields(close.closest("form") as HTMLFormElement)).toMatchObject({ intent: "close", revision: "3" });
+    fireEvent.click(close);
+    expect(await within(closing).findByText("Menyimpan...")).toBeTruthy();
+  });
+
+  test("a clean preview says so; a team member is told who closes", async () => {
+    const clean = { ...CASE_VIEW, final: { status: "done" as const, reasons: [], notRecorded: [] } };
+    const view = draw(clean, { kind: "house", editing: null });
+    expect(await screen.findByText(/Bila ditutup hari ini: selesai\./)).toBeTruthy();
+    view.unmount();
+    draw({ ...CASE_VIEW, access: "team" }, { kind: "house", editing: null });
+    expect(await screen.findByText("Berkas ditutup oleh BPBD kabupaten/kota yang mengelolanya.")).toBeTruthy();
+    expect(screen.queryByRole("button", { name: "Tutup berkas" })).toBeNull();
+  });
+
+  test("BNPB accepts a proposed closing or opens it again; each version is listed", async () => {
+    const proposed: CaseView = {
+      ...CASE_VIEW,
+      access: "bnpb",
+      file: { ...CASE_VIEW.file, status: "proposed" },
+      versions: [VERSION],
+    };
+    const view = draw(proposed, { kind: "house", editing: null });
+    const closing = await screen.findByRole("region", { name: "Menunggu diterima BNPB" });
+    const accept = within(closing).getByRole("button", { name: "Terima penutupan" });
+    fireEvent.click(accept);
+    expect(await within(closing).findByText("Menyimpan...")).toBeTruthy();
+    view.unmount();
+    const again = draw(proposed, { kind: "house", editing: null });
+    const reopen = await screen.findByRole("button", { name: "Buka lagi" });
+    fireEvent.change(screen.getByLabelText("Alasan membuka lagi"), { target: { value: "salah tutup" } });
+    fireEvent.click(reopen);
+    expect(await screen.findByText("Menyimpan...")).toBeTruthy();
+    again.unmount();
+    const done: CaseView = {
+      ...proposed,
+      file: { ...proposed.file, status: "done" },
+      versions: [
+        {
+          ...VERSION,
+          closing: { endedOn: "2026-11-26", note: null },
+          final: { status: "done", reasons: [], notRecorded: [] },
+        },
+      ],
+    };
+    draw(done, { kind: "house", editing: null });
+    const versions = await screen.findByRole("list", { name: "Versi beku" });
+    expect(within(versions).getByText("Versi 1: Selesai, kejadian selesai 2026-11-26")).toBeTruthy();
+    expect(within(versions).getByText("a".repeat(64))).toBeTruthy();
+    expect(screen.queryByRole("button", { name: "Terima penutupan" })).toBeNull();
+    expect(screen.getByRole("button", { name: "Buka lagi" })).toBeTruthy();
+  });
+
+  test("a version noted lists why, with its note", async () => {
+    draw(
+      { ...CASE_VIEW, file: { ...CASE_VIEW.file, status: "doneNoted" }, versions: [VERSION] },
+      { kind: "house", editing: null },
+    );
+    const versions = await screen.findByRole("list", { name: "Versi beku" });
+    expect(within(versions).getByText("Hilang: 2")).toBeTruthy();
+    expect(within(versions).getByText("Air surut")).toBeTruthy();
   });
 });

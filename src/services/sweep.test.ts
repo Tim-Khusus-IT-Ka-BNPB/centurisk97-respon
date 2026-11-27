@@ -129,6 +129,7 @@ describe("the scheduled sweep", () => {
       missingAnonymised: 0,
       photoFilesRemoved: 0,
       videoUploadsDropped: 0,
+      caseFilesErased: 0,
     });
   });
 

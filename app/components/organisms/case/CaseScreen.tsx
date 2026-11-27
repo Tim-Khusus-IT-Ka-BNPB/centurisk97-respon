@@ -9,6 +9,7 @@ import { limitText } from "../../../lib/status";
 import { useText } from "../../../lib/text";
 import { Notice } from "../../molecules/Notice";
 import { chip } from "../FeedScreen";
+import { CaseClosing } from "./CaseClosing";
 import { CaseFileFields } from "./CaseFileFields";
 import { CaseRecordCard } from "./CaseRecordCard";
 import { CaseRecordForm } from "./CaseRecordForm";
@@ -22,9 +23,11 @@ export type CaseAnswered = {
   readonly revealed: { readonly recordId: string; readonly personal: Readonly<Record<string, unknown>> } | null;
 };
 
-const SAVED = ["record", "update", "cancel", "photo", "fields", "nil", "removeMember"];
+const SAVED = ["record", "update", "cancel", "photo", "fields", "nil", "removeMember", "close", "accept", "reopen"];
 // The fields of the screen's forms that are not a record's own.
 const NOT_RECORD = new Set([
+  "endedOn",
+  "note",
   "name",
   "number",
   "reason",
@@ -86,6 +89,7 @@ export function CaseScreen({
         </Notice>
       )}
       <CaseTotals view={view} />
+      <CaseClosing view={view} envelope={envelope} />
       {view.access === "province" ? null : (
         <>
           <nav aria-label={t("desk.case.tabs")} className="-mx-4 flex gap-2 overflow-x-auto px-4 pb-1 md:-mx-6 md:px-6">

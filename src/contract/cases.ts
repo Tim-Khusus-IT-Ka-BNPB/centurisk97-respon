@@ -55,6 +55,21 @@ export const caseViewSchema = z.object({
   members: z.array(
     z.object({ id, name: z.string(), number: z.string(), active: z.boolean(), linkPending: z.boolean() }),
   ),
+  // Each closing sealed, oldest first: when, by whom, its fingerprint, the state and the day it ended.
+  versions: z.array(
+    z.object({
+      version: z.number().int(),
+      at: timeSchema,
+      by: z.string(),
+      fingerprint: z.string(),
+      final: z.object({
+        status: z.enum(["done", "doneNoted"]),
+        reasons: z.array(z.object({ metric: z.string(), value: z.number().nullable() })),
+        notRecorded: z.array(z.string()),
+      }),
+      closing: z.object({ endedOn: z.string(), note: z.string().nullable() }),
+    }),
+  ),
 });
 export type CaseView = z.infer<typeof caseViewSchema>;
 

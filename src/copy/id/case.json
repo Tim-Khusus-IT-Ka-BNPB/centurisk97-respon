@@ -283,5 +283,21 @@
   "desk.case.kind.victim": "Korban",
   "desk.case.kind.business": "Usaha",
   "desk.case.kind.need": "Kebutuhan",
-  "desk.case.ticket": "Tiket {ticket}"
+  "desk.case.ticket": "Tiket {ticket}",
+  "desk.case.close.ask": "Kejadian sudah selesai?",
+  "desk.case.close.preview.done": "Bila ditutup hari ini: selesai. Tidak ada korban hilang, warga mengungsi, atau prasarana putus yang tersisa.",
+  "desk.case.close.preview.doneNoted": "Bila ditutup hari ini: selesai dengan catatan, karena:",
+  "desk.case.close.endedOn": "Tanggal kejadian selesai",
+  "desk.case.close.note": "Catatan penutupan (boleh kosong)",
+  "desk.case.close.button": "Tutup berkas",
+  "desk.case.close.byKeeper": "Berkas ditutup oleh BPBD kabupaten/kota yang mengelolanya.",
+  "desk.case.accept": "Terima penutupan",
+  "desk.case.reopen": "Buka lagi",
+  "desk.case.reopen.reason": "Alasan membuka lagi",
+  "desk.case.versions": "Versi beku",
+  "desk.case.version": "Versi {version}: {status}, kejadian selesai {endedOn}",
+  "desk.case.version.by": "Ditutup {by}, {when}",
+  "desk.case.saved.close": "Berkas ditutup dan menunggu diterima BNPB.",
+  "desk.case.saved.accept": "Penutupan diterima. Tiket laporan ditutup.",
+  "desk.case.saved.reopen": "Berkas dibuka lagi."
 }

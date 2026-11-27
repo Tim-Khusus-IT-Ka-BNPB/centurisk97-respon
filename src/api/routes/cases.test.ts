@@ -4,6 +4,7 @@ import { type CaseView, caseListSchema, caseViewSchema } from "../../contract/ca
 import { deskReportSchema } from "../../contract/desk";
 import { windowStart } from "../../domain/limits";
 import { hmacKey } from "../../platform/keys";
+import { ERASE_AFTER_MS, erasePersonalData } from "../../services/cases";
 import { browser, freshNumber, manualClock, query, testBindings, testBucket, testDatabase } from "../../testing/api";
 import { exifDateTime } from "../../testing/jpegs";
 import { cameraJpeg } from "../../testing/photoBase";
@@ -57,6 +58,7 @@ const opened = async () => {
   expect(answer.status, JSON.stringify(answer.json)).toBe(200);
   return { ticket, fileId: (answer.json as { fileId: string }).fileId };
 };
+const clockDay = () => new Date(clock.now() + 7 * 3_600_000).toISOString().slice(0, 10);
 const view = async (fileId: string, phone = staff(REGENCY)): Promise<CaseView> => {
   const answer = await phone.call("GET", `/cases/${fileId}`);
   expect(answer.status, JSON.stringify(answer.json)).toBe(200);
@@ -534,6 +536,157 @@ describe("a closed file", () => {
     ).toEqual([409, "cases.closed"]);
     expect((await view(fileId)).file.status).toBe("proposed");
     void house;
+  });
+});
+
+describe("closing", () => {
+  const VICTIM = {
+    kind: "victim",
+    values: {
+      status: "missing",
+      name: "Uji Hilang",
+      age: 40,
+      sex: "male",
+      village: "Uji",
+      contactName: "Uji",
+      contactPhone: "none",
+      lastSeenPlace: "Sungai",
+      lastSeenOn: "2026-11-24",
+      search: "searching",
+    },
+  };
+  const close = async (fileId: string, endedOn: string, phone = staff(REGENCY), revision?: number) =>
+    phone.call("POST", `/cases/${fileId}/close`, {
+      endedOn,
+      note: " Air surut ",
+      revision: revision ?? (await view(fileId)).file.revision,
+    });
+
+  test("seals the totals and the state it ends in, with no personal value; BNPB accepts and the ticket closes", async () => {
+    const { ticket, fileId } = await opened();
+    await save(fileId, VICTIM);
+    expect(fields(await close(fileId, "2026-11-23"))).toEqual(["endedOn"]);
+    const member = await staff(REGENCY).call("POST", `/cases/${fileId}/members`, {
+      name: "Uji Anggota",
+      number: "0800 1111 0005",
+    });
+    expect((await close(fileId, clockDay(), browser(fetchApi))).status).toBe(401);
+    expect((await close(fileId, clockDay(), staff(DESK))).status).toBe(403);
+    const stale = await close(fileId, clockDay(), staff(REGENCY), 0);
+    expect([stale.status, stale.error.error.code]).toEqual([409, "cases.changed"]);
+    expect((await close(fileId, clockDay())).status).toBe(200);
+    const sealed = await view(fileId);
+    expect(sealed.file.status).toBe("proposed");
+    expect(sealed.versions).toEqual([
+      expect.objectContaining({
+        version: 1,
+        by: "BPBD Kabupaten Uji Satu, Petugas Uji",
+        final: expect.objectContaining({
+          status: "doneNoted",
+          reasons: expect.arrayContaining([{ metric: "missing", value: 1 }]),
+        }),
+        closing: { endedOn: clockDay(), note: "Air surut" },
+      }),
+    ]);
+    const [kept] = await query<{ body: unknown }>`select body from case_version where file_id = ${fileId}`;
+    expect(JSON.stringify(kept?.body)).not.toContain("Uji Hilang");
+    expect(kept?.body).toHaveProperty("recap");
+    expect((await close(fileId, clockDay())).status).toBe(409);
+    expect((await staff(REGENCY).call("POST", `/cases/${fileId}/accept`)).status).toBe(403);
+    expect((await staff(DESK).call("POST", "/cases/0000000000000000/accept")).status).toBe(404);
+    tick();
+    expect((await staff(DESK).call("POST", `/cases/${fileId}/accept`)).status).toBe(200);
+    expect((await view(fileId)).file.status).toBe("doneNoted");
+    const report = deskReportSchema.parse((await staff(DESK).call("GET", `/desk/reports/${ticket}`)).json);
+    expect(report.status).toBe("closed");
+    expect(report.history.at(-1)).toMatchObject({ status: "closed", note: "Ditutup dari data lanjutan BPBD" });
+    expect((await staff(DESK).call("POST", `/cases/${fileId}/accept`)).status).toBe(409);
+    void member;
+  });
+
+  test("ends done only with no one missing, no one displaced and nothing cut, each known", async () => {
+    const { fileId } = await opened();
+    for (const metric of ["missing", "displaced", "infrastructureCut"]) {
+      const answer = await staff(REGENCY).call("POST", `/cases/${fileId}/nil`, {
+        metric,
+        nil: true,
+        revision: (await view(fileId)).file.revision,
+      });
+      expect(answer.status, metric).toBe(200);
+    }
+    expect((await close(fileId, clockDay())).status).toBe(200);
+    expect((await view(fileId)).versions[0]?.final.status).toBe("done");
+    // Another desk accepts in the same moment: this one's batch loses and is told so.
+    // A trigger takes no bound value: the file's id, 16 hex digits, goes in as text.
+    await testDatabase()
+      .prepare(`create trigger accepted_meanwhile before insert on case_trail
+        when new.file_id = '${fileId}' and new.action = 'accept' begin select raise(abort, 'batch_guard_held'); end`)
+      .run();
+    expect((await staff(DESK).call("POST", `/cases/${fileId}/accept`)).status).toBe(409);
+    await query`drop trigger accepted_meanwhile`;
+    expect((await staff(DESK).call("POST", `/cases/${fileId}/accept`)).status).toBe(200);
+    expect((await view(fileId)).file.status).toBe("done");
+  });
+
+  test("BNPB opens a file again with its reason; its versions stay", async () => {
+    const { fileId } = await opened();
+    const reopen = (reason: string, phone = staff(DESK), id = fileId) =>
+      phone.call("POST", `/cases/${id}/reopen`, { reason });
+    expect((await reopen("salah tutup")).status).toBe(409);
+    expect((await close(fileId, clockDay())).status).toBe(200);
+    expect(fields(await reopen("x"))).toEqual(["reason"]);
+    expect((await reopen("salah tutup", staff(REGENCY))).status).toBe(403);
+    expect((await reopen("salah tutup", staff(DESK), "0000000000000000")).status).toBe(404);
+    expect((await reopen("  korban hilang  ditemukan ")).status).toBe(200);
+    expect((await view(fileId)).file.status).toBe("open");
+    expect((await close(fileId, clockDay())).status).toBe(200);
+    expect((await view(fileId)).versions.map((one) => one.version)).toEqual([1, 2]);
+    const trail = await query<{ action: string; detail: string }>`
+      select action, detail from case_trail where file_id = ${fileId} and action = 'reopen'`;
+    expect(trail.map((one) => JSON.parse(one.detail))).toEqual([{ reason: "korban hilang ditemukan" }]);
+  });
+
+  test("five years after its closing was accepted, a file's personal values, faces and photos of the missing go", async () => {
+    const { fileId } = await opened();
+    const shelter = idOf(await save(fileId, SHELTER));
+    const person = idOf(await save(fileId, evacuee(shelter)));
+    const missing = idOf(await save(fileId, VICTIM));
+    const house = idOf(await save(fileId, HOUSE));
+    const upload = (record: string, more: Record<string, string> = {}) => {
+      tick();
+      return staff(REGENCY).upload(`/cases/${fileId}/records/${record}/media`, photoForm(more));
+    };
+    expect((await upload(person, { face: "1" })).status).toBe(200);
+    expect((await upload(missing)).status).toBe(200);
+    expect((await upload(house)).status).toBe(200);
+    await staff(REGENCY).call("POST", `/cases/${fileId}/members`, { name: "Uji Anggota", number: "0800 1111 0006" });
+    expect((await close(fileId, clockDay())).status).toBe(200);
+    expect((await staff(DESK).call("POST", `/cases/${fileId}/accept`)).status).toBe(200);
+    const keys = await query<{
+      object_key: string;
+      record_id: string;
+    }>`select object_key, record_id from case_media where file_id = ${fileId}`;
+    expect(await erasePersonalData(bindings)).toBe(0);
+    clock.advance(ERASE_AFTER_MS + 1000);
+    expect(await erasePersonalData(bindings)).toBeGreaterThanOrEqual(1);
+    const records = await query<{
+      id: string;
+      personal: string;
+      data: string;
+    }>`select id, personal, data from case_record where file_id = ${fileId}`;
+    expect(records.map((one) => one.personal)).toEqual(records.map(() => "{}"));
+    expect(JSON.parse(records.find((one) => one.id === house)?.data as string)).toMatchObject({ damage: "heavy" });
+    const left = await Promise.all(
+      keys.map(async (one) => [one.record_id, (await testBucket().get(one.object_key)) !== null]),
+    );
+    expect(Object.fromEntries(left)).toEqual({ [person]: false, [missing]: false, [house]: true });
+    const [member] = await query<{ number: string }>`select number from case_member where file_id = ${fileId}`;
+    expect(member?.number).toBe("");
+    const [trail] = await query<{
+      detail: string;
+    }>`select detail from case_trail where file_id = ${fileId} and action = 'erase'`;
+    expect(JSON.parse(trail?.detail as string)).toEqual({ media: 2 });
+    expect(await erasePersonalData(bindings)).toBe(0);
   });
 });
 

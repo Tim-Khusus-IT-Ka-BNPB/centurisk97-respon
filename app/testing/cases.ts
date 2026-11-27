@@ -100,6 +100,7 @@ export const CASE_VIEW: CaseView = {
       missingPhotos: { photo: 0, face: 1 },
     },
   ],
+  versions: [],
   members: [
     { id: "d000000000000001", name: "Uji Anggota", number: "+6280011110001", active: true, linkPending: false },
     { id: "d000000000000002", name: "Uji Baru", number: "+6280011110002", active: true, linkPending: true },

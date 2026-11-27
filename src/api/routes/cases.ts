@@ -2,6 +2,7 @@ import { createRoute, z } from "@hono/zod-openapi";
 import { setCookie } from "hono/cookie";
 import { caseListSchema, caseViewSchema, recordChangeSchema, recordInputSchema } from "../../contract/cases";
 import {
+  acceptCaseFile,
   addCaseMember,
   addRecordPhoto,
   CASE_COOKIE,
@@ -9,11 +10,13 @@ import {
   cancelCaseRecord,
   caseList,
   caseView,
+  closeCaseFile,
   exchangeCaseLink,
   openCaseFile,
   recordMedia,
   removeCaseMember,
   renewCaseLink,
+  reopenCaseFile,
   revealRecord,
   saveRecord,
   setCaseFields,
@@ -330,6 +333,60 @@ export function addCaseRoutes(api: Api): void {
       const { fileId, memberId } = c.req.valid("param");
       return caseAnswered(c, await renewCaseLink(c.env, staffOf(c), fileId, memberId));
     },
+  );
+
+  addRoute(
+    api,
+    "staff",
+    createRoute({
+      method: "post",
+      path: "/cases/{fileId}/close",
+      request: {
+        params: fileParams,
+        body: jsonBody(
+          z.object({ endedOn: z.string().max(20), note: z.string().max(2000), revision: z.number().int() }),
+        ),
+      },
+      responses: {
+        ...ok("Sealed as a version, waiting for BNPB", fileAnswer),
+        409: refusal("Closed already, or changed since it was read"),
+        422: refusal("A day outside the file's, or a note too long, on its field"),
+      },
+    }),
+    async (c) =>
+      caseAnswered(c, await closeCaseFile(c.env, staffOf(c), c.req.valid("param").fileId, c.req.valid("json"))),
+  );
+
+  addRoute(
+    api,
+    "staff",
+    createRoute({
+      method: "post",
+      path: "/cases/{fileId}/accept",
+      request: { params: fileParams },
+      responses: {
+        ...ok("Accepted: the file ends as sealed and its ticket closes", fileAnswer),
+        409: refusal("Not waiting to be accepted"),
+      },
+    }),
+    async (c) => caseAnswered(c, await acceptCaseFile(c.env, staffOf(c), c.req.valid("param").fileId)),
+  );
+
+  addRoute(
+    api,
+    "staff",
+    createRoute({
+      method: "post",
+      path: "/cases/{fileId}/reopen",
+      request: { params: fileParams, body: jsonBody(z.object({ reason: z.string().max(1000) })) },
+      responses: {
+        ...ok("Open again; the versions sealed before stay", fileAnswer),
+        409: refusal("Open already"),
+        422: refusal("No reason, on field reason"),
+      },
+    }),
+    async (c) =>
+      caseAnswered(c, await reopenCaseFile(c.env, staffOf(c), c.req.valid("param").fileId, c.req.valid("json").reason)),
   );
 
   addRoute(

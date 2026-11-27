@@ -2,6 +2,7 @@ import { describe, expect, test } from "vitest";
 import {
   CASE_KINDS,
   CASE_SPEC,
+  checkClosing,
   checkFileFields,
   checkRecord,
   faceAllowed,
@@ -317,5 +318,29 @@ describe("personal values for BNPB's desk", () => {
       traits: "t*** l*** 1***",
       place: "1*** d*** d***",
     });
+  });
+});
+
+describe("a closing", () => {
+  test("ends on a day from the file's opening to today, with a note if any", () => {
+    expect(
+      checkClosing({ endedOn: "2026-11-26", note: "  Air surut,  warga pulang " }, "2026-11-24", "2026-11-27"),
+    ).toEqual({
+      errors: [],
+      closing: { endedOn: "2026-11-26", note: "Air surut, warga pulang" },
+    });
+    expect(checkClosing({ endedOn: "2026-11-24", note: "" }, "2026-11-24", "2026-11-27")).toEqual({
+      errors: [],
+      closing: { endedOn: "2026-11-24", note: null },
+    });
+    expect(checkClosing({ endedOn: "2026-11-27", note: "x".repeat(500) }, "2026-11-24", "2026-11-27").errors).toEqual(
+      [],
+    );
+    expect(checkClosing({ endedOn: "2026-11-23", note: "x".repeat(501) }, "2026-11-24", "2026-11-27").errors).toEqual([
+      "endedOn",
+      "note",
+    ]);
+    expect(checkClosing({ endedOn: "2026-11-28", note: "" }, "2026-11-24", "2026-11-27").errors).toEqual(["endedOn"]);
+    expect(checkClosing({ endedOn: "kemarin", note: "" }, "2026-11-24", "2026-11-27").errors).toEqual(["endedOn"]);
   });
 });

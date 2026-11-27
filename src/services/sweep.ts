@@ -7,6 +7,7 @@ import type { Database } from "../platform/database";
 import type { Logger } from "../platform/log";
 import type { Clock } from "../ports/clock";
 import type { PhotoStore } from "../ports/photoStore";
+import { erasePersonalData } from "./cases";
 import { sweepVideoUploads } from "./videos";
 
 export type SweepCounts = {
@@ -17,6 +18,8 @@ export type SweepCounts = {
   readonly missingAnonymised: number;
   readonly photoFilesRemoved: number;
   readonly videoUploadsDropped: number;
+  // BPBD follow-up files whose personal data ended five years after their closing was accepted.
+  readonly caseFilesErased: number;
 };
 
 // Deletes the files of photos whose rows are gone, then their queue rows. A run that stops in
@@ -57,6 +60,7 @@ export async function runSweep(db: Database, photos: PhotoStore, clock: Clock, l
     ),
     photoFilesRemoved: await drain(() => removePhotoFiles(db, photos, RETENTION.batch)),
     videoUploadsDropped: await sweepVideoUploads({ db, photos, clock }),
+    caseFilesErased: await erasePersonalData({ db, photos, clock }),
   };
   log.info({ event: "sweep.done", durationMs: Date.now() - started });
   return counts;

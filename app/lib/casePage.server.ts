@@ -119,6 +119,12 @@ function casePost(form: FormData): readonly [path: string, body: unknown] {
       return [`members/${member}/link`, {}];
     case "reveal":
       return [`records/${record}/reveal`, {}];
+    case "close":
+      return ["close", { endedOn: text(form, "endedOn"), note: text(form, "note"), revision }];
+    case "accept":
+      return ["accept", {}];
+    case "reopen":
+      return ["reopen", { reason: text(form, "reason") }];
     default:
       return [
         "fields",
