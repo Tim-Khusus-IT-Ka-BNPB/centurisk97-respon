@@ -6,11 +6,11 @@ import { ThemeSwitch } from "./ThemeSwitch";
 describe("theme switch", () => {
   test("names the theme a press brings, and posts it with the page to return to", async () => {
     const posted = vi.fn(never);
-    renderPage(<ThemeSwitch withLabel />, { path: "/lapor/theme", entry: "/lapor/theme?view=map", action: posted });
+    renderPage(<ThemeSwitch withLabel />, { path: "/theme", entry: "/theme?view=map", action: posted });
     const button = await screen.findByRole("button", { name: "Pakai tema gelap" });
     expect(button.getAttribute("value")).toBe("dark");
     expect(button.textContent).toBe("Pakai tema gelap");
-    expect((document.querySelector('input[name="back"]') as HTMLInputElement).value).toBe("/lapor/theme?view=map");
+    expect((document.querySelector('input[name="back"]') as HTMLInputElement).value).toBe("/theme?view=map");
     button.click();
     // While the choice is on its way the switch already shows it.
     await waitFor(() => expect(screen.getByRole("button", { name: "Pakai tema terang" })).toBeTruthy());
@@ -18,7 +18,7 @@ describe("theme switch", () => {
   });
 
   test("without a label it is an icon named in words", async () => {
-    renderPage(<ThemeSwitch />, { path: "/lapor" });
+    renderPage(<ThemeSwitch />, { path: "/" });
     const button = await screen.findByRole("button", { name: "Pakai tema gelap" });
     expect(button.textContent).toBe("");
   });

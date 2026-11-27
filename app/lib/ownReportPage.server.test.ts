@@ -41,7 +41,7 @@ describe("the reporter's own report page", () => {
     const followUp = form({ action: "followUp" });
     expect(await actOnOwnReport("LA-1", followUp, started.api)).toEqual({
       kind: "redirect",
-      location: `/lapor/report/${draftId}`,
+      location: `/report/${draftId}`,
     });
     expect(started.calls).toEqual([{ method: "POST", path: "/reports/LA-1/follow-ups", body: undefined }]);
     const closed = envelope("followUp.closed");
@@ -60,11 +60,11 @@ describe("the reporter's own report page", () => {
     const call = (act: string) => [{ method: "POST", path: "/reports/LA-1/news", body: { act } }];
     expect(await posted("newsRead")).toEqual([{ kind: "done" }, call("read")]);
     expect(await posted("newsStop")).toEqual([
-      { kind: "redirect", location: "/lapor/reports/LA-1?saved=newsStop" },
+      { kind: "redirect", location: "/reports/LA-1?saved=newsStop" },
       call("stop"),
     ]);
     expect(await posted("newsStart")).toEqual([
-      { kind: "redirect", location: "/lapor/reports/LA-1?saved=newsStart" },
+      { kind: "redirect", location: "/reports/LA-1?saved=newsStart" },
       call("start"),
     ]);
   });
@@ -77,7 +77,7 @@ describe("the reporter's own report page", () => {
 
     const refused = fakeApi(() => Response.json(envelope("report.notFound"), { status: 404 }));
     const back = await loadOwnDocument("LA-1", "semua.zip", refused.api);
-    expect([back.status, back.headers.get("location")]).toEqual([303, "/lapor/reports/LA-1?refused=document"]);
+    expect([back.status, back.headers.get("location")]).toEqual([303, "/reports/LA-1?refused=document"]);
     expect(refused.calls[0]?.path).toBe("/reports/LA-1/documents/0/pdf");
   });
 
@@ -89,6 +89,6 @@ describe("the reporter's own report page", () => {
     ]);
     const refused = fakeApi(() => Response.json(envelope("desk.reportNotFound"), { status: 404 }));
     const back = await downloadDeskDocument("LA-1", form({}), refused.api);
-    expect(back.headers.get("location")).toBe("/lapor/meja/LA-1?refused=document");
+    expect(back.headers.get("location")).toBe("/desk/LA-1?refused=document");
   });
 });

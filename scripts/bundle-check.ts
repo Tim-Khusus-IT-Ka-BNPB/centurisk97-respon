@@ -6,13 +6,13 @@ import { gzipSync } from "node:zlib";
 const BUDGET_BYTES = 300 * 1024;
 const PORT = Number(process.env.E2E_PORT ?? "8787");
 const ORIGIN = `http://localhost:${PORT}`;
-const PAGES = ["/lapor"];
+const PAGES = ["/"];
 const MAP_ASSET = /maplibre/i;
 
 async function waitForHealth(timeoutMs: number): Promise<void> {
   const deadline = Date.now() + timeoutMs;
   while (Date.now() < deadline) {
-    const ok = await fetch(`${ORIGIN}/api/lapor/health`)
+    const ok = await fetch(`${ORIGIN}/api/health`)
       .then((response) => response.ok)
       .catch(() => false);
     if (ok) return;

@@ -4,7 +4,7 @@ import type { ErrorEnvelope } from "../contract/errors";
 import { areaLevelOf } from "../domain/placeSearch";
 import type { ApiCall } from "./bridge";
 
-// GET /lapor/report/<draftId>: the draft page, with place search answered on the server so it
+// GET /report/<draftId>: the draft page, with place search answered on the server so it
 // works with no script. "q" is the typed place text, "area" a regency or district code picked
 // from the results.
 export type DraftPageLoad =

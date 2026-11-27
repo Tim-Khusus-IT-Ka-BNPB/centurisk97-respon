@@ -29,7 +29,6 @@ import FeedRoute, * as feed from "./feed";
 import FeedCardRoute, * as feedCard from "./feedCard";
 import HelpRoute, * as help from "./help";
 import HomeRoute, * as home from "./home";
-import * as rootIndex from "./index";
 import InfoRoute, * as info from "./info";
 import LanguageRoute, * as language from "./language";
 import * as manifest from "./manifest";
@@ -68,11 +67,11 @@ const post = (url: string, entries: [string, string][]) => {
 const unwrap = (value: unknown) => (value as { data: unknown; init: ResponseInit | null }) ?? null;
 const homeLoaderIn = (cookie: string) =>
   home.loader({
-    request: visit("/lapor", cookie),
+    request: visit("/", cookie),
     context: { api: api({ "GET /me": json(SAMPLE_ME), "GET /missing/mine": json([]) }) },
   } as Args);
 // A visitor's request, in the language their cookie names.
-const visit = (path = "/lapor", cookie = "") => new Request(`http://x${path}`, cookie ? { headers: { cookie } } : {});
+const visit = (path = "/", cookie = "") => new Request(`http://x${path}`, cookie ? { headers: { cookie } } : {});
 
 describe("route modules", () => {
   test("report pages are never cached", () => {
@@ -97,28 +96,28 @@ describe("route modules", () => {
   test("the root hands the site's address to every page's links", () => {
     expect(
       root.loader({
-        request: new Request("https://lapor.example.test/lapor", { headers: { cookie: "theme=dark" } }),
-        context: { origin: "https://lapor.example.test" },
+        request: new Request("https://respon.example.test/", { headers: { cookie: "theme=dark" } }),
+        context: { origin: "https://respon.example.test" },
       } as Args),
-    ).toEqual({ origin: "https://lapor.example.test", theme: "dark", language: "id" });
+    ).toEqual({ origin: "https://respon.example.test", theme: "dark", language: "id" });
     // The language picked is the public pages' own; the desk stays Indonesian.
     for (const [path, language] of [
-      ["/lapor/info", "jv"],
-      ["/lapor/meja/LA-261126-01", "id"],
+      ["/info", "jv"],
+      ["/desk/LA-261126-01", "id"],
     ] as const)
       expect(
         root.loader({
-          request: new Request(`https://lapor.example.test${path}`, { headers: { cookie: "bahasa=jv" } }),
-          context: { origin: "https://lapor.example.test" },
+          request: new Request(`https://respon.example.test${path}`, { headers: { cookie: "bahasa=jv" } }),
+          context: { origin: "https://respon.example.test" },
         } as Args).language,
       ).toBe(language);
-    expect(root.shouldRevalidate({ formAction: "/lapor/bahasa" } as Args)).toBe(true);
-    expect(root.shouldRevalidate({ formAction: "/lapor/theme" } as Args)).toBe(true);
-    expect(root.shouldRevalidate({ formAction: "/lapor/report" } as Args)).toBe(false);
+    expect(root.shouldRevalidate({ formAction: "/language" } as Args)).toBe(true);
+    expect(root.shouldRevalidate({ formAction: "/theme" } as Args)).toBe(true);
+    expect(root.shouldRevalidate({ formAction: "/report" } as Args)).toBe(false);
     expect(root.links().map((link) => (link as { href: string }).href)).toEqual([
       "/favicon-32.png",
       "/apple-touch-icon.png",
-      "/lapor/manifest.webmanifest",
+      "/manifest.webmanifest",
     ]);
   });
 
@@ -129,9 +128,9 @@ describe("route modules", () => {
       name: "robots",
       content: "noindex, nofollow",
     });
-    renderPage(routeElement(NotFoundRoute, { loaderData: loaded.data }), { path: "/lapor/nowhere" });
+    renderPage(routeElement(NotFoundRoute, { loaderData: loaded.data }), { path: "/nowhere" });
     expect(await screen.findByRole("heading", { name: "Halaman tidak ditemukan" })).toBeTruthy();
-    expect(screen.getByRole("link", { name: "Ke halaman awal" }).getAttribute("href")).toBe("/lapor");
+    expect(screen.getByRole("link", { name: "Ke halaman awal" }).getAttribute("href")).toBe("/");
   });
 
   test("the app installs with its name, icons and three ways in from the home screen", async () => {
@@ -146,11 +145,11 @@ describe("route modules", () => {
     expect(body).toMatchObject({
       name: "Pantau Bencana BNPB",
       short_name: "Pantau Bencana",
-      start_url: "/lapor",
+      start_url: "/",
       display: "standalone",
     });
     expect(body.icons).toHaveLength(3);
-    expect(body.shortcuts.map((one) => one.url)).toEqual(["/lapor/report", "/lapor/report?darurat=1", "/lapor/feed"]);
+    expect(body.shortcuts.map((one) => one.url)).toEqual(["/report", "/report?emergency=1", "/feed"]);
   });
 
   test("the village posters: a search, a district, one village of it, and a list that cannot be read", async () => {
@@ -183,7 +182,7 @@ describe("route modules", () => {
       };
     const load = (query: string, response: () => Response = json(area)) =>
       poster.loader({
-        request: new Request(`http://localhost/lapor/poster${query}`),
+        request: new Request(`http://localhost/poster${query}`),
         context: { api: answering(response) },
       } as Args);
     expect((await load("")).load).toEqual({ kind: "start", query: "" });
@@ -197,7 +196,7 @@ describe("route modules", () => {
     expect(asked).toContain("/places/search?q=baktiya");
     expect(asked).toContain("/places/districts/11.08.01/villages?q=");
     const shown = await load("?district=11.08.01");
-    renderPage(routeElement(PosterRoute, { loaderData: shown }), { path: "/lapor/poster" });
+    renderPage(routeElement(PosterRoute, { loaderData: shown }), { path: "/poster" });
     expect(await screen.findByRole("heading", { level: 1, name: "Poster QR desa" })).toBeTruthy();
     expect(screen.getAllByRole("article")).toHaveLength(1);
   });
@@ -228,7 +227,7 @@ describe("route modules", () => {
     const load = async (query: string, response: () => Response) =>
       (
         await info.loader({
-          request: new Request(`http://localhost/lapor/info${query}`),
+          request: new Request(`http://localhost/info${query}`),
           context: {
             api: async (_method: string, path: string) => {
               asked.push(path);
@@ -239,7 +238,7 @@ describe("route modules", () => {
       ).load;
     const none = json({}, 500);
     expect(await load("", none)).toEqual({ kind: "start", query: "" });
-    expect(await load("?kab=1108", none)).toEqual({ kind: "start", query: "" });
+    expect(await load("?regency=1108", none)).toEqual({ kind: "start", query: "" });
     expect(await load("?q=ab", none)).toEqual({ kind: "short", query: "ab" });
     expect(await load("?q=aceh", json(found))).toEqual({
       kind: "results",
@@ -250,9 +249,9 @@ describe("route modules", () => {
       ],
     });
     expect(await load("?q=aceh", json({}, 503))).toEqual({ kind: "unavailable", query: "aceh" });
-    expect(await load("?kab=11.08", json(OUTLOOK))).toEqual({ kind: "outlook", query: "", outlook: OUTLOOK });
-    expect(await load("?kab=99.99", json({}, 404))).toEqual({ kind: "none", query: "" });
-    expect(await load("?kab=11.08", json({}, 503))).toEqual({ kind: "unavailable", query: "" });
+    expect(await load("?regency=11.08", json(OUTLOOK))).toEqual({ kind: "outlook", query: "", outlook: OUTLOOK });
+    expect(await load("?regency=99.99", json({}, 404))).toEqual({ kind: "none", query: "" });
+    expect(await load("?regency=11.08", json({}, 503))).toEqual({ kind: "unavailable", query: "" });
     expect(asked).toEqual([
       "/places/search?q=aceh",
       "/places/search?q=aceh",
@@ -265,7 +264,7 @@ describe("route modules", () => {
         loaderData: { load: { kind: "start", query: "" }, texts: pickTexts(PAGE_TEXTS.info) },
       }),
       {
-        path: "/lapor/info",
+        path: "/info",
       },
     );
     expect(await screen.findByRole("heading", { level: 1, name: "Info daerah" })).toBeTruthy();
@@ -296,7 +295,7 @@ describe("route modules", () => {
     };
     const load = async (query: string, answers: Record<string, () => Response>) =>
       missing.loader({
-        request: new Request(`http://x/lapor/orang-hilang${query}`),
+        request: new Request(`http://x/orang-hilang${query}`),
         context: { api: api(answers) },
       } as Args);
     const mine = json([]);
@@ -311,7 +310,7 @@ describe("route modules", () => {
     expect(
       await load("?q=uji", { "GET /missing/mine": mine, "GET /places/search": json({ ...found, items: [] }) }),
     ).toMatchObject({ search: { kind: "none" } });
-    const results = await load("?q=uji&terkirim=1", { "GET /missing/mine": mine, "GET /places/search": json(found) });
+    const results = await load("?q=uji&sent=1", { "GET /missing/mine": mine, "GET /places/search": json(found) });
     expect(results).toMatchObject({
       sent: true,
       search: {
@@ -338,7 +337,7 @@ describe("route modules", () => {
       } as Args);
     };
     const done = (await posted(json({ id: "x" }, 201))) as Response;
-    expect([done.status, done.headers.get("location")]).toEqual([303, "/lapor/orang-hilang?terkirim=1"]);
+    expect([done.status, done.headers.get("location")]).toEqual([303, "/missing?sent=1"]);
     const wrongName = {
       ...apiEnvelope("request.invalidFields"),
       fields: [{ fieldId: "name", copyKey: "fieldError.missing.name", params: {} }],
@@ -347,12 +346,12 @@ describe("route modules", () => {
     expect(refused.init?.status).toBe(422);
     expect(refused.data).toMatchObject({ typed: { name: "Uji", villageCode: "11.08.01.2001" } });
     renderPage(routeElement(MissingRoute, { loaderData: results, actionData: refused.data }), {
-      path: "/lapor/orang-hilang",
+      path: "/missing",
     });
     expect(await screen.findByRole("heading", { level: 1, name: "Lapor orang hilang" })).toBeTruthy();
     expect((screen.getByLabelText("Nama lengkap") as HTMLInputElement).value).toBe("Uji");
     cleanup();
-    renderPage(routeElement(MissingRoute, { loaderData: results }), { path: "/lapor/orang-hilang" });
+    renderPage(routeElement(MissingRoute, { loaderData: results }), { path: "/missing" });
     expect(await screen.findByRole("heading", { name: "Laporan orang hilang terkirim" })).toBeTruthy();
   });
 
@@ -366,42 +365,42 @@ describe("route modules", () => {
         return response();
       };
     const read = await feed.loader({
-      request: new Request("http://localhost/lapor/feed?hazard=flood"),
+      request: new Request("http://localhost/feed?hazard=flood"),
       context: { api: answering(json({ entries: [FEED_ENTRY] })) },
     } as Args);
     expect(read).toMatchObject({ load: { kind: "feed", feed: { entries: [FEED_ENTRY] } }, hazard: "flood" });
     await feed.loader({
-      request: new Request("http://localhost/lapor/feed?hazard=other"),
+      request: new Request("http://localhost/feed?hazard=other"),
       context: { api: answering(json({ entries: [] })) },
     } as Args);
     expect(asked).toEqual(["/feed?hazard=flood", "/feed/official", "/feed", "/feed/official"]);
     const limited = apiEnvelope("limit.address.feed", { params: { limit: 600 } });
     const refused = await feed.loader({
-      request: new Request("http://localhost/lapor/feed"),
+      request: new Request("http://localhost/feed"),
       context: { api: answering(json(limited, 429)) },
     } as Args);
     expect(refused.load).toEqual({ kind: "unavailable", envelope: limited });
     const broken = await feed.loader({
-      request: new Request("http://localhost/lapor/feed"),
+      request: new Request("http://localhost/feed"),
       context: { api: answering(() => new Response("down", { status: 503 })) },
     } as Args);
     expect(broken.load).toEqual({ kind: "unavailable", envelope: null });
     // The Peringatan view reads what is on watch instead.
     const watch = await feed.loader({
-      request: new Request("http://localhost/lapor/feed?mode=peringatan"),
+      request: new Request("http://localhost/feed?mode=peringatan"),
       context: { api: answering(json(WATCH)) },
     } as Args);
     expect(watch).toMatchObject({ mode: "watch", watch: { kind: "watch", watch: WATCH } });
     const watchDown = await feed.loader({
-      request: new Request("http://localhost/lapor/feed?mode=peringatan"),
+      request: new Request("http://localhost/feed?mode=peringatan"),
       context: { api: answering(() => new Response("down", { status: 503 })) },
     } as Args);
     expect(watchDown).toMatchObject({ watch: { kind: "unavailable", envelope: null } });
-    const watchView = renderPage(routeElement(FeedRoute, { loaderData: watch }), { path: "/lapor/feed" });
+    const watchView = renderPage(routeElement(FeedRoute, { loaderData: watch }), { path: "/feed" });
     expect(await screen.findByRole("heading", { name: "Status gunung api" })).toBeTruthy();
     watchView.unmount();
     expect(feed.meta({ data: read, matches: [] } as Args)).toContainEqual({ title: "Alun-alun, Pantau Bencana BNPB" });
-    renderPage(routeElement(FeedRoute, { loaderData: read }), { path: "/lapor/feed" });
+    renderPage(routeElement(FeedRoute, { loaderData: read }), { path: "/feed" });
     expect(await screen.findByRole("heading", { level: 1, name: "Alun-alun" })).toBeTruthy();
   });
 
@@ -413,9 +412,7 @@ describe("route modules", () => {
       api({ "GET /feed": json({ entries: [FEED_ENTRY] }), [`GET /feed/cards/${card}/comments`]: list, "GET /me": me });
     const args = (url: string, answers: ApiCall) =>
       ({ request: new Request(url), params: { cardId: card }, context: { api: answers } }) as Args;
-    const read = await feedCard.loader(
-      args(`http://localhost/lapor/feed/${card}?terkirim=1`, reading(json(SAMPLE_ME))),
-    );
+    const read = await feedCard.loader(args(`http://localhost/feed/${card}?sent=1`, reading(json(SAMPLE_ME))));
     expect(read).toMatchObject({
       kind: "card",
       entry: FEED_ENTRY,
@@ -424,20 +421,18 @@ describe("route modules", () => {
       done: "sent",
     });
     expect(
-      await feedCard.loader(
-        args(`http://localhost/lapor/feed/${card}?dilaporkan=1`, reading(json(SAMPLE_FIELD_ERROR, 401))),
-      ),
+      await feedCard.loader(args(`http://localhost/feed/${card}?reported=1`, reading(json(SAMPLE_FIELD_ERROR, 401)))),
     ).toMatchObject({ known: false, done: "reported" });
-    expect(await feedCard.loader(args(`http://localhost/lapor/feed/${card}`, reading(json(SAMPLE_ME))))).toMatchObject({
+    expect(await feedCard.loader(args(`http://localhost/feed/${card}`, reading(json(SAMPLE_ME))))).toMatchObject({
       done: null,
     });
     const gone = (await feedCard.loader(
-      args(`http://localhost/lapor/feed/${card}`, reading(json(SAMPLE_ME), json(SAMPLE_FIELD_ERROR, 429))),
+      args(`http://localhost/feed/${card}`, reading(json(SAMPLE_ME), json(SAMPLE_FIELD_ERROR, 429))),
     )) as unknown as { data: { kind: string }; init: ResponseInit };
     expect([gone.data.kind, gone.init.status]).toEqual(["gone", 404]);
     const elsewhere = (await feedCard.loader(
       args(
-        `http://localhost/lapor/feed/${card}`,
+        `http://localhost/feed/${card}`,
         api({
           "GET /feed": json({ entries: [{ ...FEED_ENTRY, id: "ffffffffffffffff" }] }),
           [`GET /feed/cards/${card}/comments`]: json(comments),
@@ -448,7 +443,7 @@ describe("route modules", () => {
     expect(elsewhere.data.kind).toBe("gone");
     const downFeed = (await feedCard.loader(
       args(
-        `http://localhost/lapor/feed/${card}`,
+        `http://localhost/feed/${card}`,
         api({
           "GET /feed": () => new Response("down", { status: 503 }),
           [`GET /feed/cards/${card}/comments`]: json(comments),
@@ -463,7 +458,7 @@ describe("route modules", () => {
 
     const acting = (answers: Record<string, () => Response>, entries: [string, string][]) =>
       feedCard.action({
-        request: post(`http://localhost/lapor/feed/${card}`, entries),
+        request: post(`http://localhost/feed/${card}`, entries),
         params: { cardId: card },
         context: { api: api(answers) },
       } as Args);
@@ -471,12 +466,12 @@ describe("route modules", () => {
       ["intent", "comment"],
       ["text", "Air surut"],
     ])) as Response;
-    expect(sent.headers.get("location")).toBe(`/lapor/feed/${card}?terkirim=1#kabar`);
+    expect(sent.headers.get("location")).toBe(`/feed/${card}?sent=1#news`);
     const reported = (await acting({ "POST /feed/comments/0123456789abcdef/report": json({ counted: true }) }, [
       ["intent", "report"],
       ["commentId", "0123456789abcdef"],
     ])) as Response;
-    expect(reported.headers.get("location")).toBe(`/lapor/feed/${card}?dilaporkan=1#kabar`);
+    expect(reported.headers.get("location")).toBe(`/feed/${card}?reported=1#news`);
     const refused = (await acting({ [`POST /feed/cards/${card}/comments`]: json(SAMPLE_FIELD_ERROR, 422) }, [
       ["intent", "comment"],
       ["text", "x"],
@@ -492,28 +487,28 @@ describe("route modules", () => {
     ])) as unknown as { init: ResponseInit };
     expect(noId.init.status).toBe(404);
 
-    const view = renderPage(routeElement(FeedCardRoute, { loaderData: read }), { path: `/lapor/feed/${card}` });
+    const view = renderPage(routeElement(FeedCardRoute, { loaderData: read }), { path: `/feed/${card}` });
     expect(await screen.findByRole("heading", { level: 2, name: "Kabar warga" })).toBeTruthy();
     expect(screen.getByRole("status").textContent).toBe("Kabar Anda sudah tampil di bawah.");
     view.unmount();
     const answered = renderPage(routeElement(FeedCardRoute, { loaderData: read, actionData: refused.data }), {
-      path: `/lapor/feed/${card}`,
+      path: `/feed/${card}`,
     });
     expect(((await screen.findByRole("textbox")) as HTMLTextAreaElement).value).toBe("x");
     expect(screen.queryByRole("status")).toBeNull();
     answered.unmount();
-    const fresh = renderPage(routeElement(FeedCardRoute, { loaderData: read }), { path: `/lapor/feed/${card}` });
+    const fresh = renderPage(routeElement(FeedCardRoute, { loaderData: read }), { path: `/feed/${card}` });
     expect(await screen.findByRole("heading", { level: 2, name: "Kabar warga" })).toBeTruthy();
     expect(screen.queryByRole("link", { name: "Kabar warga" })).toBeNull();
     fresh.unmount();
-    renderPage(routeElement(FeedCardRoute, { loaderData: gone.data }), { path: `/lapor/feed/${card}` });
+    renderPage(routeElement(FeedCardRoute, { loaderData: gone.data }), { path: `/feed/${card}` });
     expect(await screen.findByRole("heading", { name: "Kejadian ini sudah tidak tampil di Alun-alun" })).toBeTruthy();
   });
 
   test("a follow-up file is read for its reader, its forms answered on it, and a member's link posted for", async () => {
     expect(caseFile.headers()).toEqual({ "cache-control": "private, no-store", "x-robots-tag": "noindex" });
     const FILE = CASE_VIEW.file.id;
-    const args = (answers: Record<string, () => Response>, url = `http://localhost/lapor/data/${FILE}`) =>
+    const args = (answers: Record<string, () => Response>, url = `http://localhost/cases/${FILE}`) =>
       ({ request: new Request(url), params: { fileId: FILE }, context: { api: api(answers) } }) as Args;
     const read = unwrap(await caseFile.loader(args({ [`GET /cases/${FILE}`]: json(CASE_VIEW) })));
     expect(read).toMatchObject({ data: { kind: "file", view: CASE_VIEW }, init: { status: 200 } });
@@ -526,7 +521,7 @@ describe("route modules", () => {
     });
     const acting = (answers: Record<string, () => Response>, entries: [string, string][]) =>
       caseFile.action({
-        request: post(`http://localhost/lapor/data/${FILE}`, entries),
+        request: post(`http://localhost/cases/${FILE}`, entries),
         params: { fileId: FILE },
         context: { api: api(answers) },
       } as Args);
@@ -534,7 +529,7 @@ describe("route modules", () => {
       ["intent", "record"],
       ["kind", "house"],
     ])) as Response;
-    expect(kept.headers.get("location")).toBe(`/lapor/data/${FILE}?jenis=house&saved=record`);
+    expect(kept.headers.get("location")).toBe(`/cases/${FILE}?kind=house&saved=record`);
     expect(
       await acting({ [`POST /cases/${FILE}/members`]: json({ link: "http://x/abc" }) }, [
         ["intent", "member"],
@@ -552,18 +547,18 @@ describe("route modules", () => {
     );
     expect(failed).toMatchObject({ init: { status: 409 }, data: { envelope: SAMPLE_FIELD_ERROR } });
     const view = renderPage(routeElement(CaseFileRoute, { loaderData: (read as { data: unknown }).data }), {
-      path: "/lapor/data/:fileId",
-      entry: `/lapor/data/${FILE}`,
+      path: "/cases/:fileId",
+      entry: `/cases/${FILE}`,
     });
     expect(await screen.findByRole("heading", { level: 1, name: "Data lanjutan BPBD" })).toBeTruthy();
     view.unmount();
     const out = renderPage(routeElement(CaseFileRoute, { loaderData: (signIn as { data: unknown }).data }), {
-      path: "/lapor/data/x",
+      path: "/cases/x",
     });
     expect(await screen.findByText(/Buka tautan dari petugas BPBD/)).toBeTruthy();
     out.unmount();
     const denied = renderPage(routeElement(CaseFileRoute, { loaderData: (refused as { data: unknown }).data }), {
-      path: "/lapor/data/x",
+      path: "/cases/x",
     });
     expect(await screen.findByRole("alert")).toBeTruthy();
     denied.unmount();
@@ -577,14 +572,14 @@ describe("route modules", () => {
       context: {
         api: api({
           "POST /case-links/abc": () =>
-            new Response(JSON.stringify({ fileId: FILE }), { headers: { "set-cookie": "lapor_data=x; Path=/" } }),
+            new Response(JSON.stringify({ fileId: FILE }), { headers: { "set-cookie": "case_access=x; Path=/" } }),
         }),
       },
     } as Args)) as Response;
     expect([joined.status, joined.headers.get("location"), joined.headers.get("set-cookie")]).toEqual([
       303,
-      `/lapor/data/${FILE}`,
-      "lapor_data=x; Path=/",
+      `/cases/${FILE}`,
+      "case_access=x; Path=/",
     ]);
     const used = unwrap(
       await caseJoin.action({
@@ -594,7 +589,7 @@ describe("route modules", () => {
     );
     expect(used).toMatchObject({ init: { status: 404 } });
     const page = renderPage(routeElement(CaseJoinRoute, { loaderData: caseJoin.loader() }), {
-      path: "/lapor/data/masuk/abc",
+      path: "/cases/join/abc",
     });
     expect(await screen.findByRole("button", { name: "Masuk" })).toBeTruthy();
     expect(screen.queryByRole("alert")).toBeNull();
@@ -602,7 +597,7 @@ describe("route modules", () => {
     renderPage(
       routeElement(CaseJoinRoute, { loaderData: caseJoin.loader(), actionData: (used as { data: unknown }).data }),
       {
-        path: "/lapor/data/masuk/abc",
+        path: "/cases/join/abc",
       },
     );
     expect((await screen.findByRole("alert")).textContent).toMatch(/sudah dipakai/);
@@ -611,24 +606,24 @@ describe("route modules", () => {
   test("the today page is read on the server, a kind picked from it; shut it answers 404", async () => {
     expect(today.headers()).toEqual({ "cache-control": "private, no-store" });
     const read = await today.loader({
-      request: new Request("http://localhost/lapor/hari-ini?hazard=flood"),
+      request: new Request("http://localhost/today?hazard=flood"),
       context: { api: api({ "GET /today": json(TODAY) }) },
     } as Args);
     expect(read).toMatchObject({ load: { kind: "today", today: TODAY }, hazard: "flood" });
     const shut = (await today.loader({
-      request: new Request("http://localhost/lapor/hari-ini?hazard=other"),
+      request: new Request("http://localhost/today?hazard=other"),
       context: { api: api({ "GET /today": json(apiEnvelope("today.closed"), 404) }) },
     } as Args)) as unknown as { data: { load: unknown; hazard: unknown }; init: ResponseInit };
     expect([shut.data.load, shut.data.hazard, shut.init.status]).toEqual([{ kind: "closed" }, null, 404]);
     const broken = await today.loader({
-      request: new Request("http://localhost/lapor/hari-ini"),
+      request: new Request("http://localhost/today"),
       context: { api: api({ "GET /today": () => new Response("down", { status: 503 }) }) },
     } as Args);
     expect(broken).toMatchObject({ load: { kind: "unavailable", envelope: null } });
     expect(today.meta({ data: read, matches: [] } as Args)).toContainEqual({
       title: "Kejadian hari ini, Pantau Bencana BNPB",
     });
-    renderPage(routeElement(TodayRoute, { loaderData: read }), { path: "/lapor/hari-ini" });
+    renderPage(routeElement(TodayRoute, { loaderData: read }), { path: "/today" });
     expect(await screen.findByRole("heading", { level: 1, name: "Kejadian hari ini" })).toBeTruthy();
   });
 
@@ -650,16 +645,13 @@ describe("route modules", () => {
     } as Args);
     expect(down.me).toBeNull();
     expect(down.missing).toEqual([]);
-    // Upstream's old Alun-alun address opens the feed.
-    const alun = await home.loader({ request: visit("/lapor/?alun"), context: {} } as Args).catch((thrown) => thrown);
-    expect([(alun as Response).status, (alun as Response).headers.get("location")]).toEqual([301, "/lapor/feed"]);
-    renderPage(routeElement(HomeRoute, { loaderData: read }), { path: "/lapor" });
+    renderPage(routeElement(HomeRoute, { loaderData: read }), { path: "/" });
     expect(await screen.findByRole("link", { name: "Lapor kejadian" })).toBeTruthy();
-    expect(screen.getByRole("link", { name: "Lapor darurat" }).getAttribute("href")).toBe("/lapor/report?darurat=1");
+    expect(screen.getByRole("link", { name: "Lapor darurat" }).getAttribute("href")).toBe("/report?emergency=1");
     // One tap is no longer offered on the home page, even where a reporter is known.
     expect(screen.queryByRole("link", { name: "Darurat sekali ketuk" })).toBeNull();
     cleanup();
-    renderPage(routeElement(HomeRoute, { loaderData: down }), { path: "/lapor" });
+    renderPage(routeElement(HomeRoute, { loaderData: down }), { path: "/" });
     expect(await screen.findByRole("link", { name: "Lapor darurat" })).toBeTruthy();
     expect(screen.queryByRole("link", { name: "Darurat sekali ketuk" })).toBeNull();
   });
@@ -679,7 +671,7 @@ describe("route modules", () => {
     expect(ownReport.meta({ data: loaded.data, matches: [] } as Args)).toContainEqual({
       title: "Laporan saya, Pantau Bencana BNPB",
     });
-    renderPage(routeElement(OwnReportRoute, { loaderData: loaded.data }), { path: "/lapor/reports/LA-231126-01" });
+    renderPage(routeElement(OwnReportRoute, { loaderData: loaded.data }), { path: "/reports/LA-231126-01" });
     expect(await screen.findByRole("heading", { level: 1, name: "LA-231126-01" })).toBeTruthy();
     cleanup();
 
@@ -688,14 +680,14 @@ describe("route modules", () => {
       await ownReport.loader({ params, request: visit(), context: { api: api({ [`GET ${path}`]: missing }) } } as Args),
     );
     expect(refused.init?.status).toBe(404);
-    renderPage(routeElement(OwnReportRoute, { loaderData: refused.data }), { path: "/lapor/reports/LA-231126-01" });
+    renderPage(routeElement(OwnReportRoute, { loaderData: refused.data }), { path: "/reports/LA-231126-01" });
     expect(await screen.findByRole("heading", { level: 1, name: "Laporan tidak ditemukan" })).toBeTruthy();
   });
 
   test("news is started by a post that leads to its draft, or drawn with its refusal", async () => {
     const params = { ticketNumber: "LA-231126-01" };
     const path = "POST /reports/LA-231126-01/follow-ups";
-    const request = (action: string) => post("http://localhost/lapor/reports/LA-231126-01", [["action", action]]);
+    const request = (action: string) => post("http://localhost/reports/LA-231126-01", [["action", action]]);
     const act = (answer: () => Response) =>
       ownReport.action({ params, request: request("followUp"), context: { api: api({ [path]: answer }) } } as Args);
     const read = () => new Response(null, { status: 204 });
@@ -717,7 +709,7 @@ describe("route modules", () => {
     };
     expect([revalidates("newsRead"), revalidates("newsStop"), revalidates(null)]).toEqual([false, true, true]);
     const started = (await act(json({ draftId: "d-9" }, 201))) as Response;
-    expect([started.status, started.headers.get("location")]).toEqual([303, "/lapor/report/d-9"]);
+    expect([started.status, started.headers.get("location")]).toEqual([303, "/report/d-9"]);
     const closed = apiEnvelope("followUp.closed", { params: { reason: "followUp.closed.tooLate" } });
     const refused = unwrap(await act(json(closed, 409)));
     expect(refused.init?.status).toBe(409);
@@ -729,7 +721,7 @@ describe("route modules", () => {
       } as Args),
     );
     renderPage(routeElement(OwnReportRoute, { loaderData: loaded.data, actionData: refused.data }), {
-      path: "/lapor/reports/LA-231126-01",
+      path: "/reports/LA-231126-01",
     });
     expect((await screen.findByRole("alert")).textContent).toContain("72 jam");
   });
@@ -738,11 +730,11 @@ describe("route modules", () => {
     const ended = SAMPLE_DRAFTS.followUpEnded;
     const answer = draft.loader({
       params: { draftId: ended.draftId },
-      request: new Request(`http://localhost/lapor/report/${ended.draftId}`),
+      request: new Request(`http://localhost/report/${ended.draftId}`),
       context: { api: api({ [`GET /drafts/${ended.draftId}`]: json(ended) }) },
     } as Args);
     const thrown = (await answer.catch((response: unknown) => response)) as Response;
-    expect([thrown.status, thrown.headers.get("location")]).toEqual([303, "/lapor/reports/LA-231126-01?saved=sent"]);
+    expect([thrown.status, thrown.headers.get("location")]).toEqual([303, "/reports/LA-231126-01?saved=sent"]);
   });
 
   test("documents are files, read by the reporter and posted for by staff", async () => {
@@ -754,7 +746,7 @@ describe("route modules", () => {
     expect(await own.text()).toBe("isi");
     const staff = await deskDocument.action({
       params: { ticketNumber: "LA-1" },
-      request: post("http://localhost/lapor/meja/LA-1/documents", [
+      request: post("http://localhost/desk/LA-1/documents", [
         ["version", "1"],
         ["format", "docx"],
       ]),
@@ -774,13 +766,13 @@ describe("route modules", () => {
       .meta({ data: loaded, matches: [] } as Args)
       .map((tag) => (tag as { title?: string }).title);
     expect(titles.find(Boolean)).toMatch(/^Darurat sekali ketuk/);
-    renderPage(routeElement(EmergencyRoute, { loaderData: loaded }), { path: "/lapor/darurat" });
+    renderPage(routeElement(EmergencyRoute, { loaderData: loaded }), { path: "/emergency" });
     expect(await screen.findByRole("heading", { level: 1, name: "Darurat sekali ketuk" })).toBeTruthy();
     const stranger = await emergency.loader({
       request: visit(),
       context: { api: api({ "GET /emergencies/start": json(SAMPLE_FIELD_ERROR, 401) }) },
     } as Args);
-    expect((stranger as Response).headers.get("location")).toBe("/lapor/report?darurat=1");
+    expect((stranger as Response).headers.get("location")).toBe("/report?emergency=1");
   });
 
   test("the tracking page is never cached or indexed, and reads its report with script", async () => {
@@ -793,7 +785,7 @@ describe("route modules", () => {
       "fetch",
       vi.fn(async () => Response.json(apiEnvelope("tracking.notFound"), { status: 404 })),
     );
-    renderPage(routeElement(TrackingRoute, { loaderData: loaded }), { path: "/lapor/lacak" });
+    renderPage(routeElement(TrackingRoute, { loaderData: loaded }), { path: "/track" });
     expect(await screen.findByRole("heading", { level: 1, name: "Laporan tidak ditemukan." })).toBeTruthy();
     vi.unstubAllGlobals();
   });
@@ -815,7 +807,7 @@ describe("route modules", () => {
       request: visit(),
       context: { api: api({ "GET /education": json(topics) }) },
     } as Args);
-    renderPage(routeElement(HelpRoute, { loaderData: loaded }), { path: "/lapor/help" });
+    renderPage(routeElement(HelpRoute, { loaderData: loaded }), { path: "/help" });
     expect(await screen.findByRole("heading", { level: 2, name: "Istilah" })).toBeTruthy();
     expect(screen.getByRole("heading", { level: 2, name: "Edukasi siaga" })).toBeTruthy();
     expect(screen.getByText("Siapkan tas siaga")).toBeTruthy();
@@ -826,22 +818,20 @@ describe("route modules", () => {
       request: visit(),
       context: { api: api({ "GET /education": json(SAMPLE_FIELD_ERROR, 503) }) },
     } as Args);
-    renderPage(routeElement(HelpRoute, { loaderData: without }), { path: "/lapor/help" });
+    renderPage(routeElement(HelpRoute, { loaderData: without }), { path: "/help" });
     expect(await screen.findByText(/Topik edukasi siaga belum bisa dimuat/)).toBeTruthy();
-    expect(screen.getByRole("link", { name: "Baca kebijakan privasi lengkap" }).getAttribute("href")).toBe(
-      "/lapor/privacy",
-    );
+    expect(screen.getByRole("link", { name: "Baca kebijakan privasi lengkap" }).getAttribute("href")).toBe("/privacy");
     renderPage(routeElement(AboutRoute, { loaderData: about.loader({ request: visit() } as Args) }), {
-      path: "/lapor/about",
+      path: "/about",
     });
     expect(await screen.findByRole("link", { name: /112 Darurat terpadu/ })).toHaveProperty("href", "tel:112");
     expect(screen.getAllByRole("listitem").length).toBeGreaterThan(6);
     renderPage(routeElement(PrivacyRoute, { loaderData: privacy.loader({ request: visit() } as Args) }), {
-      path: "/lapor/privacy",
+      path: "/privacy",
     });
     expect(await screen.findByRole("heading", { level: 2, name: "Hak Anda" })).toBeTruthy();
     expect(screen.getByText("26 November 2026")).toBeTruthy();
-    expect(screen.getAllByRole("link", { name: "Tentang" })[0]?.getAttribute("href")).toBe("/lapor/about");
+    expect(screen.getAllByRole("link", { name: "Tentang" })[0]?.getAttribute("href")).toBe("/about");
     expect(screen.getByRole("link", { name: "Hak Anda" }).getAttribute("href")).toBe("#privacy-rights-2");
     expect(screen.queryByText(/Yang berlaku secara hukum/)).toBeNull();
   });
@@ -851,23 +841,23 @@ describe("route modules", () => {
     expect(numbers.meta({ data: loaded, matches: [] } as Args)[0]).toEqual({
       title: "Nomor penting, Pantau Bencana BNPB",
     });
-    renderPage(routeElement(NumbersRoute, { loaderData: loaded }), { path: "/lapor/nomor-penting" });
+    renderPage(routeElement(NumbersRoute, { loaderData: loaded }), { path: "/numbers" });
     expect(await screen.findByRole("heading", { level: 1, name: "Nomor penting" })).toBeTruthy();
     const calls = screen
       .getAllByRole("link")
       .map((link) => link.getAttribute("href"))
       .filter((href) => href?.startsWith("tel:"));
     expect(calls).toEqual(expect.arrayContaining(["tel:112", "tel:117", "tel:115", "tel:119", "tel:110", "tel:113"]));
-    expect(screen.getByRole("link", { name: "Cari di Info daerah" }).getAttribute("href")).toBe("/lapor/info");
+    expect(screen.getByRole("link", { name: "Cari di Info daerah" }).getAttribute("href")).toBe("/info");
   });
 
   test("a public page is in the visitor's language, and the privacy text says the Indonesian one binds", async () => {
-    const english = privacy.loader({ request: visit("/lapor/privacy", "bahasa=en") } as Args);
+    const english = privacy.loader({ request: visit("/privacy", "bahasa=en") } as Args);
     expect(english.texts["app.lang"]).toBe("en");
     expect(english.texts["privacy.title"]).not.toBe(
       privacy.loader({ request: visit() } as Args).texts["privacy.title"],
     );
-    renderPage(routeElement(PrivacyRoute, { loaderData: english }), { path: "/lapor/privacy" });
+    renderPage(routeElement(PrivacyRoute, { loaderData: english }), { path: "/privacy" });
     expect(await screen.findByText(english.texts["privacy.translationNote"] as string)).toBeTruthy();
     const home = await homeLoaderIn("bahasa=jv");
     expect(home.texts["app.lang"]).toBe("jv");
@@ -881,10 +871,10 @@ describe("route modules", () => {
           Response.json({ draftId: DRAFT }, { status: 201, headers: { "set-cookie": "device_key=x" } }),
       }),
     };
-    const loaded = await start.loader({ request: new Request("http://x/lapor/report"), context } as Args);
+    const loaded = await start.loader({ request: new Request("http://x/report"), context } as Args);
     expect(loaded.view).toBe("list");
     const moved = (await start.action({
-      request: post("http://x/lapor/report?desa=1108012005", [
+      request: post("http://x/report?village=1108012005", [
         ["action", "consent"],
         ["role", "citizen"],
         ["name", "Uji"],
@@ -893,11 +883,11 @@ describe("route modules", () => {
       context,
     } as Args)) as Response;
     expect(moved.status).toBe(303);
-    expect(moved.headers.get("location")).toBe(`/lapor/report/${DRAFT}`);
+    expect(moved.headers.get("location")).toBe(`/report/${DRAFT}`);
     expect(moved.headers.get("set-cookie")).toBe("device_key=x");
     // Who reports is said on the way to a missing person's report, which is where it leads back.
     const back = (await start.action({
-      request: post("http://x/lapor/report?hilang=1", [
+      request: post("http://x/report?missing=1", [
         ["action", "consent"],
         ["role", "citizen"],
         ["name", "Uji"],
@@ -905,22 +895,22 @@ describe("route modules", () => {
       ]),
       context,
     } as Args)) as Response;
-    expect([back.status, back.headers.get("location")]).toEqual([303, "/lapor/orang-hilang"]);
+    expect([back.status, back.headers.get("location")]).toEqual([303, "/missing"]);
     const drawn = unwrap(
-      await start.action({ request: post("http://x/lapor/report", [["action", "decline"]]), context } as Args),
+      await start.action({ request: post("http://x/report", [["action", "decline"]]), context } as Args),
     );
     expect(drawn.data).toMatchObject({ view: "declineConfirm" });
-    renderPage(routeElement(StartRoute, { loaderData: loaded, actionData: undefined }), { path: "/lapor/report" });
+    renderPage(routeElement(StartRoute, { loaderData: loaded, actionData: undefined }), { path: "/report" });
     expect(await screen.findByRole("heading", { name: "Pilih pelapor" })).toBeTruthy();
     cleanup();
     // "Lapor darurat" opens the same page, saying the way is short, with 112 at hand.
     const alarmed = await start.loader({
-      request: new Request("http://x/lapor/report?darurat=1"),
+      request: new Request("http://x/report?emergency=1"),
       context,
     } as Args);
     renderPage(routeElement(StartRoute, { loaderData: alarmed, actionData: undefined }), {
-      path: "/lapor/report",
-      entry: "/lapor/report?darurat=1",
+      path: "/report",
+      entry: "/report?emergency=1",
     });
     expect(await screen.findByRole("heading", { level: 1, name: "Lapor darurat" })).toBeTruthy();
     expect(screen.getByRole("link", { name: /112/ }).getAttribute("href")).toBe("tel:112");
@@ -937,21 +927,21 @@ describe("route modules", () => {
     const loaded = unwrap(
       await draft.loader({
         params: { draftId: DRAFT },
-        request: new Request(`http://x/lapor/report/${DRAFT}`),
+        request: new Request(`http://x/report/${DRAFT}`),
         context,
       } as Args),
     );
     expect(loaded.data).toMatchObject({ kind: "draft", searching: false });
     const sent = (await draft.action({
       params: { draftId: DRAFT },
-      request: post(`http://x/lapor/report/${DRAFT}`, [["action", "send"]]),
+      request: post(`http://x/report/${DRAFT}`, [["action", "send"]]),
       context,
     } as Args)) as Response;
     expect([sent.status, sent.headers.get("X-Remix-Replace")]).toEqual([303, "true"]);
     const refused = unwrap(
       await draft.action({
         params: { draftId: DRAFT },
-        request: post(`http://x/lapor/report/${DRAFT}`, [["dead", "x"]]),
+        request: post(`http://x/report/${DRAFT}`, [["dead", "x"]]),
         context,
       } as Args),
     );
@@ -972,7 +962,7 @@ describe("route modules", () => {
     const loaded = unwrap(
       await draft.loader({
         params: { draftId: DRAFT },
-        request: new Request(`http://x/lapor/report/${DRAFT}`),
+        request: new Request(`http://x/report/${DRAFT}`),
         context,
       } as Args),
     );
@@ -1026,22 +1016,22 @@ describe("desk routes", () => {
     const load = async (answer: () => Response) =>
       unwrap(
         await desk.loader({
-          request: new Request("http://x/lapor/meja?view=list"),
+          request: new Request("http://x/desk?view=list"),
           context: { api: api({ "GET /desk/reports": answer, "GET /desk/summary": json(SUMMARY) }) },
         } as Args),
       );
     const queue = await load(json(QUEUE));
     expect(queue.init?.status).toBe(200);
-    renderPage(routeElement(DeskRoute, { loaderData: queue.data, actionData: undefined }), { path: "/lapor/meja" });
+    renderPage(routeElement(DeskRoute, { loaderData: queue.data, actionData: undefined }), { path: "/desk" });
     expect(await screen.findAllByText("Masuk sebagai Pusdalops BNPB, Petugas Uji")).toHaveLength(2);
     cleanup();
     const signIn = await load(json(signInFirst, 401));
-    renderPage(routeElement(DeskRoute, { loaderData: signIn.data, actionData: undefined }), { path: "/lapor/meja" });
+    renderPage(routeElement(DeskRoute, { loaderData: signIn.data, actionData: undefined }), { path: "/desk" });
     expect(await screen.findByRole("heading", { name: "Masuk meja laporan" })).toBeTruthy();
     cleanup();
     const refused = await load(json(notAllowed, 403));
     expect(refused.init?.status).toBe(403);
-    renderPage(routeElement(DeskRoute, { loaderData: refused.data, actionData: undefined }), { path: "/lapor/meja" });
+    renderPage(routeElement(DeskRoute, { loaderData: refused.data, actionData: undefined }), { path: "/desk" });
     expect(await screen.findByRole("heading", { name: "Meja laporan belum bisa dibuka" })).toBeTruthy();
   });
 
@@ -1053,7 +1043,7 @@ describe("desk routes", () => {
     const load = async (answer: () => Response) =>
       unwrap(
         await deskResponse.loader({
-          request: new Request("http://x/lapor/meja/respons?month=2026-11"),
+          request: new Request("http://x/desk/response?month=2026-11"),
           context: {
             api: api({
               "GET /desk/response": answer,
@@ -1064,7 +1054,7 @@ describe("desk routes", () => {
         } as Args),
       );
     const show = (loaderData: unknown) =>
-      renderPage(routeElement(DeskResponseRoute, { loaderData }), { path: "/lapor/meja/respons" });
+      renderPage(routeElement(DeskResponseRoute, { loaderData }), { path: "/desk/response" });
     show((await load(json({ account: { label: "Petugas Uji" }, month: "2026-11", agencies: [] }))).data);
     expect(await screen.findByRole("heading", { level: 1, name: "Respons BPBD" })).toBeTruthy();
     cleanup();
@@ -1081,7 +1071,7 @@ describe("desk routes", () => {
     const barred = await deskAggregates.action({
       context: { api: api({ "POST /desk/aggregates": json(notAllowed, 403) }) },
     } as Args);
-    expect([barred.status, barred.headers.get("location")]).toEqual([303, "/lapor/meja/respons?refused=aggregates"]);
+    expect([barred.status, barred.headers.get("location")]).toEqual([303, "/desk/response?refused=aggregates"]);
     const pause = async (answer: () => Response, url: string) => {
       const body = new FormData();
       body.set("paused", "1");
@@ -1091,13 +1081,13 @@ describe("desk routes", () => {
       } as Args)) as Response;
       return [done.status, done.headers.get("location")];
     };
-    expect(await pause(json({}), "http://x/lapor/meja/respons?month=2026-10&refused=warnings")).toEqual([
+    expect(await pause(json({}), "http://x/desk/response?month=2026-10&refused=warnings")).toEqual([
       303,
-      "/lapor/meja/respons?month=2026-10",
+      "/desk/response?month=2026-10",
     ]);
-    expect(await pause(json(notAllowed, 403), "http://x/lapor/meja/respons")).toEqual([
+    expect(await pause(json(notAllowed, 403), "http://x/desk/response")).toEqual([
       303,
-      "/lapor/meja/respons?refused=warnings",
+      "/desk/response?refused=warnings",
     ]);
   });
 
@@ -1113,7 +1103,7 @@ describe("desk routes", () => {
         } as Args),
       );
     const show = (loaderData: unknown, actionData?: unknown) =>
-      renderPage(routeElement(DeskPilotRoute, { loaderData, actionData }), { path: "/lapor/meja/pilot" });
+      renderPage(routeElement(DeskPilotRoute, { loaderData, actionData }), { path: "/desk/pilot" });
     const list = json({ account: { label: "Petugas Uji" }, max: 500, items: [] });
     show((await load(list)).data);
     expect(await screen.findByRole("heading", { level: 1, name: "Nomor uji WhatsApp" })).toBeTruthy();
@@ -1128,14 +1118,14 @@ describe("desk routes", () => {
     cleanup();
     const posted = (answer: () => Response) =>
       deskPilot.action({
-        request: post("http://x/lapor/meja/pilot", [
+        request: post("http://x/desk/pilot", [
           ["action", "add"],
           ["number", "12"],
         ]),
         context: { api: api({ "POST /desk/pilot": answer }) },
       } as Args);
     const done = (await posted(json({}))) as Response;
-    expect([done.status, done.headers.get("location")]).toEqual([303, "/lapor/meja/pilot?saved=allowed"]);
+    expect([done.status, done.headers.get("location")]).toEqual([303, "/desk/pilot?saved=allowed"]);
     const again = unwrap(await posted(json(notAllowed, 403)));
     expect(again.init?.status).toBe(403);
     show((await load(list)).data, again.data);
@@ -1161,10 +1151,10 @@ describe("desk routes", () => {
         } as Args),
       );
     const show = (loaderData: unknown, actionData?: unknown) =>
-      renderPage(routeElement(DeskMissingRoute, { loaderData, actionData }), { path: "/lapor/meja/orang-hilang" });
-    const listed = await load("http://x/lapor/meja/orang-hilang?status=toSar&saved=1", json({ items: [] }));
+      renderPage(routeElement(DeskMissingRoute, { loaderData, actionData }), { path: "/desk/missing" });
+    const listed = await load("http://x/desk/missing?status=toSar&saved=1", json({ items: [] }));
     expect(listed.data).toMatchObject({ kind: "missing", status: "toSar", saved: true, items: [] });
-    expect((await load("http://x/lapor/meja/orang-hilang?status=gone", json({ items: [] }))).data).toMatchObject({
+    expect((await load("http://x/desk/missing?status=gone", json({ items: [] }))).data).toMatchObject({
       status: null,
       saved: false,
     });
@@ -1172,10 +1162,10 @@ describe("desk routes", () => {
     show(listed.data);
     expect(await screen.findByRole("heading", { level: 1, name: "Orang dicari" })).toBeTruthy();
     cleanup();
-    show((await load("http://x/lapor/meja/orang-hilang", json(signInFirst, 401))).data);
+    show((await load("http://x/desk/missing", json(signInFirst, 401))).data);
     expect(await screen.findByRole("heading", { name: "Masuk meja laporan" })).toBeTruthy();
     cleanup();
-    const refused = await load("http://x/lapor/meja/orang-hilang", json(notAllowed, 403));
+    const refused = await load("http://x/desk/missing", json(notAllowed, 403));
     expect(refused.init?.status).toBe(403);
     show(refused.data);
     expect(await screen.findByRole("heading", { name: "Meja laporan belum bisa dibuka" })).toBeTruthy();
@@ -1195,15 +1185,12 @@ describe("desk routes", () => {
           },
         },
       } as Args);
-    const done = (await moved("http://x/lapor/meja/orang-hilang?status=open", json({}))) as Response;
-    expect([done.status, done.headers.get("location")]).toEqual([
-      303,
-      "/lapor/meja/orang-hilang?status=open&saved=1#orang-abc",
-    ]);
-    const plain = (await moved("http://x/lapor/meja/orang-hilang", json({}))) as Response;
-    expect(plain.headers.get("location")).toBe("/lapor/meja/orang-hilang?saved=1#orang-abc");
+    const done = (await moved("http://x/desk/missing?status=open", json({}))) as Response;
+    expect([done.status, done.headers.get("location")]).toEqual([303, "/desk/missing?status=open&saved=1#orang-abc"]);
+    const plain = (await moved("http://x/desk/missing", json({}))) as Response;
+    expect(plain.headers.get("location")).toBe("/desk/missing?saved=1#orang-abc");
     expect(sent[0]).toEqual(["/desk/missing/abc/status", { to: "foundSafe", note: "Di posko" }]);
-    const again = unwrap(await moved("http://x/lapor/meja/orang-hilang", json(notAllowed, 409)));
+    const again = unwrap(await moved("http://x/desk/missing", json(notAllowed, 409)));
     expect(again.init?.status).toBe(409);
     show(listed.data, again.data);
     expect(await screen.findByText(/^Akun ini belum berhak/)).toBeTruthy();
@@ -1211,7 +1198,7 @@ describe("desk routes", () => {
 
   test("signing in redirects with the cookie; a refused code renders with its status", async () => {
     const signed = await desk.action({
-      request: post("http://x/lapor/meja", [["code", "abc"]]),
+      request: post("http://x/desk", [["code", "abc"]]),
       context: {
         api: api({ "POST /desk/session": () => new Response(null, { status: 204, headers: { "set-cookie": "s=1" } }) }),
       },
@@ -1220,7 +1207,7 @@ describe("desk routes", () => {
     expect((signed as Response).headers.get("set-cookie")).toBe("s=1");
     const refused = unwrap(
       await desk.action({
-        request: post("http://x/lapor/meja", [["code", "x"]]),
+        request: post("http://x/desk", [["code", "x"]]),
         context: { api: api({ "POST /desk/session": json(signInFirst, 422) }) },
       } as Args),
     );
@@ -1280,20 +1267,20 @@ describe("desk routes", () => {
       );
     const read = await load(json(REPORT));
     renderPage(routeElement(DeskReportRoute, { loaderData: read.data, actionData: undefined }), {
-      path: "/lapor/meja/x",
+      path: "/desk/x",
     });
     expect(await screen.findByRole("heading", { name: "LA-241126-01" })).toBeTruthy();
     cleanup();
     const signIn = await load(json(signInFirst, 401));
     renderPage(routeElement(DeskReportRoute, { loaderData: signIn.data, actionData: undefined }), {
-      path: "/lapor/meja/x",
+      path: "/desk/x",
     });
     expect(await screen.findByRole("heading", { name: "Masuk meja laporan" })).toBeTruthy();
     cleanup();
     const refused = await load(json(notAllowed, 404));
     expect(refused.init?.status).toBe(404);
     renderPage(routeElement(DeskReportRoute, { loaderData: refused.data, actionData: undefined }), {
-      path: "/lapor/meja/x",
+      path: "/desk/x",
     });
     expect(await screen.findByRole("heading", { name: "Meja laporan belum bisa dibuka" })).toBeTruthy();
     cleanup();
@@ -1301,7 +1288,7 @@ describe("desk routes", () => {
       json({ ...notAllowed, error: { ...notAllowed.error, code: "desk.reportNotFound" } }, 404),
     );
     renderPage(routeElement(DeskReportRoute, { loaderData: missing.data, actionData: undefined }), {
-      path: "/lapor/meja/x",
+      path: "/desk/x",
     });
     expect(await screen.findByRole("heading", { name: "Laporan tidak ditemukan" })).toBeTruthy();
     cleanup();
@@ -1312,19 +1299,19 @@ describe("desk routes", () => {
         actionData: { envelope: notAllowed, typed: null, identity: null, officer: null },
       }),
       {
-        path: "/lapor/meja/LA-241126-01",
+        path: "/desk/LA-241126-01",
       },
     );
     expect((await screen.findByRole("alert")).textContent).toContain("belum berhak");
     const viewed = await deskReport.action({
       params: { ticketNumber: "LA-241126-01" },
-      request: post("http://x/lapor/meja/LA-241126-01", []),
+      request: post("http://x/desk/LA-241126-01", []),
       context: { api: api({ "POST /desk/reports/LA-241126-01/view": json(REPORT) }) },
     } as Args);
-    expect((viewed as Response).headers.get("location")).toBe("/lapor/meja/LA-241126-01");
+    expect((viewed as Response).headers.get("location")).toBe("/desk/LA-241126-01");
     const opened = await deskReport.action({
       params: { ticketNumber: "LA-241126-01" },
-      request: post("http://x/lapor/meja/LA-241126-01", [["action", "opened"]]),
+      request: post("http://x/desk/LA-241126-01", [["action", "opened"]]),
       context: { api: api({ "POST /desk/reports/LA-241126-01/view": json(REPORT) }) },
     } as Args);
     expect(opened).toBeNull();
@@ -1332,7 +1319,7 @@ describe("desk routes", () => {
     const asked = unwrap(
       await deskReport.action({
         params: { ticketNumber: "LA-241126-01" },
-        request: post("http://x/lapor/meja/LA-241126-01", [["action", "identity"]]),
+        request: post("http://x/desk/LA-241126-01", [["action", "identity"]]),
         context: { api: api({ "POST /desk/reports/LA-241126-01/identity": json(who) }) },
       } as Args),
     );
@@ -1341,7 +1328,7 @@ describe("desk routes", () => {
     const opened2 = unwrap(
       await deskReport.action({
         params: { ticketNumber: "LA-241126-01" },
-        request: post("http://x/lapor/meja/LA-241126-01", [
+        request: post("http://x/desk/LA-241126-01", [
           ["action", "officerNumber"],
           ["profileId", "profile-a"],
         ]),
@@ -1352,7 +1339,7 @@ describe("desk routes", () => {
     const limited = unwrap(
       await deskReport.action({
         params: { ticketNumber: "LA-241126-01" },
-        request: post("http://x/lapor/meja/LA-241126-01", []),
+        request: post("http://x/desk/LA-241126-01", []),
         context: { api: api({ "POST /desk/reports/LA-241126-01/view": json(notAllowed, 403) }) },
       } as Args),
     );
@@ -1368,24 +1355,24 @@ describe("theme route", () => {
       return new Response(null, { status: 204, headers: { "set-cookie": "theme=dark; Path=/" } });
     };
     const done = (await theme.action({
-      request: post("http://x/lapor/theme", [
+      request: post("http://x/theme", [
         ["theme", "dark"],
-        ["back", "/lapor/meja?view=map"],
+        ["back", "/desk?view=map"],
       ]),
       context: { api: answer },
     } as Args)) as Response;
     expect(calls).toEqual([["/preferences/theme", { theme: "dark" }]]);
     expect(done.status).toBe(303);
-    expect(done.headers.get("location")).toBe("/lapor/meja?view=map");
+    expect(done.headers.get("location")).toBe("/desk?view=map");
     expect(done.headers.get("set-cookie")).toBe("theme=dark; Path=/");
     const away = (await theme.action({
-      request: post("http://x/lapor/theme", [
+      request: post("http://x/theme", [
         ["theme", "dark"],
         ["back", "https://evil.example"],
       ]),
       context: { api: answer },
     } as Args)) as Response;
-    expect(away.headers.get("location")).toBe("/lapor");
+    expect(away.headers.get("location")).toBe("/");
   });
 });
 
@@ -1397,16 +1384,16 @@ describe("language route", () => {
       return new Response(null, { status: 204, headers: { "set-cookie": "bahasa=ace; Path=/" } });
     };
     const done = (await language.action({
-      request: post("http://x/lapor/bahasa", [
+      request: post("http://x/language", [
         ["language", "ace"],
-        ["back", "/lapor/report?desa=1108012005"],
+        ["back", "/report?village=1108012005"],
       ]),
       context: { api: answer },
     } as Args)) as Response;
     expect(calls).toEqual([["/preferences/language", { language: "ace" }]]);
     expect([done.status, done.headers.get("location"), done.headers.get("set-cookie")]).toEqual([
       303,
-      "/lapor/report?desa=1108012005",
+      "/report?village=1108012005",
       "bahasa=ace; Path=/",
     ]);
   });
@@ -1417,22 +1404,12 @@ describe("language route", () => {
       title: "Pilih bahasa, Pantau Bencana BNPB",
     });
     const loaded = language.loader({
-      request: new Request("http://x/lapor/bahasa?back=%2Flapor%2Freport%3Fdesa%3D1"),
+      request: new Request("http://x/language?back=%2Freport%3Fvillage%3D1"),
     } as Args);
-    expect(loaded.back).toBe("/lapor/report?desa=1");
-    expect(language.loader({ request: new Request("http://x/lapor/bahasa?back=https://x.test") } as Args).back).toBe(
-      "/lapor",
-    );
-    renderPage(routeElement(LanguageRoute, { loaderData: loaded }), { path: "/lapor/bahasa" });
+    expect(loaded.back).toBe("/report?village=1");
+    expect(language.loader({ request: new Request("http://x/language?back=https://x.test") } as Args).back).toBe("/");
+    renderPage(routeElement(LanguageRoute, { loaderData: loaded }), { path: "/language" });
     expect(await screen.findByRole("heading", { name: "Pilih bahasa Anda" })).toBeTruthy();
-    expect(screen.getByRole("link", { name: "Tutup" }).getAttribute("href")).toBe("/lapor/report?desa=1");
-  });
-});
-
-describe("the site root", () => {
-  test("leads to the service under /lapor", () => {
-    const answer = rootIndex.loader() as Response;
-    expect(answer.status).toBe(302);
-    expect(answer.headers.get("location")).toBe("/lapor");
+    expect(screen.getByRole("link", { name: "Tutup" }).getAttribute("href")).toBe("/report?village=1");
   });
 });

@@ -89,9 +89,9 @@ async function fileWithHouse() {
 const putPart = (path: string, bytes: Uint8Array, phone = staff(REGENCY)) => {
   const cookie = [...phone.cookies].map(([name, value]) => `${name}=${value}`).join("; ");
   return fetchApi(
-    new Request(`http://localhost/api/lapor${path}`, {
+    new Request(`http://localhost/api${path}`, {
       method: "PUT",
-      headers: { "cf-connecting-ip": phone.address, origin: TEST_ORIGIN, "x-lapor-client": "1", cookie },
+      headers: { "cf-connecting-ip": phone.address, origin: TEST_ORIGIN, "x-respon-client": "1", cookie },
       body: new Uint8Array(bytes),
     }),
   );
@@ -139,10 +139,10 @@ describe("a record's video", () => {
       "bytes",
     ]);
     const part = await fetchApi(
-      new Request(`http://localhost/api/lapor/cases/${fileId}/media/${progress.id}`, {
+      new Request(`http://localhost/api/cases/${fileId}/media/${progress.id}`, {
         headers: {
           "cf-connecting-ip": "2001:db8::1",
-          "x-lapor-client": "1",
+          "x-respon-client": "1",
           cookie: `seeded_session=${(SEEDED_SESSIONS[DESK] as { token: string }).token}`,
           range: "bytes=0-99",
         },

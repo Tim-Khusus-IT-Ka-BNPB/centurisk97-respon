@@ -1,4 +1,3 @@
-import { redirect } from "react-router";
 import type { MeResponse } from "../../src/contract/draft";
 import { HomeHero } from "../components/organisms/HomeHero";
 import { HomeScreen } from "../components/organisms/HomeScreen";
@@ -11,14 +10,12 @@ import type { Route } from "./+types/home";
 export const headers = () => ({ "cache-control": "private, no-store" });
 
 export const meta = (args: Route.MetaArgs) =>
-  pageMeta(args, { title: "page.home.title", description: "meta.home.description", path: "/lapor" });
+  pageMeta(args, { title: "page.home.title", description: "meta.home.description", path: "/" });
 
 // The resume offer is read on the server; seeing it does not count as acting on the draft.
 // The missing persons this phone reported show in Laporan saya too; a phone nobody reported from
 // has none.
 export async function loader({ request, context }: Route.LoaderArgs) {
-  // Upstream's Alun-alun lived at /lapor/?alun (LR-01, K94): an old link opens our feed.
-  if (new URL(request.url).searchParams.has("alun")) throw redirect("/lapor/feed", 301);
   const [response, sought] = await Promise.all([context.api("GET", "/me"), context.api("GET", "/missing/mine")]);
   const me = response.ok ? ((await response.json()) as MeResponse) : null;
   const missing = sought.ok ? ((await sought.json()) as MissingMine[]) : [];

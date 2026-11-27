@@ -17,13 +17,13 @@ export function SiteFooter({ width }: { readonly width: string }) {
       >
         <BrandLockup tone="hero" />
         <nav className="flex flex-wrap gap-x-5 text-meta">
-          <Link to="/lapor/help" className={link}>
+          <Link to="/help" className={link}>
             {t("help.title")}
           </Link>
-          <Link to="/lapor/about" className={link}>
+          <Link to="/about" className={link}>
             {t("nav.about")}
           </Link>
-          <Link to="/lapor/privacy" className={link}>
+          <Link to="/privacy" className={link}>
             {t("nav.privacy")}
           </Link>
         </nav>

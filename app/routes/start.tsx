@@ -10,7 +10,7 @@ import type { Route } from "./+types/start";
 export const headers = () => ({ "cache-control": "private, no-store" });
 
 export const meta = (args: Route.MetaArgs) =>
-  pageMeta(args, { title: "page.report.title", description: "meta.report.description", path: "/lapor/report" });
+  pageMeta(args, { title: "page.report.title", description: "meta.report.description", path: "/report" });
 
 export async function loader({ request, context }: Route.LoaderArgs) {
   return loadStartPage(new URL(request.url), context.api, languageFrom(request.headers.get("cookie")));
@@ -20,7 +20,7 @@ export async function action({ request, context }: Route.ActionArgs) {
   const url = new URL(request.url);
   const acted = await actOnStart(await request.formData(), context.api, isEmergency(url), posterVillageCode(url));
   // Who reports is known now: a missing person's report goes back to its own page.
-  const location = acted.kind === "redirect" && url.searchParams.has("hilang") ? "/lapor/orang-hilang" : null;
+  const location = acted.kind === "redirect" && url.searchParams.has("missing") ? "/missing" : null;
   if (acted.kind === "redirect") return redirect(location ?? acted.location, { status: 303, headers: acted.headers });
   return data(acted.data, { status: acted.status });
 }

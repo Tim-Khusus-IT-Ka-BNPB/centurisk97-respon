@@ -27,11 +27,12 @@ describe("theme", () => {
   });
 
   test("returns only to a page of this site", () => {
-    expect(safeReturn("/lapor/meja?view=map")).toBe("/lapor/meja?view=map");
-    expect(safeReturn("/lapor")).toBe("/lapor");
-    expect(safeReturn("//evil.example")).toBe("/lapor");
-    expect(safeReturn("/laporan")).toBe("/lapor");
-    expect(safeReturn("https://evil.example/lapor")).toBe("/lapor");
-    expect(safeReturn(null)).toBe("/lapor");
+    expect(safeReturn("/desk?view=map")).toBe("/desk?view=map");
+    expect(safeReturn("/")).toBe("/");
+    expect(safeReturn("//evil.example")).toBe("/");
+    expect(safeReturn("/\\evil.example")).toBe("/");
+    expect(safeReturn("/reports/LA-241126-01")).toBe("/reports/LA-241126-01");
+    expect(safeReturn("https://evil.example/")).toBe("/");
+    expect(safeReturn(null)).toBe("/");
   });
 });

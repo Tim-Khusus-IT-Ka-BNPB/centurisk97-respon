@@ -85,7 +85,7 @@ describe("who reaches the desk", () => {
     const ticket = await typedReport();
     const cookie = `seeded_session=${(SEEDED_SESSIONS[2] as { token: string }).token}`;
     const response = await fetchApi(
-      new Request(`http://localhost/api/lapor/desk/reports/${ticket}/view`, {
+      new Request(`http://localhost/api/desk/reports/${ticket}/view`, {
         method: "POST",
         headers: { "cf-connecting-ip": "198.51.100.9", origin: "http://localhost:5173", cookie },
       }),
@@ -378,12 +378,12 @@ describe("seeded staff sign-in", () => {
   test("the cookie is HttpOnly and SameSite Lax, Secure over https", async () => {
     const signIn = (origin: string) =>
       fetchApi(
-        new Request(`${origin}/api/lapor/desk/session`, {
+        new Request(`${origin}/api/desk/session`, {
           method: "POST",
           headers: {
             "cf-connecting-ip": "198.51.100.77",
             origin: "http://localhost:5173",
-            "x-lapor-client": "1",
+            "x-respon-client": "1",
             "content-type": "application/json",
           },
           body: JSON.stringify({ code: (SEEDED_SESSIONS[2] as { token: string }).token }),

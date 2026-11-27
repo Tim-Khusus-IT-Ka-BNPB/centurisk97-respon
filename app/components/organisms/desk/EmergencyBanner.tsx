@@ -51,7 +51,7 @@ export function EmergencyBanner({ initial }: { readonly initial: readonly DeskEm
       notify(
         t("desk.emergency.notice"),
         t("desk.emergency.place", { village: one.villageName, regency: one.regencyName }),
-        `/lapor/meja/${one.ticketNumber}`,
+        `/desk/${one.ticketNumber}`,
       );
   }, [emergencies, t]);
   if (emergencies.length === 0) return null;
@@ -72,7 +72,7 @@ export function EmergencyBanner({ initial }: { readonly initial: readonly DeskEm
         {emergencies.map((one) => (
           <li key={one.ticketNumber} className="flex max-w-[78vw] shrink-0 lg:max-w-none">
             <Link
-              to={`/lapor/meja/${one.ticketNumber}`}
+              to={`/desk/${one.ticketNumber}`}
               className="flex min-h-target-min min-w-0 flex-col justify-center rounded-control bg-signal-deep px-3 py-1.5 text-meta leading-snug text-on-signal no-underline hover:bg-[color-mix(in_oklab,var(--signal-deep),var(--on-signal)_14%)]"
             >
               <span className="truncate font-bold">

@@ -14,12 +14,12 @@ describe("an upload a reload cut off", () => {
     keepUpload("d1", { id: "u1", size: 4, modified: 9 });
     keepUpload("d2", { id: "u2", size: 5, modified: 9 });
     expect(openUpload("d1")).toEqual({ id: "u1", size: 4, modified: 9 });
-    expect(localStorage.getItem("lapor-video")).not.toContain("x.mp4");
+    expect(localStorage.getItem("respon-video")).not.toContain("x.mp4");
     dropUpload("d1");
     expect(openUpload("d1")).toBeNull();
     expect(openUpload("d2")).toMatchObject({ id: "u2" });
     dropUpload("d2");
-    expect(localStorage.getItem("lapor-video")).toBeNull();
+    expect(localStorage.getItem("respon-video")).toBeNull();
   });
 
   test("knows its file again by size and modified time", () => {
@@ -30,9 +30,9 @@ describe("an upload a reload cut off", () => {
   });
 
   test("storage that holds nothing readable, or refuses, starts over", () => {
-    localStorage.setItem("lapor-video", "[1]");
+    localStorage.setItem("respon-video", "[1]");
     expect(openUpload("d1")).toBeNull();
-    localStorage.setItem("lapor-video", "{broken");
+    localStorage.setItem("respon-video", "{broken");
     expect(openUpload("d1")).toBeNull();
     vi.spyOn(Storage.prototype, "setItem").mockImplementation(() => {
       throw new Error("full");

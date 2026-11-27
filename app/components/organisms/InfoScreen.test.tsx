@@ -4,7 +4,7 @@ import { OUTLOOK } from "../../testing/outlook";
 import { renderPage } from "../../testing/render";
 import { analysisOf, type InfoLoad, InfoScreen } from "./InfoScreen";
 
-const draw = (load: InfoLoad) => renderPage(<InfoScreen load={load} />, { path: "/lapor/info" });
+const draw = (load: InfoLoad) => renderPage(<InfoScreen load={load} />, { path: "/info" });
 const phones = () =>
   screen
     .getAllByRole("link")
@@ -35,7 +35,7 @@ describe("the regional outlook", () => {
     expect(within(days[2] as HTMLElement).getByText("Curah hujan belum diketahui")).toBeTruthy();
     expect(screen.getByText(": Siapkan tas siaga", { exact: false })).toBeTruthy();
     expect(phones()).toEqual(["tel:112", "tel:117", "tel:080011080001"]);
-    expect(screen.getByRole("link", { name: "Ganti wilayah" }).getAttribute("href")).toBe("/lapor/info");
+    expect(screen.getByRole("link", { name: "Ganti wilayah" }).getAttribute("href")).toBe("/info");
     expect(screen.queryByRole("searchbox")).toBeNull();
   });
 
@@ -84,7 +84,7 @@ describe("the regional outlook", () => {
       ],
     });
     const found = await screen.findByRole("link", { name: "Aceh Utara, Aceh" });
-    expect(found.getAttribute("href")).toBe("/lapor/info?kab=11.08");
+    expect(found.getAttribute("href")).toBe("/info?regency=11.08");
     expect((screen.getByRole("searchbox") as HTMLInputElement).value).toBe("aceh");
     expect(phones()).toEqual(["tel:112", "tel:117"]);
   });

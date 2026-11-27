@@ -10,7 +10,7 @@ import type { Route } from "./+types/caseFile";
 export const headers = () => ({ "cache-control": "private, no-store", "x-robots-tag": "noindex" });
 
 export const meta = (args: Route.MetaArgs) =>
-  pageMeta(args, { title: "page.case.title", description: "meta.case.description", path: "/lapor/data", index: false });
+  pageMeta(args, { title: "page.case.title", description: "meta.case.description", path: "/cases", index: false });
 
 export async function loader({ params, request, context }: Route.LoaderArgs) {
   const load = await loadCase(params.fileId, new URL(request.url), context.api);

@@ -45,18 +45,18 @@ describe("copy for a page", () => {
       "meta.help.description": "Cara memakai {appName}.",
       "meta.image.alt": "{appName}, lapor",
     };
-    const matches = [{ id: "root", data: { origin: "https://lapor.example.test" } }];
+    const matches = [{ id: "root", data: { origin: "https://respon.example.test" } }];
     const tags = pageMeta(
       { data: { texts }, matches },
-      { title: "page.help.title", description: "meta.help.description", path: "/lapor/help" },
+      { title: "page.help.title", description: "meta.help.description", path: "/help" },
     );
     const value = (key: string) =>
       (tags.find((tag) => Object.values(tag).includes(key)) as Record<string, string> | undefined)?.content;
     expect(tags[0]).toEqual({ title: "Bantuan, Pantau" });
     expect(value("description")).toBe("Cara memakai Pantau.");
-    expect(tags).toContainEqual({ tagName: "link", rel: "canonical", href: "https://lapor.example.test/lapor/help" });
-    expect(value("og:url")).toBe("https://lapor.example.test/lapor/help");
-    expect(value("og:image")).toBe("https://lapor.example.test/og/lapor.png");
+    expect(tags).toContainEqual({ tagName: "link", rel: "canonical", href: "https://respon.example.test/help" });
+    expect(value("og:url")).toBe("https://respon.example.test/help");
+    expect(value("og:image")).toBe("https://respon.example.test/og/respon.png");
     expect(value("og:site_name")).toBe("Pantau");
     expect(value("og:image:alt")).toBe("Pantau, lapor");
     expect(value("twitter:card")).toBe("summary_large_image");
@@ -72,7 +72,7 @@ describe("copy for a page", () => {
     };
     const hidden = pageMeta(
       { data: { texts }, matches: [] },
-      { title: "page.draft.title", description: "meta.draft.description", path: "/lapor/report", index: false },
+      { title: "page.draft.title", description: "meta.draft.description", path: "/report", index: false },
     );
     expect(hidden).toContainEqual({ name: "robots", content: "noindex, nofollow" });
     expect(

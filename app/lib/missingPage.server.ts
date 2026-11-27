@@ -21,7 +21,7 @@ async function searchOf(query: string, api: ApiCall): Promise<MissingSearch> {
   return villages.length === 0 ? { kind: "none" } : { kind: "results", villages };
 }
 
-// GET /lapor/orang-hilang: read on the server so it works with no script. A phone that has not said
+// GET /missing: read on the server so it works with no script. A phone that has not said
 // who reports is sent to say so first; then a village search, and the form under its results.
 export async function loadMissingPage(url: URL, api: ApiCall, language: LanguageId): Promise<MissingLoad> {
   const texts = pickTexts(PAGE_TEXTS.missing, null, language);
@@ -34,7 +34,7 @@ export async function loadMissingPage(url: URL, api: ApiCall, language: Language
     query,
     search: await searchOf(query, api),
     mine: (await mine.json()) as MissingMine[],
-    sent: url.searchParams.has("terkirim"),
+    sent: url.searchParams.has("sent"),
   };
 }
 
@@ -47,7 +47,7 @@ export type MissingActed =
       readonly typed: Readonly<Record<string, string>>;
     };
 
-// POST /lapor/orang-hilang: the form as typed, its photo too, on to the service.
+// POST /missing: the form as typed, its photo too, on to the service.
 export async function actOnMissing(form: FormData, api: ApiCall): Promise<MissingActed> {
   const response = await api("POST", "/missing", form);
   if (response.ok) return { kind: "sent" };

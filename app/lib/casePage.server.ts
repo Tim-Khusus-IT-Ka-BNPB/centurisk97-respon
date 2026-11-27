@@ -17,14 +17,14 @@ export type CaseLoad =
   | { readonly kind: "refused"; readonly status: number; readonly texts: Texts; readonly envelope: ErrorEnvelope };
 
 export function tabOf(search: URLSearchParams): CaseTab {
-  const asked = search.get("jenis");
+  const asked = search.get("kind");
   return {
     kind: CASE_KINDS.find((one) => one === asked) ?? "house",
-    editing: /^[0-9a-f]{16}$/.test(search.get("ubah") ?? "") ? (search.get("ubah") as string) : null,
+    editing: /^[0-9a-f]{16}$/.test(search.get("edit") ?? "") ? (search.get("edit") as string) : null,
   };
 }
 
-// GET /lapor/data/<file>: the file as its reader may see it, or why not.
+// GET /cases/<file>: the file as its reader may see it, or why not.
 export async function loadCase(fileId: string, url: URL, api: ApiCall): Promise<CaseLoad> {
   const response = await api("GET", `/cases/${encodeURIComponent(fileId)}`);
   if (response.ok)
@@ -144,7 +144,7 @@ function casePost(form: FormData): readonly [path: string, body: unknown] {
   }
 }
 
-// POST /lapor/data/<file>: one of the screen's forms. A change kept goes back to the tab it was made
+// POST /cases/<file>: one of the screen's forms. A change kept goes back to the tab it was made
 // on; a new member's link and a record shown in full are answered on the page itself.
 export async function actOnCase(fileId: string, form: FormData, api: ApiCall): Promise<CaseActed> {
   const file = encodeURIComponent(fileId);
@@ -164,22 +164,22 @@ export async function actOnCase(fileId: string, form: FormData, api: ApiCall): P
     return { kind: "revealed", recordId: text(form, "recordId"), personal };
   }
   const kind = text(form, "kind");
-  const tab = CASE_KINDS.some((one) => one === kind) ? `?jenis=${kind}&saved=${intent}` : `?saved=${intent}`;
-  return { kind: "redirect", location: `/lapor/data/${file}${tab}` };
+  const tab = CASE_KINDS.some((one) => one === kind) ? `?kind=${kind}&saved=${intent}` : `?saved=${intent}`;
+  return { kind: "redirect", location: `/cases/${file}${tab}` };
 }
 
 export type LinkActed =
   | { readonly kind: "joined"; readonly location: string; readonly headers: Headers }
   | { readonly kind: "refused"; readonly envelope: ErrorEnvelope };
 
-// POST /lapor/data/masuk/<token>: the link exchanged for the member's own cookie, then the file.
+// POST /cases/join/<token>: the link exchanged for the member's own cookie, then the file.
 export async function joinCase(token: string, api: ApiCall): Promise<LinkActed> {
   const response = await api("POST", `/case-links/${encodeURIComponent(token)}`);
   if (!response.ok) return { kind: "refused", envelope: (await response.json()) as ErrorEnvelope };
   const { fileId } = (await response.json()) as { fileId: string };
   const headers = new Headers();
   for (const cookie of response.headers.getSetCookie()) headers.append("set-cookie", cookie);
-  return { kind: "joined", location: `/lapor/data/${encodeURIComponent(fileId)}`, headers };
+  return { kind: "joined", location: `/cases/${encodeURIComponent(fileId)}`, headers };
 }
 
 export const caseTexts = texts;

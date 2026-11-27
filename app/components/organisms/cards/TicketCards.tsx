@@ -15,7 +15,7 @@ import { headingIdOf, useDraftView } from "./CardShell";
 
 type SentCardData = Extract<Card, { kind: "sent" }>;
 
-export const trackingPath = (token: string) => `/lapor/lacak#t=${token}`;
+export const trackingPath = (token: string) => `/track#t=${token}`;
 
 // The five handling stages as a strip: done ones filled and named, the rest waiting.
 function StageStrip({ stages }: { readonly stages: Tracking["stages"] }) {
@@ -255,7 +255,7 @@ export function TicketCard({ card }: { readonly card: SentCardData }) {
             </section>
             <ActionRow>
               <Link
-                to={`/lapor/reports/${card.ticketNumber}`}
+                to={`/reports/${card.ticketNumber}`}
                 className={buttonStyles({ variant: "primary", size: "main", className: "@actions:flex-1" })}
               >
                 {t("card.sent.open")}
@@ -281,7 +281,7 @@ export function TicketCard({ card }: { readonly card: SentCardData }) {
           <NearestNumbers nearest={card.nearest} />
         </div>
         <div className="flex flex-col border-t border-line pt-4 @actions:items-start">
-          <Link to="/lapor/report" className={buttonStyles({ variant: "secondary", size: "main" })}>
+          <Link to="/report" className={buttonStyles({ variant: "secondary", size: "main" })}>
             <Icon name="plus" />
             {t("card.sent.new")}
           </Link>

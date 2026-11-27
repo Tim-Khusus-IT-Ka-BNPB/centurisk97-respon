@@ -54,7 +54,7 @@ export function CardComments({
   const navigation = useNavigation();
   const posting = navigation.formData?.get("intent");
   return (
-    <section aria-labelledby="comments-title" id="kabar" className="flex flex-col gap-4 card-surface p-4 md:p-5">
+    <section aria-labelledby="comments-title" id="news" className="flex flex-col gap-4 card-surface p-4 md:p-5">
       <div className="flex flex-col gap-1">
         <h2 id="comments-title" className="text-card font-bold">
           {t("feed.comments.title")}
@@ -128,7 +128,7 @@ export function CardComments({
       ) : (
         <div className="flex flex-col items-start gap-3 rounded-control bg-sunken p-4">
           <p>{t("feed.comments.knownFirst")}</p>
-          <Link to="/lapor/report" className={buttonStyles({ variant: "secondary" })}>
+          <Link to="/report" className={buttonStyles({ variant: "secondary" })}>
             {t("feed.comments.reportFirst")}
           </Link>
         </div>

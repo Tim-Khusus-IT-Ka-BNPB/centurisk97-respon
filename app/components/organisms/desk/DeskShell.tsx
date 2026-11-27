@@ -13,8 +13,8 @@ import { EmergencyBanner } from "./EmergencyBanner";
 import { deskLink, STATUSES, StatusDot } from "./parts";
 
 const NONE: DeskSummary["emergencies"] = [];
-const RESPONSE = "/lapor/meja/respons";
-const MISSING = "/lapor/meja/orang-hilang";
+const RESPONSE = "/desk/response";
+const MISSING = "/desk/missing";
 
 const VIEW_ICON: Readonly<Record<DeskView, IconName>> = { list: "list", map: "map", gallery: "images" };
 
@@ -72,7 +72,7 @@ function Account({ account, className }: { readonly account: string; readonly cl
         <span className="min-w-0 text-muted">{t("desk.account", { label: account })}</span>
       </p>
       <div className="flex items-center justify-between gap-2">
-        <Form method="post" action="/lapor/meja" className="flex-1">
+        <Form method="post" action="/desk" className="flex-1">
           <input type="hidden" name="action" value="signOut" />
           <button type="submit" className={cn(item, "w-full")}>
             <Icon name="logOut" className="text-muted" />
@@ -145,7 +145,7 @@ function DeskNav({ place }: { readonly place: DeskPlace }) {
             </Link>
           </li>
         ) : null}
-        {/* The WhatsApp pilot numbers (/lapor/meja/pilot) are left out of the menu while WhatsApp waits
+        {/* The WhatsApp pilot numbers (/desk/pilot) are left out of the menu while WhatsApp waits
             (owner, 26 Nov 2026); the page itself still opens. */}
         <li>
           <Link to={MISSING} aria-current={pathname === MISSING ? "page" : undefined} className={item}>
@@ -154,13 +154,13 @@ function DeskNav({ place }: { readonly place: DeskPlace }) {
           </Link>
         </li>
         <li>
-          <Link to="/lapor/poster" className={item}>
+          <Link to="/poster" className={item}>
             <Icon name="scan" className={navIcon} />
             {t("desk.nav.poster")}
           </Link>
         </li>
         <li>
-          <Link to="/lapor" className={item}>
+          <Link to="/" className={item}>
             <Icon name="send" className={navIcon} />
             {t("desk.nav.reportForm")}
           </Link>
@@ -174,7 +174,7 @@ function Brand() {
   const t = useText();
   return (
     <Link
-      to="/lapor/meja"
+      to="/desk"
       aria-label={`${t("desk.title")}, ${t("app.name")}`}
       className="flex min-h-target-min w-fit items-center gap-3 rounded-control px-1 no-underline"
     >

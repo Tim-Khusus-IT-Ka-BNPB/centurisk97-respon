@@ -36,14 +36,14 @@ describe("ticket card", () => {
       "Selesai, Menunggu",
     ]);
     expect(screen.getByRole("link", { name: "Buka laporan dan dokumennya" }).getAttribute("href")).toBe(
-      "/lapor/reports/LA-231126-01",
+      "/reports/LA-231126-01",
     );
     expect(screen.getByRole("link", { name: "Lacak laporan" }).getAttribute("href")).toBe(
-      "/lapor/lacak#t=0123456789abcdef0123456789abcdef",
+      "/track#t=0123456789abcdef0123456789abcdef",
     );
     expect(screen.getByText("BPBD Aceh Utara")).toBeTruthy();
     expect(screen.getByRole("link", { name: "Telepon 0800-1111-2222" }).getAttribute("href")).toBe("tel:080011112222");
-    expect(screen.getByRole("link", { name: "Buat laporan baru" }).getAttribute("href")).toBe("/lapor/report");
+    expect(screen.getByRole("link", { name: "Buat laporan baru" }).getAttribute("href")).toBe("/report");
     expect(document.querySelector('[data-card-kind="sent"]')?.getAttribute("data-card-id")).toBe("c-3");
     // Staff see the report and its number on the desk, so contact is promised (K18); nothing
     // that is not built yet is.
@@ -100,7 +100,7 @@ describe("ticket card", () => {
     const dialog = await screen.findByRole("alertdialog", { name: "Terima kasih, Uji!" });
     expect(within(dialog).getByText("LA-231126-01")).toBeTruthy();
     const next = within(dialog).getByRole("link", { name: /Ketuk di mana saja untuk lanjut/ });
-    expect(next.getAttribute("href")).toBe("/lapor/report/d?rate");
+    expect(next.getAttribute("href")).toBe("/report/d?rate");
     fireEvent.click(next);
     await screen.findByRole("alertdialog", { name: "Bagaimana pengalaman melapor Anda?" });
   });
@@ -111,7 +111,7 @@ describe("ticket card", () => {
       posts.push(Object.fromEntries(await request.formData()));
       return never();
     };
-    const { unmount } = draw(SAMPLE_DRAFTS.sent, { entry: "/lapor/report/d?rate", action });
+    const { unmount } = draw(SAMPLE_DRAFTS.sent, { entry: "/report/d?rate", action });
     const choices = await screen.findAllByRole("button", { name: /^Nilai \d dari 5$/ });
     expect(choices).toHaveLength(5);
     fireEvent.click(screen.getByRole("button", { name: "Nilai 4 dari 5" }));
@@ -126,7 +126,7 @@ describe("ticket card", () => {
       retryAt: null,
       draft: null,
     } as ErrorEnvelope;
-    draw(SAMPLE_DRAFTS.sent, { entry: "/lapor/report/d?rate", envelope: refused });
+    draw(SAMPLE_DRAFTS.sent, { entry: "/report/d?rate", envelope: refused });
     expect(await screen.findByText(/Nilai harus angka bulat 1 sampai 5/)).toBeTruthy();
   });
 });

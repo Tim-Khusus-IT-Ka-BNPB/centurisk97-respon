@@ -62,7 +62,7 @@ const fakePush = (over: Partial<PushBrowser> & { subscribed?: boolean } = {}): P
   };
 };
 
-const draw = (push: PushBrowser) => renderPage(<WarningPanel push={push} />, { path: "/lapor/info" });
+const draw = (push: PushBrowser) => renderPage(<WarningPanel push={push} />, { path: "/info" });
 const sentBody = (method: string, path: string) =>
   JSON.parse(calls.find((call) => call.init?.method === method && call.url === path)?.init?.body as string);
 
@@ -74,9 +74,9 @@ afterEach(() => {
 describe("warnings to this phone", () => {
   test("a phone picks a district by search, a hazard less and a level, and is warned", async () => {
     answer({
-      "GET /api/lapor/warnings/key": { status: 200, body: { publicKey: KEY } },
-      "GET /api/lapor/places/search": { status: 200, body: SEARCH },
-      "PUT /api/lapor/warnings": { status: 200, body: ON },
+      "GET /api/warnings/key": { status: 200, body: { publicKey: KEY } },
+      "GET /api/places/search": { status: 200, body: SEARCH },
+      "PUT /api/warnings": { status: 200, body: ON },
     });
     draw(fakePush());
     fireEvent.click(await screen.findByRole("button", { name: "Nyalakan peringatan" }));
@@ -95,7 +95,7 @@ describe("warnings to this phone", () => {
     fireEvent.click(screen.getByRole("radio", { name: "Siaga" }));
     fireEvent.click(screen.getByRole("button", { name: "Nyalakan peringatan" }));
     expect(await screen.findByText("Peringatan menyala untuk Baktiya, mulai tingkat Siaga.")).toBeTruthy();
-    expect(sentBody("PUT", "/api/lapor/warnings")).toEqual({
+    expect(sentBody("PUT", "/api/warnings")).toEqual({
       ...PHONE,
       districts: ["11.08.02"],
       hazards: 3,
@@ -105,8 +105,8 @@ describe("warnings to this phone", () => {
 
   test("with no hazard ticked it says so and sends nothing", async () => {
     answer({
-      "GET /api/lapor/warnings/key": { status: 200, body: { publicKey: KEY } },
-      "POST /api/lapor/warnings/status": { status: 200, body: ON },
+      "GET /api/warnings/key": { status: 200, body: { publicKey: KEY } },
+      "POST /api/warnings/status": { status: 200, body: ON },
     });
     draw(fakePush({ subscribed: true }));
     fireEvent.click(await screen.findByRole("button", { name: "Ubah" }));
@@ -118,9 +118,9 @@ describe("warnings to this phone", () => {
 
   test("a phone already warned sees what of, changes it, cancels, and stops", async () => {
     answer({
-      "GET /api/lapor/warnings/key": { status: 200, body: { publicKey: KEY } },
-      "POST /api/lapor/warnings/status": { status: 200, body: ON },
-      "POST /api/lapor/warnings/stop": { status: 204 },
+      "GET /api/warnings/key": { status: 200, body: { publicKey: KEY } },
+      "POST /api/warnings/status": { status: 200, body: ON },
+      "POST /api/warnings/stop": { status: 204 },
     });
     draw(fakePush({ subscribed: true }));
     expect(await screen.findByText("Peringatan menyala untuk Baktiya, mulai tingkat Siaga.")).toBeTruthy();
@@ -134,21 +134,21 @@ describe("warnings to this phone", () => {
     fireEvent.click(await screen.findByRole("button", { name: "Matikan peringatan" }));
     expect(await screen.findByText("Peringatan dimatikan untuk ponsel ini.")).toBeTruthy();
     expect(stop).toHaveBeenCalled();
-    expect(sentBody("POST", "/api/lapor/warnings/stop")).toEqual({ endpoint: PHONE.endpoint });
+    expect(sentBody("POST", "/api/warnings/stop")).toEqual({ endpoint: PHONE.endpoint });
     expect(screen.getByRole("button", { name: "Nyalakan peringatan" })).toBeTruthy();
   });
 
   test("a phone subscribed but warned of nothing picks again; one whose subscription went stops at once", async () => {
     answer({
-      "GET /api/lapor/warnings/key": { status: 200, body: { publicKey: KEY } },
-      "POST /api/lapor/warnings/status": { status: 200, body: { districts: [], hazards: null, threshold: null } },
+      "GET /api/warnings/key": { status: 200, body: { publicKey: KEY } },
+      "POST /api/warnings/status": { status: 200, body: { districts: [], hazards: null, threshold: null } },
     });
     const view = draw(fakePush({ subscribed: true }));
     expect(await screen.findByRole("button", { name: "Nyalakan peringatan" })).toBeTruthy();
     view.unmount();
     answer({
-      "GET /api/lapor/warnings/key": { status: 200, body: { publicKey: KEY } },
-      "POST /api/lapor/warnings/status": { status: 200, body: ON },
+      "GET /api/warnings/key": { status: 200, body: { publicKey: KEY } },
+      "POST /api/warnings/status": { status: 200, body: ON },
     });
     let gone = false;
     draw(fakePush({ subscribed: true, current: async () => (gone ? null : { phone: PHONE, stop }) }));
@@ -178,8 +178,8 @@ describe("warnings to this phone", () => {
 
   test("three districts at most", async () => {
     answer({
-      "GET /api/lapor/warnings/key": { status: 200, body: { publicKey: KEY } },
-      "POST /api/lapor/warnings/status": {
+      "GET /api/warnings/key": { status: 200, body: { publicKey: KEY } },
+      "POST /api/warnings/status": {
         status: 200,
         body: { ...ON, districts: ["01", "02", "03"].map((n) => ({ code: `11.08.${n}`, name: `D${n}` })) },
       },
@@ -192,8 +192,8 @@ describe("warnings to this phone", () => {
 
   test("a stop or a save that does not reach the service says so", async () => {
     answer({
-      "GET /api/lapor/warnings/key": { status: 200, body: { publicKey: KEY } },
-      "POST /api/lapor/warnings/status": { status: 200, body: ON },
+      "GET /api/warnings/key": { status: 200, body: { publicKey: KEY } },
+      "POST /api/warnings/status": { status: 200, body: ON },
     });
     draw(fakePush({ subscribed: true }));
     fireEvent.click(await screen.findByRole("button", { name: "Matikan peringatan" }));
@@ -206,7 +206,7 @@ describe("warnings to this phone", () => {
   });
 
   test("leave refused when asked: it says how to allow it", async () => {
-    answer({ "GET /api/lapor/warnings/key": { status: 200, body: { publicKey: KEY } } });
+    answer({ "GET /api/warnings/key": { status: 200, body: { publicKey: KEY } } });
     let denied = false;
     draw(
       fakePush({
@@ -220,10 +220,10 @@ describe("warnings to this phone", () => {
     fireEvent.change(await screen.findByRole("searchbox"), { target: { value: "ab" } });
     fireEvent.keyDown(screen.getByRole("searchbox"), { key: "a" });
     fireEvent.keyDown(screen.getByRole("searchbox"), { key: "Enter" });
-    expect(calls.some((call) => call.url.startsWith("/api/lapor/places"))).toBe(false);
+    expect(calls.some((call) => call.url.startsWith("/api/places"))).toBe(false);
     answer({
-      "GET /api/lapor/warnings/key": { status: 200, body: { publicKey: KEY } },
-      "GET /api/lapor/places/search": { status: 200, body: SEARCH },
+      "GET /api/warnings/key": { status: 200, body: { publicKey: KEY } },
+      "GET /api/places/search": { status: 200, body: SEARCH },
     });
     fireEvent.change(screen.getByRole("searchbox"), { target: { value: "baktiya" } });
     fireEvent.keyDown(screen.getByRole("searchbox"), { key: "Enter" });
@@ -239,13 +239,13 @@ describe("warnings to this phone", () => {
     [
       "warnings shut",
       fakePush(),
-      { "GET /api/lapor/warnings/key": { status: 200, body: { publicKey: null } } },
+      { "GET /api/warnings/key": { status: 200, body: { publicKey: null } } },
       /^Peringatan ke ponsel belum dibuka/,
     ],
     [
       "notifications refused before",
       fakePush({ denied: () => true }),
-      { "GET /api/lapor/warnings/key": { status: 200, body: { publicKey: KEY } } },
+      { "GET /api/warnings/key": { status: 200, body: { publicKey: KEY } } },
       /^Izin notifikasi/,
     ],
   ] as const)("%s: it says so", async (_why, push, routes, words) => {
@@ -256,7 +256,7 @@ describe("warnings to this phone", () => {
   });
 
   test("a search that finds nothing, or cannot be read, says none match", async () => {
-    answer({ "GET /api/lapor/warnings/key": { status: 200, body: { publicKey: KEY } } });
+    answer({ "GET /api/warnings/key": { status: 200, body: { publicKey: KEY } } });
     draw(fakePush());
     fireEvent.change(await screen.findByRole("searchbox"), { target: { value: "zzzz" } });
     fireEvent.click(screen.getByRole("button", { name: "Cari" }));

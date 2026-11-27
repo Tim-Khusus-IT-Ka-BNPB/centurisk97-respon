@@ -29,12 +29,12 @@ describe("theme preference", () => {
   test("the cookie is HttpOnly and SameSite Lax, Secure over https", async () => {
     const set = (origin: string) =>
       fetchApi(
-        new Request(`${origin}/api/lapor/preferences/theme`, {
+        new Request(`${origin}/api/preferences/theme`, {
           method: "POST",
           headers: {
             "cf-connecting-ip": "198.51.100.40",
             origin: "http://localhost:5173",
-            "x-lapor-client": "1",
+            "x-respon-client": "1",
             "content-type": "application/json",
           },
           body: JSON.stringify({ theme: "light" }),

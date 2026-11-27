@@ -96,7 +96,7 @@ export function CaseScreen({
             {CASE_KINDS.map((kind) => (
               <Link
                 key={kind}
-                to={`?jenis=${kind}`}
+                to={`?kind=${kind}`}
                 aria-current={tab.kind === kind ? "true" : undefined}
                 className={cn(chip, "whitespace-nowrap")}
               >

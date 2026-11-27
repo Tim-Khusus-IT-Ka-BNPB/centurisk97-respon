@@ -62,7 +62,7 @@ export function DraftAside({ draft }: { readonly draft: DraftBody }) {
           <li>{t("about.words.back")}</li>
           <li>{t(draft.followUpOf === null ? "about.words.cancel" : "followUp.words.cancel")}</li>
         </ul>
-        <Link to="/lapor/help" className="inline-flex min-h-target-min items-center text-meta font-semibold underline">
+        <Link to="/help" className="inline-flex min-h-target-min items-center text-meta font-semibold underline">
           {t("chat.aside.help")}
         </Link>
       </section>

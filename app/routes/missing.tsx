@@ -12,7 +12,7 @@ export const meta = (args: Route.MetaArgs) =>
   pageMeta(args, {
     title: "page.missing.title",
     description: "meta.missing.description",
-    path: "/lapor/orang-hilang",
+    path: "/missing",
     index: false,
   });
 
@@ -22,7 +22,7 @@ export async function loader({ request, context }: Route.LoaderArgs) {
 
 export async function action({ request, context }: Route.ActionArgs) {
   const acted = await actOnMissing(await request.formData(), context.api);
-  if (acted.kind === "sent") return redirect("/lapor/orang-hilang?terkirim=1", 303);
+  if (acted.kind === "sent") return redirect("/missing?sent=1", 303);
   return data({ envelope: acted.envelope, typed: acted.typed }, { status: acted.status });
 }
 

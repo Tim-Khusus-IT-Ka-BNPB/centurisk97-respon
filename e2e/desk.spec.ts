@@ -29,12 +29,12 @@ async function sendReport(
     extraHTTPHeaders: {
       "cf-connecting-ip": `10.${part()}.${part()}.${part()}`,
       origin: baseURL,
-      "x-lapor-client": "1",
+      "x-respon-client": "1",
     },
   });
   const api: APIRequestContext = context.request;
   const call = async <T>(method: "GET" | "POST", path: string, data?: unknown): Promise<T> => {
-    const response = await api.fetch(`/api/lapor${path}`, { method, ...(data === undefined ? {} : { data }) });
+    const response = await api.fetch(`/api${path}`, { method, ...(data === undefined ? {} : { data }) });
     expect(response.status(), `${method} ${path}`).toBeLessThan(300);
     return (await response.json()) as T;
   };
@@ -71,7 +71,7 @@ async function sendReport(
     await new Promise((resolve) => setTimeout(resolve, PACE_MS));
     if (withPhoto && draft.card.kind === "photos" && !photoSent) {
       const photo = withExif(BASE, { make: "Uji", model: "Kamera", dateTime: exifDateTime(Date.now() - 10_000, 420) });
-      const sent = await api.fetch(`/api/lapor/drafts/${draft.draftId}/photos`, {
+      const sent = await api.fetch(`/api/drafts/${draft.draftId}/photos`, {
         method: "POST",
         multipart: {
           photo: { name: "foto.jpg", mimeType: "image/jpeg", buffer: Buffer.from(photo) },
@@ -107,7 +107,7 @@ async function sendReport(
 
 async function signIn(page: Page, code = DESK_CODE): Promise<void> {
   // Typing before the page has hydrated can lose the code on a slow machine, so wait for it to settle.
-  await page.goto("/lapor/meja", { waitUntil: "networkidle" });
+  await page.goto("/desk", { waitUntil: "networkidle" });
   await expect(page.getByRole("heading", { name: "Masuk meja laporan" })).toBeVisible();
   await page.getByLabel("Kode masuk").fill(code);
   await expect(page.getByLabel("Kode masuk")).toHaveValue(code);
@@ -181,7 +181,7 @@ test("a desk officer finds a new report, reads where each value came from, and o
   // The reporter's tracking page now shows the stage, without the officer's name.
   if (script) {
     const reporterPage = await (await browser.newContext()).newPage();
-    await reporterPage.goto(`/lapor/lacak#t=${token}`);
+    await reporterPage.goto(`/track#t=${token}`);
     const seen = reporterPage.getByRole("listitem").filter({ hasText: "Sudah dilihat petugas" });
     await expect(seen).toContainText(/pukul \d{2}\.\d{2} WIB/);
     await expect(
@@ -192,7 +192,7 @@ test("a desk officer finds a new report, reads where each value came from, and o
 });
 
 test("the desk asks for a staff code, and a wrong code is named on its field", async ({ page }) => {
-  await page.goto("/lapor/meja", { waitUntil: "networkidle" });
+  await page.goto("/desk", { waitUntil: "networkidle" });
   await expect(page.getByRole("heading", { name: "Masuk meja laporan" })).toBeVisible();
   await expect(page.getByText("Peta laporan")).toHaveCount(0);
   await page.getByLabel("Kode masuk").fill("bukan-kode");
@@ -260,7 +260,7 @@ test("an officer answers the reporter, moves the ticket to its end, and the trac
   const script = !info.project.name.includes("no-script");
   const { ticketNumber, token } = await sendReport(browser, baseURL as string);
   await signIn(page);
-  await page.goto(`/lapor/meja/${ticketNumber}`, { waitUntil: "networkidle" });
+  await page.goto(`/desk/${ticketNumber}`, { waitUntil: "networkidle" });
   const heading = page.getByRole("heading", { level: 1, name: ticketNumber });
   const header = page.locator("header").filter({ has: heading });
   if (!script) await page.getByRole("button", { name: "Tandai sudah dilihat" }).click();
@@ -328,7 +328,7 @@ test("an officer answers the reporter, moves the ticket to its end, and the trac
   // The reporter sees every stage done, and none of what staff wrote for themselves.
   if (script) {
     const reporterPage = await (await browser.newContext()).newPage();
-    await reporterPage.goto(`/lapor/lacak#t=${token}`);
+    await reporterPage.goto(`/track#t=${token}`);
     const status = reporterPage.getByRole("region", { name: "Status laporan" });
     await expect(status.getByRole("listitem").filter({ hasText: /pukul \d{2}\.\d{2} WIB/ })).toHaveCount(5);
     await expect(status.getByText("Evakuasi warga")).toBeVisible();
@@ -350,7 +350,7 @@ test("a BPBD account works only its region, and asks for the reporter's identity
   await searchTicket(page, ticketNumber);
   const panel = page.getByRole("region", { name: "Laporan di peta" });
   await expect(panel.getByText("1 laporan", { exact: true })).toBeVisible();
-  await page.goto(`/lapor/meja/${ticketNumber}`, { waitUntil: "networkidle" });
+  await page.goto(`/desk/${ticketNumber}`, { waitUntil: "networkidle" });
   const reporter = page.getByRole("region", { name: "Pelapor", exact: true });
   await expect(reporter.getByText("Uji Satu")).toHaveCount(0);
   await expect(reporter.getByRole("link")).toHaveCount(0);
@@ -363,7 +363,7 @@ test("a BPBD account works only its region, and asks for the reporter's identity
   const other = await (await browser.newContext({ baseURL, javaScriptEnabled: true })).newPage();
   await ownAddress(other.context());
   await signIn(other, PROVINCE_CODE);
-  await other.goto(`/lapor/meja/${ticketNumber}`);
+  await other.goto(`/desk/${ticketNumber}`);
   await expect(other.getByRole("heading", { name: "Laporan tidak ditemukan" })).toBeVisible();
   await expect(other.getByText("Uji Satu")).toHaveCount(0);
 });
@@ -376,7 +376,7 @@ test("on a report, BNPB opens a local BPBD officer's number, and can call or wri
   test.setTimeout(240_000);
   const { ticketNumber } = await sendReport(browser, baseURL as string);
   await signIn(page);
-  await page.goto(`/lapor/meja/${ticketNumber}`);
+  await page.goto(`/desk/${ticketNumber}`);
   const card = page.getByRole("region", { name: "PIC BPBD setempat" });
   await expect(card.getByText("Uji Andi")).toBeVisible();
   await expect(card.locator('a[href^="tel:"]')).toHaveCount(0);

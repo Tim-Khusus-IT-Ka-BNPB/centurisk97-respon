@@ -6,7 +6,7 @@ import { browserSeconds, VideoUpload } from "./VideoUpload";
 
 const DRAFT = "11111111-1111-4111-8111-111111111111";
 const ID = "22222222-2222-4222-8222-222222222222";
-const BASE = `/api/lapor/drafts/${DRAFT}/videos`;
+const BASE = `/api/drafts/${DRAFT}/videos`;
 const PART = 4;
 const KEPT = [{ id: ID, seconds: 13, container: "mp4" }];
 const progress = (received: number[]) => ({ id: ID, parts: 2, partBytes: PART, received });
@@ -32,7 +32,7 @@ function answer(routes: Record<string, Answer | Answer[]>) {
 const draw = () =>
   renderPage(
     <VideoUpload base={`/drafts/${DRAFT}/videos`} resumeKey={DRAFT} readSeconds={async () => 12.5} retryMs={0} />,
-    { path: "/lapor/report/d" },
+    { path: "/report/d" },
   );
 // The picker shows once the kept videos are read; a busy machine may take a moment.
 const pick = async (bytes = 6) =>

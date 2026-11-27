@@ -18,12 +18,12 @@ describe("a gateway's call", () => {
     expect(
       signedText({
         method: "POST",
-        path: "/api/lapor/pesan?x=1",
+        path: "/api/pesan?x=1",
         timeMs: 1764046800000,
         messageId: "m-1",
         bodyHash: "ab",
       }),
-    ).toBe("POST\n/api/lapor/pesan?x=1\n1764046800000\nm-1\nab");
+    ).toBe("POST\n/api/pesan?x=1\n1764046800000\nm-1\nab");
   });
 
   test("its headers read", () => {

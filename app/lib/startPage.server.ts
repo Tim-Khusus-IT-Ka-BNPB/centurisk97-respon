@@ -11,7 +11,7 @@ async function readMe(api: ApiCall): Promise<MeResponse | null> {
   return response.ok ? ((await response.json()) as MeResponse) : null;
 }
 
-// GET /lapor/report: the numbers known here, a picked one, "Ganti" on one, or the form.
+// GET /report: the numbers known here, a picked one, "Ganti" on one, or the form.
 export async function loadStartPage(url: URL, api: ApiCall, language: LanguageId = "id"): Promise<StartPageData> {
   const me = await readMe(api);
   const known = me?.knownReporters ?? [];
@@ -42,11 +42,11 @@ export async function loadStartPage(url: URL, api: ApiCall, language: LanguageId
 }
 
 // "Lapor darurat" opens the start page with this, and every step of it keeps it.
-export const isEmergency = (url: URL) => url.searchParams.has("darurat");
+export const isEmergency = (url: URL) => url.searchParams.has("emergency");
 
 // A poster's code opens the start page with its village's ten digits (D131), as "11.08.01.2001".
 export function posterVillageCode(url: URL): string | null {
-  const digits = /^(\d{2})(\d{2})(\d{2})(\d{4})$/.exec(url.searchParams.get("desa") ?? "");
+  const digits = /^(\d{2})(\d{2})(\d{2})(\d{4})$/.exec(url.searchParams.get("village") ?? "");
   return digits ? digits.slice(1).join(".") : null;
 }
 
@@ -59,7 +59,7 @@ const text = (form: FormData, name: string) => {
   return typeof value === "string" ? value : "";
 };
 
-// POST /lapor/report. A redirect carries the new device cookie on to the browser.
+// POST /report. A redirect carries the new device cookie on to the browser.
 export async function actOnStart(
   form: FormData,
   api: ApiCall,
@@ -120,8 +120,7 @@ async function discardOpenDraft(draftId: string, form: FormData, api: ApiCall): 
     const { revision } = (await response.json()) as DraftBody;
     response = await turn(api, draftId, revision, kind);
   }
-  if (response.ok)
-    return { kind: "redirect", location: "/lapor/report", headers: new Headers({ location: "/lapor/report" }) };
+  if (response.ok) return { kind: "redirect", location: "/report", headers: new Headers({ location: "/report" }) };
   const envelope = (await response.json()) as ErrorEnvelope;
   return { kind: "render", status: response.status, data: rendered("list", form, envelope, {}) };
 }

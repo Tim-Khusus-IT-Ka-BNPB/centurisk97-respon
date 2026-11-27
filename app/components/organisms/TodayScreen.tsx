@@ -119,13 +119,13 @@ function Filters({ events, hazard }: { readonly events: readonly TodayEvent[]; r
   if (kinds.length < 2) return null;
   return (
     <nav aria-label={t("today.filter.label")} className="-mx-4 flex gap-2 overflow-x-auto px-4 pb-1 md:-mx-6 md:px-6">
-      <Link to="/lapor/hari-ini" aria-current={hazard === null ? "true" : undefined} className={chip}>
+      <Link to="/today" aria-current={hazard === null ? "true" : undefined} className={chip}>
         {t("today.filter.all")}
       </Link>
       {kinds.map((kind) => (
         <Link
           key={kind}
-          to={`/lapor/hari-ini?hazard=${kind}`}
+          to={`/today?hazard=${kind}`}
           aria-current={hazard === kind ? "true" : undefined}
           className={chip}
         >
@@ -168,7 +168,7 @@ export function TodayScreen({ load, hazard }: { readonly load: TodayLoad; readon
   if (load.kind === "closed")
     return (
       <Message title={t("today.closed")}>
-        <Link to="/lapor" className={buttonStyles({ variant: "secondary" })}>
+        <Link to="/" className={buttonStyles({ variant: "secondary" })}>
           {t("today.closed.home")}
         </Link>
       </Message>
@@ -180,7 +180,7 @@ export function TodayScreen({ load, hazard }: { readonly load: TodayLoad; readon
         {envelope !== null && isLimit(envelope) ? (
           <p className="text-muted">{limitText(t, envelope, Date.now())}</p>
         ) : null}
-        <a href="/lapor/hari-ini" className={buttonStyles({ variant: "secondary" })}>
+        <a href="/today" className={buttonStyles({ variant: "secondary" })}>
           {t("today.retry")}
         </a>
       </Message>
@@ -202,10 +202,10 @@ export function TodayScreen({ load, hazard }: { readonly load: TodayLoad; readon
         <Message title={t("today.empty")}>
           <p className="max-w-[65ch] text-muted">{t("today.empty.lead")}</p>
           <div className="flex flex-wrap gap-3">
-            <Link to="/lapor/feed" className={buttonStyles({ variant: "secondary" })}>
+            <Link to="/feed" className={buttonStyles({ variant: "secondary" })}>
               {t("today.empty.feed")}
             </Link>
-            <Link to="/lapor/nomor-penting" className={buttonStyles({ variant: "secondary" })}>
+            <Link to="/numbers" className={buttonStyles({ variant: "secondary" })}>
               {t("today.empty.numbers")}
             </Link>
           </div>

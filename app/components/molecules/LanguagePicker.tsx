@@ -35,7 +35,7 @@ export function LanguageChooser({ back, onClose }: { readonly back: string; read
         </h2>
         {onClose}
       </div>
-      <Form method="post" action="/lapor/bahasa" className="flex min-h-0 flex-1 flex-col">
+      <Form method="post" action="/language" className="flex min-h-0 flex-1 flex-col">
         <input type="hidden" name="back" value={back} />
         <div className="flex min-h-0 flex-1 flex-col gap-5 overflow-y-auto px-5 py-5 md:px-8 md:py-6">
           {groups.map(([group, ids]) => (
@@ -85,7 +85,7 @@ function useChooser() {
   const back = `${pathname}${search}`;
   return {
     back,
-    href: `/lapor/bahasa?back=${encodeURIComponent(back)}`,
+    href: `/language?back=${encodeURIComponent(back)}`,
     current: new Map<string, string>(OFFERED).get(t("app.lang")) as string,
   };
 }

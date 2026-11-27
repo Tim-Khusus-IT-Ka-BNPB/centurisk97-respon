@@ -9,7 +9,7 @@ KEY_HMAC_SECRET=local-sample-hmac-key-at-least-32-bytes-long
 
 IDENTITY_ADAPTER=seeded
 
-# The public today page at /lapor/hari-ini: on, or empty to keep it shut.
+# The public today page at /today: on, or empty to keep it shut.
 TODAY_PAGE=on
 
 # off, recorded (the local model stub), or live with your own key. Tests always run without it.

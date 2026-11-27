@@ -225,7 +225,7 @@ describe("turn edges", () => {
     const bridge = createBridge(
       async (request) => fetchApi(request),
       TEST_ORIGIN,
-      new Request(`${TEST_ORIGIN}/lapor/report/x`, {
+      new Request(`${TEST_ORIGIN}/report/x`, {
         method: "POST",
         headers: { origin: TEST_ORIGIN, cookie, "cf-connecting-ip": phone.address },
       }),
@@ -249,7 +249,7 @@ describe("dependencies down", () => {
   test("the health check answers 503 when the database cannot be read, and ok when it can", async () => {
     const broken = { ...bindings, db: failingDatabase("network lost") };
     const request = () =>
-      new Request("http://localhost/api/lapor/health", { headers: { "cf-connecting-ip": "198.51.100.7" } });
+      new Request("http://localhost/api/health", { headers: { "cf-connecting-ip": "198.51.100.7" } });
     expect((await api.app.fetch(request(), broken)).status).toBe(503);
     expect(await (await api.app.fetch(request(), bindings)).text()).toBe("ok");
   });

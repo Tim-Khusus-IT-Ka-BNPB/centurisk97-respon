@@ -168,7 +168,7 @@ function Outlook({ outlook }: { readonly outlook: OutlookView }) {
               {t("info.outlook.madeAt", { time: madeTime.format(Date.parse(outlook.madeAt)) })}
             </p>
           </div>
-          <Link to="/lapor/info" className={buttonStyles({ variant: "secondary", size: "min" })}>
+          <Link to="/info" className={buttonStyles({ variant: "secondary", size: "min" })}>
             {t("info.outlook.change")}
           </Link>
         </div>
@@ -209,7 +209,7 @@ function Results({ regencies, query }: { readonly regencies: readonly Regency[];
         {regencies.map((regency) => (
           <li key={regency.code}>
             <Link
-              to={`/lapor/info?kab=${regency.code}`}
+              to={`/info?regency=${regency.code}`}
               className="flex min-h-target items-center justify-between gap-3 rounded-control border border-line bg-surface px-4 py-2 text-ink no-underline hover:border-control"
             >
               {t("info.search.regency", { name: regency.name, province: regency.provinceName })}
@@ -228,7 +228,7 @@ export function InfoScreen({ load }: { readonly load: InfoLoad }) {
   return (
     <>
       {load.kind === "outlook" ? null : (
-        <Form method="get" action="/lapor/info" className="flex max-w-xl flex-wrap items-end gap-3">
+        <Form method="get" action="/info" className="flex max-w-xl flex-wrap items-end gap-3">
           <label className="flex min-w-0 flex-1 flex-col gap-1.5">
             <span className="font-semibold">{t("info.search.label")}</span>
             <input

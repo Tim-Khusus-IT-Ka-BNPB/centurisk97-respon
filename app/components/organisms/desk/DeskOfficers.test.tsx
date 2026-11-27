@@ -20,7 +20,7 @@ const SARI = {
 };
 
 const draw = (props: Parameters<typeof DeskOfficers>[0]) =>
-  renderPage(<DeskOfficers {...props} />, { path: "/lapor/meja/LA-261126-01", action: never });
+  renderPage(<DeskOfficers {...props} />, { path: "/desk/LA-261126-01", action: never });
 
 describe("the BPBD officers on a report", () => {
   test("each with a masked number to open; an opened one is called or messaged", async () => {

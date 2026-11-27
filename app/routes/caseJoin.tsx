@@ -10,7 +10,7 @@ import type { Route } from "./+types/caseJoin";
 export const headers = () => ({ "cache-control": "private, no-store", "x-robots-tag": "noindex" });
 
 export const meta = (args: Route.MetaArgs) =>
-  pageMeta(args, { title: "page.case.title", description: "meta.case.description", path: "/lapor/data", index: false });
+  pageMeta(args, { title: "page.case.title", description: "meta.case.description", path: "/cases", index: false });
 
 // The link is used only by the button: a link preview or a scanner opening it changes nothing.
 export const loader = () => ({ texts: caseTexts() });

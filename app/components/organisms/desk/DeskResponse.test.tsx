@@ -39,7 +39,7 @@ const RESPONSE: DeskResponse = {
 const RUNNING: WarningControl = { open: true, paused: false, by: null, at: null, phones: 12 };
 const draw = (response = RESPONSE, warnings: WarningControl | null = RUNNING, entry?: string) =>
   renderDesk(<DeskResponseView response={response} summary={SUMMARY} warnings={warnings} />, {
-    path: "/lapor/meja/respons",
+    path: "/desk/response",
     ...(entry ? { entry } : {}),
   });
 
@@ -64,15 +64,15 @@ describe("how fast each agency answers", () => {
     await draw({ ...RESPONSE, agencies: [] });
     expect(screen.getByText("November 2026")).toBeTruthy();
     expect(screen.getByRole("link", { name: "Bulan sebelumnya" }).getAttribute("href")).toBe(
-      "/lapor/meja/respons?month=2026-10",
+      "/desk/response?month=2026-10",
     );
     expect(screen.getByRole("link", { name: "Bulan berikutnya" }).getAttribute("href")).toBe(
-      "/lapor/meja/respons?month=2026-12",
+      "/desk/response?month=2026-12",
     );
     expect(screen.getByText("Belum ada laporan di bulan ini.")).toBeTruthy();
     expect(screen.queryByRole("table")).toBeNull();
     const door = screen.getAllByRole("link", { name: "Respons BPBD" })[0];
-    expect([door?.getAttribute("href"), door?.getAttribute("aria-current")]).toEqual(["/lapor/meja/respons", "page"]);
+    expect([door?.getAttribute("href"), door?.getAttribute("aria-current")]).toEqual(["/desk/response", "page"]);
   });
 
   test("the weekly counts are posted for as a file, and a refused download says why", async () => {
@@ -81,10 +81,10 @@ describe("how fast each agency answers", () => {
     expect(within(section).getByText(/^Jumlah laporan per minggu/)).toBeTruthy();
     const button = within(section).getByRole("button", { name: "Unduh CSV" });
     const form = button.closest("form") as HTMLFormElement;
-    expect([form.method, form.getAttribute("action")]).toEqual(["post", "/lapor/meja/respons/aggregates"]);
+    expect([form.method, form.getAttribute("action")]).toEqual(["post", "/desk/response/aggregates"]);
     expect(within(section).queryByText(/belum bisa diunduh/)).toBeNull();
     view.unmount();
-    await draw(RESPONSE, RUNNING, "/lapor/meja/respons?refused=aggregates");
+    await draw(RESPONSE, RUNNING, "/desk/response?refused=aggregates");
     expect(screen.getByText(/^Berkas belum bisa diunduh/)).toBeTruthy();
   });
 
@@ -110,7 +110,7 @@ describe("how fast each agency answers", () => {
       "0",
     );
     paused.unmount();
-    const shut = await draw(RESPONSE, { ...RUNNING, open: false, phones: 0 }, "/lapor/meja/respons?refused=warnings");
+    const shut = await draw(RESPONSE, { ...RUNNING, open: false, phones: 0 }, "/desk/response?refused=warnings");
     expect(section().getByText(/^Peringatan belum dibuka/)).toBeTruthy();
     expect(section().getByText(/^Belum tersimpan/)).toBeTruthy();
     expect(section().queryByRole("button")).toBeNull();

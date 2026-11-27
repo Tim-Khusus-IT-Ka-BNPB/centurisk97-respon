@@ -193,7 +193,7 @@ export function EndCard({ icon, headingId, title, level = 2, children, action, c
         {title}
       </Heading>
       {children}
-      <Link to="/lapor/report" className={buttonStyles({ variant: "primary", size: "main" })}>
+      <Link to="/report" className={buttonStyles({ variant: "primary", size: "main" })}>
         {t(action)}
       </Link>
     </section>

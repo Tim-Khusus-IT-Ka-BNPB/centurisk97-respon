@@ -3,7 +3,7 @@ import { noSidewaysScroll } from "./support.ts";
 
 // The header is one row at every width: below 1024px the links sit in a menu, wider in the side rail.
 test("the header stays one row, with its links in a menu below 1024px and in the side rail wider", async ({ page }) => {
-  await page.goto("/lapor");
+  await page.goto("/");
   const header = page.locator("header");
   const width = page.viewportSize()?.width ?? 0;
   expect((await header.boundingBox())?.height).toBeLessThanOrEqual(80);
@@ -19,7 +19,7 @@ test("the header stays one row, with its links in a menu below 1024px and in the
     await expect.poll(async () => (await rail.boundingBox())?.width).toBeGreaterThan(200);
     expect(await page.locator("main").boundingBox()).toEqual(before);
     await rail.getByRole("link", { name: "Bantuan" }).click();
-    await expect(page).toHaveURL(/\/lapor\/help$/);
+    await expect(page).toHaveURL(/\/help$/);
     return;
   }
   await expect(header.getByRole("link", { name: "Bantuan" })).toBeHidden();
@@ -28,6 +28,6 @@ test("the header stays one row, with its links in a menu below 1024px and in the
   // The theme switch rides in the menu on a phone.
   await expect(header.getByRole("button", { name: "Pakai tema gelap" })).toBeVisible();
   await header.getByRole("link", { name: "Bantuan" }).click();
-  await expect(page).toHaveURL(/\/lapor\/help$/);
+  await expect(page).toHaveURL(/\/help$/);
   await expect(page.locator("header details")).not.toHaveAttribute("open");
 });

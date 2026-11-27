@@ -10,7 +10,7 @@ export const meta = (args: Route.MetaArgs) =>
   pageMeta(args, {
     title: "page.tracking.title",
     description: "meta.tracking.description",
-    path: "/lapor/lacak",
+    path: "/track",
     index: false,
   });
 

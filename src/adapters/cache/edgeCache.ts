@@ -13,7 +13,7 @@ const workerStore = () =>
 // Cloudflare's cache, under an address on the site's own host. With no cache, as under Node,
 // nothing is kept and every read is fresh.
 export function edgeCache(origin: string, store: EdgeStore | null = workerStore()): EdgeCache {
-  const address = (key: string) => `${origin}/api/lapor/_edge/${key}`;
+  const address = (key: string) => `${origin}/api/_edge/${key}`;
   return {
     async get(key) {
       const kept = await store?.match(address(key));

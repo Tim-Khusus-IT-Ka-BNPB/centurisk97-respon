@@ -11,7 +11,7 @@ test("keeps a text for its seconds under the site's own host, then reads none", 
   const cache = edgeCache(TEST_ORIGIN, store);
   expect(await cache.get("feed?a")).toBeNull();
   await cache.put("feed?a", "kept", 60);
-  expect(put.mock.calls[0]?.[0]).toBe(`${TEST_ORIGIN}/api/lapor/_edge/feed?a`);
+  expect(put.mock.calls[0]?.[0]).toBe(`${TEST_ORIGIN}/api/_edge/feed?a`);
   clock.advance(59_000);
   expect(await cache.get("feed?a")).toBe("kept");
   expect(await cache.get("feed?b")).toBeNull();

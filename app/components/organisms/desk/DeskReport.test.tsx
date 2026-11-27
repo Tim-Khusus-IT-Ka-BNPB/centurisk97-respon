@@ -16,7 +16,7 @@ vi.mock("../DeskMapCanvas", () => ({
 
 import { DeskReportView } from "./DeskReport";
 
-const PATH = { path: "/lapor/meja/LA-241126-01" };
+const PATH = { path: "/desk/LA-241126-01" };
 
 describe("a report on the desk", () => {
   test("each version has its files, posted for as each download is logged; a refused one is told", async () => {
@@ -25,7 +25,7 @@ describe("a report on the desk", () => {
     expect(documents.getByText("Setiap unduhan", { exact: false })).toBeTruthy();
     const pdf = documents.getByRole("button", { name: "Unduh PDF versi 2" }) as HTMLButtonElement;
     expect([pdf.name, pdf.value]).toEqual(["format", "pdf"]);
-    expect(pdf.form?.getAttribute("action")).toBe("/lapor/meja/LA-241126-01/documents");
+    expect(pdf.form?.getAttribute("action")).toBe("/desk/LA-241126-01/documents");
     expect(pdf.form?.getAttribute("method")).toBe("post");
     expect(new FormData(pdf.form as HTMLFormElement).get("version")).toBe("2");
     expect(documents.getByRole("button", { name: "Unduh Word versi 1" })).toBeTruthy();
@@ -390,9 +390,7 @@ describe("a report on the desk", () => {
     expect(history.getByText("Luka-luka: belum didata menjadi 1")).toBeTruthy();
     const handling = within(screen.getByRole("region", { name: "Penanganan" }));
     expect(handling.getByText("Evakuasi warga")).toBeTruthy();
-    expect(handling.getByRole("img", { name: "Foto penanganan 1" }).getAttribute("src")).toBe(
-      "/api/lapor/desk/proofs/p1",
-    );
+    expect(handling.getByRole("img", { name: "Foto penanganan 1" }).getAttribute("src")).toBe("/api/desk/proofs/p1");
     expect(handling.getByText("Titik GPS petugas tersimpan")).toBeTruthy();
     expect(handling.getByText("Tanpa titik GPS")).toBeTruthy();
   });
@@ -472,7 +470,7 @@ describe("a report on the desk", () => {
       PATH,
     );
     const link = screen.getByRole("link", { name: /Buka berkas data lanjutan/ });
-    expect(link.getAttribute("href")).toBe("/lapor/data/f000000000000001");
+    expect(link.getAttribute("href")).toBe("/cases/f000000000000001");
     expect(link.textContent).toContain("Menunggu diterima BNPB");
   });
 
@@ -544,7 +542,7 @@ describe("a report on the desk", () => {
       within(section)
         .getAllByRole("link")
         .map((link) => link.getAttribute("href")),
-    ).toEqual(["/lapor/meja/LA-241126-02", "/lapor/meja/LA-241126-03"]);
+    ).toEqual(["/desk/LA-241126-02", "/desk/LA-241126-03"]);
     expect(within(section).getByText("LA-241126-01").getAttribute("aria-current")).toBe("page");
   });
 
@@ -564,7 +562,7 @@ describe("a report on the desk", () => {
     ];
     const view = await renderDesk(<DeskReportView report={{ ...REPORT, event, history }} summary={SUMMARY} />, {
       ...PATH,
-      entry: "/lapor/meja/LA-241126-01?saved=released",
+      entry: "/desk/LA-241126-01?saved=released",
     });
     const section = screen.getByRole("region", { name: "Kejadian KJ-241126-01" });
     expect(within(section).getByText(/^Pelapor menyatakan 2 laporan ini satu kejadian/)).toBeTruthy();
@@ -598,8 +596,8 @@ describe("a report on the desk", () => {
     const section = screen.getByRole("region", { name: "Video dari pelapor" });
     const players = section.querySelectorAll("video");
     expect([...players].map((player) => [player.getAttribute("src"), player.controls])).toEqual([
-      [`/api/lapor/desk/reports/LA-241126-01/videos/${videos[0]?.id}`, true],
-      [`/api/lapor/desk/reports/LA-241126-01/videos/${videos[1]?.id}`, true],
+      [`/api/desk/reports/LA-241126-01/videos/${videos[0]?.id}`, true],
+      [`/api/desk/reports/LA-241126-01/videos/${videos[1]?.id}`, true],
     ]);
     expect(within(section).getByText("Video 2, 60 detik, tanpa keterangan lokasi")).toBeTruthy();
     // The file of the first said when and where it was made.

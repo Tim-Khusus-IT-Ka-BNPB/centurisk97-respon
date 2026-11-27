@@ -37,13 +37,13 @@ const home = () =>
   renderPage(
     <>
       <header>
-        <a href="/lapor/bahasa?back=%2Flapor" hidden>
+        <a href="/language?back=%2F" hidden>
           Bahasa
         </a>
       </header>
       <HomeScreen me={{ knownReporters: [], reports: [], privacyVersion: 2, session: null }} />
     </>,
-    { path: "/lapor" },
+    { path: "/" },
   );
 
 test("the home's tour lights each part it can show, back and on, and ends or is skipped", async () => {

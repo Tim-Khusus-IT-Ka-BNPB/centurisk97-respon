@@ -4,7 +4,7 @@ import { cn } from "../../lib/cn";
 export function Emblem({ size = 40, className }: { readonly size?: 32 | 40; readonly className?: string }) {
   return (
     <img
-      src="/lambang-bnpb.png"
+      src="/bnpb-emblem.png"
       alt=""
       width={size}
       height={size}

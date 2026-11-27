@@ -33,10 +33,10 @@ function Resume({ profile }: { readonly profile: MeResponse["knownReporters"][nu
       </h2>
       <p className="tabular-nums">{resumeLine(t, draft)}</p>
       <ActionRow>
-        <Link to={`/lapor/report?discard=${profile.profileId}`} className={buttonStyles({})}>
+        <Link to={`/report?discard=${profile.profileId}`} className={buttonStyles({})}>
           {t("resume.new")}
         </Link>
-        <Link to={`/lapor/report/${draft.draftId}`} className={buttonStyles({ variant: "primary" })}>
+        <Link to={`/report/${draft.draftId}`} className={buttonStyles({ variant: "primary" })}>
           {t(`${words}.continue`)}
         </Link>
       </ActionRow>
@@ -52,7 +52,7 @@ function ReportRow({ report }: { readonly report: OwnReport }) {
   return (
     <li className="border-t border-line first:border-t-0">
       <Link
-        to={`/lapor/reports/${report.ticketNumber}`}
+        to={`/reports/${report.ticketNumber}`}
         className="group flex min-h-target-main items-center gap-4 px-4 py-3 text-ink no-underline hover:bg-sunken md:px-5"
       >
         <span className="flex size-10 shrink-0 items-center justify-center rounded-control bg-selected text-primary">
@@ -118,7 +118,7 @@ function MissingList({ missing }: { readonly missing: readonly MissingMine[] }) 
         {missing.map((one) => (
           <li key={one.id} className="border-t border-line first:border-t-0">
             <Link
-              to="/lapor/orang-hilang"
+              to="/missing"
               className="flex min-h-target-main items-center gap-4 px-4 py-3 text-ink no-underline hover:bg-sunken md:px-5"
             >
               <span className="flex size-10 shrink-0 items-center justify-center rounded-control bg-selected text-primary">
@@ -148,7 +148,7 @@ function OwnReports({
   const t = useText();
   const empty = reports.length === 0 && missing.length === 0;
   return (
-    <section id="laporan-saya" aria-labelledby="own-reports" className="flex scroll-mt-4 flex-col gap-4">
+    <section id="my-reports" aria-labelledby="own-reports" className="flex scroll-mt-4 flex-col gap-4">
       <div className="flex flex-col gap-1">
         <h2 id="own-reports" className="text-section font-bold tracking-[-0.015em]">
           {t("home.reports.title")}
@@ -202,7 +202,7 @@ export function HomeScreen({
     me === null ? (
       <Notice kind="info">
         <p>{t("home.error.draftsUnreadable")}</p>
-        <Link to="/lapor" className={buttonStyles({ variant: "quiet", className: "self-start" })}>
+        <Link to="/" className={buttonStyles({ variant: "quiet", className: "self-start" })}>
           {t("home.error.retry")}
         </Link>
       </Notice>

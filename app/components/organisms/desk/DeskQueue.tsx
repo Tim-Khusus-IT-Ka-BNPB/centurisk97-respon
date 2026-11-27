@@ -97,7 +97,7 @@ function FoldedMembers({ members }: { readonly members: readonly Item[] }) {
         {members.map((member) => (
           <li key={member.ticketNumber}>
             <Link
-              to={`/lapor/meja/${member.ticketNumber}`}
+              to={`/desk/${member.ticketNumber}`}
               className="flex min-h-target-min flex-wrap items-center gap-x-3 gap-y-1 px-3 py-2 text-meta text-ink no-underline hover:bg-sunken"
             >
               <span className="font-bold tabular-nums">{member.ticketNumber}</span>
@@ -145,7 +145,7 @@ function QueueTable({ items }: { readonly items: readonly Item[] }) {
                 <td className={cell}>
                   <span className="flex flex-col items-start gap-1.5">
                     <Link
-                      to={`/lapor/meja/${item.ticketNumber}`}
+                      to={`/desk/${item.ticketNumber}`}
                       className="font-bold whitespace-nowrap text-ink tabular-nums no-underline after:absolute after:inset-0 hover:underline"
                     >
                       {item.ticketNumber}
@@ -210,7 +210,7 @@ function QueueCards({ items }: { readonly items: readonly Item[] }) {
       {foldEvents(items).map(({ head: item, members }) => (
         <li key={item.ticketNumber} className="flex flex-col gap-2">
           <Link
-            to={`/lapor/meja/${item.ticketNumber}`}
+            to={`/desk/${item.ticketNumber}`}
             className="flex h-full flex-col gap-2.5 card-surface p-4 text-ink no-underline hover:bg-sunken"
           >
             <span className="flex flex-wrap items-start justify-between gap-x-3 gap-y-2">
@@ -314,9 +314,9 @@ export function PhotoFigure({
   const t = useText();
   return (
     <figure className={cn("flex flex-col gap-2", own ? "" : "card-surface p-2")}>
-      <a href={`/api/lapor/desk/photos/${photo.photoId}`} className="group rounded-control">
+      <a href={`/api/desk/photos/${photo.photoId}`} className="group rounded-control">
         <img
-          src={`/api/lapor/desk/photos/${photo.photoId}`}
+          src={`/api/desk/photos/${photo.photoId}`}
           alt={t("desk.gallery.alt", { ticket: photo.ticketNumber })}
           loading="lazy"
           className="aspect-[4/3] w-full rounded-control bg-sunken object-cover transition-opacity duration-150 group-hover:opacity-90 motion-reduce:transition-none"
@@ -325,7 +325,7 @@ export function PhotoFigure({
       <figcaption className={cn("flex flex-col gap-1 text-meta", own ? "" : "px-1 pb-1")}>
         {own ? null : (
           <Link
-            to={`/lapor/meja/${photo.ticketNumber}`}
+            to={`/desk/${photo.ticketNumber}`}
             className="inline-flex min-h-target-min items-center font-bold tabular-nums"
           >
             {photo.ticketNumber}

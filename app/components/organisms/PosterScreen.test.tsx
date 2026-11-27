@@ -16,7 +16,7 @@ const village = (code: string, name: string) => ({
   provinceName: "Aceh",
 });
 const draw = (load: PosterLoad) =>
-  renderPage(<PosterScreen load={load} origin="https://lapor.example.test" />, { path: "/lapor/poster" });
+  renderPage(<PosterScreen load={load} origin="https://respon.example.test" />, { path: "/poster" });
 
 describe("the village posters", () => {
   test("a district's villages, one sheet each with its code to the report, printed from one button", async () => {
@@ -45,8 +45,8 @@ describe("the village posters", () => {
   });
 
   test("its code holds the report's address with the village's ten digits", () => {
-    const link = posterLink("https://lapor.example.test", "11.08.01.2001");
-    expect(link).toBe("https://lapor.example.test/lapor/report?desa=1108012001");
+    const link = posterLink("https://respon.example.test", "11.08.01.2001");
+    expect(link).toBe("https://respon.example.test/report?village=1108012001");
     expect(qrModules(link).length).toBeGreaterThan(20);
   });
 
@@ -62,7 +62,7 @@ describe("the village posters", () => {
     });
     expect(await screen.findByText("1 poster untuk Desa/Kel. Uji Satu")).toBeTruthy();
     expect(screen.getByRole("link", { name: "Semua desa di kecamatan ini" }).getAttribute("href")).toBe(
-      "/lapor/poster?district=11.08.01",
+      "/poster?district=11.08.01",
     );
   });
 
@@ -78,8 +78,8 @@ describe("the village posters", () => {
     });
     const links = within(await screen.findByRole("region", { name: "Hasil pencarian" })).getAllByRole("link");
     expect(links.map((link) => [link.textContent, link.getAttribute("href")])).toEqual([
-      ["Kec. Baktiya, Aceh Utara", "/lapor/poster?district=11.08.01"],
-      ["Desa/Kel. Uji Satu, Kec. Baktiya, Aceh Utara", "/lapor/poster?district=11.08.01&village=11.08.01.2001"],
+      ["Kec. Baktiya, Aceh Utara", "/poster?district=11.08.01"],
+      ["Desa/Kel. Uji Satu, Kec. Baktiya, Aceh Utara", "/poster?district=11.08.01&village=11.08.01.2001"],
     ]);
     expect((screen.getByLabelText("Kecamatan atau desa/kelurahan") as HTMLInputElement).value).toBe("baktiya");
   });
@@ -109,10 +109,10 @@ const SHEETS: PosterLoad = {
 const SheetsPage = () => <PosterScreen load={SHEETS} origin="" />;
 
 test("with no script the browser's own print is used: no button that does nothing", () => {
-  const Stub = createRoutesStub([{ path: "/lapor/poster", Component: SheetsPage }]);
+  const Stub = createRoutesStub([{ path: "/poster", Component: SheetsPage }]);
   const html = renderToStaticMarkup(
     <TextContext.Provider value={text}>
-      <Stub initialEntries={["/lapor/poster"]} />
+      <Stub initialEntries={["/poster"]} />
     </TextContext.Provider>,
   );
   expect(html).toContain("Uji Satu");

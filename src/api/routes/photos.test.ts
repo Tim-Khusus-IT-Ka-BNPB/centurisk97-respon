@@ -173,12 +173,12 @@ describe("photos", () => {
     const headers = {
       "cf-connecting-ip": phone.address,
       origin: TEST_ORIGIN,
-      "x-lapor-client": "1",
+      "x-respon-client": "1",
       "cf-ipcountry": "SG",
       cookie: [...phone.cookies].map(([name, value]) => `${name}=${value}`).join("; "),
     };
     const jumped = await fetchApi(
-      new Request(`http://localhost/api/lapor/drafts/${draft.draftId}/photos`, {
+      new Request(`http://localhost/api/drafts/${draft.draftId}/photos`, {
         method: "POST",
         headers,
         body: second,

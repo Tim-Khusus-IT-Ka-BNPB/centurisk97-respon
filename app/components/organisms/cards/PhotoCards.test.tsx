@@ -76,7 +76,7 @@ describe("photo card", () => {
     draw({ photos: [{ ...first, far: true }, ...card.photos.slice(1)] });
     await screen.findByRole("heading", { name: "Foto kejadian" });
     expect(screen.getByRole("img", { name: "Foto 1" }).getAttribute("src")).toBe(
-      `/api/lapor/drafts/${SAMPLE_DRAFTS.photos.draftId}/photos/${first.photoId}`,
+      `/api/drafts/${SAMPLE_DRAFTS.photos.draftId}/photos/${first.photoId}`,
     );
     expect(screen.getByText("Lokasi GPS perangkat")).toBeTruthy();
     expect(screen.getByText("Jauh dari lokasi kejadian")).toBeTruthy();

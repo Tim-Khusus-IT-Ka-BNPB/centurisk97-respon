@@ -23,7 +23,7 @@ test("a page cut off from the service says so, keeps the numbers to call and its
 }, info) => {
   const errors: string[] = [];
   page.on("pageerror", (error) => errors.push(error.message));
-  await page.goto("/lapor/help", { waitUntil: "networkidle" });
+  await page.goto("/help", { waitUntil: "networkidle" });
   // Once with a signal: what a switch needs is fetched then, and the page is refreshed after it.
   const refreshed = page.waitForResponse(
     (answer) => /\.data/.test(answer.url()) && answer.request().method() === "GET",
@@ -63,7 +63,7 @@ test.describe("with no service worker", () => {
   test.use({ serviceWorkers: "block" });
 
   test("a refresh lost after what was done keeps the theme just picked", async ({ page }) => {
-    await page.goto("/lapor/help", { waitUntil: "networkidle" });
+    await page.goto("/help", { waitUntil: "networkidle" });
     await page.route(/\.data/, (route) => (route.request().method() === "GET" ? route.abort() : route.continue()));
     await pressTheme(page, "Pakai tema gelap");
     await expect(heading(page)).toHaveText("Halaman belum bisa dibuka");

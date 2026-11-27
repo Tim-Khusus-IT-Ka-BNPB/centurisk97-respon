@@ -41,13 +41,13 @@ function replaceBody(t: Text, draft: NonNullable<Profile["openDraft"]>): string 
 function useStep() {
   const [params] = useSearchParams();
   const kept = [
-    ...(params.has("darurat") ? ["darurat=1"] : []),
-    ...(params.has("hilang") ? ["hilang=1"] : []),
-    ...(POSTER_DESA.test(params.get("desa") ?? "") ? [`desa=${params.get("desa")}`] : []),
+    ...(params.has("emergency") ? ["emergency=1"] : []),
+    ...(params.has("missing") ? ["missing=1"] : []),
+    ...(POSTER_DESA.test(params.get("village") ?? "") ? [`village=${params.get("village")}`] : []),
   ];
   return (step: string) => {
     const search = [step, ...kept].filter(Boolean).join("&");
-    return search === "" ? "/lapor/report" : `/lapor/report?${search}`;
+    return search === "" ? "/report" : `/report?${search}`;
   };
 }
 
@@ -81,7 +81,7 @@ function KnownRow({ profile }: { readonly profile: Profile }) {
       {profile.openDraft ? (
         <div className="flex flex-col gap-2 rounded-control bg-sunken p-3">
           <p className="tabular-nums">{resumeLine(t, profile.openDraft)}</p>
-          <Link to={`/lapor/report/${profile.openDraft.draftId}`} className={buttonStyles({ variant: "primary" })}>
+          <Link to={`/report/${profile.openDraft.draftId}`} className={buttonStyles({ variant: "primary" })}>
             {t("resume.continue")}
           </Link>
         </div>
@@ -199,11 +199,11 @@ function StaffSession() {
   return (
     <Panel id="staff-heading" title={t("start.staff.title")} lead={t("start.staff.body")}>
       <ActionRow>
-        <Link to="/lapor/meja" className={cn(buttonStyles({ size: "main" }), "@actions:px-6")}>
+        <Link to="/desk" className={cn(buttonStyles({ size: "main" }), "@actions:px-6")}>
           {t("start.staff.desk")}
         </Link>
-        <Form method="post" action="/lapor/meja" className="flex flex-col @actions:flex-1">
-          <input type="hidden" name="next" value="/lapor/report" />
+        <Form method="post" action="/desk" className="flex flex-col @actions:flex-1">
+          <input type="hidden" name="next" value="/report" />
           <Button name="action" value="signOut" variant="primary" size="main">
             <Icon name="logOut" />
             {t("start.staff.signOut")}
@@ -329,7 +329,7 @@ export function StartScreen({ page, acted }: { readonly page: StartPageData; rea
             {editing ? <HiddenValues values={values} withNumber={false} profileId={null} editing /> : null}
           </UseProfile>
         )}
-        <Link to={`/lapor/report/${profile.openDraft.draftId}`} className={buttonStyles({})}>
+        <Link to={`/report/${profile.openDraft.draftId}`} className={buttonStyles({})}>
           {t("card.confirm.replaceDraft.back")}
         </Link>
       </Confirm>

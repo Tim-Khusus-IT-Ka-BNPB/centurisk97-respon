@@ -16,7 +16,7 @@ import { VideoUpload } from "./VideoUpload";
 type PhotosCard = Extract<Card, { kind: "photos" }>;
 type Photo = PhotosCard["photos"][number];
 
-const API_BASE = "/api/lapor";
+const API_BASE = "/api";
 // A reading older than this is read again before a photo goes, so the server still takes it.
 const FIX_FRESH_MS = 9 * 60_000;
 

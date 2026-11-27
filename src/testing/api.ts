@@ -174,7 +174,7 @@ export const fromBrowser = { "cf-connecting-ip": "198.51.100.2" } as const;
 export const jsonWrite = {
   ...fromBrowser,
   origin: TEST_ORIGIN,
-  "x-lapor-client": "1",
+  "x-respon-client": "1",
   "content-type": "application/json",
 };
 
@@ -198,12 +198,16 @@ type Fetch = (request: Request) => Response | Promise<Response>;
 export function browser(fetchApi: Fetch, address = freshAddress()) {
   const cookies = new Map<string, string>();
   const call = async (method: string, path: string, body?: unknown) => {
-    const headers: Record<string, string> = { "cf-connecting-ip": address, origin: TEST_ORIGIN, "x-lapor-client": "1" };
+    const headers: Record<string, string> = {
+      "cf-connecting-ip": address,
+      origin: TEST_ORIGIN,
+      "x-respon-client": "1",
+    };
     if (cookies.size > 0) headers.cookie = [...cookies].map(([name, value]) => `${name}=${value}`).join("; ");
     if (body !== undefined) headers["content-type"] = "application/json";
     const init: RequestInit = { method, headers };
     if (body !== undefined) init.body = JSON.stringify(body);
-    const response = await fetchApi(new Request(`http://localhost/api/lapor${path}`, init));
+    const response = await fetchApi(new Request(`http://localhost/api${path}`, init));
     for (const line of response.headers.getSetCookie()) {
       const [pair] = line.split(";");
       const [name, value] = (pair as string).split("=");
@@ -215,17 +219,25 @@ export function browser(fetchApi: Fetch, address = freshAddress()) {
   };
   // A multipart post, as the page's photo form sends it.
   const upload = async (path: string, form: FormData) => {
-    const headers: Record<string, string> = { "cf-connecting-ip": address, origin: TEST_ORIGIN, "x-lapor-client": "1" };
+    const headers: Record<string, string> = {
+      "cf-connecting-ip": address,
+      origin: TEST_ORIGIN,
+      "x-respon-client": "1",
+    };
     if (cookies.size > 0) headers.cookie = [...cookies].map(([name, value]) => `${name}=${value}`).join("; ");
     const response = await fetchApi(
-      new Request(`http://localhost/api/lapor${path}`, { method: "POST", headers, body: form }),
+      new Request(`http://localhost/api${path}`, { method: "POST", headers, body: form }),
     );
     const json: unknown = await response.json();
     return { status: response.status, json, draft: json as DraftBody, error: json as ErrorEnvelope };
   };
   // A file read, answered as its status, type and bytes; with a body it is asked for by a post.
   const file = async (path: string, body?: unknown) => {
-    const headers: Record<string, string> = { "cf-connecting-ip": address, origin: TEST_ORIGIN, "x-lapor-client": "1" };
+    const headers: Record<string, string> = {
+      "cf-connecting-ip": address,
+      origin: TEST_ORIGIN,
+      "x-respon-client": "1",
+    };
     if (cookies.size > 0) headers.cookie = [...cookies].map(([name, value]) => `${name}=${value}`).join("; ");
     const init: RequestInit =
       body === undefined
@@ -235,7 +247,7 @@ export function browser(fetchApi: Fetch, address = freshAddress()) {
             headers: { ...headers, "content-type": "application/json" },
             body: JSON.stringify(body),
           };
-    const response = await fetchApi(new Request(`http://localhost/api/lapor${path}`, init));
+    const response = await fetchApi(new Request(`http://localhost/api${path}`, init));
     return { status: response.status, headers: response.headers, bytes: new Uint8Array(await response.arrayBuffer()) };
   };
   return { call, upload, file, cookies, address };

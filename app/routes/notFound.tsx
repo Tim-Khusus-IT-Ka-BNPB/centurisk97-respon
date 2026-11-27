@@ -10,7 +10,7 @@ export const meta = (args: Route.MetaArgs) =>
   pageMeta(args, {
     title: "page.notFound.title",
     description: "meta.notFound.description",
-    path: "/lapor",
+    path: "/",
     index: false,
   });
 
@@ -22,10 +22,10 @@ function NotFoundScreen() {
   const t = useText();
   return (
     <div className="flex flex-col gap-3 sm:flex-row">
-      <Link to="/lapor" className={buttonStyles({ variant: "primary", size: "main", className: "px-7" })}>
+      <Link to="/" className={buttonStyles({ variant: "primary", size: "main", className: "px-7" })}>
         {t("notFound.home")}
       </Link>
-      <Link to="/lapor/help" className={buttonStyles({ size: "main", className: "px-7" })}>
+      <Link to="/help" className={buttonStyles({ size: "main", className: "px-7" })}>
         {t("help.title")}
       </Link>
     </div>

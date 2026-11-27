@@ -6,7 +6,7 @@ import { renderDesk, SENT, SUMMARY } from "../../../testing/desk";
 import { never } from "../../../testing/render";
 import { DeskPilotView } from "./DeskPilot";
 
-const PATH = { path: "/lapor/meja/pilot" };
+const PATH = { path: "/desk/pilot" };
 const PILOT: DeskPilot = {
   account: { label: "Pusdalops BNPB, Petugas Uji" },
   max: 500,
@@ -94,19 +94,19 @@ describe("the numbers of the WhatsApp pilot", () => {
   });
 
   test("what was done is said; a refusal of no field is told in its place", async () => {
-    const view = await draw({}, { entry: "/lapor/meja/pilot?saved=allowed" });
+    const view = await draw({}, { entry: "/desk/pilot?saved=allowed" });
     expect(screen.getByRole("status").textContent).toContain("Nomor sudah diizinkan.");
     view?.unmount?.();
-    const other = await draw({}, { entry: "/lapor/meja/pilot?saved=entah" });
+    const other = await draw({}, { entry: "/desk/pilot?saved=entah" });
     expect(screen.queryByText("Nomor sudah diizinkan.")).toBeNull();
     other?.unmount?.();
-    const removed = await draw({}, { entry: "/lapor/meja/pilot?saved=removed" });
+    const removed = await draw({}, { entry: "/desk/pilot?saved=removed" });
     expect(screen.getByText("Izin nomor sudah dicabut.")).toBeTruthy();
     removed?.unmount?.();
     const retryAt = { utc: "2026-11-24T03:00:00.000Z", zone: "WIB" as const };
     const limited = await draw(
       { envelope: envelope("limit.desk.write", { params: { limit: 120 }, retryAt }) },
-      { entry: "/lapor/meja/pilot?saved=allowed" },
+      { entry: "/desk/pilot?saved=allowed" },
     );
     expect(screen.getByText(/Batas tindakan meja tercapai/)).toBeTruthy();
     expect(screen.queryByText("Nomor sudah diizinkan.")).toBeNull();

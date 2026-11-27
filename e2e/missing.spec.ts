@@ -15,7 +15,7 @@ test("a missing person is reported from the home's door, the desk of the region 
   // A name has no digits, so each run's is letters of its own.
   const name = `Uji Hilang ${Array.from({ length: 6 }, () => String.fromCharCode(97 + Math.floor(Math.random() * 26))).join("")}`;
   const number = syntheticNumber();
-  await page.goto("/lapor");
+  await page.goto("/");
   await page.getByRole("link", { name: /^Lapor orang hilang/ }).click();
   await expect(page.getByRole("heading", { level: 1, name: "Lapor orang hilang" })).toBeVisible();
 
@@ -28,7 +28,7 @@ test("a missing person is reported from the home's door, the desk of the region 
   await page.getByRole("button", { name: "Setuju", exact: true }).click();
   await expect(page.getByRole("heading", { name: "Periksa nomor Anda" })).toBeVisible();
   await page.getByRole("button", { name: "Ya", exact: true }).click();
-  await expect(page).toHaveURL(/\/lapor\/orang-hilang$/);
+  await expect(page).toHaveURL(/\/missing$/);
 
   await page.getByLabel("Cari desa atau kelurahan").fill("cot seumiyong");
   await page.getByRole("button", { name: "Cari desa" }).click();
@@ -55,12 +55,12 @@ test("a missing person is reported from the home's door, the desk of the region 
   const desk = await browser.newContext({ baseURL });
   await ownAddress(desk);
   const officer = await desk.newPage();
-  await officer.goto("/lapor/meja", { waitUntil: "networkidle" });
+  await officer.goto("/desk", { waitUntil: "networkidle" });
   await officer.getByLabel("Kode masuk").fill(DESK_CODE);
   await expect(officer.getByLabel("Kode masuk")).toHaveValue(DESK_CODE);
   await officer.getByRole("button", { name: "Masuk", exact: true }).click();
   await expect(officer.getByRole("heading", { level: 1, name: "Peta laporan" })).toBeVisible();
-  await officer.goto("/lapor/meja/orang-hilang");
+  await officer.goto("/desk/missing");
   await expect(officer.getByRole("heading", { level: 1, name: "Orang dicari" })).toBeVisible();
   const card = officer
     .getByRole("listitem")
@@ -73,6 +73,6 @@ test("a missing person is reported from the home's door, the desk of the region 
   await expect(officer.getByText("Status disimpan.")).toBeVisible();
   await noSidewaysScroll(officer);
 
-  await page.goto("/lapor/orang-hilang");
+  await page.goto("/missing");
   await expect(page.getByRole("listitem").filter({ hasText: name }).getByText("Ditemukan selamat")).toBeVisible();
 });

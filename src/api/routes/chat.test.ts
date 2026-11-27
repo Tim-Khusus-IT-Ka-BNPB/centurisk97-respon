@@ -61,7 +61,7 @@ describe("who is reporting (AC-01)", () => {
     expect(text).toContain("hubungi 112");
     expect(text).toContain("Pesan Anda tadi belum disimpan");
     expect(text).toContain("1. Setuju\n2. Tidak setuju");
-    expect(text).toContain("http://localhost:5173/lapor/privacy");
+    expect(text).toContain("http://localhost:5173/privacy");
     expect(await reporters(one.number)).toEqual([]);
     const [session] = await query<{ step: string }>`select step from chat_session order by updated_at desc limit 1`;
     expect(JSON.parse(session?.step as string)).toEqual({ kind: "consent", emergency: false });
@@ -147,7 +147,7 @@ describe("a whole report (AC-02)", () => {
     const ticket = (/\*(LA-251126-\d{2,})\*/.exec(text) as RegExpExecArray)[1] as string;
     expect(text).toContain("Terima kasih, Uji.");
     expect(text).toContain("BPBD Aceh Utara: 0800");
-    expect(text).toMatch(/http:\/\/localhost:5173\/lapor\/lacak#t=[0-9a-f]{32}/);
+    expect(text).toMatch(/http:\/\/localhost:5173\/track#t=[0-9a-f]{32}/);
     const [report] = await query`
       select door, number_unverified, owner_slot from report where ticket_number = ${ticket}`;
     expect(report).toEqual({ door: "chat", number_unverified: 0, owner_slot: "session" });
@@ -696,7 +696,7 @@ describe("an emergency", () => {
 
   test("a command is nobody's name, and whoever asks for their data to go is told how", async () => {
     const one = open();
-    const rights = /^\*Menghapus data Anda\*[\s\S]*persuratan@bnpb\.go\.id[\s\S]*\/lapor\/privacy/;
+    const rights = /^\*Menghapus data Anda\*[\s\S]*persuratan@bnpb\.go\.id[\s\S]*\/privacy/;
     expect((await one.send("hapus data saya")).text).toMatch(rights);
     for (const text of ["lapor", "1", "1"]) await one.send(text);
     expect((await one.send("status")).text).toMatch(/^Jawaban itu belum terbaca[\s\S]*Nama Anda/);

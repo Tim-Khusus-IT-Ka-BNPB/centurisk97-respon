@@ -93,7 +93,7 @@ function Aggregates() {
           <p>{t("desk.aggregates.refused")}</p>
         </Notice>
       ) : null}
-      <Form reloadDocument method="post" action="/lapor/meja/respons/aggregates" target={target}>
+      <Form reloadDocument method="post" action="/desk/response/aggregates" target={target}>
         <button type="submit" className={buttonStyles({ variant: "secondary", size: "min", className: "px-4" })}>
           <Icon name="download" className="size-5" />
           {t("desk.aggregates.download")}
@@ -174,7 +174,7 @@ export function DeskResponseView({
           className="flex items-center gap-1 rounded-control border border-line bg-surface p-0.5"
         >
           <Link
-            to={`/lapor/meja/respons?month=${monthStep(month, -1)}`}
+            to={`/desk/response?month=${monthStep(month, -1)}`}
             aria-label={t("desk.response.before")}
             className={buttonStyles({ variant: "link", size: "min", className: "px-3" })}
           >
@@ -182,7 +182,7 @@ export function DeskResponseView({
           </Link>
           <span className="min-w-36 text-center font-semibold">{monthText(month)}</span>
           <Link
-            to={`/lapor/meja/respons?month=${monthStep(month, 1)}`}
+            to={`/desk/response?month=${monthStep(month, 1)}`}
             aria-label={t("desk.response.after")}
             className={buttonStyles({ variant: "link", size: "min", className: "px-3" })}
           >

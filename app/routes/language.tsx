@@ -14,11 +14,11 @@ export const meta = (args: Route.MetaArgs) =>
   pageMeta(args, {
     title: "page.language.title",
     description: "meta.report.description",
-    path: "/lapor/bahasa",
+    path: "/language",
     index: false,
   });
 
-// GET /lapor/bahasa: the chooser as a page of its own, for a browser with no script; the page it
+// GET /language: the chooser as a page of its own, for a browser with no script; the page it
 // came from is where it goes back to.
 export function loader({ request }: Route.LoaderArgs) {
   return {
@@ -27,7 +27,7 @@ export function loader({ request }: Route.LoaderArgs) {
   };
 }
 
-// POST /lapor/bahasa: the language picker's form. The route keeps the choice in a cookie; the page
+// POST /language: the language picker's form. The route keeps the choice in a cookie; the page
 // the reporter was on is drawn again in that language. Works with no script.
 export async function action({ request, context }: Route.ActionArgs) {
   const form = await request.formData();

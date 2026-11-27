@@ -9,7 +9,7 @@ import type { Route } from "./+types/deskPilot";
 export const headers = () => ({ "cache-control": "private, no-store", "x-robots-tag": "noindex" });
 
 export const meta = (args: Route.MetaArgs) =>
-  pageMeta(args, { title: "page.desk.title", description: "meta.desk.description", path: "/lapor/meja", index: false });
+  pageMeta(args, { title: "page.desk.title", description: "meta.desk.description", path: "/desk", index: false });
 
 export async function loader({ context }: Route.LoaderArgs) {
   const load = await loadDeskPilot(context.api);

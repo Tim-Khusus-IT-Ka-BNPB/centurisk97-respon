@@ -136,7 +136,7 @@ describe("sending the warnings", () => {
     ).toEqual({
       title: "Prakiraan Awas banjir di Kab. Bogor",
       body: "Sabtu, 28 November. Prakiraan Pantau Bencana, bukan peringatan resmi BMKG. Buka untuk melihat yang perlu disiapkan dan nomor darurat.",
-      url: "/lapor/info?kab=32.01",
+      url: "/info?regency=32.01",
     });
     // Landslide, wind and smoke have not passed their back-test: labelled as a hypothesis (KI-01).
     const slide = messageOf({

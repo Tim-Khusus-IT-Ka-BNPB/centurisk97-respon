@@ -46,7 +46,7 @@ export function messageOf(rise: Rise) {
     body: copy.format(hypothesis ? "warn.push.hypothesisBody" : "warn.push.body", {
       day: dayName.format(Date.parse(rise.date)),
     }),
-    url: `/lapor/info?kab=${rise.regencyCode}`,
+    url: `/info?regency=${rise.regencyCode}`,
   };
 }
 

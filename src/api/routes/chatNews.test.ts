@@ -25,7 +25,7 @@ const waiting = async (one: One): Promise<Kabar[]> => {
   return (json.kabar as Kabar[]).filter((item) => `+${item.wa}` === one.number);
 };
 const mark = async (id: string) => (await machine.call("POST", `/kabar/${id}/terkirim`, {})).status;
-const path = (item: Kabar | undefined) => new URL(item?.url as string).pathname.replace("/api/lapor", "");
+const path = (item: Kabar | undefined) => new URL(item?.url as string).pathname.replace("/api", "");
 const file = async (item: Kabar | undefined, options = {}) => machine.request("GET", path(item), undefined, options);
 const drain = async (one: One) => {
   for (const item of await waiting(one)) expect(await mark(item.id)).toBe(200);
@@ -204,9 +204,7 @@ describe("what staff do (AC-03, AC-05)", () => {
     const [handled, closed] = await waiting(one);
     expect(handled?.teks).toContain("Status: Ditindaklanjuti\n\n*Tindakan petugas*\n• ");
     expect(handled?.teks).toContain("• Dapur umum");
-    expect(closed?.teks).toMatch(
-      /Status: Selesai ditangani\n\nLacak laporan: http:\/\/localhost:5173\/lapor\/lacak#t=/,
-    );
+    expect(closed?.teks).toMatch(/Status: Selesai ditangani\n\nLacak laporan: http:\/\/localhost:5173\/track#t=/);
     for (const item of [handled, closed]) {
       expect(item?.teks).not.toContain("Petugas Uji");
       expect(item?.teks).not.toContain("Tim berangkat");

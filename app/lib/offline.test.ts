@@ -20,13 +20,13 @@ describe("reports kept on the phone", () => {
     ]);
     dropReport("b");
     dropReport("a");
-    expect(localStorage.getItem("lapor-offline-reports")).toBeNull();
+    expect(localStorage.getItem("respon-offline-reports")).toBeNull();
   });
 
   test("storage that cannot be read or written keeps nothing and breaks nothing", () => {
-    localStorage.setItem("lapor-offline-reports", "{not json");
+    localStorage.setItem("respon-offline-reports", "{not json");
     expect(keptReports()).toEqual([]);
-    localStorage.setItem("lapor-offline-reports", '{"a":1}');
+    localStorage.setItem("respon-offline-reports", '{"a":1}');
     expect(keptReports()).toEqual([]);
     vi.spyOn(Storage.prototype, "setItem").mockImplementation(() => {
       throw new Error("refused");

@@ -116,7 +116,7 @@ export function CaseRecordCard({
                 {media.kind === "video" ? (
                   // biome-ignore lint/a11y/useMediaCaption: a resident's footage has no captions to give
                   <video
-                    src={`/api/lapor/cases/${fileId}/media/${media.id}`}
+                    src={`/api/cases/${fileId}/media/${media.id}`}
                     controls
                     preload="metadata"
                     aria-label={t("desk.case.video.label", {
@@ -128,7 +128,7 @@ export function CaseRecordCard({
                   />
                 ) : (
                   <img
-                    src={`/api/lapor/cases/${fileId}/media/${media.id}`}
+                    src={`/api/cases/${fileId}/media/${media.id}`}
                     alt={t("desk.case.photo.alt", {
                       kind: `desk.case.kind.${record.kind}`,
                       seq: record.seq,
@@ -157,7 +157,7 @@ export function CaseRecordCard({
           {mayWrite && !cancelled ? (
             <>
               <Link
-                to={`?jenis=${record.kind}&ubah=${record.id}`}
+                to={`?kind=${record.kind}&edit=${record.id}`}
                 className={buttonStyles({ variant: "secondary", size: "min", className: "no-underline" })}
               >
                 {t("desk.case.change")}

@@ -5,7 +5,7 @@ import { languageOf, PAGE_TEXTS, pickTexts } from "../lib/texts.server";
 import type { Route } from "./+types/privacy";
 
 export const meta = (args: Route.MetaArgs) =>
-  pageMeta(args, { title: "page.privacy.title", description: "meta.privacy.description", path: "/lapor/privacy" });
+  pageMeta(args, { title: "page.privacy.title", description: "meta.privacy.description", path: "/privacy" });
 
 export const loader = ({ request }: Route.LoaderArgs) => ({
   texts: pickTexts(PAGE_TEXTS.privacy, null, languageOf(request)),

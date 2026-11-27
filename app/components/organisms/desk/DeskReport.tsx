@@ -63,7 +63,7 @@ const SAVED = [
 function useOpened(ticketNumber: string): { readonly busy: boolean; readonly refused: ErrorEnvelope | null } {
   const { submit, state, data } = useFetcher<{ readonly envelope: ErrorEnvelope } | null>();
   useEffect(() => {
-    submit({ action: "opened" }, { method: "post", action: `/lapor/meja/${ticketNumber}` });
+    submit({ action: "opened" }, { method: "post", action: `/desk/${ticketNumber}` });
   }, [ticketNumber, submit]);
   return { busy: state === "submitting", refused: data?.envelope ?? null };
 }
@@ -145,9 +145,9 @@ function Handling({ report }: { readonly report: DeskReport }) {
           {report.proofs.map((proof, index) => (
             <li key={proof.proofId}>
               <figure className="flex flex-col gap-2">
-                <a href={`/api/lapor/desk/proofs/${proof.proofId}`}>
+                <a href={`/api/desk/proofs/${proof.proofId}`}>
                   <img
-                    src={`/api/lapor/desk/proofs/${proof.proofId}`}
+                    src={`/api/desk/proofs/${proof.proofId}`}
                     alt={t("desk.proof.alt", { n: index + 1 })}
                     loading="lazy"
                     className="aspect-[4/3] w-full rounded-control bg-sunken object-cover"
@@ -206,7 +206,7 @@ function Cluster({ report }: { readonly report: DeskReport }) {
               </span>
             ) : (
               <Link
-                to={`/lapor/meja/${ticket}`}
+                to={`/desk/${ticket}`}
                 className="inline-flex min-h-target-min items-center rounded-control border border-line bg-surface px-3 tabular-nums text-ink no-underline hover:border-control"
               >
                 {ticket}
@@ -233,7 +233,7 @@ function Videos({ report }: { readonly report: DeskReport }) {
               <video
                 controls
                 preload="metadata"
-                src={`/api/lapor/desk/reports/${encodeURIComponent(report.ticketNumber)}/videos/${video.id}`}
+                src={`/api/desk/reports/${encodeURIComponent(report.ticketNumber)}/videos/${video.id}`}
                 className="aspect-video w-full rounded-control bg-sunken"
               />
               <figcaption className="flex flex-col text-meta text-muted">
@@ -270,7 +270,7 @@ function EventCode({ report }: { readonly report: DeskReport }) {
         {event.tickets.map((ticket) => (
           <li key={ticket}>
             <Link
-              to={`/lapor/meja/${ticket}`}
+              to={`/desk/${ticket}`}
               aria-current={ticket === report.ticketNumber ? "page" : undefined}
               className="inline-flex min-h-target-min items-center rounded-control border border-line bg-surface px-3 tabular-nums text-ink no-underline hover:border-control aria-[current=page]:border-primary aria-[current=page]:bg-selected aria-[current=page]:font-semibold aria-[current=page]:text-primary"
             >
@@ -304,7 +304,7 @@ function Documents({ report }: { readonly report: DeskReport }) {
         hazardType={report.hazardType}
         voice="desk"
         files={(version) => (
-          <Form reloadDocument method="post" action={`/lapor/meja/${report.ticketNumber}/documents`} target={target}>
+          <Form reloadDocument method="post" action={`/desk/${report.ticketNumber}/documents`} target={target}>
             <input type="hidden" name="version" value={version} />
             <FileButtons
               version={version}
@@ -415,7 +415,7 @@ export function DeskReportView({
   const problem = cardProblem(told);
   return (
     <DeskShell place={{ filters: ALL_FILTERS, current: null, summary }} account={report.account.label}>
-      <Link to="/lapor/meja" className="inline-flex min-h-target-min w-fit items-center gap-2 rounded-control text-ink">
+      <Link to="/desk" className="inline-flex min-h-target-min w-fit items-center gap-2 rounded-control text-ink">
         <Icon name="arrowLeft" className="size-5" />
         {t("desk.refused.back")}
       </Link>

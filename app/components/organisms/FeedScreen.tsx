@@ -37,7 +37,7 @@ function Filters({ hazard, period }: { readonly hazard: string | null; readonly 
         {FEED_PERIODS.map((id) => (
           <Link
             key={id}
-            to={`/lapor/feed${feedQuery(hazard, id)}`}
+            to={`/feed${feedQuery(hazard, id)}`}
             aria-current={period === id ? "true" : undefined}
             className={chip}
           >
@@ -48,7 +48,7 @@ function Filters({ hazard, period }: { readonly hazard: string | null; readonly 
       </nav>
       <nav aria-label={t("feed.filter.label")} className="-mx-4 flex gap-2 overflow-x-auto px-4 pb-1 md:-mx-6 md:px-6">
         <Link
-          to={`/lapor/feed${feedQuery(null, period)}`}
+          to={`/feed${feedQuery(null, period)}`}
           aria-current={hazard === null ? "true" : undefined}
           className={chip}
         >
@@ -57,7 +57,7 @@ function Filters({ hazard, period }: { readonly hazard: string | null; readonly 
         {SELECTABLE_HAZARD_TYPES.map((id) => (
           <Link
             key={id}
-            to={`/lapor/feed${feedQuery(id, period)}`}
+            to={`/feed${feedQuery(id, period)}`}
             aria-current={hazard === id ? "true" : undefined}
             className={chip}
           >
@@ -168,7 +168,7 @@ export function FeedCard({
               {entry.proofs.map((proofId, index) => (
                 <img
                   key={proofId}
-                  src={`/api/lapor/feed/proofs/${proofId}`}
+                  src={`/api/feed/proofs/${proofId}`}
                   alt={t("feed.proofs.alt", { n: index + 1, hazard, village: entry.place.villageName })}
                   loading="lazy"
                   className="aspect-[4/3] w-full rounded-control bg-sunken object-cover"
@@ -181,7 +181,7 @@ export function FeedCard({
           {follow === null ? null : <FollowButton entry={entry} follows={follow.follows} onToggle={follow.onToggle} />}
           {commentsLink ? (
             <Link
-              to={`/lapor/feed/${entry.id}`}
+              to={`/feed/${entry.id}`}
               className={buttonStyles({ variant: "secondary", size: "min", className: "px-3 no-underline" })}
             >
               <Icon name="messageSquare" className="size-4" />
@@ -204,11 +204,11 @@ function Empty({ hazard }: { readonly hazard: string | null }) {
       <p className="text-body text-muted">{t("feed.empty.lead")}</p>
       <div className="flex flex-wrap gap-3">
         {hazard === null ? null : (
-          <Link to="/lapor/feed" className={buttonStyles({ variant: "secondary" })}>
+          <Link to="/feed" className={buttonStyles({ variant: "secondary" })}>
             {t("feed.empty.all")}
           </Link>
         )}
-        <Link to="/lapor/report" className={buttonStyles({ variant: "primary" })}>
+        <Link to="/report" className={buttonStyles({ variant: "primary" })}>
           {t("feed.report")}
         </Link>
       </div>
@@ -226,7 +226,7 @@ function Unavailable({ envelope }: { readonly envelope: ErrorEnvelope | null }) 
         {t("feed.unavailable.title")}
       </h2>
       <p className="text-body text-muted">{limited ?? t("feed.unavailable.lead")}</p>
-      <a href="/lapor/feed" className={buttonStyles({ variant: "secondary" })}>
+      <a href="/feed" className={buttonStyles({ variant: "secondary" })}>
         {t("feed.unavailable.retry")}
       </a>
     </section>
@@ -234,8 +234,8 @@ function Unavailable({ envelope }: { readonly envelope: ErrorEnvelope | null }) 
 }
 
 const MODES = [
-  { id: "events", to: "/lapor/feed", icon: "map" },
-  { id: "watch", to: "/lapor/feed?mode=peringatan", icon: "bell" },
+  { id: "events", to: "/feed", icon: "map" },
+  { id: "watch", to: "/feed?mode=peringatan", icon: "bell" },
 ] as const;
 
 // The Alun-alun's title, Sigap, and its two views (upstream DP-11): what is happening, and what is

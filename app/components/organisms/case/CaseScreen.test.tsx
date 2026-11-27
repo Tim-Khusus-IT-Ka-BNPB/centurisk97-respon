@@ -13,10 +13,10 @@ const draw = (
   view: CaseView = CASE_VIEW,
   tab: { kind: CaseView["records"][number]["kind"]; editing: string | null } = { kind: "house", editing: null },
   answered: CaseAnswered = NOTHING,
-  entry = "/lapor/data/f000000000000001",
+  entry = "/cases/f000000000000001",
 ) =>
   renderPage(<CaseScreen view={view} tab={tab} answered={answered} />, {
-    path: "/lapor/data/:fileId",
+    path: "/cases/:fileId",
     entry,
     action: never,
   });
@@ -31,7 +31,7 @@ const fields = (form: HTMLFormElement) =>
 
 describe("the follow-up file's screen", () => {
   test("its keeper sees the totals, a tab per kind, the records of the one open, and their tools", async () => {
-    draw(CASE_VIEW, { kind: "house", editing: null }, NOTHING, "/lapor/data/f000000000000001?saved=record");
+    draw(CASE_VIEW, { kind: "house", editing: null }, NOTHING, "/cases/f000000000000001?saved=record");
     expect(await screen.findByText("Tiket LA-241126-01")).toBeTruthy();
     expect((await screen.findByText("Data tersimpan.")).getAttribute("role")).toBe("status");
     const totals = screen.getByRole("region", { name: "Rekap per 2026-11-24" });
@@ -52,7 +52,7 @@ describe("the follow-up file's screen", () => {
     const tabs = screen.getByRole("navigation", { name: "Jenis data" });
     expect(within(tabs).getByRole("link", { name: "Rumah (1)" }).getAttribute("aria-current")).toBe("true");
     expect(within(tabs).getByRole("link", { name: "Pengungsi (1)" }).getAttribute("href")).toBe(
-      "/lapor/data/f000000000000001?jenis=evacuee",
+      "/cases/f000000000000001?kind=evacuee",
     );
     const [house, cancelled] = screen.getAllByRole("article") as [HTMLElement, HTMLElement];
     expect(within(house).getByText("Uji Satu")).toBeTruthy();
@@ -60,17 +60,17 @@ describe("the follow-up file's screen", () => {
     expect(within(house).getByText("Ya")).toBeTruthy();
     expect(within(house).getByText("Foto jauh dari titik")).toBeTruthy();
     expect([...house.querySelectorAll("img")].map((img) => img.getAttribute("src"))).toEqual([
-      "/api/lapor/cases/f000000000000001/media/11111111-1111-4111-8111-111111111111",
-      "/api/lapor/cases/f000000000000001/media/22222222-2222-4222-8222-222222222222",
+      "/api/cases/f000000000000001/media/11111111-1111-4111-8111-111111111111",
+      "/api/cases/f000000000000001/media/22222222-2222-4222-8222-222222222222",
     ]);
     expect(within(house).getByText("Titik ponsel")).toBeTruthy();
     const video = within(house).getByLabelText("Video Rumah 1, nomor 3");
     expect([video.tagName, video.getAttribute("src")]).toEqual([
       "VIDEO",
-      "/api/lapor/cases/f000000000000001/media/33333333-3333-4333-8333-333333333333",
+      "/api/cases/f000000000000001/media/33333333-3333-4333-8333-333333333333",
     ]);
     expect(within(house).getByRole("link", { name: "Ubah" }).getAttribute("href")).toBe(
-      "/lapor/data/f000000000000001?jenis=house&ubah=a000000000000001",
+      "/cases/f000000000000001?kind=house&edit=a000000000000001",
     );
     expect(within(house).queryByLabelText("Ini foto wajah")).toBeNull();
     expect(within(cancelled).getByText("Dibatalkan: salah ketik")).toBeTruthy();
@@ -118,7 +118,7 @@ describe("the follow-up file's screen", () => {
     expect((within(form).getByRole("checkbox", { name: "Menyusui" }) as HTMLInputElement).checked).toBe(false);
     expect(within(form).queryByLabelText("Lintang")).toBeNull();
     expect(within(form).getByRole("link", { name: "Batal ubah" }).getAttribute("href")).toBe(
-      "/lapor/data/f000000000000001?jenis=evacuee",
+      "/cases/f000000000000001?kind=evacuee",
     );
     const save = within(form).getByRole("button", { name: "Simpan" });
     expect(fields(save.closest("form") as HTMLFormElement)).toMatchObject({
@@ -202,10 +202,10 @@ describe("the follow-up file's screen", () => {
     draw(
       CASE_VIEW,
       { kind: "house", editing: null },
-      { ...NOTHING, link: { link: "http://x/lapor/data/masuk/abc", name: "Uji Baru" } },
+      { ...NOTHING, link: { link: "http://x/cases/join/abc", name: "Uji Baru" } },
     );
     expect(await screen.findByText("Tautan untuk Uji Baru")).toBeTruthy();
-    expect(screen.getByText("http://x/lapor/data/masuk/abc")).toBeTruthy();
+    expect(screen.getByText("http://x/cases/join/abc")).toBeTruthy();
   });
 
   test("BNPB reads masked, shows one record in full, and keeps nothing; a province its totals only", async () => {
@@ -319,7 +319,7 @@ describe("closing the file", () => {
   };
 
   test("its keeper is asked if the event ended, shown what keeps it noted, and closes it", async () => {
-    draw(CASE_VIEW, { kind: "house", editing: null }, NOTHING, "/lapor/data/f000000000000001?saved=close");
+    draw(CASE_VIEW, { kind: "house", editing: null }, NOTHING, "/cases/f000000000000001?saved=close");
     expect((await screen.findByText("Berkas ditutup dan menunggu diterima BNPB.")).getAttribute("role")).toBe("status");
     const closing = await screen.findByRole("region", { name: "Kejadian sudah selesai?" });
     expect(within(closing).getByText(/selesai dengan catatan/)).toBeTruthy();

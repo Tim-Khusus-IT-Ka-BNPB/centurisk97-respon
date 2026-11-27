@@ -176,7 +176,7 @@ describe("limits", () => {
   test("a spoofed x-forwarded-for is ignored and a request with no cf-connecting-ip is refused with 400", async () => {
     const headers = {
       origin: "http://localhost:5173",
-      "x-lapor-client": "1",
+      "x-respon-client": "1",
       "content-type": "application/json",
       "x-forwarded-for": "203.0.113.9",
     };
@@ -187,9 +187,7 @@ describe("limits", () => {
       privacyVersion: 2,
       agree: true,
     });
-    const refused = await fetchApi(
-      new Request("http://localhost/api/lapor/consent", { method: "POST", headers, body }),
-    );
+    const refused = await fetchApi(new Request("http://localhost/api/consent", { method: "POST", headers, body }));
     expect(refused.status).toBe(400);
     const address = freshAddress();
     for (let binding = 0; binding < 60; binding += 1)
@@ -199,7 +197,7 @@ describe("limits", () => {
         JSON.parse(body.replace(/0800\d+/, freshNumber().typed)),
       );
     const spoofed = await fetchApi(
-      new Request("http://localhost/api/lapor/consent", {
+      new Request("http://localhost/api/consent", {
         method: "POST",
         headers: { ...headers, "cf-connecting-ip": address },
         body,

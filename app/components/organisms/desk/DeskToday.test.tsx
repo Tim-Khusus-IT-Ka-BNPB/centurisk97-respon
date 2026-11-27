@@ -5,7 +5,7 @@ import { DeskToday } from "./DeskToday";
 
 const ALL = { valid: true, bpbd: true, ticket: true, version: true, pull: true };
 const draw = (today: Parameters<typeof DeskToday>[0]["today"]) =>
-  renderPage(<DeskToday today={today} />, { path: "/lapor/meja/LA-261126-01", action: never });
+  renderPage(<DeskToday today={today} />, { path: "/desk/LA-261126-01", action: never });
 
 describe("the today page on a report", () => {
   test("lists the five conditions met or not, and a shown report is pulled off", async () => {
@@ -22,7 +22,7 @@ describe("the today page on a report", () => {
     const form = pull.closest("form") as HTMLFormElement;
     expect((form.elements.namedItem("action") as HTMLInputElement).value).toBe("today");
     expect((form.elements.namedItem("pulled") as HTMLInputElement).value).toBe("1");
-    expect(screen.getByRole("link", { name: "Buka halaman Hari ini" }).getAttribute("href")).toBe("/lapor/hari-ini");
+    expect(screen.getByRole("link", { name: "Buka halaman Hari ini" }).getAttribute("href")).toBe("/today");
     fireEvent.click(pull);
     expect(await screen.findByText("Menyimpan...")).toBeTruthy();
   });

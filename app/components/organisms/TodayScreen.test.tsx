@@ -16,7 +16,7 @@ vi.mock("./FeedMap", () => ({
 }));
 
 const draw = (load: Parameters<typeof TodayScreen>[0]["load"], hazard: string | null = null) =>
-  renderPage(<TodayScreen load={load} hazard={hazard} />, { path: "/lapor/hari-ini" });
+  renderPage(<TodayScreen load={load} hazard={hazard} />, { path: "/today" });
 
 describe("the today page", () => {
   test("each event a card: its kind, place, checker, figures as ranges and how many reported", async () => {
@@ -51,9 +51,9 @@ describe("the today page", () => {
         .getAllByRole("link")
         .map((link) => [link.textContent, link.getAttribute("href"), link.getAttribute("aria-current")]),
     ).toEqual([
-      ["Semua", "/lapor/hari-ini", null],
-      ["Banjir", "/lapor/hari-ini?hazard=flood", null],
-      ["Tanah longsor", "/lapor/hari-ini?hazard=landslide", "true"],
+      ["Semua", "/today", null],
+      ["Banjir", "/today?hazard=flood", null],
+      ["Tanah longsor", "/today?hazard=landslide", "true"],
     ]);
     expect(screen.getAllByRole("article")).toHaveLength(1);
   });
@@ -63,7 +63,7 @@ describe("the today page", () => {
     expect(
       await screen.findByRole("heading", { name: "Belum ada laporan terverifikasi dalam 24 jam terakhir" }),
     ).toBeTruthy();
-    expect(screen.getByRole("link", { name: "Lihat Alun-alun" }).getAttribute("href")).toBe("/lapor/feed");
+    expect(screen.getByRole("link", { name: "Lihat Alun-alun" }).getAttribute("href")).toBe("/feed");
     expect(screen.queryByRole("navigation", { name: "Saring menurut jenis kejadian" })).toBeNull();
     view.unmount();
     draw({ kind: "today", today: { events: [TODAY.events[0] as (typeof TODAY.events)[number]] } });
@@ -74,7 +74,7 @@ describe("the today page", () => {
   test("shut, it says so and leads home; unread, it says why and reloads", async () => {
     const view = draw({ kind: "closed" });
     expect(await screen.findByRole("heading", { name: "Halaman ini belum dibuka" })).toBeTruthy();
-    expect(screen.getByRole("link", { name: "Kembali ke beranda" }).getAttribute("href")).toBe("/lapor");
+    expect(screen.getByRole("link", { name: "Kembali ke beranda" }).getAttribute("href")).toBe("/");
     view.unmount();
     const limited: ErrorEnvelope = {
       error: { code: "limit.address.feed", copyKey: "limit.address.feed", params: { limit: 600 } },
@@ -87,6 +87,6 @@ describe("the today page", () => {
     expect(screen.getByText(/600/)).toBeTruthy();
     second.unmount();
     draw({ kind: "unavailable", envelope: null });
-    expect((await screen.findByRole("link", { name: "Muat ulang" })).getAttribute("href")).toBe("/lapor/hari-ini");
+    expect((await screen.findByRole("link", { name: "Muat ulang" })).getAttribute("href")).toBe("/today");
   });
 });

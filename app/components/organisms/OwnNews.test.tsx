@@ -5,7 +5,7 @@ import { OWN_REPORT } from "../../testing/ownReport";
 import { never, renderPage } from "../../testing/render";
 import { OwnNews } from "./OwnNews";
 
-const PATH = "/lapor/reports/LA-231126-01";
+const PATH = "/reports/LA-231126-01";
 const at = (hour: number) => ({ utc: `2026-11-23T0${hour}:00:00.000Z`, zone: "WIB" as const });
 const ITEMS: NewsItem[] = [
   { kind: "status", at: at(6), isNew: true, status: "invalid", reason: "Laporan ganda" },

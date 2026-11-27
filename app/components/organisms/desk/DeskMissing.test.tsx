@@ -74,7 +74,7 @@ const draw = (props: Partial<Parameters<typeof DeskMissingView>[0]> = {}) =>
       envelope={null}
       {...props}
     />,
-    { path: "/lapor/meja/orang-hilang" },
+    { path: "/desk/missing" },
   );
 
 describe("the desk's missing persons", () => {
@@ -93,7 +93,7 @@ describe("the desk's missing persons", () => {
     );
     expect(inside.getByRole("link", { name: "Telepon orang yang dicari +62 800-1111-2222" })).toBeTruthy();
     expect(inside.getByRole("img", { name: "Foto Siti Uji" }).getAttribute("src")).toBe(
-      `/api/lapor/desk/missing/${FULL.id}/photo`,
+      `/api/desk/missing/${FULL.id}/photo`,
     );
     expect(inside.getByText("Diserahkan")).toBeTruthy();
     expect(inside.getAllByText(/, oleh Petugas Uji$/)).toHaveLength(2);
@@ -137,7 +137,7 @@ describe("the desk's missing persons", () => {
     expect((await screen.findByRole("link", { name: "Diteruskan ke Basarnas" })).getAttribute("aria-current")).toBe(
       "page",
     );
-    expect(screen.getByRole("link", { name: "Semua" }).getAttribute("href")).toBe("/lapor/meja/orang-hilang");
+    expect(screen.getByRole("link", { name: "Semua" }).getAttribute("href")).toBe("/desk/missing");
     expect(screen.getByText("Status disimpan.")).toBeTruthy();
     expect(screen.getByText("Belum ada laporan orang hilang di sini.")).toBeTruthy();
     view.unmount();

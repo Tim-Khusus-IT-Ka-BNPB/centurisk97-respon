@@ -12,7 +12,7 @@ export const meta = (args: Route.MetaArgs) =>
   pageMeta(args, {
     title: "page.poster.title",
     description: "meta.poster.description",
-    path: "/lapor/poster",
+    path: "/poster",
     index: false,
   });
 

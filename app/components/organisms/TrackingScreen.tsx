@@ -100,7 +100,7 @@ function TrackingView({ tracking }: { readonly tracking: Tracking }) {
   );
 }
 
-// The tracking page (`/lapor/lacak`): anyone with the link, no sign-in. Never the reporter's
+// The tracking page (`/track`): anyone with the link, no sign-in. Never the reporter's
 // name or number, the coordinates, or RT and RW.
 export function TrackingScreen() {
   const t = useText();
@@ -137,7 +137,7 @@ export function TrackingScreen() {
         </div>
       </section>
       <p className="text-meta text-muted">{t("tracking.footer")}</p>
-      <Link to="/lapor" className={buttonStyles({ variant: "link", className: "-ms-2 self-start" })}>
+      <Link to="/" className={buttonStyles({ variant: "link", className: "-ms-2 self-start" })}>
         {t("tracking.back")}
       </Link>
     </div>

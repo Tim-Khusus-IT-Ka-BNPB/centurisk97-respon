@@ -115,7 +115,7 @@ export function createGateway(settings: Settings) {
 
   // The owner's command, which only their own number may give.
   async function command(number: string, said: OwnerCommand): Promise<number> {
-    const response = await call("POST", "/api/lapor/izin", said);
+    const response = await call("POST", "/api/izin", said);
     const done = said.cabut ? "taken away" : "allowed";
     keep(number, {
       from: "service",
@@ -130,13 +130,13 @@ export function createGateway(settings: Settings) {
       keep(number, { from: "reporter", kind: "text", text });
       const said = number === settings.owner ? ownerCommand(text) : null;
       if (said) return command(number, said);
-      return answer(number, "/api/lapor/pesan", { wa: number, saluran: "wa", teks: text }, messageId);
+      return answer(number, "/api/pesan", { wa: number, saluran: "wa", teks: text }, messageId);
     });
 
   const share = (number: string, lat: number, lon: number) =>
     inTurn(number, () => {
       keep(number, { from: "reporter", kind: "location", text: `${lat}, ${lon}` });
-      return answer(number, "/api/lapor/pesan", { wa: number, saluran: "wa", lokasi: { lat, lon, sumber: "wa" } });
+      return answer(number, "/api/pesan", { wa: number, saluran: "wa", lokasi: { lat, lon, sumber: "wa" } });
     });
 
   const photo = (number: string, base64: string, caption: string) =>
@@ -148,9 +148,9 @@ export function createGateway(settings: Settings) {
         text: caption,
         file: keepFile({ bytes, mime: "image/jpeg", name: "photo.jpg" }),
       });
-      const status = await answer(number, "/api/lapor/foto", { wa: number, data: base64, waktu: Date.now() });
+      const status = await answer(number, "/api/foto", { wa: number, data: base64, waktu: Date.now() });
       if (caption === "") return status;
-      return answer(number, "/api/lapor/pesan", { wa: number, saluran: "wa", teks: caption });
+      return answer(number, "/api/pesan", { wa: number, saluran: "wa", teks: caption });
     });
 
   // One document of news, read with a signature of our own.
@@ -165,7 +165,7 @@ export function createGateway(settings: Settings) {
 
   // Sends what waits and marks each as sent, as the gateway does every minute.
   async function pull(): Promise<number> {
-    const response = await call("GET", "/api/lapor/kabar");
+    const response = await call("GET", "/api/kabar");
     if (!response.ok) return 0;
     const { kabar } = (await response.json()) as { kabar: News[] };
     let sent = 0;
@@ -174,7 +174,7 @@ export function createGateway(settings: Settings) {
       if (news.url !== null && file === undefined) continue;
       const kind = file === undefined ? "text" : "document";
       keep(news.wa, { from: "service", kind, text: news.teks, ...(file === undefined ? {} : { file }) });
-      await call("POST", `/api/lapor/kabar/${encodeURIComponent(news.id)}/terkirim`, {});
+      await call("POST", `/api/kabar/${encodeURIComponent(news.id)}/terkirim`, {});
       sent += 1;
     }
     return sent;

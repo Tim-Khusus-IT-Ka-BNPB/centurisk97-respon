@@ -51,12 +51,12 @@ describe("consent", () => {
   test("the device cookie is HttpOnly, Secure over https, SameSite Lax for a year, and only its fingerprint is stored", async () => {
     const consent = (origin: string) =>
       fetchApi(
-        new Request(`${origin}/api/lapor/consent`, {
+        new Request(`${origin}/api/consent`, {
           method: "POST",
           headers: {
             "cf-connecting-ip": freshAddress(),
             origin,
-            "x-lapor-client": "1",
+            "x-respon-client": "1",
             "content-type": "application/json",
           },
           body: JSON.stringify(citizen(freshNumber().typed)),
@@ -64,12 +64,12 @@ describe("consent", () => {
       );
     const plain = (await consent("http://localhost:5173")).headers.get("set-cookie") as string;
     expect(plain).toMatch(/^device_key=[A-Za-z0-9_-]{43}; Max-Age=31536000; Path=\/; HttpOnly; SameSite=Lax$/);
-    const request = new Request("https://localhost/api/lapor/consent", {
+    const request = new Request("https://localhost/api/consent", {
       method: "POST",
       headers: {
         "cf-connecting-ip": freshAddress(),
         origin: "http://localhost:5173",
-        "x-lapor-client": "1",
+        "x-respon-client": "1",
         "content-type": "application/json",
       },
       body: JSON.stringify(citizen(freshNumber().typed)),

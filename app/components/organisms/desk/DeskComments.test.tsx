@@ -39,8 +39,7 @@ const COMMENTS: Comments = {
     },
   ],
 };
-const draw = () =>
-  renderPage(<DeskComments comments={COMMENTS} />, { path: "/lapor/meja/LA-241126-01", action: never });
+const draw = () => renderPage(<DeskComments comments={COMMENTS} />, { path: "/desk/LA-241126-01", action: never });
 const fields = (form: HTMLFormElement) =>
   Object.fromEntries([...new FormData(form)].map(([name, value]) => [name, String(value)]));
 

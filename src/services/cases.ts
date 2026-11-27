@@ -94,7 +94,7 @@ const whoOf = (actor: CaseActor) =>
 // Links and cookies last 30 days, a cookie moved on with each use (Q11).
 const LINK_DAYS = 30;
 const MAX_MEDIA = 6;
-const MEMBER_COOKIE = "lapor_data";
+const MEMBER_COOKIE = "case_access";
 export const CASE_COOKIE = MEMBER_COOKIE;
 
 const randomHex = (bytes: number) =>
@@ -580,7 +580,7 @@ const newLink = async (bindings: ServiceBindings) => {
     token,
     hash: await sha256Hex(token),
     expires: new Date(bindings.clock.now() + LINK_DAYS * DAY_MS),
-    url: `${bindings.settings.appOrigin}/lapor/data/masuk/${token}`,
+    url: `${bindings.settings.appOrigin}/cases/join/${token}`,
   };
 };
 

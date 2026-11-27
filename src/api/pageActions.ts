@@ -82,7 +82,7 @@ function redirect(location: string, response: Response): PageResult {
 
 async function created(response: Response, form: Form, refusedView: StartView): Promise<PageResult> {
   if (response.status === 201)
-    return redirect(`/lapor/report/${((await response.json()) as { draftId: string }).draftId}`, response);
+    return redirect(`/report/${((await response.json()) as { draftId: string }).draftId}`, response);
   const envelope = (await response.json()) as ErrorEnvelope;
   return render(response.status === 409 ? "replaceConfirm" : refusedView, form, response.status, envelope);
 }
@@ -97,7 +97,7 @@ function identityBody(values: IdentityValues, withNumber: boolean) {
   };
 }
 
-// POST /lapor/report. The session path has no number box, so a form without one consents without it.
+// POST /report. The session path has no number box, so a form without one consents without it.
 export async function startStepAction(
   form: Form,
   api: ApiCall,
@@ -156,7 +156,7 @@ export async function startStepAction(
       const response = await api("DELETE", `/me/profiles/${encodeURIComponent(field(form, "profileId"))}`, {
         confirm: true,
       });
-      if (response.status === 204) return redirect("/lapor/report", response);
+      if (response.status === 204) return redirect("/report", response);
       return render("form", form, response.status, (await response.json()) as ErrorEnvelope);
     }
     default:
@@ -164,7 +164,7 @@ export async function startStepAction(
   }
 }
 
-// POST /lapor/report/<draftId>: a turn or a send from a form. Box values travel as "value.<fieldId>".
+// POST /report/<draftId>: a turn or a send from a form. Box values travel as "value.<fieldId>".
 // The photo route's form: the file and the turn controls, and the device reading the page put in
 // its boxes (value.<name>, as every box of a turn form travels).
 const READING_FIELDS = ["lat", "lon", "accuracy", "readAt", "offset", "zone"] as const;
@@ -210,6 +210,6 @@ export async function draftPageAction(draftId: string, form: Form, api: ApiCall)
                 groupId: field(form, "groupId") || null,
                 villageCode: field(form, "villageCode") || null,
               });
-  if (response.ok) return redirect(`/lapor/report/${draftId}`, response);
+  if (response.ok) return redirect(`/report/${draftId}`, response);
   return render("draft", form, response.status, (await response.json()) as ErrorEnvelope);
 }

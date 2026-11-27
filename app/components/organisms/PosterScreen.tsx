@@ -28,7 +28,7 @@ export type PosterLoad =
     };
 
 // The address a poster's code opens: the report, with the village's ten digits (D131).
-export const posterLink = (origin: string, code: string) => `${origin}/lapor/report?desa=${code.replace(/\D/g, "")}`;
+export const posterLink = (origin: string, code: string) => `${origin}/report?village=${code.replace(/\D/g, "")}`;
 
 function Sheet({ village, origin }: { readonly village: Item; readonly origin: string }) {
   const t = useText();
@@ -90,7 +90,7 @@ function Results({ items, query }: { readonly items: readonly Item[]; readonly q
           return (
             <li key={item.code}>
               <Link
-                to={`/lapor/poster?district=${district}${village}`}
+                to={`/poster?district=${district}${village}`}
                 className="flex min-h-target items-center justify-between gap-3 rounded-control border border-line bg-surface px-4 py-2 text-ink no-underline hover:border-control"
               >
                 {item.level === "district"
@@ -118,16 +118,13 @@ export function PosterScreen({ load, origin }: { readonly load: PosterLoad; read
     <div className="min-h-dvh print:bg-white">
       <main className="mx-auto flex w-full max-w-[72rem] flex-col gap-6 px-4 py-8 md:px-6 print:p-0">
         <header className="flex flex-col gap-3 print:hidden">
-          <Link
-            to="/lapor/meja"
-            className={buttonStyles({ variant: "link", size: "min", className: "self-start px-0" })}
-          >
+          <Link to="/desk" className={buttonStyles({ variant: "link", size: "min", className: "self-start px-0" })}>
             <Icon name="arrowLeft" className="size-5" />
             {t("poster.back")}
           </Link>
           <h1 className="text-page font-bold tracking-[-0.01em]">{t("poster.title")}</h1>
           <p className="max-w-[65ch] text-muted">{t("poster.lead")}</p>
-          <Form method="get" action="/lapor/poster" className="flex max-w-xl flex-wrap items-end gap-3">
+          <Form method="get" action="/poster" className="flex max-w-xl flex-wrap items-end gap-3">
             <label className="flex min-w-0 flex-1 flex-col gap-1.5">
               <span className="font-semibold">{t("poster.search.label")}</span>
               <input
@@ -159,10 +156,7 @@ export function PosterScreen({ load, origin }: { readonly load: PosterLoad; read
               </p>
               <div className="flex flex-wrap gap-3">
                 {load.one ? (
-                  <Link
-                    to={`/lapor/poster?district=${load.district}`}
-                    className={buttonStyles({ variant: "secondary" })}
-                  >
+                  <Link to={`/poster?district=${load.district}`} className={buttonStyles({ variant: "secondary" })}>
                     {t("poster.allVillages")}
                   </Link>
                 ) : null}

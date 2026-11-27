@@ -19,7 +19,7 @@ export const meta = (args: Route.MetaArgs) =>
   pageMeta(args, {
     title: "page.feedCard.title",
     description: "meta.feedCard.description",
-    path: `/lapor/feed/${args.params.cardId}`,
+    path: `/feed/${args.params.cardId}`,
     index: false,
   });
 
@@ -28,7 +28,7 @@ export const meta = (args: Route.MetaArgs) =>
 export async function loader({ request, params, context }: Route.LoaderArgs) {
   const texts = pickTexts(PAGE_TEXTS.feedCard, null, languageOf(request));
   const search = new URL(request.url).searchParams;
-  const done = search.has("terkirim") ? ("sent" as const) : search.has("dilaporkan") ? ("reported" as const) : null;
+  const done = search.has("sent") ? ("sent" as const) : search.has("reported") ? ("reported" as const) : null;
   const [feed, comments, me] = await Promise.all([
     context.api("GET", "/feed"),
     context.api("GET", `/feed/cards/${encodeURIComponent(params.cardId)}/comments`),
@@ -51,7 +51,7 @@ export async function action({ request, params, context }: Route.ActionArgs) {
   const response = commenting
     ? await context.api("POST", `/feed/cards/${card}/comments`, { text })
     : await context.api("POST", `/feed/comments/${encodeURIComponent(String(form.get("commentId") ?? ""))}/report`);
-  if (response.ok) return redirect(`/lapor/feed/${card}?${commenting ? "terkirim" : "dilaporkan"}=1#kabar`, 303);
+  if (response.ok) return redirect(`/feed/${card}?${commenting ? "sent" : "reported"}=1#news`, 303);
   const envelope = (await response.json()) as ErrorEnvelope;
   return data({ envelope, typed: commenting ? text : "" }, { status: response.status });
 }
@@ -61,7 +61,7 @@ function Gone() {
   return (
     <section className="flex flex-col items-start gap-3 card-surface p-5">
       <h2 className="text-section font-bold">{t("feed.card.gone")}</h2>
-      <Link to="/lapor/feed" className={buttonStyles({ variant: "secondary" })}>
+      <Link to="/feed" className={buttonStyles({ variant: "secondary" })}>
         {t("feed.card.back")}
       </Link>
     </section>
@@ -71,7 +71,7 @@ function Gone() {
 function Back() {
   const t = useText();
   return (
-    <Link to="/lapor/feed" className="inline-flex items-center gap-1.5 self-start font-semibold text-primary">
+    <Link to="/feed" className="inline-flex items-center gap-1.5 self-start font-semibold text-primary">
       <Icon name="arrowLeft" className="size-4" />
       {t("feed.card.back")}
     </Link>

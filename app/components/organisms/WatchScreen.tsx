@@ -48,7 +48,7 @@ function Forecast({ forecast }: { readonly forecast: Watch["forecast"] }) {
               {forecast.regencies.map((one) => (
                 <li key={one.regencyCode} className="min-w-0">
                   <Link
-                    to={`/lapor/info?kab=${one.regencyCode}`}
+                    to={`/info?regency=${one.regencyCode}`}
                     className="flex h-full flex-col gap-2 card-surface p-4 text-ink no-underline hover:border-primary"
                   >
                     <span className="flex items-start justify-between gap-2">

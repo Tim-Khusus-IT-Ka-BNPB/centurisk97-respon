@@ -58,7 +58,7 @@ describe("the desk's alarm", () => {
     const { alarmReady, alarmSound, askForAlarm, notify } = await load();
     expect(alarmReady()).toBe(false);
     alarmSound();
-    notify("Laporan darurat baru", "A, B", "/lapor/meja/LA-1");
+    notify("Laporan darurat baru", "A, B", "/desk/LA-1");
     expect([tones.length, shown.length]).toEqual([0, 0]);
     expect(await askForAlarm()).toBe(true);
     expect(tones).toHaveLength(3);
@@ -81,11 +81,11 @@ describe("the desk's alarm", () => {
     const assign = vi.fn();
     vi.stubGlobal("location", { ...window.location, assign });
     const { notify } = await load();
-    notify("Laporan darurat baru", "Cot Seumiyong, Aceh Utara", "/lapor/meja/LA-1");
+    notify("Laporan darurat baru", "Cot Seumiyong, Aceh Utara", "/desk/LA-1");
     expect(shown[0]).toMatchObject({ title: "Laporan darurat baru", options: { body: "Cot Seumiyong, Aceh Utara" } });
     shown[0]?.onclick?.();
     expect(focus).toHaveBeenCalled();
-    expect(assign).toHaveBeenCalledWith("/lapor/meja/LA-1");
+    expect(assign).toHaveBeenCalledWith("/desk/LA-1");
     focus.mockRestore();
   });
 

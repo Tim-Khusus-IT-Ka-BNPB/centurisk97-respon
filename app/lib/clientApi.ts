@@ -9,8 +9,8 @@ export type Answer<T> =
   // No connection, or an answer that is not the API's.
   | { readonly kind: "unreachable" };
 
-const BASE = "/api/lapor";
-const JSON_HEADERS = { "content-type": "application/json", "x-lapor-client": "1" };
+const BASE = "/api";
+const JSON_HEADERS = { "content-type": "application/json", "x-respon-client": "1" };
 
 async function answerOf<T>(
   path: string,
@@ -46,11 +46,11 @@ export const postOnly = (path: string, body: unknown) => answerOf<null>(path, po
 
 // A form with a file, such as a photo kept on the phone.
 export const postForm = <T>(path: string, form: FormData) =>
-  answerOf<T>(path, { method: "POST", headers: { "x-lapor-client": "1" }, body: form }, json<T>);
+  answerOf<T>(path, { method: "POST", headers: { "x-respon-client": "1" }, body: form }, json<T>);
 
 // A part of a file as the request's whole body.
 export const putBytes = <T>(path: string, bytes: Blob) =>
-  answerOf<T>(path, { method: "PUT", headers: { "x-lapor-client": "1" }, body: bytes }, json<T>);
+  answerOf<T>(path, { method: "PUT", headers: { "x-respon-client": "1" }, body: bytes }, json<T>);
 
 export const deleteJson = <T>(path: string) =>
-  answerOf<T>(path, { method: "DELETE", headers: { "x-lapor-client": "1" } }, json<T>);
+  answerOf<T>(path, { method: "DELETE", headers: { "x-respon-client": "1" } }, json<T>);

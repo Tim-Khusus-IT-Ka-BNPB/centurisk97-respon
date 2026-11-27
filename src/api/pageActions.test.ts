@@ -18,7 +18,7 @@ function page() {
     createBridge(
       fetchApi,
       TEST_ORIGIN,
-      new Request(`${TEST_ORIGIN}/lapor/report`, {
+      new Request(`${TEST_ORIGIN}/report`, {
         method: "POST",
         headers: { origin: TEST_ORIGIN, "cf-connecting-ip": address, cookie },
       }),
@@ -110,7 +110,7 @@ describe("start step with no script", () => {
     const result = located(
       await browser.post({ action: "consent", role: "citizen", name: "Uji Satu", number: freshNumber().typed }),
     );
-    expect(result.location).toMatch(/^\/lapor\/report\/[0-9a-f-]{36}$/);
+    expect(result.location).toMatch(/^\/report\/[0-9a-f-]{36}$/);
     expect(result.headers.get("set-cookie")).toMatch(/^device_key=/);
     expect((await browser.me()).knownReporters).toHaveLength(1);
     const refused = rendered(
@@ -136,7 +136,7 @@ describe("start step with no script", () => {
         name: "Uji Tiga",
       }),
     );
-    expect(replaced.location).toMatch(/^\/lapor\/report\//);
+    expect(replaced.location).toMatch(/^\/report\//);
     expect((await browser.me()).knownReporters[0]?.name).toBe("Uji Tiga");
     expect(
       rendered(await browser.post({ action: "useProfile", profileId: "00000000-0000-4000-8000-000000000000" })).status,
@@ -150,7 +150,7 @@ describe("start step with no script", () => {
     expect(rendered(await browser.post({ action: "removeProfileAsk", profileId })).view).toBe("removeConfirm");
     expect(rendered(await browser.post({ action: "removeProfile", profileId })).view).toBe("removeConfirm");
     expect(located(await browser.post({ action: "removeProfile", profileId, confirm: "yes" })).location).toBe(
-      "/lapor/report",
+      "/report",
     );
     expect((await browser.me()).knownReporters).toEqual([]);
     expect(rendered(await browser.post({ action: "removeProfile", profileId, confirm: "yes" })).status).toBe(404);
@@ -176,7 +176,7 @@ describe("draft page with no script", () => {
       cardId: "c-0",
       villageCode: (village as { code: string }).code,
     };
-    expect(located(await browser.draft(draftId, turn)).location).toBe(`/lapor/report/${draftId}`);
+    expect(located(await browser.draft(draftId, turn)).location).toBe(`/report/${draftId}`);
     const stale = rendered(await browser.draft(draftId, { ...turn, turnKey: crypto.randomUUID() }));
     expect(stale.status).toBe(409);
     expect(stale.envelope?.draft?.card.kind).toBe("neighbourhood");
@@ -189,7 +189,7 @@ describe("draft page with no script", () => {
       "value.rw": "",
       optionIds: [],
     };
-    expect(located(await browser.draft(draftId, boxes)).location).toBe(`/lapor/report/${draftId}`);
+    expect(located(await browser.draft(draftId, boxes)).location).toBe(`/report/${draftId}`);
     const send = rendered(
       await browser.draft(draftId, { action: "send", revision: "2", turnKey: crypto.randomUUID() }),
     );

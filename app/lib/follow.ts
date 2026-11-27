@@ -1,6 +1,6 @@
 // Events followed on the Alun-alun (D86): kept on this device alone, with no account, as each
 // entry's status when it was followed, so a change since can be marked.
-const KEY = "lapor-followed";
+const KEY = "respon-followed";
 
 export type Followed = Readonly<Record<string, string>>;
 

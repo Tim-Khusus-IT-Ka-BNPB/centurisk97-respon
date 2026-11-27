@@ -455,7 +455,7 @@ function contactText(contact: Extract<Card, { kind: "sent" }>["tracking"]["conta
 }
 
 const trackingLink = (chat: Chat, token: string) =>
-  t("whatsapp.sent.track", { link: `${chat.bindings.settings.appOrigin}/lapor/lacak#t=${token}` });
+  t("whatsapp.sent.track", { link: `${chat.bindings.settings.appOrigin}/track#t=${token}` });
 
 const newsChoices = (): Choice[] => [
   { id: "yes", label: t("whatsapp.wantNews.yes"), means: "yes" },
@@ -561,7 +561,7 @@ function identityText(chat: Chat, step: IdentityStep): string {
       return message(
         t("consent.text"),
         numbered(identityChoices(step)),
-        t("whatsapp.consent.privacy", { link: `${chat.bindings.settings.appOrigin}/lapor/privacy` }),
+        t("whatsapp.consent.privacy", { link: `${chat.bindings.settings.appOrigin}/privacy` }),
       );
     case "role":
       return message(
@@ -748,7 +748,7 @@ function changeIdentity(chat: Chat): Reply {
 }
 
 const dataRights = (chat: Chat): string =>
-  t("whatsapp.dataRights", { link: `${chat.bindings.settings.appOrigin}/lapor/privacy` });
+  t("whatsapp.dataRights", { link: `${chat.bindings.settings.appOrigin}/privacy` });
 
 // The last photo of the photo step, taken back.
 async function dropPhoto(chat: Chat, draft: DraftRecord): Promise<Reply> {

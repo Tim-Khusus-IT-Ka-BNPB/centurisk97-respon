@@ -21,7 +21,7 @@ export function HomeHero({ sent }: { readonly sent: boolean }) {
           <div className="flex flex-col gap-3 pt-2">
             <ReportDoors />
             <div className="-mx-3 flex flex-wrap">
-              <a href={sent ? "#laporan-saya" : "#steps"} className={heroLink}>
+              <a href={sent ? "#my-reports" : "#steps"} className={heroLink}>
                 <Icon name="chevronRight" className="size-5" />
                 {t(sent ? "home.reports.check" : "home.hero.howTo")}
               </a>

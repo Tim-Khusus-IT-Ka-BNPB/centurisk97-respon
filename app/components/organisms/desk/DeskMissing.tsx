@@ -13,7 +13,7 @@ import { Notice } from "../../molecules/Notice";
 import { DeskShell } from "./DeskShell";
 import { ALL_FILTERS, spacedNumber, whenShort } from "./parts";
 
-const BASE = "/lapor/meja/orang-hilang";
+const BASE = "/desk/missing";
 
 function Person({ one }: { readonly one: DeskMissingOne }) {
   const t = useText();
@@ -39,9 +39,9 @@ function Person({ one }: { readonly one: DeskMissingOne }) {
       </div>
       <div className="flex flex-wrap gap-4">
         {one.hasPhoto ? (
-          <a href={`/api/lapor/desk/missing/${one.id}/photo`} className="shrink-0 rounded-control">
+          <a href={`/api/desk/missing/${one.id}/photo`} className="shrink-0 rounded-control">
             <img
-              src={`/api/lapor/desk/missing/${one.id}/photo`}
+              src={`/api/desk/missing/${one.id}/photo`}
               alt={t("missing.desk.photo", { name })}
               className="size-32 rounded-control object-cover"
               loading="lazy"

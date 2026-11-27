@@ -28,7 +28,7 @@ vi.mock("react-router", async (importOriginal) => ({
 
 import { DeskActions } from "./DeskActions";
 
-const PATH = { path: "/lapor/meja/LA-241126-01" };
+const PATH = { path: "/desk/LA-241126-01" };
 const draw = (props: Partial<Parameters<typeof DeskActions>[0]> = {}, options: object = {}) =>
   renderDesk(<DeskActions report={REPORT} envelope={null} typed={null} {...props} />, { ...PATH, ...options });
 const onField = (fieldId: string, copyKey: string, params = {}) => ({

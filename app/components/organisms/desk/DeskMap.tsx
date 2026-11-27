@@ -51,7 +51,7 @@ function PanelItem({ item, onPoint }: { readonly item: Item; readonly onPoint: (
       onBlur={() => onPoint(null)}
     >
       <Link
-        to={`/lapor/meja/${item.ticketNumber}`}
+        to={`/desk/${item.ticketNumber}`}
         className="flex gap-3 px-4 py-3 text-ink no-underline hover:bg-sunken xl:px-5"
       >
         <span aria-hidden="true" className={`desk-pin desk-marker-${STATUS_GROUPS[item.status]}`}>
@@ -193,7 +193,7 @@ export function DeskMapView({
             <ul className="flex flex-col gap-3 py-2">
               {points.map((point) => (
                 <li key={point.ticketNumber} className="flex flex-col">
-                  <Link to={`/lapor/meja/${point.ticketNumber}`} className="font-bold tabular-nums">
+                  <Link to={`/desk/${point.ticketNumber}`} className="font-bold tabular-nums">
                     {point.ticketNumber}
                   </Link>
                   <span>{`${t(hazardKey(point.hazardType))}, ${t(`stage.short.${point.status}`)}, ${point.villageName}`}</span>

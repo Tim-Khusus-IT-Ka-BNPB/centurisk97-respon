@@ -10,7 +10,7 @@ export type OwnReportLoad =
   | { readonly kind: "report"; readonly texts: Texts; readonly report: OwnReportDetail }
   | { readonly kind: "refused"; readonly status: number; readonly texts: Texts; readonly envelope: ErrorEnvelope };
 
-// GET /lapor/reports/<ticket>, for the phone or session that sent it.
+// GET /reports/<ticket>, for the phone or session that sent it.
 export async function loadOwnReport(
   ticketNumber: string,
   api: ApiCall,
@@ -41,7 +41,7 @@ export type OwnReportActed =
 
 const NEWS_ACTS = { newsRead: "read", newsStop: "stop", newsStart: "start" } as const;
 
-// POST /lapor/reports/<ticket>: "Tambah kabar" opens its draft; the news is read, stopped or
+// POST /reports/<ticket>: "Tambah kabar" opens its draft; the news is read, stopped or
 // wanted again. Reading leads nowhere, so the marks stay for this visit.
 export async function actOnOwnReport(ticketNumber: string, form: FormData, api: ApiCall): Promise<OwnReportActed> {
   const path = `/reports/${encodeURIComponent(ticketNumber)}`;
@@ -51,8 +51,8 @@ export async function actOnOwnReport(ticketNumber: string, form: FormData, api: 
   if (!response.ok)
     return { kind: "render", status: response.status, envelope: (await response.json()) as ErrorEnvelope };
   if (act === "read") return { kind: "done" };
-  if (act) return { kind: "redirect", location: `/lapor${path}?saved=${action}` };
-  return { kind: "redirect", location: `/lapor/report/${((await response.json()) as { draftId: string }).draftId}` };
+  if (act) return { kind: "redirect", location: `${path}?saved=${action}` };
+  return { kind: "redirect", location: `/report/${((await response.json()) as { draftId: string }).draftId}` };
 }
 
 const FILE_NAME = /^v(\d{1,3})\.(pdf|docx)$/;
@@ -63,12 +63,9 @@ export async function documentOrBack(response: Response, back: string): Promise<
   return new Response(null, { status: 303, headers: { location: `${back}?refused=document` } });
 }
 
-// GET /lapor/reports/<ticket>/v2.pdf.
+// GET /reports/<ticket>/v2.pdf.
 export async function loadOwnDocument(ticketNumber: string, file: string, api: ApiCall): Promise<Response> {
   const [, version = "0", format = "pdf"] = FILE_NAME.exec(file) ?? [];
   const ticket = encodeURIComponent(ticketNumber);
-  return documentOrBack(
-    await api("GET", `/reports/${ticket}/documents/${version}/${format}`),
-    `/lapor/reports/${ticket}`,
-  );
+  return documentOrBack(await api("GET", `/reports/${ticket}/documents/${version}/${format}`), `/reports/${ticket}`);
 }

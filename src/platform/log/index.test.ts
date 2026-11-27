@@ -15,7 +15,7 @@ describe("the redacting logger", () => {
     logger.info({
       event: "request",
       requestId: "0b4c5d6e-7f80",
-      routeId: "POST /api/lapor/drafts/:draftId/turns",
+      routeId: "POST /api/drafts/:draftId/turns",
       method: "POST",
       status: 409,
       durationMs: 12,
@@ -31,7 +31,7 @@ describe("the redacting logger", () => {
         {
           event: "request",
           requestId: "0b4c5d6e-7f80",
-          routeId: "POST /api/lapor/drafts/:draftId/turns",
+          routeId: "POST /api/drafts/:draftId/turns",
           method: "POST",
           status: 409,
           durationMs: 12,
@@ -50,7 +50,7 @@ describe("the redacting logger", () => {
     const smuggled = {
       event: "request",
       errorCode: "Uji Satu 0800 0000 0001",
-      routeId: "GET /lapor?number=080000000001 x",
+      routeId: "GET /?number=080000000001 x",
       method: "TRACE",
       sqlState: "duplicate key",
       draftState: "Uji",

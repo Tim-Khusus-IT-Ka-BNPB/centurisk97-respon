@@ -6,13 +6,13 @@ import { renderPage } from "../../testing/render";
 import { WatchScreen } from "./WatchScreen";
 
 const draw = (load: Parameters<typeof WatchScreen>[0]["load"]) =>
-  renderPage(<WatchScreen load={load} />, { path: "/lapor/feed", entry: "/lapor/feed?mode=peringatan" });
+  renderPage(<WatchScreen load={load} />, { path: "/feed", entry: "/feed?mode=peringatan" });
 
 test("the regencies on watch with their level and threats, and volcanoes by level with how far to keep away", async () => {
   draw({ kind: "watch", watch: WATCH });
   const forecast = within((await screen.findByRole("region", { name: "Status prakiraan 3 hari" })) as HTMLElement);
   const regency = forecast.getByRole("link", { name: /Kab\. Aceh Utara/ });
-  expect(regency.getAttribute("href")).toBe("/lapor/info?kab=11.08");
+  expect(regency.getAttribute("href")).toBe("/info?regency=11.08");
   expect(regency.textContent).toContain("Siaga");
   expect(regency.textContent).toContain("Banjir, Longsor");
   const volcanoes = within(screen.getByRole("region", { name: "Status gunung api" }));
@@ -30,7 +30,7 @@ test("the regencies on watch with their level and threats, and volcanoes by leve
   ]);
   // The view's own link is marked as the one open.
   expect(screen.getByRole("link", { name: "Peringatan" }).getAttribute("aria-current")).toBe("page");
-  expect(screen.getByRole("link", { name: "Kejadian" }).getAttribute("href")).toBe("/lapor/feed");
+  expect(screen.getByRole("link", { name: "Kejadian" }).getAttribute("href")).toBe("/feed");
 });
 
 test("nothing on watch says so; a file not read says it cannot be known", async () => {

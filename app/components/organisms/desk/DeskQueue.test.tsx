@@ -41,7 +41,7 @@ test("a report that came through WhatsApp is marked in the table and the cards",
       filters={FILTERS}
       envelope={null}
     />,
-    { path: "/lapor/meja" },
+    { path: "/desk" },
   );
   expect(table().getByText("Lewat WhatsApp")).toBeTruthy();
   expect(screen.getAllByText("Lewat WhatsApp")).toHaveLength(2);
@@ -57,7 +57,7 @@ test("a report a week in one status is marked late in the table and the cards", 
       filters={FILTERS}
       envelope={null}
     />,
-    { path: "/lapor/meja" },
+    { path: "/desk" },
   );
   expect(within(screen.getByRole("table")).getByText("Lewat seminggu")).toBeTruthy();
   expect(screen.getAllByText("Lewat seminggu")).toHaveLength(2);
@@ -73,7 +73,7 @@ test("a report in a cluster is marked in the table and the cards, never as verif
       filters={FILTERS}
       envelope={null}
     />,
-    { path: "/lapor/meja" },
+    { path: "/desk" },
   );
   expect(within(screen.getByRole("table")).getByText("Gugus, 2 laporan")).toBeTruthy();
   expect(screen.getAllByText("Gugus, 2 laporan")).toHaveLength(2);
@@ -93,7 +93,7 @@ test("one row per event: the event's other reports on the page fold under its fi
       filters={FILTERS}
       envelope={null}
     />,
-    { path: "/lapor/meja" },
+    { path: "/desk" },
   );
   const rows = table().getAllByRole("row").slice(1);
   expect(rows).toHaveLength(3);
@@ -102,7 +102,7 @@ test("one row per event: the event's other reports on the page fold under its fi
     within(rows[1] as HTMLElement)
       .getByRole("link", { name: /LA-241126-09/ })
       .getAttribute("href"),
-  ).toBe("/lapor/meja/LA-241126-09");
+  ).toBe("/desk/LA-241126-09");
   expect(within(rows[2] as HTMLElement).getByRole("link", { name: "LA-241126-07" })).toBeTruthy();
   expect(screen.getAllByText("1 laporan lain dari kejadian ini di halaman ini")).toHaveLength(2);
 });
@@ -120,7 +120,7 @@ test("a report kept on a phone is marked from offline; more than 2 hours late it
       filters={FILTERS}
       envelope={null}
     />,
-    { path: "/lapor/meja" },
+    { path: "/desk" },
   );
   const [first, second] = table().getAllByRole("row").slice(1) as HTMLElement[];
   expect(within(first as HTMLElement).getByText("Dari luring")).toBeTruthy();
@@ -140,11 +140,11 @@ test("a report with news no officer has acted on is marked in the table and the 
       filters={FILTERS}
       envelope={null}
     />,
-    { path: "/lapor/meja" },
+    { path: "/desk" },
   );
   expect(within(screen.getByRole("table")).getByText("Kabar baru")).toBeTruthy();
   expect(screen.getByRole("link", { name: "Kabar baru, 2 laporan" }).getAttribute("href")).toBe(
-    "/lapor/meja?view=list&has=news",
+    "/desk?view=list&has=news",
   );
 });
 
@@ -157,34 +157,30 @@ describe("the side menu", () => {
         filters={{ ...FILTERS, status: "under_review" }}
         envelope={null}
       />,
-      { path: "/lapor/meja" },
+      { path: "/desk" },
     );
     const menus = screen.getAllByRole("navigation", { name: "Antrean kerja" });
     // One menu beside the work, one behind the phone's menu button.
     expect(menus).toHaveLength(2);
     const queues = within(menus[0] as HTMLElement);
-    expect(queues.getByRole("link", { name: "Semua laporan, 9 laporan" }).getAttribute("href")).toBe(
-      "/lapor/meja?view=list",
-    );
+    expect(queues.getByRole("link", { name: "Semua laporan, 9 laporan" }).getAttribute("href")).toBe("/desk?view=list");
     const current = queues.getByRole("link", { name: "Ditelaah, 2 laporan" });
     expect(current.getAttribute("aria-current")).toBe("page");
-    expect(current.getAttribute("href")).toBe("/lapor/meja?view=list&status=under_review");
+    expect(current.getAttribute("href")).toBe("/desk?view=list&status=under_review");
     expect(queues.getByRole("link", { name: "Diteruskan, 0 laporan" })).toBeTruthy();
     const views = within(screen.getAllByRole("navigation", { name: "Tampilan" })[0] as HTMLElement);
     expect(views.getByRole("link", { name: "Daftar laporan" }).getAttribute("aria-current")).toBe("page");
-    expect(views.getByRole("link", { name: "Peta laporan" }).getAttribute("href")).toBe(
-      "/lapor/meja?status=under_review",
-    );
+    expect(views.getByRole("link", { name: "Peta laporan" }).getAttribute("href")).toBe("/desk?status=under_review");
     expect(screen.getAllByText("Masuk sebagai Pusdalops BNPB, Petugas Uji")).toHaveLength(2);
     expect(screen.getAllByRole("button", { name: "Keluar" })).toHaveLength(2);
-    expect(screen.getAllByRole("link", { name: "Form lapor warga" })[0]?.getAttribute("href")).toBe("/lapor");
-    expect(screen.getAllByRole("link", { name: "Poster QR desa" })[0]?.getAttribute("href")).toBe("/lapor/poster");
+    expect(screen.getAllByRole("link", { name: "Form lapor warga" })[0]?.getAttribute("href")).toBe("/");
+    expect(screen.getAllByRole("link", { name: "Poster QR desa" })[0]?.getAttribute("href")).toBe("/poster");
     expect(screen.getByText("Antrean Ditelaah")).toBeTruthy();
   });
 
   test("with no counts the menu still leads everywhere", async () => {
     await renderDesk(<DeskQueueView shown={list(queue())} summary={null} filters={FILTERS} envelope={null} />, {
-      path: "/lapor/meja",
+      path: "/desk",
     });
     const queues = within(screen.getAllByRole("navigation", { name: "Antrean kerja" })[0] as HTMLElement);
     expect(queues.getByRole("link", { name: "Semua laporan" }).getAttribute("aria-current")).toBe("page");
@@ -206,24 +202,24 @@ describe("the filter bar", () => {
         filters={{ ...FILTERS, hazardType: "landslide", period: "week" }}
         envelope={null}
       />,
-      { path: "/lapor/meja" },
+      { path: "/desk" },
     );
     const chips = within(screen.getByRole("navigation", { name: "Jenis bencana" }));
     expect(chips.getByRole("link", { name: "Semua jenis, 9 laporan" }).getAttribute("href")).toBe(
-      "/lapor/meja?view=list&period=week",
+      "/desk?view=list&period=week",
     );
     expect(chips.getByRole("link", { name: "Banjir, 7 laporan" }).getAttribute("href")).toBe(
-      "/lapor/meja?view=list&hazardType=flood&period=week",
+      "/desk?view=list&hazardType=flood&period=week",
     );
     const picked = chips.getByRole("link", { name: "Tanah longsor, 2 laporan" });
     expect(picked.getAttribute("aria-current")).toBe("true");
-    expect(picked.getAttribute("href")).toBe("/lapor/meja?view=list&period=week");
+    expect(picked.getAttribute("href")).toBe("/desk?view=list&period=week");
     // Types with no reports are left out.
     expect(chips.queryByRole("link", { name: /Gempa/ })).toBeNull();
     const period = within(screen.getByRole("navigation", { name: "Periode" }));
     expect(period.getByRole("link", { name: "7 hari" }).getAttribute("aria-current")).toBe("true");
     expect(period.getByRole("link", { name: "Semua" }).getAttribute("href")).toBe(
-      "/lapor/meja?view=list&hazardType=landslide",
+      "/desk?view=list&hazardType=landslide",
     );
     const hidden = [...document.querySelectorAll('form[role="search"] input[type="hidden"]')].map((input) => [
       input.getAttribute("name"),
@@ -234,7 +230,7 @@ describe("the filter bar", () => {
       ["hazardType", "landslide"],
       ["period", "week"],
     ]);
-    expect(screen.getByRole("link", { name: "Hapus saringan" }).getAttribute("href")).toBe("/lapor/meja?view=list");
+    expect(screen.getByRole("link", { name: "Hapus saringan" }).getAttribute("href")).toBe("/desk?view=list");
   });
 
   test("what the reports hold: chips with counts that toggle", async () => {
@@ -245,14 +241,14 @@ describe("the filter bar", () => {
         filters={{ ...FILTERS, has: "victims" }}
         envelope={null}
       />,
-      { path: "/lapor/meja" },
+      { path: "/desk" },
     );
     const holds = within(screen.getByRole("navigation", { name: "Isi laporan" }));
     const victims = holds.getByRole("link", { name: "Ada korban, 3 laporan" });
     expect(victims.getAttribute("aria-current")).toBe("true");
-    expect(victims.getAttribute("href")).toBe("/lapor/meja?view=list");
+    expect(victims.getAttribute("href")).toBe("/desk?view=list");
     expect(holds.getByRole("link", { name: "Ada foto, 0 laporan" }).getAttribute("href")).toBe(
-      "/lapor/meja?view=list&has=photos",
+      "/desk?view=list&has=photos",
     );
     const kept = [...document.querySelectorAll('form[role="search"] input[name="has"]')];
     expect(kept.map((input) => input.getAttribute("value"))).toEqual(["victims"]);
@@ -267,7 +263,7 @@ describe("the filter bar", () => {
         filters={{ ...FILTERS, hazardType: "drought" }}
         envelope={null}
       />,
-      { path: "/lapor/meja" },
+      { path: "/desk" },
     );
     expect(screen.getByRole("link", { name: "Kekeringan, 0 laporan" })).toBeTruthy();
     // One tap tells no hazard.
@@ -281,7 +277,7 @@ describe("the filter bar", () => {
     };
     await renderDesk(
       <DeskQueueView shown={null} summary={null} filters={{ ...FILTERS, ticket: "0800" }} envelope={refused} />,
-      { path: "/lapor/meja" },
+      { path: "/desk" },
     );
     expect(
       screen.getByText("Nomor tiket ditulis seperti LA-241126-01. Periksa lagi nomornya, lalu cari."),
@@ -296,7 +292,7 @@ describe("the filter bar", () => {
 
   test("no filter in use leaves no clear link", async () => {
     await renderDesk(<DeskQueueView shown={list(queue())} summary={SUMMARY} filters={FILTERS} envelope={null} />, {
-      path: "/lapor/meja",
+      path: "/desk",
     });
     expect(screen.queryByRole("link", { name: "Hapus saringan" })).toBeNull();
     expect(screen.getByText("2 laporan")).toBeTruthy();
@@ -306,7 +302,7 @@ describe("the filter bar", () => {
 describe("the list", () => {
   test("a table row: ticket and status, the event and place, each figure, times, reporter and how complete", async () => {
     await renderDesk(<DeskQueueView shown={list(queue())} summary={SUMMARY} filters={FILTERS} envelope={null} />, {
-      path: "/lapor/meja",
+      path: "/desk",
     });
     expect(
       table()
@@ -315,7 +311,7 @@ describe("the list", () => {
     ).toEqual(["Tiket", "Kejadian", "Dampak", "Dilaporkan", "Pelapor", "Isian"]);
     const [first, second] = table().getAllByRole("row").slice(1) as HTMLElement[];
     const row = within(first as HTMLElement);
-    expect(row.getByRole("link", { name: "LA-241126-01" }).getAttribute("href")).toBe("/lapor/meja/LA-241126-01");
+    expect(row.getByRole("link", { name: "LA-241126-01" }).getAttribute("href")).toBe("/desk/LA-241126-01");
     expect(row.getByText("Diterima")).toBeTruthy();
     expect(row.getByText("Banjir")).toBeTruthy();
     expect(row.getByText("Tidak tahu")).toBeTruthy();
@@ -344,7 +340,7 @@ describe("the list", () => {
     }));
     await renderDesk(
       <DeskQueueView shown={list(queue({ items }))} summary={SUMMARY} filters={FILTERS} envelope={null} />,
-      { path: "/lapor/meja" },
+      { path: "/desk" },
     );
     const told = table()
       .getAllByRole("row")
@@ -368,7 +364,7 @@ describe("the list", () => {
         filters={FILTERS}
         envelope={null}
       />,
-      { path: "/lapor/meja" },
+      { path: "/desk" },
     );
     const [first, second] = table().getAllByRole("row").slice(1) as HTMLElement[];
     expect(within(first as HTMLElement).getByText("Darurat")).toBeTruthy();
@@ -385,7 +381,7 @@ describe("the list", () => {
         filters={FILTERS}
         envelope={null}
       />,
-      { path: "/lapor/meja" },
+      { path: "/desk" },
     );
     expect(screen.getAllByText("Ditangani: Uji Andi, Pusdalops BPBD Kabupaten Uji Satu")).toHaveLength(2);
     // Only an account that may read them is led to the response figures.
@@ -401,7 +397,7 @@ describe("the list", () => {
         filters={FILTERS}
         envelope={null}
       />,
-      { path: "/lapor/meja" },
+      { path: "/desk" },
     );
     expect(screen.queryByText("Uji Satu")).toBeNull();
     expect(screen.getAllByText("Warga")).toHaveLength(2);
@@ -419,7 +415,7 @@ describe("the list", () => {
         filters={FILTERS}
         envelope={null}
       />,
-      { path: "/lapor/meja" },
+      { path: "/desk" },
     );
     expect(table().getByText("Kejadian: 24 Nov 2026, 08.15 WIB")).toBeTruthy();
     const cards = screen
@@ -427,7 +423,7 @@ describe("the list", () => {
       .filter((item) => item.closest("ul")?.className.includes("min-[88rem]:hidden"));
     expect(cards).toHaveLength(1);
     const card = within(cards[0] as HTMLElement);
-    expect(card.getByRole("link").getAttribute("href")).toBe("/lapor/meja/LA-241126-01");
+    expect(card.getByRole("link").getAttribute("href")).toBe("/desk/LA-241126-01");
     expect(card.getByText("3+").parentElement?.textContent).toBe("3+ rumah rusak");
     expect(card.getByText("Nomor belum diverifikasi")).toBeTruthy();
   });
@@ -440,7 +436,7 @@ describe("the list", () => {
         filters={FILTERS}
         envelope={null}
       />,
-      { path: "/lapor/meja" },
+      { path: "/desk" },
     );
     expect(screen.getByText("Belum ada laporan masuk. Laporan baru tampil di sini.")).toBeTruthy();
     expect(screen.queryByRole("link", { name: "Tampilkan semua" })).toBeNull();
@@ -452,13 +448,13 @@ describe("the list", () => {
         filters={{ ...FILTERS, status: "seen", page: 2 }}
         envelope={null}
       />,
-      { path: "/lapor/meja" },
+      { path: "/desk" },
     );
     expect(screen.getByRole("link", { name: "Halaman sebelumnya" }).getAttribute("href")).toBe(
-      "/lapor/meja?view=list&status=seen",
+      "/desk?view=list&status=seen",
     );
     expect(screen.getByRole("link", { name: "Halaman berikutnya" }).getAttribute("href")).toBe(
-      "/lapor/meja?view=list&status=seen&page=3",
+      "/desk?view=list&status=seen&page=3",
     );
   });
 
@@ -470,7 +466,7 @@ describe("the list", () => {
         filters={FILTERS}
         envelope={null}
       />,
-      { path: "/lapor/meja" },
+      { path: "/desk" },
     );
     expect(screen.queryByRole("link", { name: "Halaman sebelumnya" })).toBeNull();
     view.unmount();
@@ -481,7 +477,7 @@ describe("the list", () => {
         filters={{ ...FILTERS, page: 2 }}
         envelope={null}
       />,
-      { path: "/lapor/meja" },
+      { path: "/desk" },
     );
     expect(screen.queryByRole("link", { name: "Halaman berikutnya" })).toBeNull();
   });
@@ -500,7 +496,7 @@ describe("the map and the gallery", () => {
         filters={{ ...FILTERS, view: "map" }}
         envelope={null}
       />,
-      { path: "/lapor/meja" },
+      { path: "/desk" },
     );
     expect(screen.getByRole("heading", { level: 1, name: "Peta laporan" })).toBeTruthy();
     expect(screen.getByRole("region", { name: "Peta laporan" })).toBeTruthy();
@@ -516,7 +512,7 @@ describe("the map and the gallery", () => {
         filters={{ ...FILTERS, view: "gallery" }}
         envelope={null}
       />,
-      { path: "/lapor/meja" },
+      { path: "/desk" },
     );
     expect(screen.queryByText(/Galeri menampilkan/)).toBeNull();
     expect(screen.getAllByText("Masuk sebagai Petugas Galeri")).toHaveLength(2);
@@ -530,7 +526,7 @@ describe("the map and the gallery", () => {
         filters={{ ...FILTERS, view: "map", ticket: "0800" }}
         envelope={null}
       />,
-      { path: "/lapor/meja" },
+      { path: "/desk" },
     );
     expect(screen.getByRole("region", { name: "Peta laporan" })).toBeTruthy();
     expect((screen.getByLabelText("Nomor tiket") as HTMLInputElement).value).toBe("0800");
@@ -550,12 +546,12 @@ describe("the map and the gallery", () => {
         filters={{ ...FILTERS, view: "gallery" }}
         envelope={null}
       />,
-      { path: "/lapor/meja" },
+      { path: "/desk" },
     );
     expect(screen.getByText("2 foto")).toBeTruthy();
     expect(screen.getByText(/Galeri menampilkan 2 foto terbaru/)).toBeTruthy();
     expect(screen.getAllByRole("img", { name: "Foto laporan LA-241126-01" })[0]?.getAttribute("src")).toBe(
-      `/api/lapor/desk/photos/${PHOTO.photoId}`,
+      `/api/desk/photos/${PHOTO.photoId}`,
     );
     expect(screen.getByText("Lokasi GPS perangkat")).toBeTruthy();
     expect(screen.getByText("Tanpa lokasi")).toBeTruthy();
@@ -574,7 +570,7 @@ describe("the map and the gallery", () => {
         filters={{ ...FILTERS, view: "gallery" }}
         envelope={null}
       />,
-      { path: "/lapor/meja" },
+      { path: "/desk" },
     );
     expect(screen.getByText("Belum ada foto masuk. Foto pelapor tampil di sini setelah dikirim.")).toBeTruthy();
   });
@@ -588,10 +584,10 @@ describe("the map and the gallery", () => {
         filters={filtered}
         envelope={null}
       />,
-      { path: "/lapor/meja" },
+      { path: "/desk" },
     );
     expect(screen.getByText(/Tidak ada laporan yang cocok dengan saringan ini/)).toBeTruthy();
-    expect(screen.getByRole("link", { name: "Tampilkan semua" }).getAttribute("href")).toBe("/lapor/meja?view=list");
+    expect(screen.getByRole("link", { name: "Tampilkan semua" }).getAttribute("href")).toBe("/desk?view=list");
     view.unmount();
     await renderDesk(
       <DeskQueueView
@@ -600,7 +596,7 @@ describe("the map and the gallery", () => {
         filters={{ ...filtered, view: "gallery" }}
         envelope={null}
       />,
-      { path: "/lapor/meja" },
+      { path: "/desk" },
     );
     expect(screen.getByText(/Tidak ada foto yang cocok dengan saringan ini/)).toBeTruthy();
   });

@@ -152,7 +152,7 @@ export function FollowUpEndedCard({ card }: { readonly card: Extract<Card, { kin
         {t(card.titleKey, card.params)}
       </h2>
       <p>{t(card.promptKey as string, card.params)}</p>
-      <Link to={`/lapor/reports/${card.ticketNumber}`} className={buttonStyles({ variant: "primary", size: "main" })}>
+      <Link to={`/reports/${card.ticketNumber}`} className={buttonStyles({ variant: "primary", size: "main" })}>
         {t("card.followUp.open")}
       </Link>
     </section>

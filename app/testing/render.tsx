@@ -38,7 +38,7 @@ const Nothing = () => null;
 // Draws a component inside a router and the copy, as a page would.
 export function renderPage(
   ui: ReactNode,
-  { path = "/lapor/report/d", entry, action, loader, errorBoundary }: Options = {},
+  { path = "/report/d", entry, action, loader, errorBoundary }: Options = {},
 ): RenderResult {
   current = ui;
   const Stub = createRoutesStub([

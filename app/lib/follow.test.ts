@@ -17,7 +17,7 @@ describe("events followed on this device", () => {
 
   test("storage that cannot be read or written follows nothing and breaks nothing", () => {
     for (const stored of ["{not json", "[1]", "null"]) {
-      localStorage.setItem("lapor-followed", stored);
+      localStorage.setItem("respon-followed", stored);
       expect(followed()).toEqual({});
     }
     vi.spyOn(Storage.prototype, "setItem").mockImplementation(() => {

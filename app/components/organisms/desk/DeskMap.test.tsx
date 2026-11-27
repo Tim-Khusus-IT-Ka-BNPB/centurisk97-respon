@@ -31,7 +31,7 @@ const POINTS = [POINT, { ...POINT, ticketNumber: "LA-241126-02", lat: -8 }];
 const map = (points = POINTS, cut = false) => ({ account: { label: "Petugas" }, points, cut });
 const draw = (props: Partial<Parameters<typeof DeskMapView>[0]> = {}) =>
   renderDesk(<DeskMapView map={map()} queue={queue()} summary={SUMMARY} filters={MAP} envelope={null} {...props} />, {
-    path: "/lapor/meja",
+    path: "/desk",
   });
 const panel = () => within(screen.getByRole("region", { name: "Laporan di peta" }));
 const tickets = () =>
@@ -50,7 +50,7 @@ describe("the map view", () => {
     expect(screen.getByText("Belum ditangani")).toBeTruthy();
     expect(panel().getByText("2 laporan")).toBeTruthy();
     const first = within(panel().getAllByRole("listitem")[0] as HTMLElement);
-    expect(first.getByRole("link").getAttribute("href")).toBe("/lapor/meja/LA-241126-01");
+    expect(first.getByRole("link").getAttribute("href")).toBe("/desk/LA-241126-01");
     expect(first.getByText("Banjir, Sukamaju, Aceh Utara")).toBeTruthy();
     expect(first.getByText("24 Nov 2026, 09.30 WIB")).toBeTruthy();
     // Only figures above zero: two dead and at least three houses, but not "0 luka-luka".
@@ -100,8 +100,8 @@ describe("the map view", () => {
     expect(panel().getByRole("status").textContent).toBe("2 di area peta ini");
     const rows = panel().getAllByRole("listitem").slice(0, 2);
     expect(rows.map((row) => within(row).getByRole("link").getAttribute("href"))).toEqual([
-      "/lapor/meja/LA-241126-02",
-      "/lapor/meja/LA-241126-03",
+      "/desk/LA-241126-02",
+      "/desk/LA-241126-03",
     ]);
   });
 
@@ -128,9 +128,9 @@ describe("the map view", () => {
     const view = await draw({ filters: { ...MAP, status: "seen" } });
     expect(panel().getByText("Antrean Dilihat")).toBeTruthy();
     expect(panel().getByRole("link", { name: "Ada rumah rusak, 5 laporan" }).getAttribute("href")).toBe(
-      "/lapor/meja?status=seen&has=houses",
+      "/desk?status=seen&has=houses",
     );
-    expect(screen.getByRole("link", { name: "Hapus saringan" }).getAttribute("href")).toBe("/lapor/meja");
+    expect(screen.getByRole("link", { name: "Hapus saringan" }).getAttribute("href")).toBe("/desk");
     view.unmount();
     await draw({ summary: null });
     expect(panel().getByRole("link", { name: "Ada rumah rusak" })).toBeTruthy();
@@ -160,7 +160,7 @@ describe("the map view", () => {
     });
     expect(panel().getByText("Menampilkan 2 laporan terbaru.")).toBeTruthy();
     expect(panel().getByRole("link", { name: "Buka daftar lengkap" }).getAttribute("href")).toBe(
-      "/lapor/meja?view=list&has=photos",
+      "/desk?view=list&has=photos",
     );
     expect(panel().getByText(/Peta menampilkan 2 laporan terbaru/)).toBeTruthy();
   });

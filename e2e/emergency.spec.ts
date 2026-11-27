@@ -26,7 +26,7 @@ async function deskPage(browser: Browser, code: string, baseURL: string): Promis
   const context = await browser.newContext({ baseURL });
   await ownAddress(context);
   const desk = await context.newPage();
-  await desk.goto("/lapor/meja", { waitUntil: "networkidle" });
+  await desk.goto("/desk", { waitUntil: "networkidle" });
   await desk.getByLabel("Kode masuk").fill(code);
   await expect(desk.getByLabel("Kode masuk")).toHaveValue(code);
   await desk.getByRole("button", { name: "Masuk", exact: true }).click();
@@ -36,7 +36,7 @@ async function deskPage(browser: Browser, code: string, baseURL: string): Promis
 
 // "Lapor darurat" from the home: identity and consent as usual.
 async function startEmergency(page: Page): Promise<void> {
-  await page.goto("/lapor");
+  await page.goto("/");
   await page.getByRole("link", { name: "Lapor darurat" }).click();
   await expect(page.getByRole("heading", { level: 1, name: "Lapor darurat" })).toBeVisible();
   await page.getByLabel("Warga").check();
@@ -121,15 +121,15 @@ test("one tap shows who to call before the phone is read, and is for a reporter 
   test.setTimeout(120_000);
   test.skip(info.project.name.includes("no-script"), "one tap needs script");
   // Nobody known here: the way leads to the short conversation.
-  await page.goto("/lapor/darurat");
-  await expect(page).toHaveURL(/\/lapor\/report\?darurat=1$/);
+  await page.goto("/emergency");
+  await expect(page).toHaveURL(/\/report\?emergency=1$/);
   await startEmergency(page);
   await context.grantPermissions(["geolocation"]);
   await context.setGeolocation(HERE);
   // One tap is no longer offered on the home page; its page opens it.
-  await page.goto("/lapor");
+  await page.goto("/");
   await expect(page.getByRole("link", { name: "Darurat sekali ketuk" })).toHaveCount(0);
-  await page.goto("/lapor/darurat?ketuk=1");
+  await page.goto("/emergency?ketuk=1");
   for (const phone of ["112", "117"]) await expect(page.locator(`a[href="tel:${phone}"]`).first()).toBeVisible();
   await expect(page.getByText(/Terkirim ke meja BNPB dengan nomor LA-/)).toBeVisible({ timeout: 40_000 });
   await expect(page.getByRole("link", { name: /^BPBD Aceh Utara/ })).toBeVisible();
@@ -138,16 +138,16 @@ test("one tap shows who to call before the phone is read, and is for a reporter 
   const ticket = /LA-\d{6}-\d{2,}/.exec((await page.getByRole("status").textContent()) ?? "")?.[0] as string;
 
   // A second tap is refused with the time it opens again.
-  await page.goto("/lapor/darurat?ketuk=1");
+  await page.goto("/emergency?ketuk=1");
   await expect(page.getByText(/sudah terkirim dari ponsel ini. Bisa dikirim lagi mulai/)).toBeVisible({
     timeout: 40_000,
   });
 
   // Its own regency's desk alarms; another province's never does.
   const own = await deskPage(browser, REGENCY_CODE, baseURL as string);
-  await expect(own.locator(`a[href="/lapor/meja/${ticket}"]`).first()).toBeVisible();
+  await expect(own.locator(`a[href="/desk/${ticket}"]`).first()).toBeVisible();
   const other = await deskPage(browser, PROVINCE_CODE, baseURL as string);
-  await expect(other.locator(`a[href="/lapor/meja/${ticket}"]`)).toHaveCount(0);
+  await expect(other.locator(`a[href="/desk/${ticket}"]`)).toHaveCount(0);
 });
 
 test("with no signal one tap is kept on the phone with a camera photo, and both reach the desk when signal returns", async ({
@@ -161,7 +161,7 @@ test("with no signal one tap is kept on the phone with a camera photo, and both 
   await startEmergency(page);
   await context.grantPermissions(["geolocation"]);
   await context.setGeolocation(HERE);
-  await page.goto("/lapor/darurat");
+  await page.goto("/emergency");
   await context.setOffline(true);
   await page.getByRole("button", { name: "Kirim titik lokasi sekarang" }).click();
   await expect(page.getByText(/^Tidak ada sinyal\./)).toBeVisible();
@@ -182,7 +182,7 @@ test("with no signal one tap is kept on the phone with a camera photo, and both 
   await expect(page.getByText(/Terkirim ke meja BNPB dengan nomor LA-/)).toBeVisible({ timeout: 40_000 });
   const ticket = /LA-\d{6}-\d{2,}/.exec((await page.getByRole("status").textContent()) ?? "")?.[0] as string;
   const desk = await deskPage(browser, DESK_CODE, baseURL as string);
-  await desk.goto(`/lapor/meja/${ticket}`);
+  await desk.goto(`/desk/${ticket}`);
   const photos = desk.getByRole("region", { name: "Foto pelapor" });
   await expect(photos.getByRole("img")).toHaveCount(1);
 });

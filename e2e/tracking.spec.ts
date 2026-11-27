@@ -60,10 +60,10 @@ test("a sent report thanks, asks a rating, shows its ticket, and its link opens 
   await noSidewaysScroll(page);
   await ticket.screenshot({ path: test.info().outputPath("ticket.png") });
   const link = (await ticket.getByRole("link", { name: "Lacak laporan" }).getAttribute("href")) as string;
-  expect(link).toMatch(/^\/lapor\/lacak#t=[0-9a-f]{32}$/);
+  expect(link).toMatch(/^\/track#t=[0-9a-f]{32}$/);
 
   // Laporan saya on the home lists it.
-  await page.goto("/lapor");
+  await page.goto("/");
   const mine = page.getByRole("region", { name: "Laporan saya" });
   await expect(mine.getByText(ticketNumber)).toBeVisible();
 
@@ -92,8 +92,8 @@ test("a sent report thanks, asks a rating, shows its ticket, and its link opens 
 
   // One character changed: not found.
   const changed = `${link.slice(0, -1)}${link.endsWith("0") ? "1" : "0"}`;
-  const answer = tab.waitForResponse((response) => response.url().endsWith("/api/lapor/tracking"));
-  await tab.goto("/lapor");
+  const answer = tab.waitForResponse((response) => response.url().endsWith("/api/tracking"));
+  await tab.goto("/");
   await tab.goto(changed);
   expect((await answer).status()).toBe(404);
   await expect(tab.getByRole("heading", { level: 1, name: "Laporan tidak ditemukan." })).toBeVisible();

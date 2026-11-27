@@ -17,8 +17,8 @@ const TOUR: readonly Step[] = [
   { key: "info", target: '[aria-labelledby="door-info"]', scene: "info" },
   { key: "education", target: '[aria-labelledby="door-education"]', scene: "learn" },
   { key: "numbers", target: '[aria-labelledby="door-numbers"]', scene: "numbers" },
-  { key: "language", target: 'header a[href^="/lapor/bahasa"]', scene: "language" },
-  { key: "reports", target: "#laporan-saya", scene: "reports" },
+  { key: "language", target: 'header a[href^="/language"]', scene: "language" },
+  { key: "reports", target: "#my-reports", scene: "reports" },
 ];
 
 const shown = (selector: string) =>

@@ -5,7 +5,7 @@ import { languageOf, PAGE_TEXTS, pickTexts } from "../lib/texts.server";
 import type { Route } from "./+types/help";
 
 export const meta = (args: Route.MetaArgs) =>
-  pageMeta(args, { title: "page.help.title", description: "meta.help.description", path: "/lapor/help" });
+  pageMeta(args, { title: "page.help.title", description: "meta.help.description", path: "/help" });
 
 // The topics come from the imported file; help still opens when they cannot be read.
 export async function loader({ request, context }: Route.LoaderArgs) {

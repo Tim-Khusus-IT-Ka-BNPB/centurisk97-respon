@@ -39,7 +39,7 @@ const acted = (extra: Partial<StartActionData>): StartActionData => ({
   ...extra,
 });
 const draw = (data: StartPageData, action: StartActionData | null = null) =>
-  renderPage(<StartScreen page={data} acted={action} />, { path: "/lapor/report", action: never });
+  renderPage(<StartScreen page={data} acted={action} />, { path: "/report", action: never });
 
 describe("numbers known on this device", () => {
   test("each row names the reporter and masked number, with its own removal, its open draft, then Nomor lain", async () => {
@@ -52,49 +52,49 @@ describe("numbers known on this device", () => {
     expect(removes[0]?.getAttribute("aria-describedby")).toBe(row.id);
     expect(screen.getByText("Banjir, terakhir diubah pukul 08.01 WIB.")).toBeTruthy();
     expect(screen.getByRole("link", { name: "Lanjutkan laporan" }).getAttribute("href")).toBe(
-      `/lapor/report/${withDraft.openDraft.draftId}`,
+      `/report/${withDraft.openDraft.draftId}`,
     );
     expect(screen.getByRole("link", { name: "Nomor lain" }).getAttribute("href")).toContain("?new=1");
   });
 
   test("an emergency stays one through every step", async () => {
     renderPage(<StartScreen page={page({ emergency: true })} acted={null} />, {
-      path: "/lapor/report",
-      entry: "/lapor/report?darurat=1",
+      path: "/report",
+      entry: "/report?emergency=1",
       action: never,
     });
     const hrefs = (await screen.findAllByRole("link")).map((link) => link.getAttribute("href"));
-    expect(hrefs).toContain(`/lapor/report?profile=${profile.profileId}&darurat=1`);
-    expect(hrefs).toContain("/lapor/report?new=1&darurat=1");
+    expect(hrefs).toContain(`/report?profile=${profile.profileId}&emergency=1`);
+    expect(hrefs).toContain("/report?new=1&emergency=1");
   });
 
   test("the way back to a missing person's report stays through every step", async () => {
     renderPage(<StartScreen page={page()} acted={null} />, {
-      path: "/lapor/report",
-      entry: "/lapor/report?hilang=1",
+      path: "/report",
+      entry: "/report?missing=1",
       action: never,
     });
     const hrefs = (await screen.findAllByRole("link")).map((link) => link.getAttribute("href"));
-    expect(hrefs).toContain(`/lapor/report?profile=${profile.profileId}&hilang=1`);
+    expect(hrefs).toContain(`/report?profile=${profile.profileId}&missing=1`);
   });
 
   test("a poster's village stays through every step; a desa of the wrong shape is dropped", async () => {
     const view = renderPage(<StartScreen page={page()} acted={null} />, {
-      path: "/lapor/report",
-      entry: "/lapor/report?desa=1108012005",
+      path: "/report",
+      entry: "/report?village=1108012005",
       action: never,
     });
     const hrefs = (await screen.findAllByRole("link")).map((link) => link.getAttribute("href"));
-    expect(hrefs).toContain(`/lapor/report?profile=${profile.profileId}&desa=1108012005`);
-    expect(hrefs).toContain("/lapor/report?new=1&desa=1108012005");
+    expect(hrefs).toContain(`/report?profile=${profile.profileId}&village=1108012005`);
+    expect(hrefs).toContain("/report?new=1&village=1108012005");
     view.unmount();
     renderPage(<StartScreen page={page()} acted={null} />, {
-      path: "/lapor/report",
-      entry: "/lapor/report?desa=11.08",
+      path: "/report",
+      entry: "/report?village=11.08",
       action: never,
     });
     const plain = (await screen.findAllByRole("link")).map((link) => link.getAttribute("href"));
-    expect(plain).toContain("/lapor/report?new=1");
+    expect(plain).toContain("/report?new=1");
   });
 
   test("after a removal the number removed is named; a failed removal says so", async () => {
@@ -220,9 +220,9 @@ describe("identity and consent", () => {
     expect(await screen.findByRole("heading", { name: "Anda masuk sebagai petugas meja" })).toBeTruthy();
     expect(screen.queryByRole("button", { name: "Setuju" })).toBeNull();
     const out = screen.getByRole("button", { name: "Keluar dari meja dan lapor" }).closest("form") as HTMLFormElement;
-    expect(out.getAttribute("action")).toBe("/lapor/meja");
-    expect((out.querySelector('input[name="next"]') as HTMLInputElement).value).toBe("/lapor/report");
-    expect(screen.getByRole("link", { name: "Kembali ke meja" }).getAttribute("href")).toBe("/lapor/meja");
+    expect(out.getAttribute("action")).toBe("/desk");
+    expect((out.querySelector('input[name="next"]') as HTMLInputElement).value).toBe("/report");
+    expect(screen.getByRole("link", { name: "Kembali ke meja" }).getAttribute("href")).toBe("/desk");
   });
 
   test("changing a known profile keeps its name and role and posts the change", async () => {
@@ -280,19 +280,19 @@ describe("the home", () => {
         />
       </>,
       {
-        path: "/lapor",
+        path: "/",
       },
     );
     expect(
       await screen.findByRole("heading", { level: 1, name: "Laporkan kejadian bencana di sekitar Anda" }),
     ).toBeTruthy();
-    expect(screen.getByRole("link", { name: "Lapor kejadian" }).getAttribute("href")).toBe("/lapor/report");
+    expect(screen.getByRole("link", { name: "Lapor kejadian" }).getAttribute("href")).toBe("/report");
     expect(screen.getByRole("link", { name: "112 Darurat terpadu" }).getAttribute("href")).toBe("tel:112");
     expect(screen.getByRole("link", { name: "Lihat cara melapor" }).getAttribute("href")).toBe("#steps");
     expect(screen.getByRole("heading", { level: 2, name: "Cara melapor" })).toBeTruthy();
     expect(screen.getAllByRole("heading", { name: "Ada laporan yang belum selesai" })).toHaveLength(1);
     expect(screen.getByRole("link", { name: "Buat laporan baru" }).getAttribute("href")).toBe(
-      `/lapor/report?discard=${withDraft.profileId}`,
+      `/report?discard=${withDraft.profileId}`,
     );
     expect(screen.getByRole("link", { name: "021 2982 7793" }).getAttribute("href")).toBe("tel:02129827793");
     expect(screen.getByText(/Graha BNPB/).closest("a")).toBeNull();
@@ -301,12 +301,10 @@ describe("the home", () => {
   test("news not sent yet is offered as news, and a new report over it says only the news goes", async () => {
     const open = { ...(withDraft.openDraft as NonNullable<typeof withDraft.openDraft>), followUpOf: "LA-231126-01" };
     const me = { ...SAMPLE_ME, knownReporters: [{ ...withDraft, openDraft: open }] };
-    const view = renderPage(<HomeScreen me={me} />, { path: "/lapor" });
+    const view = renderPage(<HomeScreen me={me} />, { path: "/" });
     expect(await screen.findByRole("heading", { name: "Kabar belum dikirim" })).toBeTruthy();
     expect(screen.getByText(/^Kabar untuk LA-231126-01, terakhir diisi pukul/)).toBeTruthy();
-    expect(screen.getByRole("link", { name: "Lanjutkan kabar" }).getAttribute("href")).toBe(
-      `/lapor/report/${open.draftId}`,
-    );
+    expect(screen.getByRole("link", { name: "Lanjutkan kabar" }).getAttribute("href")).toBe(`/report/${open.draftId}`);
     view.unmount();
     draw(page({ me, view: "discardConfirm", profileId: withDraft.profileId }), null);
     expect(
@@ -322,23 +320,23 @@ describe("the home", () => {
         <HomeHero sent />
         <HomeScreen me={SAMPLE_ME} />
       </>,
-      { path: "/lapor" },
+      { path: "/" },
     );
     const list = await screen.findByRole("region", { name: "Laporan saya" });
-    expect(list.id).toBe("laporan-saya");
-    expect(screen.getByRole("link", { name: "Cek status laporan" }).getAttribute("href")).toBe("#laporan-saya");
+    expect(list.id).toBe("my-reports");
+    expect(screen.getByRole("link", { name: "Cek status laporan" }).getAttribute("href")).toBe("#my-reports");
     expect(within(list).getByText("LA-231126-01")).toBeTruthy();
     expect(within(list).getByText("Banjir, dikirim 23 November 2026 pukul 09.00 WIB")).toBeTruthy();
     expect(within(list).getByText("Laporan diterima")).toBeTruthy();
     expect(within(list).getByText("2 kabar baru")).toBeTruthy();
     // The whole row is the link, so it is named by the ticket and its stage too.
     const row = within(list).getByRole("link", { name: /LA-231126-01.*Laporan diterima.*Buka laporan/ });
-    expect(row.getAttribute("href")).toBe("/lapor/reports/LA-231126-01");
+    expect(row.getAttribute("href")).toBe("/reports/LA-231126-01");
   });
 
   test("a report with no unread news carries no mark", async () => {
     const read = SAMPLE_ME.reports.map((report) => ({ ...report, unread: 0 }));
-    renderPage(<HomeScreen me={{ ...SAMPLE_ME, reports: read }} />, { path: "/lapor" });
+    renderPage(<HomeScreen me={{ ...SAMPLE_ME, reports: read }} />, { path: "/" });
     const list = await screen.findByRole("region", { name: "Laporan saya" });
     expect(within(list).getByText("LA-231126-01")).toBeTruthy();
     expect(within(list).queryByText(/kabar baru/)).toBeNull();
@@ -363,24 +361,24 @@ describe("the home", () => {
       },
       { id: "m2", name: null, status: "closed" as const, villageName: "Dua", createdAt: "2026-11-25T03:00:00.000Z" },
     ];
-    renderPage(<HomeScreen me={{ ...SAMPLE_ME, reports }} missing={missing} />, { path: "/lapor" });
+    renderPage(<HomeScreen me={{ ...SAMPLE_ME, reports }} missing={missing} />, { path: "/" });
     const list = await screen.findByRole("region", { name: "Laporan saya" });
     const tiles = [...list.querySelectorAll("dl > div")].map((tile) => tile.textContent);
     expect(tiles).toEqual([`Terkirim${reports.length}`, `Diproses${reports.length - 1}`, "Selesai1"]);
     const sought = within(screen.getByRole("region", { name: "Orang hilang yang Anda laporkan" }));
     expect(sought.getByText("Uji Hilang, terakhir terlihat di Uji")).toBeTruthy();
     expect(sought.getByText("Nama sudah dihapus, terakhir terlihat di Dua")).toBeTruthy();
-    expect(sought.getAllByRole("link")[0]?.getAttribute("href")).toBe("/lapor/orang-hilang");
+    expect(sought.getAllByRole("link")[0]?.getAttribute("href")).toBe("/missing");
   });
 
   test("with nothing sent, Laporan saya says so and there is no Cek status laporan", async () => {
-    renderPage(<HomeScreen me={{ ...SAMPLE_ME, reports: [] }} />, { path: "/lapor" });
+    renderPage(<HomeScreen me={{ ...SAMPLE_ME, reports: [] }} />, { path: "/" });
     expect(await screen.findByText("Belum ada laporan terkirim dari perangkat ini.")).toBeTruthy();
     expect(screen.queryByRole("link", { name: "Cek status laporan" })).toBeNull();
   });
 
   test("unreadable drafts are said, and reporting still works", async () => {
-    renderPage(<HomeScreen me={null} />, { path: "/lapor" });
+    renderPage(<HomeScreen me={null} />, { path: "/" });
     expect(await screen.findByText(/tidak bisa dimuat sekarang/)).toBeTruthy();
     expect(screen.getByRole("link", { name: "Muat ulang daftar" })).toBeTruthy();
     expect(SAMPLE_DRAFTS.sent).toBeTruthy();

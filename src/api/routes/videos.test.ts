@@ -67,9 +67,9 @@ function movie(bytes: number, madeMs: number | null = clock.now() - 600_000, pla
 const putPart = (phone: Phone, path: string, bytes: Uint8Array) => {
   const cookie = [...phone.cookies].map(([name, value]) => `${name}=${value}`).join("; ");
   return fetchApi(
-    new Request(`http://localhost/api/lapor${path}`, {
+    new Request(`http://localhost/api${path}`, {
       method: "PUT",
-      headers: { "cf-connecting-ip": phone.address, origin: TEST_ORIGIN, "x-lapor-client": "1", cookie },
+      headers: { "cf-connecting-ip": phone.address, origin: TEST_ORIGIN, "x-respon-client": "1", cookie },
       body: new Uint8Array(bytes),
     }),
   );
@@ -138,7 +138,7 @@ describe("a video of the scene", () => {
     ]);
     const play = (range?: string) =>
       fetchApi(
-        new Request(`http://localhost/api/lapor/desk/reports/${ticket}/videos/${id}`, {
+        new Request(`http://localhost/api/desk/reports/${ticket}/videos/${id}`, {
           headers: {
             "cf-connecting-ip": desk.address,
             cookie: `seeded_session=${(SEEDED_SESSIONS[2] as { token: string }).token}`,
@@ -163,7 +163,7 @@ describe("a video of the scene", () => {
     // Another region's officer finds no such report; past the hourly limit the desk is refused.
     const province = (SEEDED_SESSIONS[4] as { token: string }).token;
     const elsewhere = await fetchApi(
-      new Request(`http://localhost/api/lapor/desk/reports/${ticket}/videos/${id}`, {
+      new Request(`http://localhost/api/desk/reports/${ticket}/videos/${id}`, {
         headers: { "cf-connecting-ip": desk.address, cookie: `seeded_session=${province}` },
       }),
     );
@@ -175,7 +175,7 @@ describe("a video of the scene", () => {
     expect((await play()).status).toBe(429);
     await query`delete from rate_counter where subject_key = ${key}`;
     const other = await fetchApi(
-      new Request(`http://localhost/api/lapor/desk/reports/${ticket}/videos/${crypto.randomUUID()}`, {
+      new Request(`http://localhost/api/desk/reports/${ticket}/videos/${crypto.randomUUID()}`, {
         headers: {
           "cf-connecting-ip": desk.address,
           cookie: `seeded_session=${(SEEDED_SESSIONS[2] as { token: string }).token}`,

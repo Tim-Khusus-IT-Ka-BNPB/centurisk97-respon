@@ -45,7 +45,7 @@ export function DeskToday({ today }: { readonly today: Today }) {
             {t(pulled ? "desk.today.restore" : "desk.today.pullOff")}
           </Button>
         </Form>
-        <Link to="/lapor/hari-ini" className="font-semibold text-primary">
+        <Link to="/today" className="font-semibold text-primary">
           {t("desk.today.open")}
         </Link>
       </div>

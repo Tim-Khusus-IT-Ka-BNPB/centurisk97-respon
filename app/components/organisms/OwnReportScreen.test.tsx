@@ -7,7 +7,7 @@ import { OwnReportScreen } from "./OwnReportScreen";
 
 type Version = (typeof OWN_REPORT.versions)[number];
 
-const PATH = "/lapor/reports/LA-231126-01";
+const PATH = "/reports/LA-231126-01";
 const draw = (report = OWN_REPORT, entry = PATH) =>
   renderPage(<OwnReportScreen report={report} />, { path: PATH, entry, action: never });
 
@@ -16,11 +16,11 @@ describe("the reporter's own report", () => {
     draw();
     expect(await screen.findByRole("heading", { level: 1, name: "LA-231126-01" })).toBeTruthy();
     expect(screen.getByText("Banjir di Desa/Kel. Sukamaju")).toBeTruthy();
-    expect(screen.getByRole("link", { name: "Laporan saya" }).getAttribute("href")).toBe("/lapor#laporan-saya");
+    expect(screen.getByRole("link", { name: "Laporan saya" }).getAttribute("href")).toBe("/#my-reports");
     const status = within(screen.getByRole("region", { name: "Status laporan" }));
     expect(status.getAllByRole("listitem")[0]?.textContent).toContain("Laporan diterima");
     expect(screen.getByRole("link", { name: "Buka halaman lacak" }).getAttribute("href")).toBe(
-      "/lapor/lacak#t=0123456789abcdef0123456789abcdef",
+      "/track#t=0123456789abcdef0123456789abcdef",
     );
   });
 
@@ -62,7 +62,7 @@ describe("the reporter's own report", () => {
     const proofs = [{ proofId: "p1", at: { utc: "2026-11-23T05:00:00.000Z", zone: "WIB" as const } }];
     draw({ ...OWN_REPORT, tracking: { ...OWN_REPORT.tracking, actions: ["Evakuasi warga"], proofs } });
     const photo = await screen.findByRole("img", { name: "Foto penanganan 1" });
-    expect(photo.getAttribute("src")).toBe("/api/lapor/reports/LA-231126-01/proofs/p1");
+    expect(photo.getAttribute("src")).toBe("/api/reports/LA-231126-01/proofs/p1");
   });
 
   test("news may be added until its time, by one button that says it is on the way", async () => {
@@ -84,7 +84,7 @@ describe("the reporter's own report", () => {
     const news = within(await screen.findByRole("region", { name: "Kabar tidak bisa ditambah lagi" }));
     expect(news.getByText(new RegExp(words))).toBeTruthy();
     expect(news.queryByRole("button")).toBeNull();
-    expect(news.getByRole("link", { name: "Buat laporan baru" }).getAttribute("href")).toBe("/lapor/report");
+    expect(news.getByRole("link", { name: "Buat laporan baru" }).getAttribute("href")).toBe("/report");
   });
 
   test("a refused start says why, and leads to the report that must be finished first", async () => {
@@ -96,7 +96,7 @@ describe("the reporter's own report", () => {
     const view = refused("followUp.finishFirst", { draftId: "d-1" });
     expect((await screen.findByRole("alert")).textContent).toContain("Ada laporan yang belum selesai");
     expect(screen.getByRole("link", { name: "Buka laporan yang belum selesai" }).getAttribute("href")).toBe(
-      "/lapor/report/d-1",
+      "/report/d-1",
     );
     // What was saved before is not told again beside a refusal.
     expect(screen.queryByText(/Kabar terkirim/)).toBeNull();

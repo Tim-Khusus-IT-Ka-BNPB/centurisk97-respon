@@ -9,7 +9,7 @@ import type { Route } from "./+types/deskReport";
 export const headers = () => ({ "cache-control": "private, no-store", "x-robots-tag": "noindex" });
 
 export const meta = (args: Route.MetaArgs) =>
-  pageMeta(args, { title: "page.desk.title", description: "meta.desk.description", path: "/lapor/meja", index: false });
+  pageMeta(args, { title: "page.desk.title", description: "meta.desk.description", path: "/desk", index: false });
 
 export async function loader({ params, context }: Route.LoaderArgs) {
   const load = await loadDeskReport(params.ticketNumber, context.api);

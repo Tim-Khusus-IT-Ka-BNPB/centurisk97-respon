@@ -12,7 +12,7 @@ import type { Route } from "./+types/feed";
 export const headers = () => ({ "cache-control": "private, no-store" });
 
 export const meta = (args: Route.MetaArgs) =>
-  pageMeta(args, { title: "page.feed.title", description: "meta.feed.description", path: "/lapor/feed" });
+  pageMeta(args, { title: "page.feed.title", description: "meta.feed.description", path: "/feed" });
 
 // Read on the server, so the list shows with no script; an unknown filter shows every hazard.
 export async function loader({ request, context }: Route.LoaderArgs) {

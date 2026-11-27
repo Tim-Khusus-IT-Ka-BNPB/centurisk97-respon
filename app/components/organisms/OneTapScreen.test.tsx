@@ -39,8 +39,8 @@ const answer = (response: () => Response) =>
       return response();
     }),
   );
-const draw = (entry = "/lapor/darurat", start: Parameters<typeof OneTapScreen>[0]["start"] = START) =>
-  renderPage(<OneTapScreen start={start} />, { path: "/lapor/darurat", entry });
+const draw = (entry = "/emergency", start: Parameters<typeof OneTapScreen>[0]["start"] = START) =>
+  renderPage(<OneTapScreen start={start} />, { path: "/emergency", entry });
 const phones = () =>
   screen
     .getAllByRole("link")
@@ -64,7 +64,7 @@ describe("one tap", () => {
     let found: (result: PositionResult) => void = () => {};
     device.read = new Promise<PositionResult>((resolve) => (found = resolve));
     answer(() => Response.json(SENT, { status: 201 }));
-    draw("/lapor/darurat?ketuk=1", { ...START, contact: SENT.contact });
+    draw("/emergency?ketuk=1", { ...START, contact: SENT.contact });
     expect(await screen.findByText(/Membaca lokasi ponsel/)).toBeTruthy();
     expect(phones()).toEqual(["tel:112", "tel:117", "tel:080011080001"]);
     expect(calls).toEqual([]);
@@ -72,13 +72,13 @@ describe("one tap", () => {
     expect(await screen.findByText("Terkirim ke meja BNPB dengan nomor LA-241126-01.")).toBeTruthy();
     expect(calls).toEqual([
       {
-        url: "/api/lapor/emergencies",
+        url: "/api/emergencies",
         // Sent at once, it carries its id but no phone time: it is no kept report.
         body: { lat: 5.1, lon: 97, accuracyM: 12, clientId: expect.any(String) },
       },
     ]);
     expect(screen.getByRole("link", { name: "Lihat dan lengkapi laporan" }).getAttribute("href")).toBe(
-      `/lapor/reports/${SENT.ticketNumber}`,
+      `/reports/${SENT.ticketNumber}`,
     );
   });
 
@@ -96,7 +96,7 @@ describe("one tap", () => {
   test("says it is sending while the point is on its way", async () => {
     let finish: (response: Response) => void = () => {};
     vi.stubGlobal("fetch", () => new Promise<Response>((resolve) => (finish = resolve)));
-    draw("/lapor/darurat?ketuk=1");
+    draw("/emergency?ketuk=1");
     expect(await screen.findByText("Mengirim titik lokasi...")).toBeTruthy();
     expect(screen.getByRole("button", { name: "Tunggu sebentar..." })).toBeTruthy();
     await act(async () => finish(Response.json(SENT, { status: 201 })));
@@ -110,12 +110,12 @@ describe("one tap", () => {
   ] as const)("a position %s is told with the other way to report, and nothing is sent", async (kind, words) => {
     device.read = Promise.resolve({ kind });
     answer(() => Response.json(SENT));
-    draw("/lapor/darurat?ketuk=1");
+    draw("/emergency?ketuk=1");
     expect(await screen.findByText(words)).toBeTruthy();
     expect(calls).toEqual([]);
     expect(screen.getByRole("button", { name: "Coba lagi" })).toBeTruthy();
     expect(screen.getByRole("link", { name: "Lapor darurat dengan keterangan" }).getAttribute("href")).toBe(
-      "/lapor/report?darurat=1",
+      "/report?emergency=1",
     );
   });
 
@@ -129,7 +129,7 @@ describe("one tap", () => {
         { status: 429 },
       ),
     );
-    const view = draw("/lapor/darurat?ketuk=1");
+    const view = draw("/emergency?ketuk=1");
     expect(await screen.findByText(/sudah terkirim dari ponsel ini. Bisa dikirim lagi mulai/)).toBeTruthy();
     view.unmount();
     answer(() =>
@@ -141,7 +141,7 @@ describe("one tap", () => {
         { status: 422 },
       ),
     );
-    draw("/lapor/darurat?ketuk=1");
+    draw("/emergency?ketuk=1");
     expect(await screen.findByText(/Titik ini di luar Indonesia/)).toBeTruthy();
   });
 
@@ -174,7 +174,7 @@ describe("with no signal", () => {
     fireEvent.change(screen.getByLabelText("Kejadian apa? Boleh dilewati"), { target: { value: "flood" } });
     fireEvent.click(screen.getByLabelText("Ya, ada"));
     fireEvent.change(screen.getByLabelText("Kejadian apa? Boleh dilewati"), { target: { value: "" } });
-    const kept = JSON.parse(localStorage.getItem("lapor-offline-reports") as string);
+    const kept = JSON.parse(localStorage.getItem("respon-offline-reports") as string);
     expect(kept).toEqual([expect.objectContaining({ lat: 5.1, lon: 97, accuracyM: 12, victims: "yes" })]);
     expect(kept[0].hazardType).toBeUndefined();
     vi.stubGlobal("navigator", { ...navigator, onLine: true });
@@ -183,7 +183,7 @@ describe("with no signal", () => {
     });
     expect(await screen.findByText("Terkirim ke meja BNPB dengan nomor LA-241126-01.")).toBeTruthy();
     expect(calls[0]?.body).toMatchObject({ clientId: kept[0].clientId, victims: "yes" });
-    expect(localStorage.getItem("lapor-offline-reports")).toBeNull();
+    expect(localStorage.getItem("respon-offline-reports")).toBeNull();
   });
 
   test("a send the network does not carry is kept; Kirim sekarang tries again", async () => {
@@ -200,7 +200,7 @@ describe("with no signal", () => {
 
   test("a report kept before goes as soon as the page opens with signal", async () => {
     localStorage.setItem(
-      "lapor-offline-reports",
+      "respon-offline-reports",
       JSON.stringify([
         { clientId: "00000000-0000-4000-8000-000000000001", lat: 5, lon: 97, accuracyM: 9, takenAtMs: 1 },
       ]),
@@ -254,7 +254,7 @@ describe("with no signal", () => {
     await take();
     await take();
     expect(screen.queryByLabelText("Ambil foto")).toBeNull();
-    const kept = JSON.parse(localStorage.getItem("lapor-offline-reports") as string);
+    const kept = JSON.parse(localStorage.getItem("respon-offline-reports") as string);
     expect(kept[0].photos).toHaveLength(3);
     expect(kept[0].photos[0]).toEqual({ jpeg: "/9gB", fix: { lat: 5.1, lon: 97, accuracy: 9, readAt: 5 } });
 
@@ -278,10 +278,10 @@ describe("with no signal", () => {
       ),
     ).toBeTruthy();
     expect(calls.map((one) => one.url)).toEqual([
-      "/api/lapor/emergencies",
-      `/api/lapor/emergencies/${kept[0].clientId}/photos`,
-      `/api/lapor/emergencies/${kept[0].clientId}/photos`,
-      `/api/lapor/emergencies/${kept[0].clientId}/photos`,
+      "/api/emergencies",
+      `/api/emergencies/${kept[0].clientId}/photos`,
+      `/api/emergencies/${kept[0].clientId}/photos`,
+      `/api/emergencies/${kept[0].clientId}/photos`,
     ]);
     expect(calls[0]?.body).not.toHaveProperty("photos");
     expect(calls[1]?.body).toMatchObject({ index: "0", lat: "5.1", readAt: "5" });

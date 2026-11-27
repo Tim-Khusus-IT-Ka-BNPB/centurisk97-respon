@@ -23,7 +23,7 @@ const envelope = (
 });
 const draw = (props: Partial<Parameters<typeof CardComments>[0]> = {}) =>
   renderPage(<CardComments comments={COMMENTS} mayComment envelope={null} typed="" done={null} {...props} />, {
-    path: "/lapor/feed/0123456789abcdef",
+    path: "/feed/0123456789abcdef",
     action: never,
   });
 
@@ -81,6 +81,6 @@ describe("the residents' news on a card", () => {
     draw({ comments: [], mayComment: false });
     expect(await screen.findByText("Belum ada kabar dari warga.")).toBeTruthy();
     expect(screen.queryByRole("textbox")).toBeNull();
-    expect(screen.getByRole("link", { name: "Laporkan kejadian" }).getAttribute("href")).toBe("/lapor/report");
+    expect(screen.getByRole("link", { name: "Laporkan kejadian" }).getAttribute("href")).toBe("/report");
   });
 });

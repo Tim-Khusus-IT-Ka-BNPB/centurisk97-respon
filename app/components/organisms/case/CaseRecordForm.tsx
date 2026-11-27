@@ -200,7 +200,7 @@ export function CaseRecordForm({
             {t("desk.case.save")}
           </Button>
           {editing === null ? null : (
-            <Link to={`?jenis=${kind}`} className={buttonStyles({ variant: "secondary" })}>
+            <Link to={`?kind=${kind}`} className={buttonStyles({ variant: "secondary" })}>
               {t("desk.case.cancelEdit")}
             </Link>
           )}

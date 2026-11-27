@@ -96,7 +96,7 @@ describe("news for a sent report", () => {
     const view = draw(SAMPLE_DRAFTS.followUpEnded);
     expect(await screen.findByRole("heading", { name: "Kabar terkirim" })).toBeTruthy();
     expect(screen.getByText("Kabar Anda masuk ke laporan LA-231126-01 sebagai versi baru.")).toBeTruthy();
-    expect(screen.getByRole("link", { name: "Buka laporan" }).getAttribute("href")).toBe("/lapor/reports/LA-231126-01");
+    expect(screen.getByRole("link", { name: "Buka laporan" }).getAttribute("href")).toBe("/reports/LA-231126-01");
     view.unmount();
     const ended = SAMPLE_DRAFTS.followUpEnded.card as Extract<Card, { kind: "followUpEnded" }>;
     draw({

@@ -20,7 +20,7 @@ export type OfflineReport = {
   readonly photos?: readonly KeptPhoto[];
 };
 
-const KEY = "lapor-offline-reports";
+const KEY = "respon-offline-reports";
 
 export function keptReports(): OfflineReport[] {
   try {

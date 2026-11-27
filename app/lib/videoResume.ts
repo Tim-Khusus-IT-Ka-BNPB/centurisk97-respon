@@ -1,7 +1,7 @@
 // A video upload a reload cut off (D89): which upload of this draft it was and how to know the file
 // again when it is picked once more. Only the upload's id, the file's size and its modified time are
 // kept, never its name or bytes, and only until the upload is whole or given up.
-const KEY = "lapor-video";
+const KEY = "respon-video";
 
 export type OpenUpload = { readonly id: string; readonly size: number; readonly modified: number };
 

@@ -49,7 +49,7 @@ function Documents({ report }: { readonly report: OwnReportDetail }) {
             version={version}
             button={(format, look, children) => (
               <a
-                href={`/lapor/reports/${ticketNumber}/v${version}.${format}`}
+                href={`/reports/${ticketNumber}/v${version}.${format}`}
                 target={target}
                 aria-label={look.label}
                 className={look.className}
@@ -90,7 +90,7 @@ function FollowUp({ report, envelope }: { readonly report: OwnReportDetail; read
         <Notice kind="error">
           <p>{t(envelope.error.copyKey, envelope.error.params)}</p>
           {unfinished ? (
-            <Link to={`/lapor/report/${unfinished}`} className="w-fit font-semibold underline">
+            <Link to={`/report/${unfinished}`} className="w-fit font-semibold underline">
               {t("followUp.finish")}
             </Link>
           ) : null}
@@ -110,7 +110,7 @@ function FollowUp({ report, envelope }: { readonly report: OwnReportDetail; read
           </Button>
         </Form>
       ) : (
-        <Link to="/lapor/report" className={buttonStyles({ variant: "secondary" })}>
+        <Link to="/report" className={buttonStyles({ variant: "secondary" })}>
           {t("followUp.newReport")}
         </Link>
       )}
@@ -118,7 +118,7 @@ function FollowUp({ report, envelope }: { readonly report: OwnReportDetail; read
   );
 }
 
-// A report on the phone that sent it (`/lapor/reports/<ticket>`): where it stands, and what only
+// A report on the phone that sent it (`/reports/<ticket>`): where it stands, and what only
 // its reporter is given.
 export function OwnReportScreen({
   report,
@@ -136,7 +136,7 @@ export function OwnReportScreen({
     <div className="flex flex-col gap-6">
       <header className="flex flex-col gap-2">
         <Link
-          to="/lapor#laporan-saya"
+          to="/#my-reports"
           className="inline-flex min-h-target-min w-fit items-center gap-2 rounded-control text-ink"
         >
           <Icon name="arrowLeft" className="size-5" />
@@ -164,7 +164,7 @@ export function OwnReportScreen({
             tracking={tracking}
             photo={(proofId, alt) => (
               <img
-                src={`/api/lapor/reports/${tracking.ticketNumber}/proofs/${proofId}`}
+                src={`/api/reports/${tracking.ticketNumber}/proofs/${proofId}`}
                 alt={alt}
                 loading="lazy"
                 className="aspect-[4/3] w-full rounded-control bg-sunken object-cover"

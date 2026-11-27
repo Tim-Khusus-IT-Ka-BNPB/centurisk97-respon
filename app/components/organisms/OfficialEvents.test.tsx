@@ -6,7 +6,7 @@ import { OfficialEvents } from "./OfficialEvents";
 
 const draw = (props: Partial<Parameters<typeof OfficialEvents>[0]> = {}) =>
   renderPage(<OfficialEvents official={OFFICIAL} entries={[FEED_ENTRY, FEED_ALONE]} hazard={null} {...props} />, {
-    path: "/lapor/feed",
+    path: "/feed",
   });
 
 test("each event of BNPB's report with its status, figures, our own reports of it, its news and social media", async () => {
@@ -20,9 +20,7 @@ test("each event of BNPB's report with its status, figures, our own reports of i
   expect(flood.getByText("45 rumah terdampak")).toBeTruthy();
   expect(flood.queryByText(/mengungsi/)).toBeNull();
   // Our own closed flood in Aceh Utara is of it.
-  expect(flood.getByRole("link", { name: /laporan warga ditangani/ }).getAttribute("href")).toBe(
-    "/lapor/feed?hazard=flood",
-  );
+  expect(flood.getByRole("link", { name: /laporan warga ditangani/ }).getAttribute("href")).toBe("/feed?hazard=flood");
   expect(flood.getByText("Berita (3)")).toBeTruthy();
   const news = flood.getByRole("link", { name: "Banjir Aceh Utara" });
   expect([news.getAttribute("href"), news.getAttribute("target"), news.getAttribute("rel")]).toEqual([

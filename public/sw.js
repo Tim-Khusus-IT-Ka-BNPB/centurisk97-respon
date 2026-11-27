@@ -1,26 +1,18 @@
-// The service worker of /lapor (LR-03): a page seen before opens again with no signal, from the copy
+// The service worker of / (LR-03): a page seen before opens again with no signal, from the copy
 // kept here. Pages: the network first, the kept copy when it fails. Built files, whose names carry
 // their content's hash: the kept copy first. The API is never kept. Raise VERSION when this file changes.
 const VERSION = "lapor-5";
 const KEPT = `${VERSION}-pages`;
 // Kept at install: the home and the emergency page, so a report can be made with no signal.
-const FIRST = ["/lapor", "/lapor/darurat"];
+const FIRST = ["/", "/emergency"];
 // Only these pages are ever kept: never the desk, or a reporter's own report with its details.
-const KEEPABLE = new Set([
-  ...FIRST,
-  "/lapor/help",
-  "/lapor/about",
-  "/lapor/privacy",
-  "/lapor/feed",
-  "/lapor/info",
-  "/lapor/lacak",
-]);
+const KEEPABLE = new Set([...FIRST, "/help", "/about", "/privacy", "/feed", "/info", "/track"]);
 
 // Kept at install with them: the emblem and the shield every page draws, so a page with no signal is
 // drawn whole.
 // Built files are kept as they are asked for, never all at install: fetching them all there held up
 // a phone's first map.
-const SHELL = ["/lambang-bnpb.png", "/logo-pantau.svg", "/icons/192.png"];
+const SHELL = ["/bnpb-emblem.png", "/logo-pantau.svg", "/icons/192.png"];
 
 self.addEventListener("install", (event) => {
   event.waitUntil(
@@ -71,7 +63,7 @@ self.addEventListener("fetch", (event) => {
           }
           return response;
         } catch {
-          const kept = (await caches.match(url.pathname)) ?? (await caches.match("/lapor"));
+          const kept = (await caches.match(url.pathname)) ?? (await caches.match("/"));
           return kept ?? Response.error();
         }
       })(),
@@ -104,7 +96,7 @@ self.addEventListener("push", (event) => {
     }
   })();
   if (!message || typeof message.title !== "string") return;
-  const url = typeof message.url === "string" && message.url.startsWith("/lapor/") ? message.url : "/lapor/info";
+  const url = typeof message.url === "string" && message.url.startsWith("/") ? message.url : "/info";
   event.waitUntil(
     self.registration.showNotification(message.title, {
       body: typeof message.body === "string" ? message.body : "",
@@ -118,7 +110,7 @@ self.addEventListener("push", (event) => {
 
 self.addEventListener("notificationclick", (event) => {
   event.notification.close();
-  const url = event.notification.data?.url ?? "/lapor/info";
+  const url = event.notification.data?.url ?? "/info";
   event.waitUntil(
     (async () => {
       for (const client of await self.clients.matchAll({ type: "window" }))

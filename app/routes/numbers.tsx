@@ -14,7 +14,7 @@ export const meta = (args: Route.MetaArgs) =>
   pageMeta(args, {
     title: "page.numbers.title",
     description: "meta.numbers.description",
-    path: "/lapor/nomor-penting",
+    path: "/numbers",
   });
 
 export const loader = ({ request }: Route.LoaderArgs) => ({
@@ -44,7 +44,7 @@ function Numbers() {
           {t("numbers.bpbd.title")}
         </h2>
         <p className="max-w-[60ch] text-muted">{t("numbers.bpbd.body")}</p>
-        <Link to="/lapor/info" className={buttonStyles({ variant: "secondary", className: "self-start" })}>
+        <Link to="/info" className={buttonStyles({ variant: "secondary", className: "self-start" })}>
           <Icon name="map" className="size-5" />
           {t("numbers.bpbd.go")}
         </Link>

@@ -12,14 +12,14 @@ export const meta = (args: Route.MetaArgs) =>
   pageMeta(args, {
     title: "page.emergency.title",
     description: "meta.emergency.description",
-    path: "/lapor/darurat",
+    path: "/emergency",
     index: false,
   });
 
 // One tap is for a reporter known on this phone; anyone else is led to the short conversation.
 export async function loader({ request, context }: Route.LoaderArgs) {
   const response = await context.api("GET", "/emergencies/start");
-  if (!response.ok) return redirect("/lapor/report?darurat=1");
+  if (!response.ok) return redirect("/report?emergency=1");
   return {
     start: (await response.json()) as OneTapStart,
     texts: pickTexts(PAGE_TEXTS.emergency, null, languageOf(request)),

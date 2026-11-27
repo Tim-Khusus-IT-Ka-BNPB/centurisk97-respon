@@ -10,25 +10,25 @@ type Door = { readonly to: string; readonly key: string; readonly icon: IconName
 // an event in orange, a missing person in the band's own light.
 const REPORTS: readonly (Door & { readonly look: string })[] = [
   {
-    to: "/lapor/report?darurat=1",
+    to: "/report?emergency=1",
     key: "emergency",
     icon: "triangleAlert",
     look: "bg-signal text-on-signal hover:bg-signal-deep",
   },
   {
-    to: "/lapor/report",
+    to: "/report",
     key: "report",
     icon: "send",
     look: "bg-accent text-on-accent hover:bg-[color-mix(in_oklab,var(--accent),white_16%)]",
   },
-  { to: "/lapor/orang-hilang", key: "missing", icon: "userSearch", look: "bg-surface text-ink hover:bg-sunken" },
+  { to: "/missing", key: "missing", icon: "userSearch", look: "bg-surface text-ink hover:bg-sunken" },
 ];
 
 // The rest of what the service offers, under the band.
 const MORE: readonly Door[] = [
-  { to: "/lapor/info", key: "info", icon: "map" },
-  { to: "/lapor/help#help-education", key: "education", icon: "clipboardCheck" },
-  { to: "/lapor/nomor-penting", key: "numbers", icon: "phone" },
+  { to: "/info", key: "info", icon: "map" },
+  { to: "/help#help-education", key: "education", icon: "clipboardCheck" },
+  { to: "/numbers", key: "numbers", icon: "phone" },
 ];
 
 export function ReportDoors() {

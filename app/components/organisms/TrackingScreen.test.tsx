@@ -19,7 +19,7 @@ function answer(status: number, body: unknown = null) {
   );
 }
 
-const draw = () => renderPage(<TrackingScreen />, { path: "/lapor/lacak" });
+const draw = () => renderPage(<TrackingScreen />, { path: "/track" });
 
 beforeEach(() => {
   calls.length = 0;
@@ -35,7 +35,7 @@ describe("tracking page", () => {
     answer(200, tracking);
     draw();
     expect(await screen.findByRole("heading", { level: 1, name: "LA-231126-01" })).toBeTruthy();
-    expect(calls[0]?.url).toBe("/api/lapor/tracking");
+    expect(calls[0]?.url).toBe("/api/tracking");
     expect(calls[0]?.url).not.toContain(TOKEN);
     expect(calls[0]?.init).toMatchObject({ method: "POST", body: JSON.stringify({ token: TOKEN }) });
     const status = screen.getByRole("region", { name: "Status laporan" });
@@ -97,7 +97,7 @@ describe("tracking page", () => {
     expect(status.getByText("Evakuasi warga")).toBeTruthy();
     expect((await screen.findByRole("img", { name: "Foto penanganan 1" })).getAttribute("src")).toBe("blob:p1");
     expect(await screen.findByText("Foto belum bisa dimuat.")).toBeTruthy();
-    expect(sent.filter((one) => one.url === "/api/lapor/tracking/photos").map((one) => JSON.parse(one.body))).toEqual([
+    expect(sent.filter((one) => one.url === "/api/tracking/photos").map((one) => JSON.parse(one.body))).toEqual([
       { token: TOKEN, proofId: "p1" },
       { token: TOKEN, proofId: "p2" },
     ]);

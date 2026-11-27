@@ -52,12 +52,12 @@ describe("a gateway's signed calls (AC-05)", () => {
 
   test("a browser's write without a signature is refused, whatever its origin", async () => {
     const response = await api.app.fetch(
-      new Request("http://localhost/api/lapor/pesan", {
+      new Request("http://localhost/api/pesan", {
         method: "POST",
         headers: {
           "cf-connecting-ip": "203.0.113.9",
           origin: "http://localhost:5173",
-          "x-lapor-client": "1",
+          "x-respon-client": "1",
           "content-type": "application/json",
         },
         body: JSON.stringify(body()),

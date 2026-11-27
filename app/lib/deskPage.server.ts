@@ -96,7 +96,7 @@ const VIEW_READS: Readonly<Record<DeskView, readonly string[]>> = {
   gallery: ["/desk/photos"],
 };
 
-// GET /lapor/meja: the queue for a staff account, or the sign-in form for anyone else.
+// GET /desk: the queue for a staff account, or the sign-in form for anyone else.
 export async function loadDeskQueue(url: URL, api: ApiCall): Promise<DeskQueueLoad> {
   const filters = filtersOf(url.searchParams);
   // The map and the gallery are not paged.
@@ -129,7 +129,7 @@ export async function loadDeskQueue(url: URL, api: ApiCall): Promise<DeskQueueLo
   return refusalOf(response);
 }
 
-// GET /lapor/meja/<ticket>.
+// GET /desk/<ticket>.
 export async function loadDeskReport(ticketNumber: string, api: ApiCall): Promise<DeskReportLoad> {
   const [response, summary] = await Promise.all([
     api("GET", `/desk/reports/${encodeURIComponent(ticketNumber)}`),
@@ -150,7 +150,7 @@ export type DeskResponseLoad =
       readonly warnings: WarningControl | null;
     };
 
-// GET /lapor/meja/respons: how fast each agency answered a month's reports.
+// GET /desk/response: how fast each agency answered a month's reports.
 export async function loadDeskResponse(month: string | null, api: ApiCall): Promise<DeskResponseLoad> {
   const query = month === null ? "" : `?month=${encodeURIComponent(month)}`;
   const [response, summary, warnings] = await Promise.all([
@@ -168,7 +168,7 @@ export async function loadDeskResponse(month: string | null, api: ApiCall): Prom
   };
 }
 
-// POST /lapor/meja/respons: pause or resume the warnings, then the page again, as it was.
+// POST /desk/response: pause or resume the warnings, then the page again, as it was.
 export async function pauseWarnings(form: FormData, api: ApiCall): Promise<boolean> {
   return (await api("POST", "/desk/warnings", { paused: formText(form, "paused") === "1" })).ok;
 }
@@ -182,7 +182,7 @@ export type DeskPilotLoad =
       readonly summary: DeskSummary | null;
     };
 
-// GET /lapor/meja/pilot: the numbers the WhatsApp pilot serves.
+// GET /desk/pilot: the numbers the WhatsApp pilot serves.
 export async function loadDeskPilot(api: ApiCall): Promise<DeskPilotLoad> {
   const [response, summary] = await Promise.all([api("GET", "/desk/pilot"), summaryOf(api, "")]);
   if (!response.ok) return refusalOf(response);
@@ -205,14 +205,14 @@ const redirectTo = (location: string, response: Response): Extract<DeskActed, { 
   return { kind: "redirect", location, headers };
 };
 
-// POST /lapor/meja: sign in with a code, or sign out. Signing out from the report start goes
+// POST /desk: sign in with a code, or sign out. Signing out from the report start goes
 // back there; no other place is taken, so the field cannot send anyone off the site.
 export async function actOnDesk(form: FormData, api: ApiCall): Promise<DeskActed> {
   const response =
     formText(form, "action") === "signOut"
       ? await api("DELETE", "/desk/session")
       : await api("POST", "/desk/session", { code: formText(form, "code") });
-  const next = formText(form, "next") === "/lapor/report" ? "/lapor/report" : "/lapor/meja";
+  const next = formText(form, "next") === "/report" ? "/report" : "/desk";
   if (response.ok) return redirectTo(next, response);
   return { kind: "render", status: response.status, envelope: (await response.json()) as ErrorEnvelope };
 }
@@ -318,7 +318,7 @@ const TOGGLED: Readonly<Record<string, readonly [string, string]>> = {
   figure: ["figureRejected", "figureAccepted"],
 };
 
-// POST /lapor/meja/<ticket>: one of the page's forms. A change kept is named on the page after;
+// POST /desk/<ticket>: one of the page's forms. A change kept is named on the page after;
 // asking who reported is answered on the page itself.
 export async function actOnDeskReport(ticketNumber: string, form: FormData, api: ApiCall): Promise<DeskReportActed> {
   const ticket = encodeURIComponent(ticketNumber);
@@ -331,8 +331,7 @@ export async function actOnDeskReport(ticketNumber: string, form: FormData, api:
   if (path === "identity") return { kind: "identity", identity: (await response.json()) as DeskIdentity };
   if (path.startsWith("officers/")) return { kind: "officerNumber", officer: (await response.json()) as OfficerNumber };
   // A file opened is gone to at once.
-  if (path === "case")
-    return redirectTo(`/lapor/data/${((await response.json()) as { fileId: string }).fileId}`, response);
+  if (path === "case") return redirectTo(`/cases/${((await response.json()) as { fileId: string }).fileId}`, response);
   if (form.get("action") === "opened") return { kind: "done" };
   const action = form.get("action");
   const saved =
@@ -343,10 +342,10 @@ export async function actOnDeskReport(ticketNumber: string, form: FormData, api:
       : action === "release"
         ? "released"
         : (TOGGLED[String(action)]?.[formText(form, TOGGLE_FIELD[String(action)] as string) === "1" ? 1 : 0] ?? path);
-  return redirectTo(`/lapor/meja/${ticket}${path === "view" ? "" : `?saved=${saved}`}`, response);
+  return redirectTo(`/desk/${ticket}${path === "view" ? "" : `?saved=${saved}`}`, response);
 }
 
-// POST /lapor/meja/pilot: a number allowed, or taken away after its confirm.
+// POST /desk/pilot: a number allowed, or taken away after its confirm.
 export async function actOnDeskPilot(form: FormData, api: ApiCall): Promise<DeskPosted> {
   const remove = formText(form, "action") === "remove";
   const response = remove
@@ -355,24 +354,24 @@ export async function actOnDeskPilot(form: FormData, api: ApiCall): Promise<Desk
         number: formText(form, "number"),
         officerRegency: formText(form, "officerRegency"),
       });
-  if (response.ok) return redirectTo(`/lapor/meja/pilot?saved=${remove ? "removed" : "allowed"}`, response);
+  if (response.ok) return redirectTo(`/desk/pilot?saved=${remove ? "removed" : "allowed"}`, response);
   const envelope = (await response.json()) as ErrorEnvelope;
   return { kind: "render", status: response.status, envelope, typed: typedIn(form) };
 }
 
-// POST /lapor/meja/<ticket>/documents: a version as a file.
+// POST /desk/<ticket>/documents: a version as a file.
 export async function downloadDeskDocument(ticketNumber: string, form: FormData, api: ApiCall): Promise<Response> {
   const ticket = encodeURIComponent(ticketNumber);
   const body = { version: formText(form, "version"), format: formText(form, "format") };
   const response = await api("POST", `/desk/reports/${ticket}/documents`, body);
-  return documentOrBack(response, `/lapor/meja/${ticket}`);
+  return documentOrBack(response, `/desk/${ticket}`);
 }
 
-// POST /lapor/meja/respons: the weekly counts as a file, or the page again with why not.
+// POST /desk/response: the weekly counts as a file, or the page again with why not.
 export async function downloadAggregates(api: ApiCall): Promise<Response> {
   const response = await api("POST", "/desk/aggregates", {});
   if (response.ok) return response;
-  return new Response(null, { status: 303, headers: { location: "/lapor/meja/respons?refused=aggregates" } });
+  return new Response(null, { status: 303, headers: { location: "/desk/response?refused=aggregates" } });
 }
 
 export type DeskMissingLoad =
@@ -389,7 +388,7 @@ export type DeskMissingLoad =
 const isMissingStatus = (value: string | null): value is MissingStatus =>
   (MISSING_STATUSES as readonly (string | null)[]).includes(value);
 
-// GET /lapor/meja/orang-hilang: the region's missing persons, each with its history, by status.
+// GET /desk/missing: the region's missing persons, each with its history, by status.
 export async function loadDeskMissing(url: URL, api: ApiCall): Promise<DeskMissingLoad> {
   const asked = url.searchParams.get("status");
   const status = isMissingStatus(asked) ? asked : null;
@@ -402,7 +401,7 @@ export async function loadDeskMissing(url: URL, api: ApiCall): Promise<DeskMissi
   return { kind: "missing", texts: texts(), status, items, summary, saved: url.searchParams.has("saved") };
 }
 
-// POST /lapor/meja/orang-hilang: one person's new status, with its note.
+// POST /desk/missing: one person's new status, with its note.
 export async function actOnDeskMissing(form: FormData, api: ApiCall, url: URL): Promise<DeskPosted> {
   const id = encodeURIComponent(formText(form, "id"));
   const response = await api("POST", `/desk/missing/${id}/status`, {
@@ -410,7 +409,7 @@ export async function actOnDeskMissing(form: FormData, api: ApiCall, url: URL): 
     note: formText(form, "note"),
   });
   const status = url.searchParams.get("status");
-  const back = `/lapor/meja/orang-hilang?${isMissingStatus(status) ? `status=${status}&` : ""}saved=1#orang-${id}`;
+  const back = `/desk/missing?${isMissingStatus(status) ? `status=${status}&` : ""}saved=1#orang-${id}`;
   if (response.ok) return redirectTo(back, response);
   const envelope = (await response.json()) as ErrorEnvelope;
   return { kind: "render", status: response.status, envelope, typed: typedIn(form) };

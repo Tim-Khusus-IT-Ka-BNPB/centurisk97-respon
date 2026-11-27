@@ -45,7 +45,7 @@ export function deskLink(filters: DeskFilters, change: Partial<DeskFilters> = {}
     if (value !== "" && value !== 1 && value !== "map" && !(name === "period" && value === "all"))
       search.set(name, String(value));
   const text = search.toString();
-  return text === "" ? "/lapor/meja" : `/lapor/meja?${text}`;
+  return text === "" ? "/desk" : `/desk?${text}`;
 }
 
 // The desk with nothing filtered: what the side menu leads to from a page that is not a queue.

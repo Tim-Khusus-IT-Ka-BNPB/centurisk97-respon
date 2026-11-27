@@ -19,7 +19,7 @@ const phoneOf = (subscription: PushSubscription): Subscribed => {
 // The page's own service worker, kept only in a built app; none means no push here.
 const registration = async () =>
   "serviceWorker" in navigator && "PushManager" in window && "Notification" in window
-    ? ((await navigator.serviceWorker.getRegistration("/lapor")) ?? null)
+    ? ((await navigator.serviceWorker.getRegistration("/")) ?? null)
     : null;
 
 export const pushBrowser = {

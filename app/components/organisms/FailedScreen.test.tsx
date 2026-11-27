@@ -3,7 +3,7 @@ import { describe, expect, test } from "vitest";
 import { renderPage } from "../../testing/render";
 import { FailedScreen } from "./FailedScreen";
 
-const PATH = "/lapor/reports/LA-231126-01";
+const PATH = "/reports/LA-231126-01";
 
 // A page whose loader answers as told, one after another.
 async function failing(answers: (() => unknown)[]) {
@@ -30,14 +30,14 @@ describe("a page that cannot be shown", () => {
     const { reload } = await failing([lost]);
     expect(screen.getByRole("alert").textContent).toMatch(/^Halaman belum bisa dibukaSambungan internet/);
     expect(screen.getAllByRole("link").map((link) => link.getAttribute("href"))).toEqual([
-      "/lapor",
-      "/lapor/reports/LA-231126-01?saved=sent",
-      "/lapor",
+      "/",
+      "/reports/LA-231126-01?saved=sent",
+      "/",
       "tel:112",
       "tel:117",
     ]);
     // With no script the link itself asks for the page again.
-    expect(reload.getAttribute("href")).toBe("/lapor/reports/LA-231126-01?saved=sent");
+    expect(reload.getAttribute("href")).toBe("/reports/LA-231126-01?saved=sent");
     expect(screen.getByRole("status").textContent).toBe("");
   });
 

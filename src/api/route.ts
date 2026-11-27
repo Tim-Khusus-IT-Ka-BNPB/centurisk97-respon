@@ -19,7 +19,7 @@ import { refuse } from "./envelope";
 // "caseTeam" is a staff account, or a member of a BPBD follow-up file by their own cookie (D20).
 export type Policy = "public" | "reporter" | "staff" | "gateway" | "caseTeam";
 
-export const API_BASE = "/api/lapor";
+export const API_BASE = "/api";
 const MAX_BODY_BYTES = 16 * 1024;
 // A photo upload: 2.5 MB is the photo rule, and a page with no script cannot shrink a camera
 // file first, so the route takes more and the photo check names the size.
@@ -31,7 +31,7 @@ const isPhotoUpload = (method: string, path: string) =>
     )) ||
   (method === "PUT" && /\/(?:drafts\/[^/]+|cases\/[^/]+\/records\/[^/]+)\/videos\/[^/]+\/parts\/\d+$/.test(path));
 // Upstream's route shapes for its gateway (ROADMAP section 7), kept as they are.
-export const isGatewayPath = (path: string) => /^\/api\/lapor\/(?:pesan|foto|izin|bahasa|kabar(?:\/.+)?)$/.test(path);
+export const isGatewayPath = (path: string) => /^\/api\/(?:pesan|foto|izin|bahasa|kabar(?:\/.+)?)$/.test(path);
 const READ_METHODS = new Set(["GET", "HEAD"]);
 
 export type Api = {
@@ -69,7 +69,7 @@ const addressCheck = createMiddleware<ApiEnv>(async (c, next) => {
 const writeCheck = createMiddleware<ApiEnv>(async (c, next) => {
   if (!READ_METHODS.has(c.req.method) && !isGatewayPath(c.req.path)) {
     const sameOrigin = c.req.header("origin") === c.env.settings.appOrigin;
-    if (!sameOrigin || c.req.header("x-lapor-client") !== "1") return refuse(c, 403, "request.refused");
+    if (!sameOrigin || c.req.header("x-respon-client") !== "1") return refuse(c, 403, "request.refused");
   }
   await next();
 });

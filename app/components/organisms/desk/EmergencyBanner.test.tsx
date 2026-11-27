@@ -38,7 +38,7 @@ const answer = (response: () => Response | Promise<Response>) =>
     "fetch",
     vi.fn(async () => response()),
   );
-const draw = (initial: DeskEmergency[]) => renderDesk(<EmergencyBanner initial={initial} />, { path: "/lapor/meja" });
+const draw = (initial: DeskEmergency[]) => renderDesk(<EmergencyBanner initial={initial} />, { path: "/desk" });
 const links = () => screen.queryAllByRole("link").map((link) => link.getAttribute("href"));
 const later = (ms: number) => act(() => vi.advanceTimersByTimeAsync(ms));
 
@@ -56,7 +56,7 @@ describe("the desk's emergencies", () => {
   test("stand on top with their place, time and victims, each leading to its report", async () => {
     await draw([SECOND, FIRST]);
     expect(screen.getByRole("alert").textContent).toBe("2 laporan darurat belum dibuka");
-    expect(links()).toEqual(["/lapor/meja/LA-241126-02", "/lapor/meja/LA-241126-01"]);
+    expect(links()).toEqual(["/desk/LA-241126-02", "/desk/LA-241126-01"]);
     const [tap, chat] = screen.getAllByRole("link") as [HTMLElement, HTMLElement];
     expect(within(tap).getByText(/Jenis belum diketahui, Cot Seumiyong, Aceh Utara/)).toBeTruthy();
     expect(tap.textContent).toContain("korban belum diketahui");
@@ -73,7 +73,7 @@ describe("the desk's emergencies", () => {
     expect(links()).toHaveLength(2);
     expect(alarm.sound).toHaveBeenCalledTimes(1);
     expect(alarm.notify.mock.calls).toEqual([
-      ["Laporan darurat baru", "Cot Seumiyong, Aceh Utara", "/lapor/meja/LA-241126-02"],
+      ["Laporan darurat baru", "Cot Seumiyong, Aceh Utara", "/desk/LA-241126-02"],
     ]);
     await later(20_000);
     expect(alarm.sound).toHaveBeenCalledTimes(1);

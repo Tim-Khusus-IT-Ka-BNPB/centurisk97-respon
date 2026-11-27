@@ -21,7 +21,7 @@ import { drawnTheme, type Theme, themeFromCookie } from "./lib/theme";
 export const links: Route.LinksFunction = () => [
   { rel: "icon", href: "/favicon-32.png", type: "image/png", sizes: "32x32" },
   { rel: "apple-touch-icon", href: "/apple-touch-icon.png" },
-  { rel: "manifest", href: "/lapor/manifest.webmanifest" },
+  { rel: "manifest", href: "/manifest.webmanifest" },
 ];
 
 // The site's address, so every page's canonical and share links are absolute, the theme this
@@ -30,15 +30,13 @@ export const links: Route.LinksFunction = () => [
 export const loader = ({ request, context }: Route.LoaderArgs) => ({
   origin: context.origin,
   theme: themeFromCookie(request.headers.get("cookie")),
-  language: new URL(request.url).pathname.startsWith("/lapor/meja")
-    ? "id"
-    : languageFrom(request.headers.get("cookie")),
+  language: new URL(request.url).pathname.startsWith("/desk") ? "id" : languageFrom(request.headers.get("cookie")),
 });
 
 // Only a theme or a language picked changes them. Left out of every other refresh, they stay when it
 // fails, and so does the theme.
 export const shouldRevalidate = ({ formAction }: ShouldRevalidateFunctionArgs) =>
-  formAction === "/lapor/theme" || formAction === "/lapor/bahasa";
+  formAction === "/theme" || formAction === "/language";
 
 // Every page has its own; this is what is left when the page cannot be shown.
 export const meta: Route.MetaFunction = () => [
@@ -52,7 +50,7 @@ const BAR = { light: "#e9eff7", dark: "#142235" } as const;
 function useTheme(): Theme {
   const loaded = useRouteLoaderData<typeof loader>("root");
   const pending = useFetchers()
-    .find((fetcher) => fetcher.formAction === "/lapor/theme")
+    .find((fetcher) => fetcher.formAction === "/theme")
     ?.formData?.get("theme");
   return (pending as Theme | undefined) ?? loaded?.theme ?? drawnTheme();
 }
@@ -88,7 +86,7 @@ export function Layout({ children }: { children: ReactNode }) {
 function useOfflinePages() {
   useEffect(() => {
     if (import.meta.env.PROD && "serviceWorker" in navigator)
-      void navigator.serviceWorker.register("/lapor-sw.js", { scope: "/lapor" }).catch(() => undefined);
+      void navigator.serviceWorker.register("/sw.js", { scope: "/" }).catch(() => undefined);
   }, []);
 }
 

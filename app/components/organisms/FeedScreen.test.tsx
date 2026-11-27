@@ -21,7 +21,7 @@ describe("following an event on this device", () => {
   test("a followed event whose status moved on is marked; follow, let go, and show only those followed", async () => {
     kept.follows = { [FEED_ENTRY.id]: "in_handling" };
     renderPage(<FeedScreen load={{ kind: "feed", feed: { entries: [FEED_ENTRY, FEED_ALONE] } }} hazard={null} />, {
-      path: "/lapor/feed",
+      path: "/feed",
     });
     const cards = () => screen.getAllByRole("article");
     const first = within((await screen.findAllByRole("article"))[0] as HTMLElement);
@@ -44,7 +44,7 @@ describe("following an event on this device", () => {
 describe("the public feed page", () => {
   test("each event a card: its place, status, figures, times, how many reported and the photos of the work", async () => {
     renderPage(<FeedScreen load={{ kind: "feed", feed: { entries: [FEED_ENTRY, FEED_ALONE] } }} hazard={null} />, {
-      path: "/lapor/feed",
+      path: "/feed",
     });
     expect(await screen.findByRole("heading", { level: 1, name: "Alun-alun" })).toBeTruthy();
     expect(screen.getByTestId("map")).toBeTruthy();
@@ -60,7 +60,7 @@ describe("the public feed page", () => {
     const photos = within(flood).getAllByRole("img", { name: /^Foto penanganan \d, Banjir di Desa\/Kel\. Uji Satu$/ });
     expect(photos[1]?.getAttribute("alt")).toBe("Foto penanganan 2, Banjir di Desa/Kel. Uji Satu");
     expect(photos.map((photo) => photo.getAttribute("src"))).toEqual(
-      FEED_ENTRY.proofs.map((id) => `/api/lapor/feed/proofs/${id}`),
+      FEED_ENTRY.proofs.map((id) => `/api/feed/proofs/${id}`),
     );
     const quake = screen.getByRole("article", { name: "Gempa bumi" });
     expect(within(quake).getByText("Sedang ditangani")).toBeTruthy();
@@ -70,47 +70,47 @@ describe("the public feed page", () => {
     expect(within(quake).queryByRole("img")).toBeNull();
     const filter = screen.getByRole("navigation", { name: "Jenis bencana" });
     expect(within(filter).getByRole("link", { name: "Semua jenis" }).getAttribute("aria-current")).toBe("true");
-    expect(within(filter).getByRole("link", { name: "Banjir" }).getAttribute("href")).toBe("/lapor/feed?hazard=flood");
+    expect(within(filter).getByRole("link", { name: "Banjir" }).getAttribute("href")).toBe("/feed?hazard=flood");
   });
 
   test("the period and the hazard each keep the other in their links", async () => {
     renderPage(<FeedScreen load={{ kind: "feed", feed: { entries: [] } }} hazard="flood" period="3" />, {
-      path: "/lapor/feed",
+      path: "/feed",
     });
     const periods = await screen.findByRole("navigation", { name: "Saring menurut waktu" });
     expect(within(periods).getByRole("link", { name: "3 hari" }).getAttribute("aria-current")).toBe("true");
-    expect(within(periods).getByRole("link", { name: "Semua" }).getAttribute("href")).toBe("/lapor/feed?hazard=flood");
+    expect(within(periods).getByRole("link", { name: "Semua" }).getAttribute("href")).toBe("/feed?hazard=flood");
     expect(within(periods).getByRole("link", { name: "Hari terakhir" }).getAttribute("href")).toBe(
-      "/lapor/feed?hazard=flood&period=latest",
+      "/feed?hazard=flood&period=latest",
     );
     const hazards = screen.getByRole("navigation", { name: "Jenis bencana" });
-    expect(within(hazards).getAllByRole("link")[0]?.getAttribute("href")).toBe("/lapor/feed?period=3");
+    expect(within(hazards).getAllByRole("link")[0]?.getAttribute("href")).toBe("/feed?period=3");
     expect(feedQuery(null, "all")).toBe("");
   });
 
   test("nothing handled yet: says why and leads to a report, or back to every hazard", async () => {
     const view = renderPage(<FeedScreen load={{ kind: "feed", feed: { entries: [] } }} hazard={null} />, {
-      path: "/lapor/feed",
+      path: "/feed",
     });
     expect(await screen.findByRole("heading", { name: "Belum ada laporan yang ditangani" })).toBeTruthy();
-    expect(screen.getByRole("link", { name: "Lapor kejadian" }).getAttribute("href")).toBe("/lapor/report");
+    expect(screen.getByRole("link", { name: "Lapor kejadian" }).getAttribute("href")).toBe("/report");
     expect(screen.queryByRole("link", { name: "Lihat semua jenis" })).toBeNull();
     view.unmount();
     renderPage(<FeedScreen load={{ kind: "feed", feed: { entries: [] } }} hazard="landslide" />, {
-      path: "/lapor/feed",
+      path: "/feed",
     });
     expect(await screen.findByRole("heading", { name: "Belum ada laporan Tanah longsor yang ditangani" })).toBeTruthy();
-    expect(screen.getByRole("link", { name: "Lihat semua jenis" }).getAttribute("href")).toBe("/lapor/feed");
+    expect(screen.getByRole("link", { name: "Lihat semua jenis" }).getAttribute("href")).toBe("/feed");
     expect(screen.getByRole("link", { name: "Tanah longsor" }).getAttribute("aria-current")).toBe("true");
   });
 
   test("a feed that cannot be read says so, with the limit's words when it is one", async () => {
     const view = renderPage(<FeedScreen load={{ kind: "unavailable", envelope: null }} hazard={null} />, {
-      path: "/lapor/feed",
+      path: "/feed",
     });
     expect(await screen.findByRole("heading", { name: "Alun-alun belum bisa dimuat" })).toBeTruthy();
     expect(screen.getByText("Coba muat ulang halaman ini sebentar lagi.")).toBeTruthy();
-    expect(screen.getByRole("link", { name: "Muat ulang" }).getAttribute("href")).toBe("/lapor/feed");
+    expect(screen.getByRole("link", { name: "Muat ulang" }).getAttribute("href")).toBe("/feed");
     view.unmount();
     const envelope: ErrorEnvelope = {
       error: { code: "limit.address.feed", copyKey: "limit.address.feed", params: { limit: 600 } },
@@ -118,7 +118,7 @@ describe("the public feed page", () => {
       retryAt: { utc: new Date(Date.now() + 20 * 60_000).toISOString(), zone: "WIB" },
       draft: null,
     };
-    renderPage(<FeedScreen load={{ kind: "unavailable", envelope }} hazard={null} />, { path: "/lapor/feed" });
+    renderPage(<FeedScreen load={{ kind: "unavailable", envelope }} hazard={null} />, { path: "/feed" });
     expect(await screen.findByText(/^Alun-alun sudah dibuka 600 kali dalam satu jam/)).toBeTruthy();
   });
 });

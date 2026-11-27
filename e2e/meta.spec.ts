@@ -18,15 +18,7 @@ async function tagsOf(html: string) {
   };
 }
 
-const PUBLIC = [
-  "/lapor",
-  "/lapor/report",
-  "/lapor/help",
-  "/lapor/about",
-  "/lapor/privacy",
-  "/lapor/info",
-  "/lapor/hari-ini",
-];
+const PUBLIC = ["/", "/report", "/help", "/about", "/privacy", "/info", "/today"];
 
 test("every public page has its own title, description, canonical address and share card", async ({ request }) => {
   const titles = new Set<string>();
@@ -57,32 +49,32 @@ test("every public page has its own title, description, canonical address and sh
 });
 
 test("icons answer and the browser bar follows the theme, light until dark is picked", async ({ request }) => {
-  const html = await (await request.get("/lapor")).text();
-  for (const href of ["/favicon-32.png", "/apple-touch-icon.png", "/lambang-bnpb.png"]) {
+  const html = await (await request.get("/")).text();
+  for (const href of ["/favicon-32.png", "/apple-touch-icon.png", "/bnpb-emblem.png"]) {
     expect(html).toMatch(new RegExp(`(href|src)="${href}"`));
     expect((await request.get(href)).status()).toBe(200);
   }
   expect(html).toContain('name="theme-color" content="#e9eff7"');
   expect(html).toContain('data-theme="light"');
-  const dark = await (await request.get("/lapor", { headers: { cookie: "theme=dark" } })).text();
+  const dark = await (await request.get("/", { headers: { cookie: "theme=dark" } })).text();
   expect(dark).toContain('name="theme-color" content="#142235"');
   expect(dark).toContain('data-theme="dark"');
 });
 
 test("a draft page is not indexed and its share card names nothing of the draft", async ({ request }) => {
-  const address = "/lapor/report/0b4c5d6e-7f80-4912-a3b4-c5d6e7f80912";
+  const address = "/report/0b4c5d6e-7f80-4912-a3b4-c5d6e7f80912";
   const html = await (await request.get(address)).text();
   const tags = await tagsOf(html);
   expect(tags.robots).toBe("noindex, nofollow");
-  expect(tags.canonical?.endsWith("/lapor/report")).toBe(true);
+  expect(tags.canonical?.endsWith("/report")).toBe(true);
   expect(tags.og("url")).toBe(tags.canonical);
   expect(html.match(/<head>[\s\S]*<\/head>/)?.[0]).not.toContain("0b4c5d6e");
 });
 
 test("an unknown address answers 404, is not indexed and leads home", async ({ page }) => {
-  const response = await page.goto("/lapor/nowhere");
+  const response = await page.goto("/nowhere");
   expect(response?.status()).toBe(404);
   await expect(page.getByRole("heading", { level: 1 })).toHaveText("Halaman tidak ditemukan");
   await expect(page.locator('meta[name="robots"]')).toHaveAttribute("content", "noindex, nofollow");
-  await expect(page.getByRole("link", { name: "Ke halaman awal" })).toHaveAttribute("href", "/lapor");
+  await expect(page.getByRole("link", { name: "Ke halaman awal" })).toHaveAttribute("href", "/");
 });

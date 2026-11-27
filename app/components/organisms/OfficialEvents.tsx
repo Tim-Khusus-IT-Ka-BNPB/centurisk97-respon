@@ -68,7 +68,7 @@ function EventCard({ event, entries }: { readonly event: Event; readonly entries
         {own === 0 ? (
           <p className="text-meta text-muted">{t("official.residents.none")}</p>
         ) : (
-          <Link to={`/lapor/feed?hazard=${event.hazardType}`} className="text-meta font-semibold">
+          <Link to={`/feed?hazard=${event.hazardType}`} className="text-meta font-semibold">
             {t("official.residents.some", { count: own })}
           </Link>
         )}

@@ -7,7 +7,7 @@ import { languageOf, PAGE_TEXTS, pickTexts } from "../lib/texts.server";
 import type { Route } from "./+types/info";
 
 export const meta = (args: Route.MetaArgs) =>
-  pageMeta(args, { title: "page.info.title", description: "meta.info.description", path: "/lapor/info" });
+  pageMeta(args, { title: "page.info.title", description: "meta.info.description", path: "/info" });
 
 const REGENCY = /^\d{2}\.\d{2}$/;
 
@@ -25,7 +25,7 @@ const regenciesOf = (items: PlaceResults["items"]) => [
 // Read on the server, so it opens with no script: a search, or a regency's outlook.
 export async function loader({ request, context }: Route.LoaderArgs) {
   const search = new URL(request.url).searchParams;
-  const regency = search.get("kab") ?? "";
+  const regency = search.get("regency") ?? "";
   const query = (search.get("q") ?? "").trim();
   const texts = pickTexts(PAGE_TEXTS.info, null, languageOf(request));
   let load: InfoLoad = { kind: "start", query };

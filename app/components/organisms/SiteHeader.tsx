@@ -13,16 +13,16 @@ function NavLinks({ className }: { readonly className: string }) {
   const t = useText();
   return (
     <nav className={className}>
-      <Link to="/lapor/feed" className={navLink}>
+      <Link to="/feed" className={navLink}>
         {t("nav.feed")}
       </Link>
-      <Link to="/lapor/info" className={navLink}>
+      <Link to="/info" className={navLink}>
         {t("nav.info")}
       </Link>
-      <Link to="/lapor/help" className={navLink}>
+      <Link to="/help" className={navLink}>
         {t("help.title")}
       </Link>
-      <Link to="/lapor/about" className={navLink}>
+      <Link to="/about" className={navLink}>
         {t("nav.about")}
       </Link>
     </nav>
@@ -37,10 +37,10 @@ function QuickIcons() {
   const t = useText();
   return (
     <>
-      <Link to="/lapor/info#info-warn" aria-label={t("nav.warnings")} title={t("nav.warnings")} className={quickIcon}>
+      <Link to="/info#info-warn" aria-label={t("nav.warnings")} title={t("nav.warnings")} className={quickIcon}>
         <Icon name="bell" />
       </Link>
-      <Link to="/lapor/nomor-penting" aria-label={t("nav.numbers")} title={t("nav.numbers")} className={quickIcon}>
+      <Link to="/numbers" aria-label={t("nav.numbers")} title={t("nav.numbers")} className={quickIcon}>
         <Icon name="phone" />
       </Link>
     </>
@@ -70,7 +70,7 @@ export function SiteHeader({
           width,
         )}
       >
-        <Link to="/lapor" className="-mx-1 inline-flex min-h-target-min min-w-0 items-center rounded-control px-1">
+        <Link to="/" className="-mx-1 inline-flex min-h-target-min min-w-0 items-center rounded-control px-1">
           <BrandLockup />
         </Link>
         <div className="flex items-center gap-2 sm:gap-4">
@@ -87,7 +87,7 @@ export function SiteHeader({
               </summary>
               <div className="absolute inset-x-0 top-full z-40 flex flex-col gap-1 border-b border-line bg-header px-4 py-2">
                 <NavLinks className="flex flex-col gap-1" />
-                <Link to="/lapor/nomor-penting" className={cn(navLink, "sm:hidden")}>
+                <Link to="/numbers" className={cn(navLink, "sm:hidden")}>
                   {t("nav.numbers")}
                 </Link>
                 {/* Only the page cut off from the service drops the language, and it has no menu. */}

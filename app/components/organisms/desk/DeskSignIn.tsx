@@ -29,7 +29,7 @@ export function DeskSignIn({ envelope }: { readonly envelope: ErrorEnvelope | nu
             <p>{limitText(t, envelope, Date.now())}</p>
           </Notice>
         ) : null}
-        <Form method="post" action="/lapor/meja" className="flex flex-col gap-4">
+        <Form method="post" action="/desk" className="flex flex-col gap-4">
           <input type="hidden" name="action" value="signIn" />
           <Field
             id="code"
@@ -59,7 +59,7 @@ export function DeskRefused({ envelope }: { readonly envelope: ErrorEnvelope }) 
         <Notice kind={envelope.error.code.startsWith("limit.") ? "limit" : "error"}>
           <p>{limitText(t, envelope, Date.now())}</p>
         </Notice>
-        <Link to="/lapor/meja" className={buttonStyles({ variant: "primary", size: "main" })}>
+        <Link to="/desk" className={buttonStyles({ variant: "primary", size: "main" })}>
           {t("desk.refused.back")}
         </Link>
       </Panel>

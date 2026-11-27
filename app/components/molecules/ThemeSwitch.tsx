@@ -24,7 +24,7 @@ export function ThemeSwitch({
   const next = nextTheme(current);
   const name = t(`theme.${next}`);
   return (
-    <fetcher.Form method="post" action="/lapor/theme" className={className}>
+    <fetcher.Form method="post" action="/theme" className={className}>
       <input type="hidden" name="back" value={`${pathname}${search}`} />
       <button
         type="submit"

@@ -47,14 +47,14 @@ async function shoot(page: Page, label: string): Promise<void> {
 }
 
 test("public pages", async ({ page }) => {
-  for (const path of ["", "/help", "/about", "/privacy", "/nowhere"]) {
-    await page.goto(`/lapor${path}`);
-    await shoot(page, `page${path.replace("/", "-") || "-home"}`);
+  for (const path of ["/", "/help", "/about", "/privacy", "/nowhere"]) {
+    await page.goto(path);
+    await shoot(page, `page${path === "/" ? "-home" : path.replace("/", "-")}`);
   }
 });
 
 test("the start step and its views", async ({ page }) => {
-  await page.goto("/lapor/report");
+  await page.goto("/report");
   await shoot(page, "start-form");
   await page.getByLabel("Petugas BPBD").check();
   await page.getByLabel("Nama").fill("Uji Satu");
@@ -112,6 +112,6 @@ test("every card of a walk", async ({ page }) => {
   await paced(() => liveCard(page).getByRole("button", { name: "Kirim", exact: true }).click());
   await expect(liveCard(page)).toHaveAttribute("data-card-kind", /sent|summary/);
   await shoot(page, "card-after-send");
-  await page.goto("/lapor/report");
+  await page.goto("/report");
   await shoot(page, "start-known");
 });

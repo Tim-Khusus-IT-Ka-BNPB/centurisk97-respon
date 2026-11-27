@@ -23,16 +23,16 @@ const FILE = "f000000000000001";
 
 describe("the follow-up file's page", () => {
   test("opens on the kind asked and the record being changed, else houses", () => {
-    expect(tabOf(new URLSearchParams("jenis=evacuee&ubah=c000000000000001"))).toEqual({
+    expect(tabOf(new URLSearchParams("kind=evacuee&edit=c000000000000001"))).toEqual({
       kind: "evacuee",
       editing: "c000000000000001",
     });
-    expect(tabOf(new URLSearchParams("jenis=cats&ubah=x"))).toEqual({ kind: "house", editing: null });
+    expect(tabOf(new URLSearchParams("kind=cats&edit=x"))).toEqual({ kind: "house", editing: null });
     expect(tabOf(new URLSearchParams(""))).toEqual({ kind: "house", editing: null });
   });
 
   test("reads the file, or why not", async () => {
-    const url = new URL("http://localhost/lapor/data/f?jenis=shelter");
+    const url = new URL("http://localhost/cases/f?kind=shelter");
     expect(await loadCase(FILE, url, fakeApi(() => Response.json(CASE_VIEW)).api)).toMatchObject({
       kind: "file",
       view: CASE_VIEW,
@@ -71,7 +71,7 @@ describe("the follow-up file's page", () => {
     const acted = async (values: Record<string, string | string[]>) => actOnCase(FILE, form(values), api);
     expect(await acted({ intent: "record", kind: "house", "v.village": "Uji", lat: "5.1", lon: "97.2" })).toEqual({
       kind: "redirect",
-      location: `/lapor/data/${FILE}?jenis=house&saved=record`,
+      location: `/cases/${FILE}?kind=house&saved=record`,
     });
     await acted({ intent: "record", kind: "cats", "v.village": "Uji", lat: "x", lon: "97.2" });
     await acted({ intent: "update", kind: "shelter", recordId: "b1", revision: "2", "v.name": "Uji" });
@@ -81,7 +81,7 @@ describe("the follow-up file's page", () => {
     await acted({ intent: "nil", metric: "dead", nil: "0", revision: "3" });
     expect(await acted({ intent: "removeMember", memberId: "m1" })).toEqual({
       kind: "redirect",
-      location: `/lapor/data/${FILE}?saved=removeMember`,
+      location: `/cases/${FILE}?saved=removeMember`,
     });
     await acted({
       intent: "fields",
@@ -167,10 +167,10 @@ describe("the follow-up file's page", () => {
   });
 
   test("a new member's link and a record shown in full are answered on the page", async () => {
-    const link = fakeApi(() => Response.json({ memberId: "m1", link: "http://x/lapor/data/masuk/abc" }));
+    const link = fakeApi(() => Response.json({ memberId: "m1", link: "http://x/cases/join/abc" }));
     expect(await actOnCase(FILE, form({ intent: "member", name: "Uji", number: "0800" }), link.api)).toEqual({
       kind: "link",
-      link: "http://x/lapor/data/masuk/abc",
+      link: "http://x/cases/join/abc",
       name: "Uji",
     });
     expect(await actOnCase(FILE, form({ intent: "renewLink", memberId: "m1", name: "Uji" }), link.api)).toMatchObject({
@@ -201,12 +201,12 @@ describe("the follow-up file's page", () => {
     const { api, calls } = fakeApi(
       () =>
         new Response(JSON.stringify({ fileId: FILE }), {
-          headers: { "set-cookie": "lapor_data=abc; Path=/; HttpOnly", "content-type": "application/json" },
+          headers: { "set-cookie": "case_access=abc; Path=/; HttpOnly", "content-type": "application/json" },
         }),
     );
     const joined = await joinCase("t1", api);
-    expect(joined).toMatchObject({ kind: "joined", location: `/lapor/data/${FILE}` });
-    expect(joined.kind === "joined" && joined.headers.get("set-cookie")).toBe("lapor_data=abc; Path=/; HttpOnly");
+    expect(joined).toMatchObject({ kind: "joined", location: `/cases/${FILE}` });
+    expect(joined.kind === "joined" && joined.headers.get("set-cookie")).toBe("case_access=abc; Path=/; HttpOnly");
     expect(calls[0]).toMatchObject({ method: "POST", path: "/case-links/t1" });
     const used = await joinCase(
       "t1",

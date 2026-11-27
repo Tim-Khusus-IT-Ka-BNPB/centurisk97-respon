@@ -40,7 +40,7 @@ async function worded(bindings: ServiceBindings, news: NewsMessage, of: WaitingN
       changes: changesOf(versions, news.corrected),
       hazardType,
     },
-    `${bindings.settings.appOrigin}/lapor/lacak#t=${token}`,
+    `${bindings.settings.appOrigin}/track#t=${token}`,
   );
 }
 
@@ -61,7 +61,7 @@ export async function waitingNews(bindings: ServiceBindings): Promise<WaitingNew
         wa: of.number.slice(1),
         jenis: file ? ("pdf" as const) : words,
         teks: await worded(bindings, news, of),
-        url: file ? `${bindings.settings.appOrigin}/api/lapor/kabar/${news.id}/berkas` : null,
+        url: file ? `${bindings.settings.appOrigin}/api/kabar/${news.id}/berkas` : null,
         nomor: news.ticketNumber,
       };
     }),

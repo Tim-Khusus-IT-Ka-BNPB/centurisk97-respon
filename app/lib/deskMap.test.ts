@@ -119,7 +119,7 @@ describe("desk map pieces", () => {
     expect(popupElement({ ...POINT, hazardType: "other" }, text).textContent).toContain("Jenis belum diketahui");
     expect(popup.querySelector("b")).toBeNull();
     const link = popup.querySelector("a") as HTMLAnchorElement;
-    expect(link.getAttribute("href")).toBe("/lapor/meja/LA-241126-01");
+    expect(link.getAttribute("href")).toBe("/desk/LA-241126-01");
     expect(link.textContent).toBe("Buka laporan");
   });
 });
@@ -204,8 +204,8 @@ describe("clusters", () => {
     const list = clusterList([POINT, { ...POINT, ticketNumber: "LA-241126-02", status: "closed" }], text);
     expect(list.querySelector("p")?.textContent).toBe("2 laporan di titik yang sama");
     expect([...list.querySelectorAll("a")].map((link) => [link.getAttribute("href"), link.textContent])).toEqual([
-      ["/lapor/meja/LA-241126-01", "LA-241126-01, Banjir, Dilihat"],
-      ["/lapor/meja/LA-241126-02", "LA-241126-02, Banjir, Selesai"],
+      ["/desk/LA-241126-01", "LA-241126-01, Banjir, Dilihat"],
+      ["/desk/LA-241126-02", "LA-241126-02, Banjir, Selesai"],
     ]);
   });
 });

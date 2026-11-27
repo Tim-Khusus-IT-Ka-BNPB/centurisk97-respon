@@ -225,7 +225,7 @@ function WhoFirst() {
         {t("missing.whoFirst.title")}
       </h2>
       <p className="max-w-[60ch]">{t("missing.whoFirst.body")}</p>
-      <Link to="/lapor/report?hilang=1" className={buttonStyles({ variant: "primary", className: "self-start" })}>
+      <Link to="/report?missing=1" className={buttonStyles({ variant: "primary", className: "self-start" })}>
         {t("missing.whoFirst.go")}
       </Link>
     </section>
@@ -285,7 +285,7 @@ function Report({
         <h2 id="missing-place" className="text-card font-bold">
           {t("missing.place.title")}
         </h2>
-        <Form method="get" action="/lapor/orang-hilang" className="flex flex-wrap items-end gap-3">
+        <Form method="get" action="/missing" className="flex flex-wrap items-end gap-3">
           <div className="flex min-w-0 flex-1 basis-56 flex-col gap-1.5">
             <label htmlFor="missing-q" className="font-semibold">
               {t("missing.place.label")}

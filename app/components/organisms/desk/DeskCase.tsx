@@ -23,7 +23,7 @@ export function DeskCase({ caseFile }: { readonly caseFile: NonNullable<DeskRepo
           </Button>
         </Form>
       ) : (
-        <Link to={`/lapor/data/${caseFile.file.id}`} className={buttonStyles({ variant: "secondary" })}>
+        <Link to={`/cases/${caseFile.file.id}`} className={buttonStyles({ variant: "secondary" })}>
           <Icon name="fileText" className="size-5" />
           {t("desk.case.openFile")}
           <span className="font-normal text-muted">({t(`desk.case.status.${caseFile.file.status}`)})</span>

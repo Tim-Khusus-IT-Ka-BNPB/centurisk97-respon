@@ -60,11 +60,11 @@ describe("copy for a page", () => {
 describe("the draft page", () => {
   test("a readable draft comes with a fresh turn key and only its copy", async () => {
     const { api } = fakeApi({ [`GET /drafts/${DRAFT}`]: json(SAMPLE_DRAFTS.numberForm) });
-    const page = await loadDraftPage(DRAFT, new URL(`http://x/lapor/report/${DRAFT}?resume=1`), api, () => "k-1");
+    const page = await loadDraftPage(DRAFT, new URL(`http://x/report/${DRAFT}?resume=1`), api, () => "k-1");
     expect(page.status).toBe(200);
     expect(page.data).toMatchObject({ kind: "draft", turnKey: "k-1", searching: false, envelope: null });
     expect(page.data.texts["field.dead.label"]).toBe("Meninggal");
-    const search = await loadDraftPage(DRAFT, new URL(`http://x/lapor/report/${DRAFT}?q=suka`), api, () => "k-2");
+    const search = await loadDraftPage(DRAFT, new URL(`http://x/report/${DRAFT}?q=suka`), api, () => "k-2");
     expect(search.data).toMatchObject({ searching: true });
   });
 
@@ -106,7 +106,7 @@ describe("the draft page", () => {
       ]),
       api,
     );
-    expect(acted).toMatchObject({ kind: "redirect", location: `/lapor/report/${DRAFT}` });
+    expect(acted).toMatchObject({ kind: "redirect", location: `/report/${DRAFT}` });
     if (acted.kind !== "redirect") return;
     expect(acted.headers.get("set-cookie")).toBe("a=b");
     expect(acted.headers.get("X-Remix-Replace")).toBe("true");
@@ -127,7 +127,7 @@ describe("the draft page", () => {
 describe("the start step", () => {
   test("known numbers list first; a pick, a change or another number are pages of their own", async () => {
     const { api } = fakeApi({ "GET /me": json(SAMPLE_ME) });
-    const at = (query: string) => loadStartPage(new URL(`http://x/lapor/report${query}`), api);
+    const at = (query: string) => loadStartPage(new URL(`http://x/report${query}`), api);
     expect(await at("")).toMatchObject({ view: "list", profileId: null, editing: false });
     expect(await at("?new=1")).toMatchObject({ view: "form", profileId: null });
     expect(await at(`?profile=${PROFILE}`)).toMatchObject({ view: "confirm", profileId: PROFILE });
@@ -153,7 +153,7 @@ describe("the start step", () => {
       ]),
       api,
     );
-    expect(acted).toMatchObject({ kind: "redirect", location: `/lapor/report/${DRAFT}` });
+    expect(acted).toMatchObject({ kind: "redirect", location: `/report/${DRAFT}` });
   });
 
   test("consent to an emergency, and a known reporter's, start one", async () => {
@@ -197,14 +197,14 @@ describe("the start step", () => {
   });
 
   test("the poster's ten digits read as a village code; anything else is no village", () => {
-    const read = (search: string) => posterVillageCode(new URL(`http://x/lapor/report${search}`));
-    expect(read("?desa=1108012005")).toBe("11.08.01.2005");
-    expect([read(""), read("?desa=110801200"), read("?desa=11080120051"), read("?desa=11.08.01.2005")]).toEqual([
-      null,
-      null,
-      null,
-      null,
-    ]);
+    const read = (search: string) => posterVillageCode(new URL(`http://x/report${search}`));
+    expect(read("?village=1108012005")).toBe("11.08.01.2005");
+    expect([
+      read(""),
+      read("?village=110801200"),
+      read("?village=11080120051"),
+      read("?village=11.08.01.2005"),
+    ]).toEqual([null, null, null, null]);
   });
 
   test("a read-back is drawn with the values typed", async () => {
@@ -277,7 +277,7 @@ describe("the start step", () => {
       ]),
       api,
     );
-    expect(acted).toMatchObject({ kind: "redirect", location: "/lapor/report" });
+    expect(acted).toMatchObject({ kind: "redirect", location: "/report" });
     expect(turns).toHaveLength(2);
   });
 
@@ -316,7 +316,7 @@ describe("the start step", () => {
 
   test("the home's offer opens its own confirm", async () => {
     const { api } = fakeApi({ "GET /me": json(SAMPLE_ME) });
-    const at = (query: string) => loadStartPage(new URL(`http://x/lapor/report${query}`), api);
+    const at = (query: string) => loadStartPage(new URL(`http://x/report${query}`), api);
     expect(await at(`?discard=${PROFILE}`)).toMatchObject({ view: "discardConfirm", profileId: PROFILE });
   });
 

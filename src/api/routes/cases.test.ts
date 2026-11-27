@@ -358,13 +358,13 @@ describe("the team", () => {
     });
     expect(added.status, JSON.stringify(added.json)).toBe(200);
     const { memberId, link } = added.json as { memberId: string; link: string };
-    expect(link).toMatch(/^http:\/\/localhost:\d+\/lapor\/data\/masuk\/[0-9a-f]{32}$/);
+    expect(link).toMatch(/^http:\/\/localhost:\d+\/cases\/join\/[0-9a-f]{32}$/);
     const token = link.slice(-32);
     const member = browser(fetchApi);
     expect((await member.call("GET", `/cases/${fileId}`)).status).toBe(401);
     const joined = await member.call("POST", `/case-links/${token}`);
     expect([joined.status, joined.json]).toEqual([200, { fileId }]);
-    expect(member.cookies.get("lapor_data")).toMatch(/^[0-9a-f]{64}$/);
+    expect(member.cookies.get("case_access")).toMatch(/^[0-9a-f]{64}$/);
     const twice = await browser(fetchApi).call("POST", `/case-links/${token}`);
     expect([twice.status, twice.error.error.code]).toEqual([404, "cases.linkUsed"]);
     const mine = await view(fileId, member);
@@ -391,7 +391,7 @@ describe("the team", () => {
     expect(fields(nameless)).toEqual(["name", "number"]);
     expect((await member.call("GET", `/cases/${fileId}`, undefined)).status).toBe(401);
     const forged = browser(fetchApi);
-    forged.cookies.set("lapor_data", "zz");
+    forged.cookies.set("case_access", "zz");
     expect((await forged.call("GET", `/cases/${fileId}`)).status).toBe(401);
     clock.advance(31 * 24 * 3_600_000);
     const late = await staff(REGENCY).call("POST", `/cases/${fileId}/members`, {

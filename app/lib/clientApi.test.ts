@@ -17,11 +17,11 @@ describe("calls from the browser", () => {
   test("a read and a write answer their body; a write names its client and sends JSON", async () => {
     answer(() => Response.json({ n: 1 }));
     expect(await getJson<{ n: number }>("/desk/emergencies")).toEqual({ kind: "ok", body: { n: 1 } });
-    expect(calls[0]).toEqual(["/api/lapor/desk/emergencies", {}]);
+    expect(calls[0]).toEqual(["/api/desk/emergencies", {}]);
     expect(await postJson("/tracking", { token: "t" })).toEqual({ kind: "ok", body: { n: 1 } });
     expect(calls[1]?.[1]).toEqual({
       method: "POST",
-      headers: { "content-type": "application/json", "x-lapor-client": "1" },
+      headers: { "content-type": "application/json", "x-respon-client": "1" },
       body: '{"token":"t"}',
     });
   });

@@ -12,7 +12,8 @@ export const drawnTheme = (): Theme =>
 // One button flips between the two.
 export const nextTheme = (current: Theme): Theme => (current === "light" ? "dark" : "light");
 
-// Where to return after a switch: a page of this site under /lapor, never another host.
+// Where to return after a switch: a page of this site, never another host. "//host" and "/\\host"
+// are read by browsers as another host, so a second slash or backslash is refused.
 export function safeReturn(path: unknown): string {
-  return typeof path === "string" && /^\/lapor(?:[/?#]|$)/.test(path) ? path : "/lapor";
+  return typeof path === "string" && /^\/(?![/\\])/.test(path) ? path : "/";
 }

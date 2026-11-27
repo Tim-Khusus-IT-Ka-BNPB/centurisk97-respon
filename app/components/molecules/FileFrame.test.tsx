@@ -5,7 +5,7 @@ import { describe, expect, test, vi } from "vitest";
 import { renderPage } from "../../testing/render";
 import { FileFrame, useFileTarget } from "./FileFrame";
 
-const PATH = "/lapor/reports/LA-231126-01";
+const PATH = "/reports/LA-231126-01";
 
 function Page() {
   return (

@@ -5,12 +5,12 @@ import { Icon } from "../atoms/Icon";
 import type { IconName } from "../atoms/icons";
 
 const ITEMS: readonly { readonly to: string; readonly icon: IconName; readonly label: string }[] = [
-  { to: "/lapor", icon: "house", label: "nav.home" },
-  { to: "/lapor/feed", icon: "map", label: "nav.feed" },
-  { to: "/lapor/info", icon: "sun", label: "nav.info" },
-  { to: "/lapor/nomor-penting", icon: "phone", label: "nav.numbers" },
-  { to: "/lapor/help", icon: "circleHelp", label: "help.title" },
-  { to: "/lapor/about", icon: "info", label: "nav.about" },
+  { to: "/", icon: "house", label: "nav.home" },
+  { to: "/feed", icon: "map", label: "nav.feed" },
+  { to: "/info", icon: "sun", label: "nav.info" },
+  { to: "/numbers", icon: "phone", label: "nav.numbers" },
+  { to: "/help", icon: "circleHelp", label: "help.title" },
+  { to: "/about", icon: "info", label: "nav.about" },
 ];
 
 // Upstream's side menu on a wide screen: a column of icons that opens over the page while the
@@ -26,7 +26,7 @@ export function SideRail() {
     >
       <ul className="flex flex-col gap-1">
         {ITEMS.map(({ to, icon, label }) => {
-          const here = to === "/lapor" ? pathname === to || pathname === "/lapor/" : pathname.startsWith(to);
+          const here = to === "/" ? pathname === to || pathname === "/" : pathname.startsWith(to);
           return (
             <li key={to}>
               <Link

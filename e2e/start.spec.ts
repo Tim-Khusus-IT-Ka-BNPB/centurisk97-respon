@@ -4,7 +4,7 @@ import { noSidewaysScroll, ownAddress, syntheticNumber } from "./support.ts";
 test.beforeEach(async ({ context }) => ownAddress(context));
 
 test("a missing position for an officer is named under the field, tied to it, with focus on it", async ({ page }) => {
-  await page.goto("/lapor/report");
+  await page.goto("/report");
   await page.getByLabel("Petugas BPBD").check();
   await page.getByLabel("Nama").fill("Uji Satu");
   await page.getByLabel("WhatsApp").fill(syntheticNumber());
@@ -24,7 +24,7 @@ test("a missing position for an officer is named under the field, tied to it, wi
 });
 
 test("the number is read back as stored, and Ganti returns to the form with every value", async ({ page }) => {
-  await page.goto("/lapor/report");
+  await page.goto("/report");
   await page.getByLabel("Warga").check();
   await page.getByLabel("Nama").fill("Uji Satu");
   await page.getByLabel("WhatsApp").fill("6280000000001");
@@ -38,7 +38,7 @@ test("the number is read back as stored, and Ganti returns to the form with ever
 });
 
 test("a decline asks first, its way back keeps the values, and the decline itself shows 112", async ({ page }) => {
-  await page.goto("/lapor/report");
+  await page.goto("/report");
   await page.getByLabel("Warga").check();
   await page.getByLabel("Nama").fill("Uji Dua");
   await page.getByRole("button", { name: "Tidak setuju" }).click();

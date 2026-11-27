@@ -20,7 +20,7 @@ export function createBridge(
     if (method !== "GET" && pageRequest.headers.get("origin") !== appOrigin) {
       return Response.json(envelope("request.refused"), { status: 403 });
     }
-    const headers = new Headers({ origin: appOrigin, "x-lapor-client": "1" });
+    const headers = new Headers({ origin: appOrigin, "x-respon-client": "1" });
     for (const name of FORWARDED_HEADERS) {
       const value = pageRequest.headers.get(name);
       if (value !== null) headers.set(name, value);

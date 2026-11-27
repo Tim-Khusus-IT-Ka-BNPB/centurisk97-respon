@@ -11,7 +11,7 @@ import type { Route } from "./+types/today";
 export const headers = () => ({ "cache-control": "private, no-store" });
 
 export const meta = (args: Route.MetaArgs) =>
-  pageMeta(args, { title: "page.today.title", description: "meta.today.description", path: "/lapor/hari-ini" });
+  pageMeta(args, { title: "page.today.title", description: "meta.today.description", path: "/today" });
 
 // Read on the server, so the list shows with no script. Every kind is read at once, the same for all
 // readers at the edge; the chosen kind is picked from it here. Shut, the page answers 404.

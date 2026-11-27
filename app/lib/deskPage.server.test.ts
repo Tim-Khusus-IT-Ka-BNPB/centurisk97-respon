@@ -38,7 +38,7 @@ describe("the desk queue page", () => {
   test("filters travel from the address to the API, empty ones left out", async () => {
     const { api, calls } = fakeApi(() => Response.json(QUEUE));
     const load = await loadDeskQueue(
-      new URL("http://x/lapor/meja?view=list&status=seen&hazardType=&ticket=LA-1&has=victims&page=2"),
+      new URL("http://x/desk?view=list&status=seen&hazardType=&ticket=LA-1&has=victims&page=2"),
       api,
     );
     expect(calls[1]?.path).toBe("/desk/reports?status=seen&period=all&ticket=LA-1&has=victims&page=2");
@@ -57,26 +57,26 @@ describe("the desk queue page", () => {
   test("a refused search keeps the filters and says why; no staff account asks to sign in; others refuse", async () => {
     const field = envelope("request.invalidFields");
     const searched = await loadDeskQueue(
-      new URL("http://x/lapor/meja?ticket=1"),
+      new URL("http://x/desk?ticket=1"),
       fakeApi(() => Response.json(field, { status: 422 })).api,
     );
     expect(searched).toMatchObject({ kind: "queue", shown: null, envelope: field, summary: null });
     // The menu's counts and the alarm are read again without the search.
     const summary = { total: 3 };
     const counted = await loadDeskQueue(
-      new URL("http://x/lapor/meja?ticket=1&status=new"),
+      new URL("http://x/desk?ticket=1&status=new"),
       fakeApi((_method, path) =>
         path === "/desk/summary?status=new&period=all" ? Response.json(summary) : Response.json(field, { status: 422 }),
       ).api,
     );
     expect(counted).toMatchObject({ shown: null, envelope: field, summary });
     const signIn = await loadDeskQueue(
-      new URL("http://x/lapor/meja"),
+      new URL("http://x/desk"),
       fakeApi(() => Response.json(envelope("auth.staffSignInFirst"), { status: 401 })).api,
     );
     expect(signIn).toMatchObject({ kind: "signIn", envelope: null });
     const refused = await loadDeskQueue(
-      new URL("http://x/lapor/meja"),
+      new URL("http://x/desk"),
       fakeApi(() => Response.json(envelope("desk.notAllowed"), { status: 403 })).api,
     );
     expect(refused).toMatchObject({ kind: "refused", status: 403, envelope: { error: { code: "desk.notAllowed" } } });
@@ -88,11 +88,11 @@ describe("the map and the gallery", () => {
     const { api, calls } = fakeApi(() =>
       Response.json({ account: { label: "Petugas" }, points: [], photos: [], cut: false }),
     );
-    const map = await loadDeskQueue(new URL("http://x/lapor/meja?view=map&status=new&page=3"), api);
+    const map = await loadDeskQueue(new URL("http://x/desk?view=map&status=new&page=3"), api);
     expect(map).toMatchObject({ kind: "queue", shown: { view: "map", map: { points: [] } } });
-    const gallery = await loadDeskQueue(new URL("http://x/lapor/meja?view=gallery"), api);
+    const gallery = await loadDeskQueue(new URL("http://x/desk?view=gallery"), api);
     expect(gallery).toMatchObject({ kind: "queue", shown: { view: "gallery", gallery: { photos: [] } } });
-    await loadDeskQueue(new URL("http://x/lapor/meja?view=nope"), api);
+    await loadDeskQueue(new URL("http://x/desk?view=nope"), api);
     // Each view reads its route and the side menu's counts under the same filters.
     expect(calls.map((call) => call.path)).toEqual([
       "/desk/summary?status=new&period=all",
@@ -113,7 +113,7 @@ describe("the side menu's counts", () => {
     const read = fakeApi((_method, path) =>
       path.startsWith("/desk/summary") ? Response.json(SUMMARY) : Response.json({ items: [] }),
     );
-    expect(await loadDeskQueue(new URL("http://x/lapor/meja"), read.api)).toMatchObject({ summary: SUMMARY });
+    expect(await loadDeskQueue(new URL("http://x/desk"), read.api)).toMatchObject({ summary: SUMMARY });
     const limited = fakeApi((_method, path) =>
       path.startsWith("/desk/summary")
         ? Response.json(envelope("limit.desk.read"), { status: 429 })
@@ -134,7 +134,7 @@ describe("a report on the desk", () => {
     });
     expect(await actOnDeskReport("LA-241126-01", new FormData(), api)).toMatchObject({
       kind: "redirect",
-      location: "/lapor/meja/LA-241126-01",
+      location: "/desk/LA-241126-01",
     });
     expect(calls.map((call) => `${call.method} ${call.path}`)).toEqual([
       "GET /desk/reports/LA-241126-01",
@@ -163,9 +163,9 @@ describe("a change to a ticket", () => {
       form({ action: "status", to: "under_review", note: "Dicek", revision: "3" }),
       api,
     );
-    expect(moved).toMatchObject({ kind: "redirect", location: "/lapor/meja/LA-241126-01?saved=status" });
+    expect(moved).toMatchObject({ kind: "redirect", location: "/desk/LA-241126-01?saved=status" });
     const replied = await actOnDeskReport("LA-241126-01", form({ action: "reply", reply: "Kami cek" }), api);
-    expect(replied).toMatchObject({ kind: "redirect", location: "/lapor/meja/LA-241126-01?saved=replies" });
+    expect(replied).toMatchObject({ kind: "redirect", location: "/desk/LA-241126-01?saved=replies" });
     expect(calls).toEqual([
       {
         method: "POST",
@@ -183,13 +183,13 @@ describe("a change to a ticket", () => {
       form({ action: "proofPublic", proofId: "p1", public: "1" }),
       api,
     );
-    expect(shown).toMatchObject({ location: "/lapor/meja/LA-241126-01?saved=proofShown" });
+    expect(shown).toMatchObject({ location: "/desk/LA-241126-01?saved=proofShown" });
     const hidden = await actOnDeskReport(
       "LA-241126-01",
       form({ action: "proofPublic", proofId: "p1", public: "0" }),
       api,
     );
-    expect(hidden).toMatchObject({ location: "/lapor/meja/LA-241126-01?saved=proofHidden" });
+    expect(hidden).toMatchObject({ location: "/desk/LA-241126-01?saved=proofHidden" });
     expect(calls.map((call) => [call.path, call.body])).toEqual([
       ["/desk/reports/LA-241126-01/proofs/p1/public", { public: true }],
       ["/desk/reports/LA-241126-01/proofs/p1/public", { public: false }],
@@ -199,9 +199,9 @@ describe("a change to a ticket", () => {
   test("an event pulled off the today page or put back is posted to its route and named on the page after", async () => {
     const { api, calls } = fakeApi(() => Response.json({}));
     const off = await actOnDeskReport("LA-241126-01", form({ action: "today", pulled: "1" }), api);
-    expect(off).toMatchObject({ location: "/lapor/meja/LA-241126-01?saved=todayPulled" });
+    expect(off).toMatchObject({ location: "/desk/LA-241126-01?saved=todayPulled" });
     const back = await actOnDeskReport("LA-241126-01", form({ action: "today", pulled: "0" }), api);
-    expect(back).toMatchObject({ location: "/lapor/meja/LA-241126-01?saved=todayRestored" });
+    expect(back).toMatchObject({ location: "/desk/LA-241126-01?saved=todayRestored" });
     expect(calls.map((call) => [call.path, call.body])).toEqual([
       ["/desk/reports/LA-241126-01/today", { pulled: true }],
       ["/desk/reports/LA-241126-01/today", { pulled: false }],
@@ -219,7 +219,7 @@ describe("a change to a ticket", () => {
     ] as const;
     for (const [body, saved] of posted)
       expect(await actOnDeskReport(ticket, body, api)).toMatchObject({
-        location: `/lapor/meja/${ticket}?saved=${saved}`,
+        location: `/desk/${ticket}?saved=${saved}`,
       });
     expect(calls.map((call) => [call.path, call.body])).toEqual([
       [`/desk/reports/${ticket}/comments/c1`, { shown: false, reason: "hoaks" }],
@@ -232,7 +232,7 @@ describe("a change to a ticket", () => {
   test("a follow-up file opened from the report is gone to at once", async () => {
     const { api, calls } = fakeApi(() => Response.json({ fileId: "f000000000000001" }));
     expect(await actOnDeskReport("LA-241126-01", form({ action: "openCase" }), api)).toMatchObject({
-      location: "/lapor/data/f000000000000001",
+      location: "/cases/f000000000000001",
     });
     expect(calls.map((call) => call.path)).toEqual(["/desk/reports/LA-241126-01/case"]);
   });
@@ -240,7 +240,7 @@ describe("a change to a ticket", () => {
   test("a report taken out of its event is posted to its route and named on the page after", async () => {
     const { api, calls } = fakeApi(() => Response.json({}));
     const done = await actOnDeskReport("LA-241126-01", form({ action: "release" }), api);
-    expect(done).toMatchObject({ location: "/lapor/meja/LA-241126-01?saved=released" });
+    expect(done).toMatchObject({ location: "/desk/LA-241126-01?saved=released" });
     expect(calls.map((call) => call.path)).toEqual(["/desk/reports/LA-241126-01/event/release"]);
   });
 
@@ -258,12 +258,12 @@ describe("a change to a ticket", () => {
       }),
       api,
     );
-    expect(checked).toMatchObject({ location: "/lapor/meja/LA-241126-01?saved=checks" });
+    expect(checked).toMatchObject({ location: "/desk/LA-241126-01?saved=checks" });
     const done = form({ action: "actions", otherAction: "Sedot sumur" });
     done.append("actions", "evakuasi");
     done.append("actions", "logistik");
     expect(await actOnDeskReport("LA-241126-01", done, api)).toMatchObject({
-      location: "/lapor/meja/LA-241126-01?saved=actions",
+      location: "/desk/LA-241126-01?saved=actions",
     });
     expect(calls.map((call) => [call.path, call.body])).toEqual([
       [
@@ -280,7 +280,7 @@ describe("a change to a ticket", () => {
     proof.set("photo", photo);
     const kept = fakeApi(() => Response.json({}));
     expect(await actOnDeskReport("LA-241126-01", proof, kept.api)).toMatchObject({
-      location: "/lapor/meja/LA-241126-01?saved=proofs",
+      location: "/desk/LA-241126-01?saved=proofs",
     });
     const sent = kept.calls[0]?.body as FormData;
     expect([...sent.keys()].sort()).toEqual(["lat", "lon", "photo"]);
@@ -330,7 +330,7 @@ describe("taking a report and the response figures", () => {
   test("taking is posted to its route and named on the page after", async () => {
     const { api, calls } = fakeApi(() => Response.json({}));
     expect(await actOnDeskReport("LA-241126-01", form({ action: "take" }), api)).toMatchObject({
-      location: "/lapor/meja/LA-241126-01?saved=take",
+      location: "/desk/LA-241126-01?saved=take",
     });
     expect(calls[0]?.path).toBe("/desk/reports/LA-241126-01/take");
   });
@@ -391,10 +391,10 @@ describe("the numbers of the pilot", () => {
   test("a number is posted, or taken away by its key, and named on the page after", async () => {
     const { api, calls } = fakeApi(() => Response.json({}));
     expect(await actOnDeskPilot(form({ action: "add", number: "0800", officerRegency: "Uji" }), api)).toMatchObject({
-      location: "/lapor/meja/pilot?saved=allowed",
+      location: "/desk/pilot?saved=allowed",
     });
     expect(await actOnDeskPilot(form({ action: "remove", key: "abc" }), api)).toMatchObject({
-      location: "/lapor/meja/pilot?saved=removed",
+      location: "/desk/pilot?saved=removed",
     });
     expect(calls).toEqual([
       { method: "POST", path: "/desk/pilot", body: { number: "0800", officerRegency: "Uji" } },
@@ -421,14 +421,14 @@ describe("signing in and out", () => {
     expect(signed.calls[0]).toEqual({ method: "POST", path: "/desk/session", body: { code: "abc" } });
     expect(acted.kind === "redirect" && acted.headers.get("set-cookie")).toBe("seeded_session=a; Path=/");
     const out = fakeApi(() => new Response(null, { status: 204 }));
-    expect(await actOnDesk(form({ action: "signOut" }), out.api)).toMatchObject({ location: "/lapor/meja" });
+    expect(await actOnDesk(form({ action: "signOut" }), out.api)).toMatchObject({ location: "/desk" });
     expect(out.calls[0]?.method).toBe("DELETE");
     // From the report start the way out leads back to it, and to no other place.
-    expect(await actOnDesk(form({ action: "signOut", next: "/lapor/report" }), out.api)).toMatchObject({
-      location: "/lapor/report",
+    expect(await actOnDesk(form({ action: "signOut", next: "/report" }), out.api)).toMatchObject({
+      location: "/report",
     });
     expect(await actOnDesk(form({ action: "signOut", next: "https://elsewhere.test" }), out.api)).toMatchObject({
-      location: "/lapor/meja",
+      location: "/desk",
     });
     const refused = await actOnDesk(
       new FormData(),

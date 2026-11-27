@@ -13,9 +13,9 @@ type Draft = { draftId: string; revision: number; card: { kind: string; cardId: 
 // own context: what follows is about the report once sent.
 async function sendEmergency(page: Page, baseURL: string): Promise<string> {
   const call = async <T>(method: "GET" | "POST", path: string, data?: unknown): Promise<T> => {
-    const response = await page.request.fetch(`/api/lapor${path}`, {
+    const response = await page.request.fetch(`/api${path}`, {
       method,
-      headers: { origin: baseURL, "x-lapor-client": "1", "cf-connecting-ip": "10.77.0.1" },
+      headers: { origin: baseURL, "x-respon-client": "1", "cf-connecting-ip": "10.77.0.1" },
       ...(data === undefined ? {} : { data }),
     });
     expect(response.status(), `${method} ${path}`).toBeLessThan(300);
@@ -54,7 +54,7 @@ async function deskPage(browser: Browser, baseURL: string, script: boolean): Pro
   const context = await browser.newContext({ baseURL, javaScriptEnabled: script, acceptDownloads: true });
   await ownAddress(context);
   const desk = await context.newPage();
-  await desk.goto("/lapor/meja", { waitUntil: "networkidle" });
+  await desk.goto("/desk", { waitUntil: "networkidle" });
   await desk.getByLabel("Kode masuk").fill(DESK_CODE);
   await expect(desk.getByLabel("Kode masuk")).toHaveValue(DESK_CODE);
   await desk.getByRole("button", { name: "Masuk", exact: true }).click();
@@ -82,7 +82,7 @@ test("a sent report is downloaded, added to, and answered by staff, each on its 
   const ticket = await sendEmergency(page, baseURL as string);
 
   // "Laporan saya" leads to the report.
-  await page.goto("/lapor");
+  await page.goto("/");
   await page.getByRole("link", { name: new RegExp(ticket) }).click();
   await expect(page.getByRole("heading", { level: 1, name: ticket })).toBeVisible();
   await noSidewaysScroll(page);
@@ -116,7 +116,7 @@ test("a sent report is downloaded, added to, and answered by staff, each on its 
 
   // The desk: the news stands out, a version is downloaded, and a reply is written.
   const desk = await deskPage(browser, baseURL as string, script);
-  await desk.goto(`/lapor/meja/${ticket}`);
+  await desk.goto(`/desk/${ticket}`);
   if (!script) await desk.getByRole("button", { name: "Tandai sudah dilihat" }).click();
   await expect(desk.getByRole("region", { name: "Kabar baru dari pelapor, versi 2" })).toContainText("2 orang");
   expect((await saved(desk, () => desk.getByRole("button", { name: "Unduh PDF versi 2" }).click())).name).toBe(
@@ -132,7 +132,7 @@ test("a sent report is downloaded, added to, and answered by staff, each on its 
   await expect(desk.getByRole("region", { name: "Kabar baru dari pelapor, versi 2" })).toHaveCount(0);
 
   // The reporter sees that there is news, reads it, and stops it.
-  await page.goto("/lapor");
+  await page.goto("/");
   const row = page.getByRole("link", { name: new RegExp(ticket) });
   await expect(row).toContainText("3 kabar baru");
   await row.click();
@@ -144,9 +144,9 @@ test("a sent report is downloaded, added to, and answered by staff, each on its 
     await own.getByRole("button", { name: "Tandai sudah dibaca" }).click();
     await expect(own.getByText("Baru", { exact: true })).toHaveCount(0);
   } else await page.waitForLoadState("networkidle");
-  await page.goto("/lapor");
+  await page.goto("/");
   await expect(page.getByRole("link", { name: new RegExp(ticket) })).not.toContainText("kabar baru");
-  await page.goto(`/lapor/reports/${ticket}`);
+  await page.goto(`/reports/${ticket}`);
   await own.getByRole("button", { name: "Hentikan kabar" }).click();
   await expect(page.getByRole("status")).toHaveText("Kabar untuk laporan ini dihentikan.");
   await own.getByRole("button", { name: "Nyalakan kabar" }).click();
@@ -157,6 +157,6 @@ test("a sent report is downloaded, added to, and answered by staff, each on its 
   const stranger = await browser.newContext({ baseURL: baseURL as string });
   await ownAddress(stranger);
   const other = await stranger.newPage();
-  const answer = await other.goto(`/lapor/reports/${ticket}`);
+  const answer = await other.goto(`/reports/${ticket}`);
   expect(answer?.status()).toBe(401);
 });

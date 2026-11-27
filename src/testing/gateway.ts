@@ -24,7 +24,7 @@ export function gateway(fetchApi: Fetch, defaults: GatewayOptions = {}) {
     const text = body === undefined ? "" : JSON.stringify(body);
     const call = {
       method,
-      path: `/api/lapor${path}`,
+      path: `/api${path}`,
       timeMs: all.timeMs ?? (all.now ?? Date.now)(),
       messageId: all.messageId ?? crypto.randomUUID(),
       bodyHash: await sha256Hex(text),

@@ -140,7 +140,7 @@ export function popupElement(point: MapPoint, t: Text): HTMLElement {
   line(`${point.villageName}, ${t(`desk.map.precision.${point.precision}`)}`, "");
   line(`${point.ticketNumber}, ${t(`stage.short.${point.status}`)}`, "text-muted tabular-nums");
   const link = document.createElement("a");
-  link.href = `/lapor/meja/${point.ticketNumber}`;
+  link.href = `/desk/${point.ticketNumber}`;
   link.className = "desk-popup-open";
   link.textContent = t("desk.map.open");
   box.appendChild(link);
@@ -276,7 +276,7 @@ export function clusterList(points: readonly MapPoint[], t: Text): HTMLElement {
   for (const point of points) {
     const item = document.createElement("li");
     const link = document.createElement("a");
-    link.href = `/lapor/meja/${point.ticketNumber}`;
+    link.href = `/desk/${point.ticketNumber}`;
     const dot = document.createElement("span");
     dot.className = `desk-dot desk-dot-${STATUS_GROUPS[point.status]}`;
     dot.setAttribute("aria-hidden", "true");

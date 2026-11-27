@@ -15,7 +15,7 @@ export const meta = (args: Route.MetaArgs) =>
   pageMeta(args, {
     title: "page.draft.title",
     description: "meta.draft.description",
-    path: "/lapor/report",
+    path: "/report",
     index: false,
   });
 
@@ -29,7 +29,7 @@ export async function loader({ params, request, context }: Route.LoaderArgs) {
   );
   const card = page.data.kind === "draft" ? page.data.draft.card : null;
   // News that is sent or dropped is told on its report's own page.
-  if (card?.kind === "followUpEnded") throw redirect(`/lapor/reports/${card.ticketNumber}?saved=${card.outcome}`, 303);
+  if (card?.kind === "followUpEnded") throw redirect(`/reports/${card.ticketNumber}?saved=${card.outcome}`, 303);
   return data(page.data, { status: page.status });
 }
 

@@ -55,7 +55,7 @@ function Failed() {
             </div>
             <div className="flex flex-col gap-3 pt-2 sm:flex-row sm:flex-wrap sm:items-center">
               <Reload />
-              <Link to="/lapor" className={buttonStyles({ variant: "onHero", size: "main", className: "px-7" })}>
+              <Link to="/" className={buttonStyles({ variant: "onHero", size: "main", className: "px-7" })}>
                 {t("failed.home")}
               </Link>
             </div>

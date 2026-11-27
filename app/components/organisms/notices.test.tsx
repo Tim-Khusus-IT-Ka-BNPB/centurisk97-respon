@@ -194,7 +194,7 @@ describe("the start step after review", () => {
         acted={acted({ view: "replaceConfirm", profileId: profile.profileId, editing: true, values })}
       />,
       {
-        path: "/lapor/report",
+        path: "/report",
         action: never,
       },
     );
@@ -215,7 +215,7 @@ describe("the start step after review", () => {
     const values = { role: "citizen", name: "Uji Satu", number: "0800", officerRegency: "", officerPosition: "" };
     renderPage(
       <StartScreen page={startPage({ me: null, view: "form" })} acted={acted({ values, focusNumber: true })} />,
-      { path: "/lapor/report" },
+      { path: "/report" },
     );
     const number = await screen.findByLabelText("WhatsApp");
     await waitFor(() => expect(document.activeElement).toBe(number));
@@ -225,7 +225,7 @@ describe("the start step after review", () => {
     renderPage(
       <StartScreen page={startPage({ view: "discardConfirm", profileId: profile.profileId })} acted={null} />,
       {
-        path: "/lapor/report",
+        path: "/report",
         action: never,
       },
     );

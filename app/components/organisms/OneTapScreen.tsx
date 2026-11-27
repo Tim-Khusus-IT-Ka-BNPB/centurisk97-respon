@@ -265,10 +265,7 @@ export function OneTapScreen({ start }: { readonly start: OneTapStart }) {
           </Notice>
         )}
         {step.kind === "sent" ? (
-          <a
-            href={`/lapor/reports/${step.sent.ticketNumber}`}
-            className={buttonStyles({ variant: "primary", size: "main" })}
-          >
+          <a href={`/reports/${step.sent.ticketNumber}`} className={buttonStyles({ variant: "primary", size: "main" })}>
             {t("emergency.track")}
           </a>
         ) : (
@@ -292,7 +289,7 @@ export function OneTapScreen({ start }: { readonly start: OneTapStart }) {
             ) : (
               <p>{t("emergency.noscript")}</p>
             )}
-            <Link to="/lapor/report?darurat=1" className={buttonStyles({ variant: "secondary", size: "main" })}>
+            <Link to="/report?emergency=1" className={buttonStyles({ variant: "secondary", size: "main" })}>
               {t("emergency.chat")}
             </Link>
           </>

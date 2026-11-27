@@ -64,7 +64,7 @@ async function deskPage(browser: Browser, baseURL: string, script: boolean): Pro
   const context = await browser.newContext({ baseURL, javaScriptEnabled: script });
   await ownAddress(context);
   const desk = await context.newPage();
-  await desk.goto("/lapor/meja", { waitUntil: "networkidle" });
+  await desk.goto("/desk", { waitUntil: "networkidle" });
   await desk.getByLabel("Kode masuk").fill(DESK_CODE);
   await desk.getByRole("button", { name: "Masuk", exact: true }).click();
   await expect(desk.getByRole("heading", { level: 1, name: "Peta laporan" })).toBeVisible();
@@ -72,7 +72,7 @@ async function deskPage(browser: Browser, baseURL: string, script: boolean): Pro
 }
 
 async function allow(desk: Page, number: string): Promise<void> {
-  await desk.goto("/lapor/meja/pilot");
+  await desk.goto("/desk/pilot");
   await desk.getByLabel("Nomor WhatsApp").fill(`+${number}`);
   await desk.getByRole("button", { name: "Izinkan nomor" }).click();
   await expect(desk.getByText("Nomor sudah diizinkan.")).toBeVisible();
@@ -127,7 +127,7 @@ test("a report filed in a chat, its document and news received there, and closed
   // At the desk: through WhatsApp, answered, handled and closed, each told in the chat.
   const told = (words: string) =>
     expect.poll(async () => (await one.received()).filter((entry) => entry.text.includes(words)).length).toBe(1);
-  await desk.goto(`/lapor/meja/${ticket}`, { waitUntil: "networkidle" });
+  await desk.goto(`/desk/${ticket}`, { waitUntil: "networkidle" });
   const header = desk.locator("header").filter({ has: desk.getByRole("heading", { level: 1, name: ticket }) });
   await expect(header.getByText("Lewat WhatsApp")).toBeVisible();
   if (!script) await desk.getByRole("button", { name: "Tandai sudah dilihat" }).click();
@@ -157,7 +157,7 @@ test("a report filed in a chat, its document and news received there, and closed
   await noSidewaysScroll(desk);
 
   // Taken off the list: silence.
-  await desk.goto("/lapor/meja/pilot");
+  await desk.goto("/desk/pilot");
   await desk.getByLabel(`Cabut izin ${shown(one.number)}`).click();
   const row = desk.getByRole("listitem").filter({ hasText: shown(one.number) });
   await row.getByRole("button", { name: "Cabut izin" }).click();

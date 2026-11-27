@@ -50,7 +50,7 @@ export async function noSidewaysScroll(page: Page): Promise<void> {
 
 // Fills the identity and consent form and stores it through the read-back.
 export async function startReport(page: Page, name: string, number: string): Promise<void> {
-  await page.goto("/lapor");
+  await page.goto("/");
   await page.getByRole("link", { name: "Lapor kejadian" }).click();
   await expect(page.getByRole("heading", { name: "Data pelapor" })).toBeVisible();
   await page.getByLabel("Warga").check();

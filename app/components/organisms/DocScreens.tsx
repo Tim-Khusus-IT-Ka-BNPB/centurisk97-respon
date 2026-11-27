@@ -144,7 +144,7 @@ export function HelpScreen({ education }: { readonly education: Education | null
               ))}
             </div>
             {group === "privacy" ? (
-              <Link to="/lapor/privacy" className={buttonStyles({ variant: "link", className: "-ms-2 self-start" })}>
+              <Link to="/privacy" className={buttonStyles({ variant: "link", className: "-ms-2 self-start" })}>
                 {t("help.privacy.fullLink")}
               </Link>
             ) : null}

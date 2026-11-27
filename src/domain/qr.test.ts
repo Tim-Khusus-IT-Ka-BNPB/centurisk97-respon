@@ -12,7 +12,7 @@ describe("qr", () => {
   test("the smallest version that holds the text, with its three finder patterns", () => {
     const sizes = [
       "Hello, world!",
-      "https://lapor-bencana.centurisk97.id/lapor/lacak#t=0123456789abcdef0123456789abcdef",
+      "https://lapor-bencana.centurisk97.id/track#t=0123456789abcdef0123456789abcdef",
       "x".repeat(300),
       "y".repeat(1500),
     ].map((text) => qrModules(text).length);

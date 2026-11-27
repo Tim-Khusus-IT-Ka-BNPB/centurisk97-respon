@@ -16,13 +16,13 @@ const FORM: Extract<MissingLoad, { kind: "form" }> = {
 };
 
 const draw = (load: MissingLoad, problem: ReturnType<typeof envelope> | null = null) =>
-  renderPage(<MissingScreen load={load} envelope={problem} />, { path: "/lapor/orang-hilang" });
+  renderPage(<MissingScreen load={load} envelope={problem} />, { path: "/missing" });
 
 describe("the missing person page", () => {
   test("a phone that has not said who reports is led to say so, and back", async () => {
     draw({ kind: "whoFirst", texts: {} });
     expect((await screen.findByRole("link", { name: "Isi data pelapor" })).getAttribute("href")).toBe(
-      "/lapor/report?hilang=1",
+      "/report?missing=1",
     );
     expect(screen.queryByRole("button", { name: "Kirim laporan orang hilang" })).toBeNull();
   });
@@ -49,7 +49,7 @@ describe("the missing person page", () => {
       ],
     };
     renderPage(<MissingScreen load={FORM} envelope={wrong} typed={{ sex: "male", lastSeenDate: "2026-11-25" }} />, {
-      path: "/lapor/orang-hilang",
+      path: "/missing",
     });
     expect(((await screen.findByLabelText("Uji, Baktiya, Aceh Utara")) as HTMLInputElement).checked).toBe(true);
     expect(screen.getAllByText("Pilih salah satu.")).toHaveLength(2);

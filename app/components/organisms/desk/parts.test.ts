@@ -8,11 +8,9 @@ const FILTERS = { view: "map" as const, status: "", hazardType: "", period: "all
 
 describe("desk helpers", () => {
   test("a desk address carries only the filters in use", () => {
-    expect(deskLink(FILTERS)).toBe("/lapor/meja");
-    expect(deskLink(FILTERS, { view: "list", status: "seen", page: 3 })).toBe(
-      "/lapor/meja?view=list&status=seen&page=3",
-    );
-    expect(deskLink({ ...FILTERS, period: "week", ticket: "LA-1" })).toBe("/lapor/meja?period=week&ticket=LA-1");
+    expect(deskLink(FILTERS)).toBe("/desk");
+    expect(deskLink(FILTERS, { view: "list", status: "seen", page: 3 })).toBe("/desk?view=list&status=seen&page=3");
+    expect(deskLink({ ...FILTERS, period: "week", ticket: "LA-1" })).toBe("/desk?period=week&ticket=LA-1");
   });
 
   test("an event's time reads short, with its hour when known", () => {
