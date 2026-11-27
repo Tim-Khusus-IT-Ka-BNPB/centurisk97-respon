@@ -7,12 +7,15 @@ import { SAMPLE_DRAFTS, SAMPLE_FIELD_ERROR, SAMPLE_ME } from "../../src/testing/
 import { LOST } from "../lib/network";
 import { PAGE_TEXTS, pickTexts } from "../lib/texts.server";
 import * as root from "../root";
+import { CASE_VIEW } from "../testing/cases";
 import { SUMMARY } from "../testing/desk";
 import { FEED_ENTRY, TODAY, WATCH } from "../testing/feed";
 import { OUTLOOK } from "../testing/outlook";
 import { OWN_REPORT } from "../testing/ownReport";
 import { never, renderPage } from "../testing/render";
 import AboutRoute, * as about from "./about";
+import CaseFileRoute, * as caseFile from "./caseFile";
+import CaseJoinRoute, * as caseJoin from "./caseJoin";
 import DeskRoute, * as desk from "./desk";
 import * as deskAggregates from "./deskAggregates";
 import * as deskDocument from "./deskDocument";
@@ -505,6 +508,104 @@ describe("route modules", () => {
     fresh.unmount();
     renderPage(routeElement(FeedCardRoute, { loaderData: gone.data }), { path: `/lapor/feed/${card}` });
     expect(await screen.findByRole("heading", { name: "Kejadian ini sudah tidak tampil di Alun-alun" })).toBeTruthy();
+  });
+
+  test("a follow-up file is read for its reader, its forms answered on it, and a member's link posted for", async () => {
+    expect(caseFile.headers()).toEqual({ "cache-control": "private, no-store", "x-robots-tag": "noindex" });
+    const FILE = CASE_VIEW.file.id;
+    const args = (answers: Record<string, () => Response>, url = `http://localhost/lapor/data/${FILE}`) =>
+      ({ request: new Request(url), params: { fileId: FILE }, context: { api: api(answers) } }) as Args;
+    const read = unwrap(await caseFile.loader(args({ [`GET /cases/${FILE}`]: json(CASE_VIEW) })));
+    expect(read).toMatchObject({ data: { kind: "file", view: CASE_VIEW }, init: { status: 200 } });
+    const signIn = unwrap(await caseFile.loader(args({ [`GET /cases/${FILE}`]: json(SAMPLE_FIELD_ERROR, 401) })));
+    expect(signIn).toMatchObject({ data: { kind: "signIn" }, init: { status: 401 } });
+    const refused = unwrap(await caseFile.loader(args({ [`GET /cases/${FILE}`]: json(SAMPLE_FIELD_ERROR, 404) })));
+    expect(refused).toMatchObject({ data: { kind: "refused" }, init: { status: 404 } });
+    expect(caseFile.meta({ data: (read as { data: unknown }).data, matches: [] } as Args)).toContainEqual({
+      title: "Data lanjutan BPBD, Pantau Bencana BNPB",
+    });
+    const acting = (answers: Record<string, () => Response>, entries: [string, string][]) =>
+      caseFile.action({
+        request: post(`http://localhost/lapor/data/${FILE}`, entries),
+        params: { fileId: FILE },
+        context: { api: api(answers) },
+      } as Args);
+    const kept = (await acting({ [`POST /cases/${FILE}/records`]: json({ recordId: "x" }) }, [
+      ["intent", "record"],
+      ["kind", "house"],
+    ])) as Response;
+    expect(kept.headers.get("location")).toBe(`/lapor/data/${FILE}?jenis=house&saved=record`);
+    expect(
+      await acting({ [`POST /cases/${FILE}/members`]: json({ link: "http://x/abc" }) }, [
+        ["intent", "member"],
+        ["name", "Uji"],
+      ]),
+    ).toEqual({ envelope: null, typed: null, link: { link: "http://x/abc", name: "Uji" }, revealed: null });
+    expect(
+      await acting({ [`POST /cases/${FILE}/records/c1/reveal`]: json({ personal: { name: "Uji" } }) }, [
+        ["intent", "reveal"],
+        ["recordId", "c1"],
+      ]),
+    ).toEqual({ envelope: null, typed: null, link: null, revealed: { recordId: "c1", personal: { name: "Uji" } } });
+    const failed = unwrap(
+      await acting({ [`POST /cases/${FILE}/nil`]: json(SAMPLE_FIELD_ERROR, 409) }, [["intent", "nil"]]),
+    );
+    expect(failed).toMatchObject({ init: { status: 409 }, data: { envelope: SAMPLE_FIELD_ERROR } });
+    const view = renderPage(routeElement(CaseFileRoute, { loaderData: (read as { data: unknown }).data }), {
+      path: "/lapor/data/:fileId",
+      entry: `/lapor/data/${FILE}`,
+    });
+    expect(await screen.findByRole("heading", { level: 1, name: "Data lanjutan BPBD" })).toBeTruthy();
+    view.unmount();
+    const out = renderPage(routeElement(CaseFileRoute, { loaderData: (signIn as { data: unknown }).data }), {
+      path: "/lapor/data/x",
+    });
+    expect(await screen.findByText(/Buka tautan dari petugas BPBD/)).toBeTruthy();
+    out.unmount();
+    const denied = renderPage(routeElement(CaseFileRoute, { loaderData: (refused as { data: unknown }).data }), {
+      path: "/lapor/data/x",
+    });
+    expect(await screen.findByRole("alert")).toBeTruthy();
+    denied.unmount();
+
+    expect(caseJoin.headers()).toEqual({ "cache-control": "private, no-store", "x-robots-tag": "noindex" });
+    expect(caseJoin.meta({ data: caseJoin.loader(), matches: [] } as Args)).toContainEqual({
+      title: "Data lanjutan BPBD, Pantau Bencana BNPB",
+    });
+    const joined = (await caseJoin.action({
+      params: { token: "abc" },
+      context: {
+        api: api({
+          "POST /case-links/abc": () =>
+            new Response(JSON.stringify({ fileId: FILE }), { headers: { "set-cookie": "lapor_data=x; Path=/" } }),
+        }),
+      },
+    } as Args)) as Response;
+    expect([joined.status, joined.headers.get("location"), joined.headers.get("set-cookie")]).toEqual([
+      303,
+      `/lapor/data/${FILE}`,
+      "lapor_data=x; Path=/",
+    ]);
+    const used = unwrap(
+      await caseJoin.action({
+        params: { token: "abc" },
+        context: { api: api({ "POST /case-links/abc": json(SAMPLE_FIELD_ERROR, 404) }) },
+      } as Args),
+    );
+    expect(used).toMatchObject({ init: { status: 404 } });
+    const page = renderPage(routeElement(CaseJoinRoute, { loaderData: caseJoin.loader() }), {
+      path: "/lapor/data/masuk/abc",
+    });
+    expect(await screen.findByRole("button", { name: "Masuk" })).toBeTruthy();
+    expect(screen.queryByRole("alert")).toBeNull();
+    page.unmount();
+    renderPage(
+      routeElement(CaseJoinRoute, { loaderData: caseJoin.loader(), actionData: (used as { data: unknown }).data }),
+      {
+        path: "/lapor/data/masuk/abc",
+      },
+    );
+    expect((await screen.findByRole("alert")).textContent).toMatch(/sudah dipakai/);
   });
 
   test("the today page is read on the server, a kind picked from it; shut it answers 404", async () => {

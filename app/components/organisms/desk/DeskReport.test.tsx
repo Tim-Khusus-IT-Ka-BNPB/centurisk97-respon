@@ -1,4 +1,4 @@
-import { act, screen, waitFor, within } from "@testing-library/react";
+import { act, fireEvent, screen, waitFor, within } from "@testing-library/react";
 import { describe, expect, test, vi } from "vitest";
 import { envelope } from "../../../../src/api/envelope";
 import type { DeskIdentity } from "../../../../src/contract/desk";
@@ -449,6 +449,31 @@ describe("a report on the desk", () => {
     );
     const section = screen.getByRole("region", { name: "PIC BPBD setempat" });
     expect(within(section).getByRole("link", { name: "Telepon" }).getAttribute("href")).toBe("tel:+628001108001");
+  });
+
+  test("the BPBD's follow-up file is opened here, or reached once open", async () => {
+    const view = await renderDesk(
+      <DeskReportView report={{ ...REPORT, caseFile: { file: null, mayOpen: true } }} summary={SUMMARY} />,
+      PATH,
+    );
+    const section = screen.getByRole("region", { name: "Data lanjutan BPBD" });
+    const open = within(section).getByRole("button", { name: "Buka data lanjutan" });
+    expect(((open.closest("form") as HTMLFormElement).elements.namedItem("action") as HTMLInputElement).value).toBe(
+      "openCase",
+    );
+    fireEvent.click(open);
+    expect(await within(section).findByText("Menyimpan...")).toBeTruthy();
+    view.unmount();
+    await renderDesk(
+      <DeskReportView
+        report={{ ...REPORT, caseFile: { file: { id: "f000000000000001", status: "proposed" }, mayOpen: false } }}
+        summary={SUMMARY}
+      />,
+      PATH,
+    );
+    const link = screen.getByRole("link", { name: /Buka berkas data lanjutan/ });
+    expect(link.getAttribute("href")).toBe("/lapor/data/f000000000000001");
+    expect(link.textContent).toContain("Menunggu diterima BNPB");
   });
 
   test("the residents' news on its Alun-alun card, and a decision named on the page after", async () => {

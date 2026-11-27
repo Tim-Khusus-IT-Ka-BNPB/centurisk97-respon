@@ -15,6 +15,7 @@ import { Notice } from "../../molecules/Notice";
 import { DeskMapCanvas, SMALL } from "../DeskMapCanvas";
 import { ChangeList, FileButtons, VersionList } from "../VersionList";
 import { DeskActions } from "./DeskActions";
+import { DeskCase } from "./DeskCase";
 import { DeskComments } from "./DeskComments";
 import { DeskHistory } from "./DeskHistory";
 import { DeskOfficers } from "./DeskOfficers";
@@ -534,6 +535,11 @@ export function DeskReportView({
           {report.officers === null ? null : (
             <Section id="desk-officers" title={t("desk.officers.title")}>
               <DeskOfficers officers={report.officers} opened={officer} />
+            </Section>
+          )}
+          {report.caseFile === null ? null : (
+            <Section id="desk-case" title={t("desk.case.section")}>
+              <DeskCase caseFile={report.caseFile} />
             </Section>
           )}
           {report.comments === null ? null : (

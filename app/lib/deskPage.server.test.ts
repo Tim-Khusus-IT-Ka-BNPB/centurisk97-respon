@@ -229,6 +229,14 @@ describe("a change to a ticket", () => {
     ]);
   });
 
+  test("a follow-up file opened from the report is gone to at once", async () => {
+    const { api, calls } = fakeApi(() => Response.json({ fileId: "f000000000000001" }));
+    expect(await actOnDeskReport("LA-241126-01", form({ action: "openCase" }), api)).toMatchObject({
+      location: "/lapor/data/f000000000000001",
+    });
+    expect(calls.map((call) => call.path)).toEqual(["/desk/reports/LA-241126-01/case"]);
+  });
+
   test("a report taken out of its event is posted to its route and named on the page after", async () => {
     const { api, calls } = fakeApi(() => Response.json({}));
     const done = await actOnDeskReport("LA-241126-01", form({ action: "release" }), api);

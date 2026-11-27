@@ -17,5 +17,6 @@
   "meta.missing.description": "Laporkan keluarga atau kerabat yang belum ditemukan setelah bencana. Hanya dibaca BNPB dan BPBD daerahnya.",
   "meta.numbers.description": "Nomor darurat nasional 112, Call Center BNPB 117, Basarnas 115, ambulans 119, polisi 110, pemadam kebakaran 113, dan kontak BNPB.",
   "meta.today.description": "Laporan warga yang sudah diverifikasi BPBD dalam 24 jam terakhir, tanpa nama, nomor, atau foto pelapor. Bukan data resmi korban.",
-  "meta.feedCard.description": "Kabar dari warga tentang satu kejadian di Alun-alun, tanpa nama dan nomor pelapor."
+  "meta.feedCard.description": "Kabar dari warga tentang satu kejadian di Alun-alun, tanpa nama dan nomor pelapor.",
+  "meta.case.description": "Berkas data lanjutan BPBD: data per rumah, prasarana, pengungsi, dan korban, hanya untuk petugas dan tim."
 }

@@ -25,6 +25,8 @@ export default [
   route("lapor/meja/pilot", "routes/deskPilot.tsx"),
   route("lapor/meja/orang-hilang", "routes/deskMissing.tsx"),
   route("lapor/meja/:ticketNumber", "routes/deskReport.tsx"),
+  route("lapor/data/masuk/:token", "routes/caseJoin.tsx"),
+  route("lapor/data/:fileId", "routes/caseFile.tsx"),
   route("lapor/meja/:ticketNumber/documents", "routes/deskDocument.tsx"),
   route("lapor/help", "routes/help.tsx"),
   route("lapor/about", "routes/about.tsx"),

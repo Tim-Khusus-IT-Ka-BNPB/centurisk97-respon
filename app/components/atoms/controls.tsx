@@ -1,4 +1,4 @@
-import type { InputHTMLAttributes, LabelHTMLAttributes, TextareaHTMLAttributes } from "react";
+import type { InputHTMLAttributes, LabelHTMLAttributes, SelectHTMLAttributes, TextareaHTMLAttributes } from "react";
 import { cn } from "../../lib/cn";
 
 const box =
@@ -6,6 +6,10 @@ const box =
 
 export function Input({ className, ...props }: InputHTMLAttributes<HTMLInputElement>) {
   return <input type="text" {...props} className={cn(box, "min-h-target", className)} />;
+}
+
+export function Select({ className, ...props }: SelectHTMLAttributes<HTMLSelectElement>) {
+  return <select {...props} className={cn(box, "min-h-target", className)} />;
 }
 
 export function Textarea({ className, ...props }: TextareaHTMLAttributes<HTMLTextAreaElement>) {

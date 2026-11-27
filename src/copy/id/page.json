@@ -17,5 +17,6 @@
   "page.language.title": "Pilih bahasa, {appName}",
   "page.numbers.title": "Nomor penting, {appName}",
   "page.today.title": "Kejadian hari ini, {appName}",
-  "page.feedCard.title": "Kabar warga, {appName}"
+  "page.feedCard.title": "Kabar warga, {appName}",
+  "page.case.title": "Data lanjutan BPBD, {appName}"
 }

@@ -280,6 +280,8 @@ function deskPost(form: FormData): readonly [path: string, body?: unknown] {
       return ["event/release"];
     case "today":
       return ["today", { pulled: text("pulled") === "1" }];
+    case "openCase":
+      return ["case"];
     case "commentShown":
       return [
         `comments/${encodeURIComponent(text("commentId"))}`,
@@ -328,6 +330,9 @@ export async function actOnDeskReport(ticketNumber: string, form: FormData, api:
   }
   if (path === "identity") return { kind: "identity", identity: (await response.json()) as DeskIdentity };
   if (path.startsWith("officers/")) return { kind: "officerNumber", officer: (await response.json()) as OfficerNumber };
+  // A file opened is gone to at once.
+  if (path === "case")
+    return redirectTo(`/lapor/data/${((await response.json()) as { fileId: string }).fileId}`, response);
   if (form.get("action") === "opened") return { kind: "done" };
   const action = form.get("action");
   const saved =
