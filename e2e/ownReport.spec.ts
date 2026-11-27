@@ -63,7 +63,8 @@ async function deskPage(browser: Browser, baseURL: string, script: boolean): Pro
 }
 
 async function saved(page: Page, press: () => Promise<void>): Promise<{ name: string; start: string }> {
-  const coming = page.waitForEvent("download");
+  // A PDF is drawn on the server first; WebKit on CI has taken longer than the action timeout.
+  const coming = page.waitForEvent("download", { timeout: 60_000 });
   await press();
   const download: Download = await coming;
   const bytes = readFileSync(await download.path());
