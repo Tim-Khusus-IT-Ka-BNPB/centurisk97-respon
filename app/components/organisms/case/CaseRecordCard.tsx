@@ -1,6 +1,6 @@
 import { Form, Link, useNavigation } from "react-router";
 import type { CaseView } from "../../../../src/contract/cases";
-import { CASE_SPEC } from "../../../../src/domain/caseSpec";
+import { CASE_SPEC, type CaseField } from "../../../../src/domain/caseSpec";
 import { cn } from "../../../lib/cn";
 import { useHydrated } from "../../../lib/hooks";
 import { useText } from "../../../lib/text";
@@ -8,6 +8,7 @@ import { Button, buttonStyles } from "../../atoms/Button";
 import { Input } from "../../atoms/controls";
 import { VideoUpload } from "../cards/VideoUpload";
 import { when } from "../desk/parts";
+import { recordName } from "./recordName";
 
 type CaseRecord = CaseView["records"][number];
 
@@ -20,6 +21,19 @@ function valueText(t: ReturnType<typeof useText>, value: unknown): string {
   return /^[a-z][a-zA-Z0-9]*$/.test(String(value)) && t.has(key) ? t(key) : String(value);
 }
 
+// A field's value: another record by its name, the head of family as "self" in words.
+function fieldText(
+  t: ReturnType<typeof useText>,
+  one: CaseField,
+  value: unknown,
+  records: readonly CaseRecord[],
+): string {
+  if (one.field.type !== "record" && one.id !== "head") return valueText(t, value);
+  if (value === "self") return t("desk.case.headSelf");
+  const other = records.find((record) => record.id === value);
+  return other === undefined ? String(value) : recordName(t, other);
+}
+
 const chip = "rounded-chip px-2 py-0.5 text-meta font-semibold";
 
 // One record of the file: its values (personal ones masked for BNPB until shown), what looks wrong,
@@ -27,12 +41,14 @@ const chip = "rounded-chip px-2 py-0.5 text-meta font-semibold";
 export function CaseRecordCard({
   fileId,
   record,
+  records,
   mayWrite,
   mayReveal,
   revealed,
 }: {
   readonly fileId: string;
   readonly record: CaseRecord;
+  readonly records: readonly CaseRecord[];
   readonly mayWrite: boolean;
   readonly mayReveal: boolean;
   readonly revealed: Readonly<Record<string, unknown>> | null;
@@ -45,7 +61,7 @@ export function CaseRecordCard({
   const busy = (intent: string) => (posting === intent ? t("desk.case.saving") : null);
   const personal = revealed ?? record.personal;
   const values = { ...record.data, ...personal };
-  const title = t("desk.case.recordTitle", { kind: `desk.case.kind.${record.kind}`, seq: record.seq });
+  const title = recordName(t, record);
   const cancelled = record.cancelledReason !== null;
   return (
     <li>
@@ -72,7 +88,7 @@ export function CaseRecordCard({
             .map((one) => (
               <div key={one.id} className="flex min-w-0 flex-wrap gap-x-2">
                 <dt className="text-muted">{t(`desk.case.field.${record.kind}.${one.id}`)}</dt>
-                <dd className="font-semibold break-words">{valueText(t, values[one.id])}</dd>
+                <dd className="font-semibold break-words">{fieldText(t, one, values[one.id], records)}</dd>
               </div>
             ))}
         </dl>

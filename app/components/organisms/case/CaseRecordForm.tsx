@@ -7,6 +7,7 @@ import { useText } from "../../../lib/text";
 import { Button, buttonStyles } from "../../atoms/Button";
 import { Input, Select, Textarea } from "../../atoms/controls";
 import { Field } from "../../molecules/Field";
+import { recordName } from "./recordName";
 
 type CaseRecord = CaseView["records"][number];
 type Typed = Readonly<Record<string, string>>;
@@ -51,7 +52,7 @@ function Control({
         <option value="">{t(kind === "need" ? "desk.case.noShelter" : "desk.case.choose")}</option>
         {options.map((record) => (
           <option key={record.id} value={record.id}>
-            {t("desk.case.recordTitle", { kind: `desk.case.kind.${record.kind}`, seq: record.seq })}
+            {recordName(t, record)}
           </option>
         ))}
       </Select>
@@ -64,7 +65,7 @@ function Control({
         <option value="self">{t("desk.case.headSelf")}</option>
         {heads.map((record) => (
           <option key={record.id} value={record.id}>
-            {t("desk.case.recordTitle", { kind: "desk.case.kind.evacuee", seq: record.seq })}
+            {recordName(t, record)}
           </option>
         ))}
       </Select>

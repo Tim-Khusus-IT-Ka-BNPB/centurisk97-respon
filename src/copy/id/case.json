@@ -24,6 +24,7 @@
   "desk.case.cancelEdit": "Batal ubah",
   "desk.case.none": "Belum ada data {kind}.",
   "desk.case.recordTitle": "{kind} {seq}",
+  "desk.case.recordNamed": "{title}, {name}",
   "desk.case.by": "Diisi {by}, {when}",
   "desk.case.cancelled": "Dibatalkan: {reason}",
   "desk.case.cancel.reason": "Alasan pembatalan",

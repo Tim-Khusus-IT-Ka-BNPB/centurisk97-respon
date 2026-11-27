@@ -116,6 +116,7 @@ export function CaseScreen({
                   key={record.id}
                   fileId={view.file.id}
                   record={record}
+                  records={view.records}
                   mayWrite={mayWrite}
                   mayReveal={view.access === "bnpb"}
                   revealed={answered.revealed?.recordId === record.id ? answered.revealed.personal : null}

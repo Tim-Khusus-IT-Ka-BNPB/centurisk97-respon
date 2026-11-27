@@ -6,6 +6,8 @@ import { CASE_VIEW } from "../../../testing/cases";
 import { never, renderPage } from "../../../testing/render";
 import { type CaseAnswered, CaseScreen } from "./CaseScreen";
 
+type CaseRecord = CaseView["records"][number];
+
 const NOTHING: CaseAnswered = { envelope: null, typed: null, link: null, revealed: null };
 const draw = (
   view: CaseView = CASE_VIEW,
@@ -103,12 +105,14 @@ describe("the follow-up file's screen", () => {
     expect(within(person).getByText("Sakit, Lansia")).toBeTruthy();
     expect(within(person).getByText("Kurang foto wajah")).toBeTruthy();
     expect(within(person).getByLabelText("Ini foto wajah")).toBeTruthy();
+    expect(within(person).getByText("Tempat pengungsian 1, Meunasah Uji")).toBeTruthy();
+    expect(within(person).getByText("Diri sendiri (kepala keluarga)")).toBeTruthy();
     const form = screen.getByRole("region", { name: "Ubah Pengungsi 1" });
     expect((within(form).getByLabelText("Nama") as HTMLInputElement).value).toBe("Uji Dua");
     expect((within(form).getByLabelText("Tempat pengungsian") as unknown as HTMLSelectElement).value).toBe(
       "b000000000000001",
     );
-    expect(within(form).getByRole("option", { name: "Tempat pengungsian 1" })).toBeTruthy();
+    expect(within(form).getByRole("option", { name: "Tempat pengungsian 1, Meunasah Uji" })).toBeTruthy();
     expect((within(form).getByLabelText("Kepala keluarga") as unknown as HTMLSelectElement).value).toBe("self");
     expect((within(form).getByRole("checkbox", { name: "Sakit" }) as HTMLInputElement).checked).toBe(true);
     expect((within(form).getByRole("checkbox", { name: "Menyusui" }) as HTMLInputElement).checked).toBe(false);
@@ -125,6 +129,20 @@ describe("the follow-up file's screen", () => {
     });
     fireEvent.click(save);
     expect(await screen.findAllByText("Menyimpan...")).toBeTruthy();
+  });
+
+  test("an evacuee's card names its head by record, and an id it cannot find as it is", async () => {
+    const evacuee = CASE_VIEW.records.find((one) => one.kind === "evacuee") as CaseRecord;
+    const child = {
+      ...evacuee,
+      id: "c000000000000002",
+      seq: 2,
+      data: { ...evacuee.data, shelter: "d000000000000001", head: evacuee.id },
+    };
+    draw({ ...CASE_VIEW, records: [...CASE_VIEW.records, child] }, { kind: "evacuee", editing: null });
+    const [, second] = (await screen.findAllByRole("article")) as [HTMLElement, HTMLElement];
+    expect(within(second).getByText("Pengungsi 1")).toBeTruthy();
+    expect(within(second).getByText("d000000000000001")).toBeTruthy();
   });
 
   test("a need's shelter may be none; a long text is a box of its own", async () => {
