@@ -58,7 +58,8 @@ describe("reference file importer", () => {
     await expect(importReferenceFile(db, "responseActions", path, "upstream")).rejects.toBeInstanceOf(
       ReferenceFileRefused,
     );
-    await expect(importReferenceFile(db, "forecast", path, "upstream")).rejects.toBeInstanceOf(ReferenceFileRefused);
+    for (const name of ["forecast", "volcanoes", "facilityNumbers", "officialEvents"] as const)
+      await expect(importReferenceFile(db, name, path, "upstream")).rejects.toBeInstanceOf(ReferenceFileRefused);
     expect(await stored()).toEqual(before);
     await importReferenceFile(db, "bpbdContacts", "db/reference/bpbd-contacts.json", "seed");
   });

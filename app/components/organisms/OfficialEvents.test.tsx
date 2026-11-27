@@ -52,3 +52,10 @@ test("a hazard picked shows only its events; none of it, or the report unread, s
   expect(await screen.findByText("Laporan harian BNPB belum bisa dibaca.")).toBeTruthy();
   expect(screen.queryByRole("listitem")).toBeNull();
 });
+
+test("headlines all shown say no more", async () => {
+  const [flood] = OFFICIAL.events;
+  draw({ official: { day: OFFICIAL.day, events: [{ ...(flood as (typeof OFFICIAL.events)[number]), moreNews: 0 }] } });
+  expect(await screen.findByText("Berita (1)")).toBeTruthy();
+  expect(screen.queryByText(/berita lain/)).toBeNull();
+});
