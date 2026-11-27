@@ -172,11 +172,7 @@ export function CaseRecordCard({
                     className="min-h-target-min py-1"
                   />
                 </span>
-                <Button
-                  variant="quietDanger"
-                  size="min"
-                  busyLabel={busy("cancel")}
-                >
+                <Button variant="quietDanger" size="min" busyLabel={busy("cancel")}>
                   {t("desk.case.cancel.button")}
                 </Button>
               </Form>

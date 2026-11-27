@@ -138,7 +138,9 @@ describe("the follow-up file's screen", () => {
     const fresh = draw(CASE_VIEW, { kind: "evacuee", editing: null });
     expect(((await screen.findByRole("checkbox", { name: "Sakit" })) as HTMLInputElement).checked).toBe(false);
     fresh.unmount();
-    const refused = envelope("request.invalidFields", [{ fieldId: "vulnerable", copyKey: "fieldError.case.value", params: {} }]);
+    const refused = envelope("request.invalidFields", [
+      { fieldId: "vulnerable", copyKey: "fieldError.case.value", params: {} },
+    ]);
     draw(CASE_VIEW, { kind: "evacuee", editing: null }, { ...NOTHING, envelope: refused, typed: { intent: "record" } });
     expect((await screen.findByRole("group", { name: "Kelompok rentan" })).getAttribute("aria-invalid")).toBe("true");
   });
