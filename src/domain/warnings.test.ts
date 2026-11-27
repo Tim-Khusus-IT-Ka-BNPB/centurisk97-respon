@@ -4,12 +4,14 @@ import { HOUR_MS } from "./time";
 import {
   ALL_HAZARDS,
   heldAtNight,
+  mergedRises,
   pushEndpointOk,
   pushKeysOk,
   type Rise,
   riseFor,
   risenWarnings,
   sentKey,
+  statusRises,
   WARNING_HAZARDS,
 } from "./warnings";
 
@@ -152,5 +154,73 @@ describe("when a warning goes out", () => {
     expect(riseFor(rises, 2, 2)).toBeNull();
     expect(riseFor(rises, 8, 1)).toBeNull();
     expect(riseFor([], ALL_HAZARDS, 1)).toBeNull();
+  });
+});
+
+describe("upstream's status file, the second trigger", () => {
+  // 26 November 10.00 WIB; the file made at 05.00 WIB, so its first day is the 26th.
+  const MADE = "2026-11-26T05:00:00+07:00";
+  const names = new Map([["3201", "Kab. Bogor"]]);
+  const status = (kab: unknown, dibuat: unknown = MADE) => ({ dibuat, kab });
+  const rises = (json: unknown, sent = new Map<string, number>(), at = NOW) => statusRises(json, names, sent, at);
+  const bogor = (hazard: string, date: string, level: Level) => ({
+    regencyCode: "32.01",
+    regencyName: "Kab. Bogor",
+    hazard,
+    date,
+    level,
+  });
+
+  test("each rise by regency, hazard and day from the file's own date, for a regency the outlook names", () => {
+    expect(
+      rises(status({ "3201": { CEX: { hari: [2, 0, 3] }, BNJ: { hari: [1] } }, "1108": { BNJ: { hari: [3] } } })),
+    ).toEqual([bogor("BNJ", "2026-11-26", 1), bogor("CEX", "2026-11-26", 2), bogor("CEX", "2026-11-28", 3)]);
+  });
+
+  test("only a rise, never a level that cannot be, a day gone or a hazard not offered", () => {
+    const of = (hari: unknown[], sent = new Map<string, number>(), dibuat = MADE) =>
+      rises(status({ "3201": { BNJ: { hari }, KHT: { hari: [3] } } }, dibuat), sent).map((one) => [
+        one.date,
+        one.level,
+      ]);
+    expect(of([0, 4, "2", 1.5, null, 2])).toEqual([["2026-12-01", 2]]);
+    expect(of([2], new Map([["32.01|BNJ|2026-11-26", 2]]))).toEqual([]);
+    expect(of([3], new Map([["32.01|BNJ|2026-11-26", 2]]))).toEqual([["2026-11-26", 3]]);
+    // A file of yesterday: its first day is gone.
+    expect(of([3, 2], new Map(), "2026-11-25T20:00:00+07:00")).toEqual([["2026-11-26", 2]]);
+    // Waspada waits out the night; Siaga does not.
+    const night = Date.UTC(2026, 10, 26, 16);
+    expect(rises(status({ "3201": { BNJ: { hari: [1, 2] } } }), new Map(), night).map((one) => one.level)).toEqual([2]);
+  });
+
+  test("a file too old, broken or missing raises nothing", () => {
+    expect(rises(status({ "3201": { BNJ: { hari: [3] } } }, "2026-11-24T14:59:59Z"))).toEqual([]);
+    expect(rises(status({ "3201": { BNJ: { hari: [0, 0, 3] } } }, "2026-11-24T15:00:00Z"))).toHaveLength(1);
+    for (const broken of [
+      null,
+      status(null),
+      status("x"),
+      status({ "3201": { BNJ: { hari: [3] } } }, "kemarin"),
+      status({ "3201": null }),
+      status({ "3201": { BNJ: null } }),
+      status({ "3201": { BNJ: { hari: "3" } } }),
+    ])
+      expect(rises(broken), JSON.stringify(broken)).toEqual([]);
+  });
+
+  test("both triggers' rises are one each, the higher level winning", () => {
+    expect(
+      mergedRises(
+        [bogor("BNJ", "2026-11-26", 2), bogor("LSR", "2026-11-26", 1)],
+        [bogor("BNJ", "2026-11-26", 3), bogor("LSR", "2026-11-26", 1)],
+      ),
+    ).toEqual([bogor("BNJ", "2026-11-26", 3), bogor("LSR", "2026-11-26", 1)]);
+    expect(mergedRises([bogor("BNJ", "2026-11-26", 3)], [bogor("BNJ", "2026-11-26", 2)])).toEqual([
+      bogor("BNJ", "2026-11-26", 3),
+    ]);
+    // At the same level the outlook's, listed first, stays.
+    expect(
+      mergedRises([bogor("BNJ", "2026-11-26", 2)], [{ ...bogor("BNJ", "2026-11-26", 2), regencyName: "Lain" }]),
+    ).toEqual([bogor("BNJ", "2026-11-26", 2)]);
   });
 });

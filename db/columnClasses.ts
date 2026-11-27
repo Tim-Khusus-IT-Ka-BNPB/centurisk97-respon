@@ -444,6 +444,10 @@ export const COLUMN_CLASSES: Readonly<Record<string, TableClasses>> = {
     retention: "until the day it is for has passed, swept by the sender",
     columns: { regency_code: I, hazard: I, date: I, level: I },
   },
+  warning_daily: {
+    retention: "the day it is for, swept by the sender",
+    columns: { device: I, regency_code: I, hazard: I, wib_date: I },
+  },
   warning_pause: {
     retention: "kept; append-only",
     columns: { id: I, paused: I, staff_id: I, staff_label: I, at: I },

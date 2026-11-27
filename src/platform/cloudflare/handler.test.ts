@@ -3,7 +3,7 @@ import { testDatabase } from "../../testing/api";
 import { vapidKeys } from "../../testing/push";
 import type { Database } from "../database";
 import type { LogLine } from "../log";
-import { createWorker } from "./handler";
+import { createWorker, statusOf } from "./handler";
 
 const pending: Promise<unknown>[] = [];
 const ctx = { waitUntil: (work: Promise<unknown>) => pending.push(work) } as unknown as ExecutionContext;
@@ -169,4 +169,20 @@ describe("worker handler", () => {
     await expect(handler.scheduled(controller, env)).rejects.toThrow("Scheduled sweep failed");
     expect(lines).toEqual([{ event: "sweep.failed", errorCode: "sweep.failed", sqlState: "SQLITE_ERROR" }]);
   });
+});
+
+test("upstream's status file is read from its bucket where one is bound, and is nothing where none is", async () => {
+  const kept = new Map([["dampak_peringatan/status.json", '{"dibuat":"2026-11-26T05:00:00+07:00"}']]);
+  const media = {
+    get: async (key: string) => {
+      const text = kept.get(key);
+      return text === undefined ? null : { text: async () => text };
+    },
+  };
+  expect(await statusOf({ UPSTREAM_MEDIA: media } as unknown as Env)()).toEqual({
+    dibuat: "2026-11-26T05:00:00+07:00",
+  });
+  kept.clear();
+  expect(await statusOf({ UPSTREAM_MEDIA: media } as unknown as Env)()).toBeNull();
+  expect(await statusOf({} as Env)()).toBeNull();
 });

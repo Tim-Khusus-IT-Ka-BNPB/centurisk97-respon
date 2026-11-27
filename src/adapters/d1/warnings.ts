@@ -79,6 +79,7 @@ export async function keepSent(
 ): Promise<void> {
   await atomically(db, [
     sql`delete from warning_sent where date < ${today}`,
+    sql`delete from warning_daily where wib_date < ${today}`,
     ...sent.map(
       (one) => sql`insert into warning_sent (regency_code, hazard, date, level)
         values (${one.regencyCode}, ${one.hazard}, ${one.date}, ${one.level})
@@ -86,6 +87,22 @@ export async function keepSent(
     ),
   ]);
 }
+
+// The phones told today of a regency, as "device|hazard": one warning a day each (DP-13, D30).
+export async function toldToday(db: Database, regencyCode: string, today: string): Promise<Set<string>> {
+  const found = await rows<{ device: string; hazard: string }>(
+    db,
+    sql`select device, hazard from warning_daily where regency_code = ${regencyCode} and wib_date = ${today}`,
+  );
+  return new Set(found.map((one) => `${one.device}|${one.hazard}`));
+}
+
+export const toldDaily = (db: Database, told: { device: string; regencyCode: string; hazard: string }, today: string) =>
+  run(
+    db,
+    sql`insert into warning_daily (device, regency_code, hazard, wib_date)
+      values (${told.device}, ${told.regencyCode}, ${told.hazard}, ${today}) on conflict do nothing`,
+  );
 
 export type PauseRow = { readonly paused: number; readonly staff_label: string; readonly at: string };
 

@@ -49,6 +49,7 @@ const reset = async () => {
   handed.length = 0;
   const db = testDatabase();
   await run(db, sql`delete from warning_sent`);
+  await run(db, sql`delete from warning_daily`);
   await run(db, sql`delete from warning_subscription where endpoint like ${`${PREFIX}%`}`);
 };
 afterEach(reset);
@@ -95,6 +96,37 @@ describe("sending the warnings", () => {
     expect(request.headers.get("content-encoding")).toBe("aes128gcm");
     handed.length = 0;
     await sendWarnings(bindings, service);
+    expect(mine()).toEqual([]);
+  });
+
+  test("upstream's status file raises what the outlook did not; a phone hears of a hazard once a day", async () => {
+    await reset();
+    await addPhone("twice", 15, 1);
+    const wind =
+      (...hari: number[]) =>
+      async () => ({
+        dibuat: "2026-11-26T05:00:00+07:00",
+        kab: { "3201": { CEX: { hari } } },
+      });
+    // Of both triggers the phone hears the highest: the outlook's Awas flood.
+    await sendWarnings(bindings, service, wind(2));
+    expect(handed.map((request) => request.url)).toEqual([`${PREFIX}twice`]);
+    expect(await query`select level from warning_sent where regency_code = '32.01' and hazard = 'CEX'`).toEqual([
+      { level: 2 },
+    ]);
+    // The wind rises to Awas: a hazard it has not heard of today.
+    handed.length = 0;
+    await sendWarnings(bindings, service, wind(3));
+    expect(mine()).toEqual([`${PREFIX}twice`]);
+    // Wind again, for tomorrow: already told of wind today, so not again.
+    handed.length = 0;
+    await sendWarnings(bindings, service, wind(3, 3));
+    expect(mine()).toEqual([]);
+    expect(await query`select count(*) as n from warning_daily where regency_code = '32.01'`).toEqual([{ n: 2 }]);
+    // A file that cannot be read is no trigger.
+    await sendWarnings(bindings, service, async () => {
+      throw new Error("bucket down");
+    });
     expect(mine()).toEqual([]);
   });
 
