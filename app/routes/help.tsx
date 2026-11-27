@@ -16,7 +16,11 @@ export async function loader({ request, context }: Route.LoaderArgs) {
 
 export default function HelpRoute({ loaderData }: Route.ComponentProps) {
   return (
-    <Page texts={loaderData.texts} wide banner={{ title: "help.title", lead: "help.lead" }}>
+    <Page
+      texts={loaderData.texts}
+      wide
+      banner={{ title: "help.title", lead: "help.lead", sigap: { scene: "report", copy: "sigap.help" } }}
+    >
       <HelpScreen education={loaderData.education} />
     </Page>
   );

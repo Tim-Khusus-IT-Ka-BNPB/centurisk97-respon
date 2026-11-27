@@ -31,7 +31,7 @@ export default function MissingRoute({ loaderData, actionData }: Route.Component
     <Page
       texts={loaderData.texts}
       publicPage={false}
-      banner={{ title: "missing.title", lead: "missing.lead" }}
+      banner={{ title: "missing.title", lead: "missing.lead", sigap: { scene: "missing", copy: "sigap.missing" } }}
       aside={<MissingAside />}
     >
       <MissingScreen load={loaderData} envelope={actionData?.envelope ?? null} typed={actionData?.typed} />

@@ -3,16 +3,30 @@ import type { DraftBody } from "../../../src/contract/draft";
 import { clockTime, longDate } from "../../../src/copy/time";
 import { useText } from "../../lib/text";
 import { ProgressBar } from "../atoms/ProgressBar";
+import { SigapSays } from "../molecules/Sigap";
 
 const heading = "text-meta font-semibold text-muted";
 
-// Beside the conversation on a wide screen: how complete the report is, how long it is kept,
+// Sigap beside the conversation: concerned once someone may be hurt or in danger (the page's own
+// 112 panel is the way to call), else helping the report along.
+function DraftSigap({ draft }: { readonly draft: DraftBody }) {
+  const t = useText();
+  const sorry = draft.notices.some((notice) => notice.kind === "lifeLine" || notice.kind === "danger");
+  return sorry ? (
+    <SigapSays scene="sorry" title={t("sigap.sorry.title")} text={t("sigap.sorry.text")} />
+  ) : (
+    <SigapSays scene="report" title={t("sigap.draft.title")} text={t("sigap.draft.text")} />
+  );
+}
+
+// Beside the conversation on a wide screen: Sigap, how complete the report is, how long it is kept,
 // the words that work in the message box, and the way to help.
 export function DraftAside({ draft }: { readonly draft: DraftBody }) {
   const t = useText();
   const kept = draft.keptUntil;
   return (
     <div className="flex flex-col gap-4">
+      <DraftSigap draft={draft} />
       <section aria-labelledby="aside-progress" className="card-surface flex flex-col gap-3 p-5">
         {draft.followUpOf === null ? (
           <>

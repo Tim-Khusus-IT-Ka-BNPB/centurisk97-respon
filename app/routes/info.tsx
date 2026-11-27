@@ -45,7 +45,11 @@ export async function loader({ request, context }: Route.LoaderArgs) {
 
 export default function InfoRoute({ loaderData: { load, texts } }: Route.ComponentProps) {
   return (
-    <Page texts={texts} wide banner={{ title: "info.title", lead: "info.lead" }}>
+    <Page
+      texts={texts}
+      wide
+      banner={{ title: "info.title", lead: "info.lead", sigap: { scene: "info", copy: "sigap.info" } }}
+    >
       <InfoScreen load={load} />
     </Page>
   );

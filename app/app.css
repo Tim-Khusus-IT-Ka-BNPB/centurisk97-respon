@@ -595,3 +595,37 @@
   height: 0.75rem;
   transform: none;
 }
+
+/* Sigap, the mascot (upstream K76): a soft breath while a scene plays, and a small hop as one render
+   gives way to another, so the change is not a jump cut. Only for those who allow motion. */
+@keyframes sigap-breathe {
+  50% {
+    transform: scale(1.012, 0.988);
+  }
+}
+
+@keyframes sigap-hop {
+  16% {
+    transform: translateY(2px) scale(1.05, 0.93);
+  }
+  40% {
+    transform: translateY(-12px) scale(0.97, 1.04);
+  }
+  70% {
+    transform: scale(1.03, 0.96);
+  }
+}
+
+@utility sigap-breathe {
+  transform-origin: 50% 100%;
+  @media (prefers-reduced-motion: no-preference) {
+    animation: sigap-breathe 3.2s ease-in-out infinite;
+  }
+}
+
+@utility sigap-hop {
+  transform-origin: 50% 100%;
+  @media (prefers-reduced-motion: no-preference) {
+    animation: sigap-hop 520ms ease-out;
+  }
+}

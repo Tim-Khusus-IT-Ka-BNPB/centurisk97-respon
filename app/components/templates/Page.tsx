@@ -2,7 +2,7 @@ import { type ReactNode, useMemo } from "react";
 import { makeText, type Texts } from "../../../src/copy/text";
 import { cn } from "../../lib/cn";
 import { TextContext } from "../../lib/text";
-import { PageBanner } from "../organisms/PageBanner";
+import { type BannerSigap, PageBanner } from "../organisms/PageBanner";
 import { SideRail } from "../organisms/SideRail";
 import { SiteFooter } from "../organisms/SiteFooter";
 import { SiteHeader } from "../organisms/SiteHeader";
@@ -33,7 +33,7 @@ export function Page({
   // A full-width opening band above the column, for the home.
   readonly hero?: ReactNode;
   // A text page's title band: its catalogue keys.
-  readonly banner?: { readonly title: string; readonly lead?: string };
+  readonly banner?: { readonly title: string; readonly lead?: string; readonly sigap?: BannerSigap };
   readonly children: ReactNode;
   // A column beside the content on a wide screen, as the report's progress beside its conversation.
   readonly aside?: ReactNode;
@@ -50,7 +50,7 @@ export function Page({
         {publicPage ? <SideRail /> : null}
         <SiteHeader nav={publicPage} width={SITE} />
         {hero}
-        {banner ? <PageBanner titleKey={banner.title} leadKey={banner.lead} /> : null}
+        {banner ? <PageBanner titleKey={banner.title} leadKey={banner.lead} sigap={banner.sigap} /> : null}
         <main
           className={cn(
             "mx-auto grid w-full flex-1 grid-cols-1 content-start px-4 pt-8 md:px-6 md:pt-10",

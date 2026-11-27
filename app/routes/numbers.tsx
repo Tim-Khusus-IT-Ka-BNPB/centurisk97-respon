@@ -56,7 +56,11 @@ function Numbers() {
 
 export default function NumbersRoute({ loaderData }: Route.ComponentProps) {
   return (
-    <Page texts={loaderData.texts} wide banner={{ title: "numbers.title", lead: "numbers.lead" }}>
+    <Page
+      texts={loaderData.texts}
+      wide
+      banner={{ title: "numbers.title", lead: "numbers.lead", sigap: { scene: "numbers", copy: "sigap.numbers" } }}
+    >
       <Numbers />
     </Page>
   );

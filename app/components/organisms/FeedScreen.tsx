@@ -13,6 +13,7 @@ import { limitText } from "../../lib/status";
 import { useText } from "../../lib/text";
 import { buttonStyles } from "../atoms/Button";
 import { Icon } from "../atoms/Icon";
+import { SigapSays } from "../molecules/Sigap";
 import { eventShort, Impact, StatusDot, whenShort } from "./desk/parts";
 import { FeedMap } from "./FeedMap";
 
@@ -239,9 +240,12 @@ export function FeedScreen({
   const follow = follows === null ? null : { follows, onToggle: setFollows };
   return (
     <div className="flex flex-col gap-6">
-      <header className="flex flex-col gap-2">
-        <h1 className="text-page font-bold tracking-[-0.01em]">{t("feed.title")}</h1>
-        <p className="max-w-[65ch] text-body text-muted">{t("feed.lead")}</p>
+      <header className="grid items-end gap-4 md:grid-cols-[minmax(0,1fr)_22rem]">
+        <div className="flex flex-col gap-2">
+          <h1 className="text-page font-bold tracking-[-0.01em]">{t("feed.title")}</h1>
+          <p className="max-w-[65ch] text-body text-muted">{t("feed.lead")}</p>
+        </div>
+        <SigapSays scene="info" title={t("sigap.feed.title")} text={t("sigap.feed.text")} />
       </header>
       <Filters hazard={hazard} period={period} />
       {mine.length > 0 ? (

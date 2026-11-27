@@ -1,17 +1,21 @@
+import { useState } from "react";
 import { Link } from "react-router";
 import type { MeResponse } from "../../../src/contract/draft";
 import { hazardKey } from "../../../src/copy/hazardKey";
 import { clockTime, longDate } from "../../../src/copy/time";
 import { hazardIcon } from "../../lib/hazardIcons";
+import { useHydrated } from "../../lib/hooks";
 import type { MissingMine } from "../../lib/missingTypes";
 import { useText } from "../../lib/text";
-import { buttonStyles } from "../atoms/Button";
+import { Button, buttonStyles } from "../atoms/Button";
 import { Icon } from "../atoms/Icon";
 import { ActionRow } from "../molecules/layout";
 import { Notice } from "../molecules/Notice";
+import { SigapSays } from "../molecules/Sigap";
 import { ContactSection } from "./ContactSection";
 import { MoreDoors } from "./HomeDoors";
 import { HowToReport } from "./HowToReport";
+import { SigapTour } from "./SigapTour";
 import { resumeLine } from "./StartScreen";
 
 function Resume({ profile }: { readonly profile: MeResponse["knownReporters"][number] }) {
@@ -167,6 +171,25 @@ function OwnReports({
 }
 
 // Under the opening band: the offer to resume, the reports sent, how reporting goes, and BNPB's contacts.
+// Sigap greets on the home, and offers the tour of it.
+function HomeSigap() {
+  const t = useText();
+  const hydrated = useHydrated();
+  const [touring, setTouring] = useState(false);
+  return (
+    <>
+      <SigapSays scene="greet" title={t("sigap.home.title")} text={t("sigap.home.text")} className="max-w-xl">
+        {hydrated ? (
+          <Button type="button" variant="quiet" size="min" className="self-start px-0" onClick={() => setTouring(true)}>
+            {t("sigap.home.tour")}
+          </Button>
+        ) : null}
+      </SigapSays>
+      {touring ? <SigapTour onClose={() => setTouring(false)} /> : null}
+    </>
+  );
+}
+
 export function HomeScreen({
   me,
   missing = [],
@@ -193,6 +216,7 @@ export function HomeScreen({
     );
   return (
     <div className="flex flex-col gap-14 md:gap-16">
+      <HomeSigap />
       <MoreDoors />
       {resumes}
       <HowToReport />

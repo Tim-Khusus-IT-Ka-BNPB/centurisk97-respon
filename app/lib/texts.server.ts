@@ -14,6 +14,7 @@ const SHELL = [
   "nav.",
   "home.contact.organisation",
   "theme.",
+  "sigap.",
 ];
 
 export const PAGE_TEXTS = {
