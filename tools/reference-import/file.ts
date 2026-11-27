@@ -9,7 +9,14 @@ import { checkActionFile } from "../../src/domain/responseActions.ts";
 import { checkVolcanoFile } from "../../src/domain/volcano.ts";
 import { type Database, row, run, sql } from "../../src/platform/database.ts";
 
-export type ReferenceName = "bpbdContacts" | "education" | "responseActions" | "forecast" | "volcanoes" | "facilityNumbers" | "officialEvents";
+export type ReferenceName =
+  | "bpbdContacts"
+  | "education"
+  | "responseActions"
+  | "forecast"
+  | "volcanoes"
+  | "facilityNumbers"
+  | "officialEvents";
 
 export class ReferenceFileRefused extends Error {
   constructor(name: ReferenceName) {
