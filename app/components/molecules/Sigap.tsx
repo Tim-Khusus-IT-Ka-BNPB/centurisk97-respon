@@ -64,8 +64,10 @@ export function Sigap({ scene, className }: { readonly scene: SigapScene; readon
           key={file}
           src={sigapSrc(file)}
           alt=""
-          width={640}
-          height={640}
+          // The size it is drawn at, not the file's 640: before the stylesheet lands the attributes
+          // size it, and a 640px box widened a phone's page for good in WebKit.
+          width={112}
+          height={112}
           className={cn("size-full object-contain", hop && moving && "sigap-hop")}
         />
       </span>
