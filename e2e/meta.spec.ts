@@ -18,7 +18,15 @@ async function tagsOf(html: string) {
   };
 }
 
-const PUBLIC = ["/lapor", "/lapor/report", "/lapor/help", "/lapor/about", "/lapor/privacy", "/lapor/info"];
+const PUBLIC = [
+  "/lapor",
+  "/lapor/report",
+  "/lapor/help",
+  "/lapor/about",
+  "/lapor/privacy",
+  "/lapor/info",
+  "/lapor/hari-ini",
+];
 
 test("every public page has its own title, description, canonical address and share card", async ({ request }) => {
   const titles = new Set<string>();
