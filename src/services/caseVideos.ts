@@ -19,7 +19,8 @@ import type { LimitRefusal } from "./limits";
 // A video of a house or a piece of infrastructure (upstream LJ-18, video optional per K5), sent in
 // parts like a report's own: a broken send goes on where it stopped.
 
-const PER_RECORD = 2;
+// As many as a report takes, so the uploader says one limit.
+const PER_RECORD = VIDEO.perReport;
 const MADE_SINCE_MS = Date.UTC(2010, 0, 1);
 const WITH_VIDEO = new Set(["house", "infrastructure"]);
 

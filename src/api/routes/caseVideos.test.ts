@@ -161,11 +161,12 @@ describe("a record's video", () => {
     expect(await refused({ bytes: 5000, seconds: VIDEO.maxSeconds + 2 })).toBe("fieldError.video.tooLong");
     const junk = await upload(base, new Uint8Array(5000));
     expect(junk.done.error.fields[0]?.copyKey).toMatch(/^fieldError\.video\./);
-    for (let n = 0; n < 2; n += 1) expect((await upload(base, movie(5000, null, false))).done.status).toBe(200);
+    for (let n = 0; n < VIDEO.perReport; n += 1)
+      expect((await upload(base, movie(5000, null, false))).done.status).toBe(200);
     expect(await refused({ bytes: 5000, seconds: null })).toBe("fieldError.video.tooMany");
     const [kept] = (await staff(REGENCY).call("GET", base)).json as { id: string }[];
     const taken = await staff(REGENCY).call("DELETE", `${base}/${kept?.id}`);
-    expect((taken.json as unknown[]).length).toBe(1);
+    expect((taken.json as unknown[]).length).toBe(VIDEO.perReport - 1);
     expect((await staff(REGENCY).call("DELETE", `${base}/${kept?.id}`)).status).toBe(404);
     const shelter = await staff(REGENCY).call("POST", `/cases/${fileId}/records`, {
       kind: "business",
@@ -225,7 +226,8 @@ describe("a record's video", () => {
     };
     const [a, b] = [await open(), await open()];
     expect((await staff(REGENCY).call("POST", `${base}/${a}/complete`)).status).toBe(200);
-    expect((await upload(base, movie(5000, null, false))).done.status).toBe(200);
+    for (let n = 1; n < VIDEO.perReport; n += 1)
+      expect((await upload(base, movie(5000, null, false))).done.status).toBe(200);
     expect((await staff(REGENCY).call("POST", `${base}/${b}/complete`)).error.fields[0]?.copyKey).toBe(
       "fieldError.video.tooMany",
     );
