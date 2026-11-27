@@ -8,13 +8,13 @@ export const CASE_KINDS = ["house", "infrastructure", "shelter", "evacuee", "vic
 export type CaseKind = (typeof CASE_KINDS)[number];
 
 export const DAMAGE = ["heavy", "moderate", "light"] as const;
-export type Damage = (typeof DAMAGE)[number];
+type Damage = (typeof DAMAGE)[number];
 // Infrastructure reaching the desk's vital-service and basic-service columns (upstream VITAL, LAYANAN).
 export const VITAL = ["power", "water", "signal", "irrigation", "transport", "fuelStation"] as const;
 export const SERVICES = ["school", "healthFacility", "worship", "office", "market"] as const;
-export const INFRASTRUCTURE = ["bridge", "road", ...SERVICES, ...VITAL, "other"] as const;
+const INFRASTRUCTURE = ["bridge", "road", ...SERVICES, ...VITAL, "other"] as const;
 // A face photo is asked from this age (Q13, the child limit of UU 35/2014).
-export const ADULT_AGE = 18;
+const ADULT_AGE = 18;
 const VULNERABLE = [
   "toddler",
   "pregnant1",
@@ -28,7 +28,7 @@ const VULNERABLE = [
   "mentalDisability",
   "sick",
 ] as const;
-export const SHELTER_SECTORS = [
+const SHELTER_SECTORS = [
   "needWater",
   "needFood",
   "needClothing",
@@ -270,7 +270,7 @@ export function photosMissing(
 }
 
 // The file's own values (F-9): its emergency status, decree, post, efforts and personnel.
-export const EMERGENCY_STATUSES = ["alert", "emergencyResponse", "transition", "notSet"] as const;
+const EMERGENCY_STATUSES = ["alert", "emergencyResponse", "transition", "notSet"] as const;
 const FILE_FIELDS = ["emergencyStatus", "decreeNumber", "decreeDate", "post", "efforts", "personnel"] as const;
 const POST_FIELDS = ["name", "shelter", "phone"] as const;
 
@@ -346,3 +346,19 @@ function checkPost(value: unknown, named: boolean): Readonly<Record<string, unkn
   if (entries.length === 0 || post.name === null || (post.name === undefined && !named && others)) return undefined;
   return post;
 }
+
+// What BNPB's desk sees of a personal value until it asks for it in full (Q6): each word's first
+// letter, the last four digits of a number or NIK, and a list by its length.
+const maskOne = (value: unknown): unknown => {
+  if (Array.isArray(value)) return value.map(() => "***");
+  const text = String(value);
+  if (text === "none") return text;
+  if (/^\+?\d{6,}$/.test(text)) return `${"*".repeat(text.length - 4)}${text.slice(-4)}`;
+  return text
+    .split(" ")
+    .map((word) => `${word.charAt(0)}***`)
+    .join(" ");
+};
+
+export const maskPersonal = (values: CaseValues): CaseValues =>
+  Object.fromEntries(Object.entries(values).map(([id, value]) => [id, maskOne(value)]));

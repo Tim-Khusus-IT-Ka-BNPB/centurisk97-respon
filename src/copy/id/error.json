@@ -42,5 +42,9 @@
   "error.comments.unknownReporter": "Untuk berkomentar, kirim laporan sekali dulu dari nomor Anda di ponsel ini.",
   "error.comments.notShown": "Kejadian ini sudah tidak tampil di Alun-alun.",
   "error.comments.notFound": "Komentar ini sudah tidak ada.",
-  "error.comments.own": "Komentar Anda sendiri tidak bisa dilaporkan."
+  "error.comments.own": "Komentar Anda sendiri tidak bisa dilaporkan.",
+  "error.cases.notFound": "Berkas data lanjutan ini tidak ada untuk akun Anda.",
+  "error.cases.closed": "Berkas ini sudah ditutup. Minta BNPB membukanya lagi bila ada yang perlu diubah.",
+  "error.cases.changed": "Data ini baru saja diubah orang lain. Muat ulang, lalu periksa sebelum menyimpan lagi.",
+  "error.cases.linkUsed": "Tautan ini sudah dipakai atau sudah berakhir. Minta tautan baru ke petugas BPBD yang menambahkan Anda."
 }

@@ -1,11 +1,13 @@
 import { OpenAPIHono, type RouteConfig, type RouteHandler, type z } from "@hono/zod-openapi";
 import { bodyLimit } from "hono/body-limit";
+import { getCookie } from "hono/cookie";
 import { createMiddleware } from "hono/factory";
 import { routePath } from "hono/route";
 import { errorEnvelopeSchema } from "../contract/errors";
 import { clientAddress } from "../platform/address";
 import { sqlState } from "../platform/database";
 import type { Principal } from "../ports/identity";
+import { CASE_COOKIE, caseMemberOf } from "../services/cases";
 import { admitCall } from "../services/gateway";
 import type { ApiEnv } from "./context";
 import { refuse } from "./envelope";
@@ -14,7 +16,8 @@ import { refuse } from "./envelope";
 // answers 404 inside the handler, the same as a draft that does not exist. "staff" needs a staff
 // account; what it may do there is decided in the service, by role and region.
 // "gateway" is a WhatsApp gateway: it signs each call and no cookie or Origin speaks for it.
-export type Policy = "public" | "reporter" | "staff" | "gateway";
+// "caseTeam" is a staff account, or a member of a BPBD follow-up file by their own cookie (D20).
+export type Policy = "public" | "reporter" | "staff" | "gateway" | "caseTeam";
 
 export const API_BASE = "/api/lapor";
 const MAX_BODY_BYTES = 16 * 1024;
@@ -23,7 +26,9 @@ const MAX_BODY_BYTES = 16 * 1024;
 const PHOTO_BODY_BYTES = 12 * 1024 * 1024;
 const isPhotoUpload = (method: string, path: string) =>
   (method === "POST" &&
-    /\/(?:(?:drafts|emergencies)\/[^/]+\/photos|desk\/reports\/[^/]+\/proofs|foto|missing)$/.test(path)) ||
+    /\/(?:(?:drafts|emergencies)\/[^/]+\/photos|desk\/reports\/[^/]+\/proofs|cases\/[^/]+\/records\/[^/]+\/media|foto|missing)$/.test(
+      path,
+    )) ||
   (method === "PUT" && /\/drafts\/[^/]+\/videos\/[^/]+\/parts\/\d+$/.test(path));
 // Upstream's route shapes for its gateway (ROADMAP section 7), kept as they are.
 export const isGatewayPath = (path: string) => /^\/api\/lapor\/(?:pesan|foto|izin|bahasa|kabar(?:\/.+)?)$/.test(path);
@@ -96,6 +101,11 @@ function policyGuard(policy: Policy) {
       if (principal.kind === "staff") return refuse(c, 404, "draft.notFound");
     }
     if (policy === "staff" && c.var.principal?.kind !== "staff") return refuse(c, 401, "auth.staffSignInFirst");
+    if (policy === "caseTeam" && c.var.principal?.kind !== "staff") {
+      const member = await caseMemberOf(c.env, getCookie(c, CASE_COOKIE));
+      if (member === null) return refuse(c, 401, "auth.signInFirst");
+      c.set("caseMember", member);
+    }
     await next();
   });
 }
@@ -145,6 +155,7 @@ function sharedResponses(method: string, policy: Policy) {
     ...(policy === "gateway"
       ? { 401: refusal("Not signed by a known gateway, or not now"), 409: refusal("The message id was used before") }
       : {}),
+    ...(policy === "caseTeam" ? { 401: refusal("No staff account, and no team member's cookie") } : {}),
     ...(policy === "staff"
       ? {
           401: refusal("No staff account"),

@@ -1156,6 +1156,7 @@ describe("desk routes", () => {
       officers: null,
       today: null,
       comments: null,
+      caseFile: null,
       nextStatuses: [],
       revision: 0,
       mayTake: false,

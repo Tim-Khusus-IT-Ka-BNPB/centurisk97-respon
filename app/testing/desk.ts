@@ -75,6 +75,7 @@ export const REPORT: DeskReport = {
   officers: null,
   today: null,
   comments: null,
+  caseFile: null,
   ...ITEM,
   status: "seen",
   account: { label: "Pusdalops BNPB, Petugas Uji" },

@@ -7,6 +7,7 @@ type TableClasses = { readonly retention: string; readonly columns: Readonly<Rec
 const I = "internal";
 const P = "personal";
 const PUB = "public";
+const S = "specific";
 
 export const COLUMN_CLASSES: Readonly<Record<string, TableClasses>> = {
   batch_guard: {
@@ -215,6 +216,86 @@ export const COLUMN_CLASSES: Readonly<Record<string, TableClasses>> = {
       staff_label: I,
       at: I,
     },
+  },
+  case_file: {
+    retention: "with the report; personal values of its records cleared five years after its closing is accepted",
+    columns: {
+      id: I,
+      ticket_number: I,
+      regency_code: I,
+      status: I,
+      fields: I,
+      nil: I,
+      revision: I,
+      opened_by: I,
+      opened_at: I,
+      accepted_at: I,
+      erased_at: I,
+    },
+  },
+  case_member: {
+    retention: "with its file",
+    columns: {
+      id: I,
+      file_id: I,
+      name: P,
+      number: P,
+      link_hash: I,
+      link_expires_at: I,
+      session_hash: I,
+      session_expires_at: I,
+      added_by: I,
+      added_at: I,
+      removed_at: I,
+    },
+  },
+  case_record: {
+    retention: "with its file; personal cleared five years after the closing is accepted",
+    columns: {
+      id: I,
+      file_id: I,
+      kind: I,
+      seq: I,
+      data: P,
+      personal: S,
+      lat: P,
+      lon: P,
+      cancelled_reason: I,
+      client_id: I,
+      revision: I,
+      by_label: I,
+      created_at: I,
+      updated_at: I,
+    },
+  },
+  case_media: {
+    retention: "with its record; faces and photos of the missing deleted with the personal values",
+    columns: {
+      id: I,
+      record_id: I,
+      file_id: I,
+      kind: I,
+      object_key: I,
+      lat: P,
+      lon: P,
+      badge: I,
+      taken_at: I,
+      by_label: I,
+      at: I,
+      erased_at: I,
+    },
+  },
+  case_trail: {
+    retention: "with its file; append-only, personal values by fingerprint only",
+    columns: { id: I, file_id: I, record_id: I, action: I, detail: P, by_label: I, at: I },
+  },
+  case_access: {
+    retention: "with its file; append-only",
+    columns: { id: I, file_id: I, record_id: I, action: I, who_id: I, who_label: I, at: I },
+  },
+  case_version: {
+    retention: "with its file; append-only, no personal value",
+    columns: { file_id: I, version: I, body: I, fingerprint: I, sealed_by: I, at: I },
   },
   handling_action: {
     retention: "with the report; append-only",

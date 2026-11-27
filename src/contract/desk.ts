@@ -212,6 +212,14 @@ export const deskReportSchema = queueItemSchema.extend({
     .nullable(),
   // The comments on the Alun-alun card this report shows on; null when there are none.
   comments: deskCommentsSchema.nullable(),
+  // The BPBD's follow-up file of this report (M09): its id and state, null when none is open; and
+  // whether this account may open one, as the BPBD of the report's regency.
+  caseFile: z
+    .object({
+      file: z.object({ id: z.string(), status: z.enum(["open", "proposed", "done", "doneNoted"]) }).nullable(),
+      mayOpen: z.boolean(),
+    })
+    .nullable(),
   // Where it is on the map; null where its village has no outline to place it in.
   point: mapPointSchema.nullable(),
   groups: z.array(deskGroupSchema),

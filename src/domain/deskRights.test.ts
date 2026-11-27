@@ -25,6 +25,10 @@ const RIGHTS: readonly (readonly [DeskCapability, boolean, boolean])[] = [
   ["callOfficers", true, false],
   ["pullToday", true, true],
   ["moderateComments", true, true],
+  ["readCases", true, true],
+  ["leadCase", false, true],
+  ["revealCase", true, false],
+  ["acceptCase", true, false],
 ];
 
 describe("desk capabilities", () => {

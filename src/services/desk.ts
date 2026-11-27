@@ -49,6 +49,7 @@ import type { TicketStatus } from "../domain/stages";
 import { checkMove, checkReply, moveCapability, noteRule, offeredStatuses } from "../domain/ticketMoves";
 import type { StaffPrincipal } from "../ports/identity";
 import type { ServiceBindings } from "./bindings";
+import { caseOfReport } from "./cases";
 import { deskDelivery } from "./chatNews";
 import { clusterMap } from "./clusters";
 import { commentsFor } from "./comments";
@@ -60,7 +61,7 @@ import { summaryGroups } from "./summary";
 import { todayFor } from "./todayDesk";
 import { versionsOf } from "./versions";
 
-type Refused =
+export type Refused =
   | { readonly kind: "notAllowed" }
   | { readonly kind: "notFound" }
   | { readonly kind: "limit"; readonly refusal: LimitRefusal };
@@ -333,6 +334,7 @@ async function reportBody(bindings: ServiceBindings, staff: StaffPrincipal, tick
     officers: await officersOf(bindings, staff, found.villageCode, place),
     today: await todayFor(bindings, ticketNumber),
     comments: await commentsFor(bindings, ticketNumber),
+    caseFile: await caseOfReport(bindings, staff, ticketNumber, found.villageCode.slice(0, 5)),
     point: point === undefined ? null : pointView(point),
     groups: summaryGroups(states).map((group) => ({
       ...group,

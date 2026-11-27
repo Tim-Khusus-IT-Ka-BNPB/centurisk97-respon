@@ -1,5 +1,13 @@
 import { describe, expect, test } from "vitest";
-import { CASE_KINDS, CASE_SPEC, checkFileFields, checkRecord, faceAllowed, photosMissing } from "./caseSpec";
+import {
+  CASE_KINDS,
+  CASE_SPEC,
+  checkFileFields,
+  checkRecord,
+  faceAllowed,
+  maskPersonal,
+  photosMissing,
+} from "./caseSpec";
 
 const SHELTER = "0123456789abcdef";
 const HOUSE = {
@@ -283,5 +291,31 @@ describe("the file's own values", () => {
     expect(post({ shelter: null })).toEqual({ errors: [], patch: { post: { shelter: null } } });
     expect(post(["Posko"]).errors).toEqual(["post"]);
     expect(post(5).errors).toEqual(["post"]);
+  });
+});
+
+describe("personal values for BNPB's desk", () => {
+  test("are each word's first letter, a number's last four digits, and a list by its length", () => {
+    expect(
+      maskPersonal({
+        name: "Uji Satu Dua",
+        phone: "+6280000000001",
+        nik: "3201010101010001",
+        contactPhone: "none",
+        vulnerable: ["sick", "elderly"],
+        short: "12345",
+        traits: "tahi lalat 123456",
+        place: "123456 di dusun",
+      }),
+    ).toEqual({
+      name: "U*** S*** D***",
+      phone: "**********0001",
+      nik: "************0001",
+      contactPhone: "none",
+      vulnerable: ["***", "***"],
+      short: "1***",
+      traits: "t*** l*** 1***",
+      place: "1*** d*** d***",
+    });
   });
 });

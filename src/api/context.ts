@@ -1,6 +1,7 @@
 import type { Context } from "hono";
 import type { Principal } from "../ports/identity";
 import type { ServiceBindings } from "../services/bindings";
+import type { CaseMember } from "../services/cases";
 
 // What the Worker hands every API request: the services' bindings.
 export type ApiBindings = ServiceBindings;
@@ -12,6 +13,8 @@ type ApiVariables = {
   principal: Principal;
   // The gateway whose signature a call carries, on the gateway's own routes.
   gatewayId: string;
+  // A member of a BPBD follow-up file, by their own cookie, on the file's routes.
+  caseMember: CaseMember;
 };
 
 export type ApiEnv = { Bindings: ApiBindings; Variables: ApiVariables };

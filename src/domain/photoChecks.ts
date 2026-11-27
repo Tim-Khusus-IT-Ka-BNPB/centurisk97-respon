@@ -65,7 +65,7 @@ export function usableFix(device: DeviceFix | null, nowMs: number): DeviceFix | 
   return Math.abs(nowMs - device.readAtMs) <= GEO.deviceFixMaxAgeMs ? device : null;
 }
 
-function takenAt(exif: Exif, fallbackOffsetMinutes: number): number | null {
+export function takenAt(exif: Exif, fallbackOffsetMinutes: number): number | null {
   if (exif.time === null) return null;
   return exif.time.localMs - (exif.time.offsetMinutes ?? fallbackOffsetMinutes) * MINUTE_MS;
 }

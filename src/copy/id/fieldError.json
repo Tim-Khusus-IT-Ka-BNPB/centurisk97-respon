@@ -70,5 +70,7 @@
   "fieldError.comment.rude": "Komentar memuat kata kasar. Tulis ulang dengan kata yang sopan.",
   "fieldError.comment.repeated": "Komentar berisi huruf atau tanda yang diulang terlalu banyak.",
   "fieldError.comments.housesLevel": "Pilih tingkat kerusakan rumah: berat, sedang, atau ringan.",
-  "fieldError.comments.fieldNotUsed": "Isian ini tidak dipakai untuk jenis kejadian laporan itu."
+  "fieldError.comments.fieldNotUsed": "Isian ini tidak dipakai untuk jenis kejadian laporan itu.",
+  "fieldError.case.value": "Isian ini belum diisi atau belum sesuai.",
+  "fieldError.photo.faceNotAsked": "Foto wajah hanya untuk pengungsi dewasa yang tidak menolak difoto, atau korban yang masih dicari."
 }
