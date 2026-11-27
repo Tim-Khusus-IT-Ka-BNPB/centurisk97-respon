@@ -342,5 +342,21 @@
   "desk.gps.jump": "Titik foto melompat terlalu jauh dari foto sebelumnya dalam waktu singkat.",
   "desk.videos.made": "Direkam {date}, pukul {time} {zone}, menurut file video",
   "desk.videos.point": "Titik di file video {lat}, {lon}",
-  "desk.videos.captionPlaced": "Video {n}, {seconds} detik"
+  "desk.videos.captionPlaced": "Video {n}, {seconds} detik",
+  "desk.today.title": "Halaman Hari ini",
+  "desk.today.shown": "Tampil di halaman Hari ini sekarang.",
+  "desk.today.hidden": "Belum tampil di halaman Hari ini.",
+  "desk.today.valid": "Pengecekan terakhir Valid",
+  "desk.today.bpbd": "Dicek BPBD wilayah laporan",
+  "desk.today.ticket": "Tiket bukan Tidak valid",
+  "desk.today.version": "Tidak ada perubahan sesudah pengecekan",
+  "desk.today.pull": "Tidak ditarik dari halaman publik",
+  "desk.today.met": ", terpenuhi",
+  "desk.today.unmet": ", belum terpenuhi",
+  "desk.today.pullOff": "Tarik dari halaman publik",
+  "desk.today.restore": "Tampilkan lagi",
+  "desk.today.busy": "Menyimpan...",
+  "desk.today.open": "Buka halaman Hari ini",
+  "desk.saved.todayPulled": "Kejadian ini ditarik dari halaman Hari ini.",
+  "desk.saved.todayRestored": "Kejadian ini boleh tampil lagi di halaman Hari ini."
 }

@@ -90,9 +90,11 @@ export async function addFieldCheck(
               officer_regency, officer_position, privacy_version, consent_agreed_at, ${next.completePercent}, ${at}
             from report_version where report_id = ${reportId} and version = ${LAST(reportId)}`,
         ]),
-    sql`insert into field_check (ticket_number, staff_id, staff_label, result, note, version, at)
+    sql`insert into field_check (ticket_number, staff_id, staff_label, result, note, version, at, checker_role,
+        checker_level, checker_code)
       values (${ticketNumber}, ${staff.staffId}, ${staff.label}, ${check.result}, ${check.note},
-        ${next === null ? null : LAST(reportId)}, ${at})`,
+        ${next === null ? null : LAST(reportId)}, ${at}, ${staff.role}, ${staff.scope.level},
+        ${staff.scope.level === "national" ? null : staff.scope.code})`,
     actionRow(staff, ticketNumber, "fieldCheck", at),
   ]);
   return done !== null;

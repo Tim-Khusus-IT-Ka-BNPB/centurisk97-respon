@@ -17,6 +17,7 @@ export type Settings = {
   readonly clockFixedMs: number | null;
   readonly faultSend: boolean;
   readonly faultPlace: boolean;
+  readonly todayPage: boolean;
   readonly addressFallback: "loopback" | null;
   // One secret per WhatsApp gateway, by its id. Empty: that door is shut.
   readonly gatewaySecrets: ReadonlyMap<string, string>;
@@ -80,6 +81,8 @@ const raw = z.object({
   CLOCK_FIXED: z.union([z.literal(""), z.iso.datetime()]).default(""),
   FAULT_SEND: z.enum(["", "on"]).default(""),
   FAULT_PLACE: z.enum(["", "on"]).default(""),
+  // The public today page (upstream LAPOR_HARI_INI): off unless "on"; off, its page and API answer 404.
+  TODAY_PAGE: z.enum(["", "on"]).default(""),
   ADDRESS_FALLBACK: z.enum(["", "loopback"]).default(""),
   GATEWAY_SECRETS: z
     .string()
@@ -164,6 +167,7 @@ export function parseSettings(source: Readonly<Record<string, unknown>>, hasData
     clockFixedMs: values.CLOCK_FIXED === "" ? null : Date.parse(values.CLOCK_FIXED),
     faultSend: values.FAULT_SEND === "on",
     faultPlace: values.FAULT_PLACE === "on",
+    todayPage: values.TODAY_PAGE === "on",
     addressFallback: values.ADDRESS_FALLBACK === "" ? null : "loopback",
     gatewaySecrets: readGatewaySecrets(values.GATEWAY_SECRETS) as ReadonlyMap<string, string>,
     push:

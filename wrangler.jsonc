@@ -53,6 +53,7 @@
         "MODEL_MODE": "live",
         "MODEL_BASE_URL": "https://api.anthropic.com",
         "MODEL_NAME": "claude-sonnet-5-5",
+        "TODAY_PAGE": "on",
         "LOG_LEVEL": "info"
       }
     }

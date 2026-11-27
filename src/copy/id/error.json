@@ -37,5 +37,6 @@
   "error.ticket.taken": "Laporan ini sudah ditangani {taker}. Muat ulang halaman untuk melihat keadaan terbaru.",
   "error.missing.placeUnknown": "Desa atau kelurahan tempat terakhir terlihat belum terbaca. Cari lagi nama desanya.",
   "error.missing.tooMany": "Nomor ini sudah mengirim 5 laporan orang hilang hari ini. Bila ada yang mendesak, hubungi 112 atau Basarnas 115.",
-  "error.missing.moveRefused": "Status ini tidak bisa diubah ke pilihan itu, atau petugas lain sudah mengubahnya. Muat ulang halaman."
+  "error.missing.moveRefused": "Status ini tidak bisa diubah ke pilihan itu, atau petugas lain sudah mengubahnya. Muat ulang halaman.",
+  "error.today.closed": "Halaman kejadian hari ini belum dibuka."
 }

@@ -195,6 +195,20 @@ export const deskReportSchema = queueItemSchema.extend({
   // BNPB only: who at the BPBD to call, and the BPBD's own number when no officer of the regency
   // is there; null for an account that may not.
   officers: z.object({ items: z.array(deskOfficerSchema), official: contactSchema.nullable() }).nullable(),
+  // The public today page's five conditions for this report, and whether it shows there now; null
+  // while the page is shut.
+  today: z
+    .object({
+      conditions: z.object({
+        valid: z.boolean(),
+        bpbd: z.boolean(),
+        ticket: z.boolean(),
+        version: z.boolean(),
+        pull: z.boolean(),
+      }),
+      shown: z.boolean(),
+    })
+    .nullable(),
   // Where it is on the map; null where its village has no outline to place it in.
   point: mapPointSchema.nullable(),
   groups: z.array(deskGroupSchema),

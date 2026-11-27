@@ -1,6 +1,7 @@
 import { render, waitFor } from "@testing-library/react";
 import { describe, expect, test, vi } from "vitest";
 import { makeText } from "../../../src/copy/text";
+import { feedMarkers } from "../../lib/deskMap";
 import { TextContext } from "../../lib/text";
 import { FEED_ALONE, FEED_ENTRY } from "../../testing/feed";
 import { ALL_TEXTS } from "../../testing/render";
@@ -67,7 +68,7 @@ vi.mock("maplibre-gl/dist/maplibre-gl-worker.mjs?url", () => ({ default: "/asset
 const draw = (entries = [FEED_ENTRY, FEED_ALONE], rings: Parameters<typeof FeedMap>[0]["rings"] = []) =>
   render(
     <TextContext.Provider value={makeText(ALL_TEXTS)}>
-      <FeedMap entries={entries} rings={rings} />
+      <FeedMap markers={feedMarkers(entries, makeText(ALL_TEXTS))} rings={rings} />
       <article id={`feed-${FEED_ENTRY.id}`} tabIndex={-1} />
     </TextContext.Provider>,
   );

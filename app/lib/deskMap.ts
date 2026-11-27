@@ -1,5 +1,6 @@
 import Supercluster from "supercluster";
 import type { DeskMap } from "../../src/contract/desk";
+import type { FeedEntry } from "../../src/contract/publicFeed";
 import { hazardKey } from "../../src/copy/hazardKey";
 import type { Text } from "../../src/copy/text";
 import { ICONS, type IconName } from "../components/atoms/icons";
@@ -291,3 +292,25 @@ export function clusterList(points: readonly MapPoint[], t: Text): HTMLElement {
   box.appendChild(list);
   return box;
 }
+
+// One point on the map: where it stands, how it is named in words, and the card it leads to.
+export type MapMarker = {
+  readonly anchor: string;
+  readonly hazardType: string;
+  readonly centre: { readonly lat: number; readonly lon: number } | null;
+  readonly label: string;
+  readonly group: "open" | "working" | "done";
+};
+
+export const feedMarkers = (entries: readonly FeedEntry[], t: Text): MapMarker[] =>
+  entries.map((entry) => ({
+    anchor: `feed-${entry.id}`,
+    hazardType: entry.hazardType,
+    centre: entry.centre,
+    label: t("feed.map.marker", {
+      hazard: hazardKey(entry.hazardType),
+      village: entry.place.villageName,
+      status: `feed.status.${entry.status}`,
+    }),
+    group: STATUS_GROUPS[entry.status],
+  }));

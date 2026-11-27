@@ -49,6 +49,7 @@ describe("settings read at start", () => {
       addressFallback: null,
       gatewaySecrets: new Map(),
       push: null,
+      todayPage: false,
       logLevel: "info",
     });
   });
@@ -129,6 +130,11 @@ describe("settings read at start", () => {
     expect(refusal({ ...local, KEY_HMAC_SECRET: "x".repeat(31) }).problems).toEqual([
       { setting: "KEY_HMAC_SECRET", reason: "invalid" },
     ]);
+  });
+
+  test("the today page opens only on its switch", () => {
+    expect(parseSettings({ ...local, TODAY_PAGE: "on" }, true).todayPage).toBe(true);
+    expect(() => parseSettings({ ...local, TODAY_PAGE: "yes" }, true)).toThrow();
   });
 
   test("development switches are read in local and test", () => {

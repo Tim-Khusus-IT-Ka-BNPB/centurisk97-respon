@@ -196,6 +196,18 @@ describe("a change to a ticket", () => {
     ]);
   });
 
+  test("an event pulled off the today page or put back is posted to its route and named on the page after", async () => {
+    const { api, calls } = fakeApi(() => Response.json({}));
+    const off = await actOnDeskReport("LA-241126-01", form({ action: "today", pulled: "1" }), api);
+    expect(off).toMatchObject({ location: "/lapor/meja/LA-241126-01?saved=todayPulled" });
+    const back = await actOnDeskReport("LA-241126-01", form({ action: "today", pulled: "0" }), api);
+    expect(back).toMatchObject({ location: "/lapor/meja/LA-241126-01?saved=todayRestored" });
+    expect(calls.map((call) => [call.path, call.body])).toEqual([
+      ["/desk/reports/LA-241126-01/today", { pulled: true }],
+      ["/desk/reports/LA-241126-01/today", { pulled: false }],
+    ]);
+  });
+
   test("a report taken out of its event is posted to its route and named on the page after", async () => {
     const { api, calls } = fakeApi(() => Response.json({}));
     const done = await actOnDeskReport("LA-241126-01", form({ action: "release" }), api);

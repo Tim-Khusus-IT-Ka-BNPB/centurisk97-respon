@@ -8,7 +8,7 @@ import { LOST } from "../lib/network";
 import { PAGE_TEXTS, pickTexts } from "../lib/texts.server";
 import * as root from "../root";
 import { SUMMARY } from "../testing/desk";
-import { FEED_ENTRY, WATCH } from "../testing/feed";
+import { FEED_ENTRY, TODAY, WATCH } from "../testing/feed";
 import { OUTLOOK } from "../testing/outlook";
 import { OWN_REPORT } from "../testing/ownReport";
 import { never, renderPage } from "../testing/render";
@@ -38,6 +38,7 @@ import PosterRoute, * as poster from "./poster";
 import PrivacyRoute, * as privacy from "./privacy";
 import StartRoute, * as start from "./start";
 import * as theme from "./theme";
+import TodayRoute, * as today from "./today";
 import TrackingRoute, * as tracking from "./tracking";
 
 const DRAFT = SAMPLE_DRAFTS.summary.draftId;
@@ -398,6 +399,30 @@ describe("route modules", () => {
     expect(feed.meta({ data: read, matches: [] } as Args)).toContainEqual({ title: "Alun-alun, Pantau Bencana BNPB" });
     renderPage(routeElement(FeedRoute, { loaderData: read }), { path: "/lapor/feed" });
     expect(await screen.findByRole("heading", { level: 1, name: "Alun-alun" })).toBeTruthy();
+  });
+
+  test("the today page is read on the server, a kind picked from it; shut it answers 404", async () => {
+    expect(today.headers()).toEqual({ "cache-control": "private, no-store" });
+    const read = await today.loader({
+      request: new Request("http://localhost/lapor/hari-ini?hazard=flood"),
+      context: { api: api({ "GET /today": json(TODAY) }) },
+    } as Args);
+    expect(read).toMatchObject({ load: { kind: "today", today: TODAY }, hazard: "flood" });
+    const shut = (await today.loader({
+      request: new Request("http://localhost/lapor/hari-ini?hazard=other"),
+      context: { api: api({ "GET /today": json(apiEnvelope("today.closed"), 404) }) },
+    } as Args)) as unknown as { data: { load: unknown; hazard: unknown }; init: ResponseInit };
+    expect([shut.data.load, shut.data.hazard, shut.init.status]).toEqual([{ kind: "closed" }, null, 404]);
+    const broken = await today.loader({
+      request: new Request("http://localhost/lapor/hari-ini"),
+      context: { api: api({ "GET /today": () => new Response("down", { status: 503 }) }) },
+    } as Args);
+    expect(broken).toMatchObject({ load: { kind: "unavailable", envelope: null } });
+    expect(today.meta({ data: read, matches: [] } as Args)).toContainEqual({
+      title: "Kejadian hari ini, Pantau Bencana BNPB",
+    });
+    renderPage(routeElement(TodayRoute, { loaderData: read }), { path: "/lapor/hari-ini" });
+    expect(await screen.findByRole("heading", { level: 1, name: "Kejadian hari ini" })).toBeTruthy();
   });
 
   test("the home reads the open drafts on the server, and survives when it cannot", async () => {
@@ -1023,6 +1048,7 @@ describe("desk routes", () => {
       videos: [],
       event: null,
       officers: null,
+      today: null,
       nextStatuses: [],
       revision: 0,
       mayTake: false,

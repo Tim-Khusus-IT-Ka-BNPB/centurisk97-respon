@@ -7,6 +7,7 @@ import { FEED_PERIODS, type FeedPeriod } from "../../../src/domain/feedPeriod";
 import { SELECTABLE_HAZARD_TYPES } from "../../../src/domain/hazards";
 import { provinceRings } from "../../../src/domain/provinceRings";
 import { cn } from "../../lib/cn";
+import { feedMarkers } from "../../lib/deskMap";
 import { isLimit } from "../../lib/envelope";
 import { type Followed, followed, toggleFollow } from "../../lib/follow";
 import { hazardIcon } from "../../lib/hazardIcons";
@@ -19,7 +20,7 @@ import { eventShort, Impact, StatusDot, whenShort } from "./desk/parts";
 import { FeedMap } from "./FeedMap";
 import { OfficialEvents } from "./OfficialEvents";
 
-const chip =
+export const chip =
   "inline-flex min-h-target-min shrink-0 items-center gap-2 rounded-control border border-line bg-surface px-3 text-ink no-underline transition-colors duration-100 motion-reduce:transition-none hover:border-control aria-[current=true]:border-primary aria-[current=true]:bg-selected aria-[current=true]:font-semibold aria-[current=true]:text-primary";
 
 // The feed's query: a hazard, a period other than all, or neither. Each filter keeps the other.
@@ -331,7 +332,7 @@ export function FeedScreen({
               "lg:sticky lg:top-6 lg:order-2 lg:h-[calc(100dvh-8rem)]",
             )}
           >
-            <FeedMap entries={entries} rings={ringsOf(entries, official)} />
+            <FeedMap markers={feedMarkers(entries, t)} rings={ringsOf(entries, official)} />
           </div>
           <section aria-labelledby="feed-count" className="flex min-w-0 flex-col gap-3 lg:order-1">
             <h2 id="feed-count" className="text-meta font-semibold text-muted">

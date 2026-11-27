@@ -451,6 +451,17 @@ describe("a report on the desk", () => {
     expect(within(section).getByRole("link", { name: "Telepon" }).getAttribute("href")).toBe("tel:+628001108001");
   });
 
+  test("with the today page open, its five conditions, and a pull named on the page after", async () => {
+    const today = { conditions: { valid: true, bpbd: true, ticket: true, version: true, pull: true }, shown: true };
+    await renderDesk(<DeskReportView report={{ ...REPORT, today }} summary={SUMMARY} />, {
+      ...PATH,
+      entry: `${PATH.path}?saved=todayPulled`,
+    });
+    const section = screen.getByRole("region", { name: "Halaman Hari ini" });
+    expect(within(section).getAllByRole("listitem")).toHaveLength(5);
+    expect(screen.getByRole("status").textContent).toContain("Kejadian ini ditarik dari halaman Hari ini.");
+  });
+
   test("a report in a cluster names it beside its status and links the others, itself marked", async () => {
     const cluster = {
       tickets: ["LA-241126-01", "LA-241126-02", "LA-241126-03"],

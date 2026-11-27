@@ -19,6 +19,7 @@ import { DeskHistory } from "./DeskHistory";
 import { DeskOfficers } from "./DeskOfficers";
 import { Hazard, PhotoFigure } from "./DeskQueue";
 import { DeskShell } from "./DeskShell";
+import { DeskToday } from "./DeskToday";
 import { DeskValues } from "./DeskValues";
 import {
   ALL_FILTERS,
@@ -37,7 +38,19 @@ import {
   when,
 } from "./parts";
 
-const SAVED = ["status", "replies", "checks", "actions", "proofs", "take", "proofShown", "proofHidden", "released"];
+const SAVED = [
+  "status",
+  "replies",
+  "checks",
+  "actions",
+  "proofs",
+  "take",
+  "proofShown",
+  "proofHidden",
+  "released",
+  "todayPulled",
+  "todayRestored",
+];
 
 // With script the open is posted once per visit, beside the page: a navigation would take what the
 // address says was just done off it.
@@ -516,6 +529,11 @@ export function DeskReportView({
           {report.officers === null ? null : (
             <Section id="desk-officers" title={t("desk.officers.title")}>
               <DeskOfficers officers={report.officers} opened={officer} />
+            </Section>
+          )}
+          {report.today === null ? null : (
+            <Section id="desk-today" title={t("desk.today.title")}>
+              <DeskToday today={report.today} />
             </Section>
           )}
         </div>

@@ -1,4 +1,5 @@
 import type { FeedEntry, Official, Watch } from "../../src/contract/publicFeed";
+import type { Today } from "../../src/contract/today";
 
 // A feed entry as the public feed sends it: a closed flood in a cluster of three, two photos marked public.
 export const FEED_ENTRY: FeedEntry = {
@@ -89,6 +90,41 @@ export const OFFICIAL: Official = {
       houses: null,
       news: [],
       moreNews: 0,
+    },
+  ],
+};
+
+// The today page with a verified flood seen by three people and a landslide no one figured.
+export const TODAY: Today = {
+  events: [
+    {
+      id: "0123456789",
+      hazardType: "flood",
+      hazardSubtype: "flashFlood",
+      eventTime: { kind: "dateTime", localDate: "2026-11-24", localTime: "08:00", zone: "WIB" },
+      place: { villageName: "Uji Satu", districtName: "Baktiya", regencyName: "Aceh Utara", provinceName: "Aceh" },
+      centre: { lat: 5.1, lon: 97.2 },
+      reporters: 3,
+      verifiedBy: { level: "regency", name: "Aceh Utara" },
+      verifiedAt: { utc: "2026-11-24T03:00:00.000Z", zone: "WIB" },
+      impact: { dead: { min: 2, max: 2 }, displaced: { min: 40, max: 120 } },
+    },
+    {
+      id: "abcdef0123",
+      hazardType: "landslide",
+      hazardSubtype: null,
+      eventTime: null,
+      place: {
+        villageName: "Uji Dua",
+        districtName: "Medan Kota",
+        regencyName: "Medan",
+        provinceName: "Sumatera Utara",
+      },
+      centre: null,
+      reporters: null,
+      verifiedBy: { level: "province", name: "Sumatera Utara" },
+      verifiedAt: { utc: "2026-11-24T02:00:00.000Z", zone: "WIB" },
+      impact: {},
     },
   ],
 };

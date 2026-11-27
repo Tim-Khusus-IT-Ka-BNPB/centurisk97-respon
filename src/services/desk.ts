@@ -56,6 +56,7 @@ import { emergencyList } from "./emergency";
 import { checkLimits, type LimitRefusal } from "./limits";
 import { officersOf } from "./officers";
 import { summaryGroups } from "./summary";
+import { todayFor } from "./todayDesk";
 import { versionsOf } from "./versions";
 
 type Refused =
@@ -329,6 +330,7 @@ async function reportBody(bindings: ServiceBindings, staff: StaffPrincipal, tick
       identity: mayUse(staff.role, "readIdentity") ? identityOf(found) : null,
     },
     officers: await officersOf(bindings, staff, found.villageCode, place),
+    today: await todayFor(bindings, ticketNumber),
     point: point === undefined ? null : pointView(point),
     groups: summaryGroups(states).map((group) => ({
       ...group,

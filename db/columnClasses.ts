@@ -171,7 +171,23 @@ export const COLUMN_CLASSES: Readonly<Record<string, TableClasses>> = {
   },
   field_check: {
     retention: "with the report; append-only",
-    columns: { id: I, ticket_number: I, staff_id: I, staff_label: I, result: I, note: I, version: I, at: I },
+    columns: {
+      id: I,
+      ticket_number: I,
+      staff_id: I,
+      staff_label: I,
+      result: I,
+      note: I,
+      version: I,
+      at: I,
+      checker_role: I,
+      checker_level: I,
+      checker_code: I,
+    },
+  },
+  today_pull: {
+    retention: "with the report; append-only",
+    columns: { id: I, ticket_number: I, pulled: I, staff_id: I, staff_label: I, at: I },
   },
   handling_action: {
     retention: "with the report; append-only",

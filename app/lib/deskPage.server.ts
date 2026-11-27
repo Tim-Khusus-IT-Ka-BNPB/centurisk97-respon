@@ -278,6 +278,8 @@ function deskPost(form: FormData): readonly [path: string, body?: unknown] {
       return [`proofs/${encodeURIComponent(text("proofId"))}/public`, { public: text("public") === "1" }];
     case "release":
       return ["event/release"];
+    case "today":
+      return ["today", { pulled: text("pulled") === "1" }];
     default:
       return ["view"];
   }
@@ -309,7 +311,11 @@ export async function actOnDeskReport(ticketNumber: string, form: FormData, api:
         : "proofHidden"
       : action === "release"
         ? "released"
-        : path;
+        : action === "today"
+          ? formText(form, "pulled") === "1"
+            ? "todayPulled"
+            : "todayRestored"
+          : path;
   return redirectTo(`/lapor/meja/${ticket}${path === "view" ? "" : `?saved=${saved}`}`, response);
 }
 

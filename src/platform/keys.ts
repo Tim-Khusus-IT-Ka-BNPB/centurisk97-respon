@@ -1,7 +1,7 @@
 // Keys of people and addresses: HMAC-SHA-256 under the server secret, so a stored key cannot be
 // reversed by trying numbers. Each kind has its own label so a number never collides with an address.
 // "feed" stands for a public feed entry without naming its report.
-export type KeyKind = "number" | "address" | "subject" | "tracking" | "feed";
+export type KeyKind = "number" | "address" | "subject" | "tracking" | "feed" | "today";
 
 const encoder = new TextEncoder();
 const hex = (bytes: ArrayBuffer) =>

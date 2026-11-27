@@ -30,7 +30,9 @@ export type DeskCapability =
   // Take a report out of the event its reporter joined (D106): BNPB only.
   | "releaseEvent"
   // See the region's BPBD officers and open their numbers, each time logged (PF-09): BNPB only.
-  | "callOfficers";
+  | "callOfficers"
+  // Pull an event off the public today page, or put it back (upstream D8): BNPB and the region's BPBD.
+  | "pullToday";
 
 // The roles holding each capability. A regional officer works only its own region (StaffScope),
 // asks for a reporter's identity each time, and neither forwards nor reopens.
@@ -54,6 +56,7 @@ const HOLDERS: Readonly<Record<DeskCapability, readonly StaffRole[]>> = {
   pauseWarnings: ["deskOfficer"],
   releaseEvent: ["deskOfficer"],
   callOfficers: ["deskOfficer"],
+  pullToday: ["deskOfficer", "regionalOfficer"],
 };
 
 export const mayUse = (role: StaffRole, capability: DeskCapability): boolean => HOLDERS[capability].includes(role);

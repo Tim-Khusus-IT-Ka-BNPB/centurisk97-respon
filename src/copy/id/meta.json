@@ -15,5 +15,6 @@
   "meta.poster.description": "Poster QR per desa untuk dicetak: pindaian membuka halaman lapor kejadian bencana.",
   "meta.info.description": "Prakiraan hujan dan ancaman bencana tiga hari ke depan per kabupaten atau kota, dengan nomor BPBD, 112, dan 117.",
   "meta.missing.description": "Laporkan keluarga atau kerabat yang belum ditemukan setelah bencana. Hanya dibaca BNPB dan BPBD daerahnya.",
-  "meta.numbers.description": "Nomor darurat nasional 112, Call Center BNPB 117, Basarnas 115, ambulans 119, polisi 110, pemadam kebakaran 113, dan kontak BNPB."
+  "meta.numbers.description": "Nomor darurat nasional 112, Call Center BNPB 117, Basarnas 115, ambulans 119, polisi 110, pemadam kebakaran 113, dan kontak BNPB.",
+  "meta.today.description": "Laporan warga yang sudah diverifikasi BPBD dalam 24 jam terakhir, tanpa nama, nomor, atau foto pelapor. Bukan data resmi korban."
 }

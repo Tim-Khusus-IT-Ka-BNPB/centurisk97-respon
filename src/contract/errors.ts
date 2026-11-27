@@ -32,6 +32,7 @@ const ERROR_CODES = [
   "gateway.refused",
   "gateway.replayed",
   "feed.photoNotFound",
+  "today.closed",
   "outlook.regencyNotFound",
   "warnings.closed",
   "warnings.full",
