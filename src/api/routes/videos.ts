@@ -17,13 +17,13 @@ import { fieldErrors } from "./shared";
 
 const draft = z.object({ draftId: z.uuid() });
 const one = draft.extend({ videoId: z.uuid() });
-const progressSchema = z.object({
+export const progressSchema = z.object({
   id: z.uuid(),
   parts: z.number().int().positive(),
   partBytes: z.number().int().positive(),
   received: z.array(z.number().int().nonnegative()),
 });
-const listSchema = z.array(z.object({ id: z.uuid(), seconds: z.number().int(), container: z.string() }));
+export const listSchema = z.array(z.object({ id: z.uuid(), seconds: z.number().int(), container: z.string() }));
 
 function videoAnswered<T>(c: ApiContext, answer: VideoAnswer<T>): Response {
   if (answer.kind === "ok") return c.json(answer.body as object, 200);

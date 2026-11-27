@@ -220,7 +220,9 @@ export function PhotosCardView({ card }: { readonly card: PhotosCard }) {
         </ul>
       ) : null}
       <PhotoForm card={card} />
-      {hydrated ? <VideoUpload draftId={draft.draftId} /> : null}
+      {hydrated ? (
+        <VideoUpload base={`/drafts/${encodeURIComponent(draft.draftId)}/videos`} resumeKey={draft.draftId} />
+      ) : null}
       <TurnForm className="flex flex-col">
         {card.options.map((option) => (
           <Button

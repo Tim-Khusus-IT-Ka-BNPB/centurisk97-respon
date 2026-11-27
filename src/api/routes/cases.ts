@@ -28,6 +28,7 @@ import { refuse } from "../envelope";
 import { type Api, addRoute, jsonBody, jsonResponse, refusal } from "../route";
 import { answered, staffOf, ticketParams } from "./desk";
 import { deviceFix, fieldErrors, type limitRefused, photoForm } from "./shared";
+import { rangeOf } from "./videos";
 
 const fileParams = z.object({ fileId: z.string().regex(/^[0-9a-f]{16}$/) });
 const recordParams = fileParams.extend({ recordId: z.string().regex(/^[0-9a-f]{16}$/) });
@@ -50,10 +51,11 @@ type Answer =
   | { readonly kind: "closed" }
   | { readonly kind: "changed" }
   | { readonly kind: "invalid"; readonly errors: readonly string[] }
-  | { readonly kind: "photoRefused"; readonly rule: string };
+  | { readonly kind: "photoRefused"; readonly rule: string }
+  | { readonly kind: "refused"; readonly rule: string };
 
 // Every answer of the file's routes, the same way: a value refused on its own field.
-function caseAnswered(c: ApiContext, answer: Answer): Response {
+export function caseAnswered(c: ApiContext, answer: Answer): Response {
   c.header("x-robots-tag", "noindex");
   c.header("cache-control", "private, no-store");
   if (answer.kind === "closed") return refuse(c, 409, "cases.closed");
@@ -66,6 +68,10 @@ function caseAnswered(c: ApiContext, answer: Answer): Response {
   if (answer.kind === "photoRefused")
     return refuse(c, 422, "request.invalidFields", {
       fields: fieldErrors([{ fieldId: "photo", rule: `photo.${answer.rule}`, params: {} }]),
+    });
+  if (answer.kind === "refused")
+    return refuse(c, 422, "request.invalidFields", {
+      fields: fieldErrors([{ fieldId: "video", rule: answer.rule, params: {} }]),
     });
   return answered(c, answer);
 }
@@ -213,7 +219,11 @@ export function addCaseRoutes(api: Api): void {
       path: "/cases/{fileId}/media/{mediaId}",
       request: { params: fileParams.extend({ mediaId: z.uuid() }) },
       responses: {
-        200: { description: "The photo; the reading is logged", content: { "image/jpeg": { schema: z.string() } } },
+        200: {
+          description: "The photo or video; the reading is logged",
+          content: { "image/jpeg": { schema: z.string() } },
+        },
+        206: { description: "Part of a video", content: { "video/mp4": { schema: z.string() } } },
         404: refusal("No such photo for this reader"),
       },
     }),
@@ -221,10 +231,20 @@ export function addCaseRoutes(api: Api): void {
       const { fileId, mediaId } = c.req.valid("param");
       const answer = await recordMedia(c.env, actorOf(c), fileId, mediaId);
       if (answer.kind !== "ok") return caseAnswered(c, answer);
-      return c.body(new Uint8Array(answer.body), 200, {
-        "content-type": "image/jpeg",
+      const { bytes, contentType } = answer.body;
+      // A video is played by range, as a phone's player and Safari ask for.
+      const range = rangeOf(c.req.header("range"), bytes.length);
+      const headers = {
+        "content-type": contentType,
+        "accept-ranges": "bytes",
+        "x-content-type-options": "nosniff",
         "cache-control": "private, no-store",
         "x-robots-tag": "noindex",
+      };
+      if (range === null) return c.body(new Uint8Array(bytes), 200, headers);
+      return c.body(new Uint8Array(bytes.slice(range.start, range.end + 1)), 206, {
+        ...headers,
+        "content-range": `bytes ${range.start}-${range.end}/${bytes.length}`,
       });
     },
   );

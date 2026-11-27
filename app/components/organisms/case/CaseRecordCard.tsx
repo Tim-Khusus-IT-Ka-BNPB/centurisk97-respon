@@ -2,9 +2,11 @@ import { Form, Link, useNavigation } from "react-router";
 import type { CaseView } from "../../../../src/contract/cases";
 import { CASE_SPEC } from "../../../../src/domain/caseSpec";
 import { cn } from "../../../lib/cn";
+import { useHydrated } from "../../../lib/hooks";
 import { useText } from "../../../lib/text";
 import { Button, buttonStyles } from "../../atoms/Button";
 import { Input } from "../../atoms/controls";
+import { VideoUpload } from "../cards/VideoUpload";
 import { when } from "../desk/parts";
 
 type CaseRecord = CaseView["records"][number];
@@ -37,6 +39,8 @@ export function CaseRecordCard({
 }) {
   const t = useText();
   const navigation = useNavigation();
+  // The video's sending runs in the page: shown once its script is there.
+  const hydrated = useHydrated();
   const posting = navigation.formData?.get("recordId") === record.id ? navigation.formData.get("intent") : null;
   const busy = (intent: string) => (posting === intent ? t("desk.case.saving") : null);
   const personal = revealed ?? record.personal;
@@ -93,16 +97,31 @@ export function CaseRecordCard({
           <div className="grid grid-cols-3 gap-2 sm:grid-cols-6">
             {record.media.map((media, index) => (
               <figure key={media.id} className="flex flex-col gap-1">
-                <img
-                  src={`/api/lapor/cases/${fileId}/media/${media.id}`}
-                  alt={t("desk.case.photo.alt", {
-                    kind: `desk.case.kind.${record.kind}`,
-                    seq: record.seq,
-                    n: index + 1,
-                  })}
-                  loading="lazy"
-                  className="aspect-square w-full rounded-control bg-sunken object-cover"
-                />
+                {media.kind === "video" ? (
+                  // biome-ignore lint/a11y/useMediaCaption: a resident's footage has no captions to give
+                  <video
+                    src={`/api/lapor/cases/${fileId}/media/${media.id}`}
+                    controls
+                    preload="metadata"
+                    aria-label={t("desk.case.video.label", {
+                      kind: `desk.case.kind.${record.kind}`,
+                      seq: record.seq,
+                      n: index + 1,
+                    })}
+                    className="aspect-square w-full rounded-control bg-sunken object-cover"
+                  />
+                ) : (
+                  <img
+                    src={`/api/lapor/cases/${fileId}/media/${media.id}`}
+                    alt={t("desk.case.photo.alt", {
+                      kind: `desk.case.kind.${record.kind}`,
+                      seq: record.seq,
+                      n: index + 1,
+                    })}
+                    loading="lazy"
+                    className="aspect-square w-full rounded-control bg-sunken object-cover"
+                  />
+                )}
                 <figcaption className="text-[0.75rem] text-muted">{t(`desk.case.badge.${media.badge}`)}</figcaption>
               </figure>
             ))}
@@ -157,6 +176,11 @@ export function CaseRecordCard({
                   {t("desk.case.photo.button")}
                 </Button>
               </Form>
+              {hydrated && (record.kind === "house" || record.kind === "infrastructure") ? (
+                <div className="w-full">
+                  <VideoUpload base={`/cases/${fileId}/records/${record.id}/videos`} resumeKey={`case-${record.id}`} />
+                </div>
+              ) : null}
               <Form method="post" preventScrollReset className="flex flex-wrap items-end gap-2">
                 <input type="hidden" name="intent" value="cancel" />
                 <input type="hidden" name="recordId" value={record.id} />

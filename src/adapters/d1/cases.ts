@@ -275,9 +275,10 @@ export async function addMedia(db: Database, media: NewMedia, max: number, at: D
 }
 
 export const mediaKey = (db: Database, fileId: string, mediaId: string) =>
-  row<{ object_key: string; record_id: string }>(
+  row<{ object_key: string; record_id: string; container: string | null }>(
     db,
-    sql`select object_key, record_id from case_media where id = ${mediaId} and file_id = ${fileId} and erased_at is null`,
+    sql`select object_key, record_id, container from case_media
+      where id = ${mediaId} and file_id = ${fileId} and erased_at is null`,
   );
 
 // The file's own values merged in (RFC 7396), or its nil marks, from the revision read.
@@ -558,3 +559,115 @@ export const erasePersonal = (db: Database, fileId: string, mediaIds: readonly s
     sql`update case_file set erased_at = ${at} where id = ${fileId}`,
     trailRow(fileId, null, "erase", { media: mediaIds.length }, "Sistem", at),
   ]);
+
+export type CaseUploadRow = {
+  readonly id: string;
+  readonly store_key: string;
+  readonly upload_id: string;
+  readonly bytes: number;
+  readonly parts: string;
+  readonly browser_seconds: number | null;
+};
+
+export const caseUploadOf = (db: Database, recordId: string, id: string) =>
+  row<CaseUploadRow>(
+    db,
+    sql`select id, store_key, upload_id, bytes, parts, browser_seconds from case_video_upload
+      where id = ${id} and record_id = ${recordId}`,
+  );
+
+export async function openCaseUploads(db: Database, recordId: string): Promise<number> {
+  const found = await row<{ n: number }>(
+    db,
+    sql`select count(*) as n from case_video_upload where record_id = ${recordId}`,
+  );
+  return (found as { n: number }).n;
+}
+
+export const openCaseUpload = (
+  db: Database,
+  upload: Omit<CaseUploadRow, "parts"> & { readonly fileId: string; readonly recordId: string },
+  at: Date,
+) =>
+  atomically(db, [
+    sql`insert into case_video_upload (id, file_id, record_id, store_key, upload_id, bytes, browser_seconds, started_at,
+        touched_at)
+      values (${upload.id}, ${upload.fileId}, ${upload.recordId}, ${upload.store_key}, ${upload.upload_id},
+        ${upload.bytes}, ${upload.browser_seconds}, ${at}, ${at})`,
+  ]);
+
+// A part's tag kept under its number; answers every part kept so far.
+export async function keepCasePart(db: Database, id: string, n: number, etag: string, at: Date): Promise<string> {
+  const found = await row<{ parts: string }>(
+    db,
+    sql`update case_video_upload set parts = json_set(parts, ${`$."${n}"`}, ${etag}), touched_at = ${at}
+      where id = ${id} returning parts`,
+  );
+  return (found as { parts: string }).parts;
+}
+
+export const dropCaseUpload = (db: Database, id: string) =>
+  atomically(db, [sql`delete from case_video_upload where id = ${id}`]);
+
+// A whole video joins its record's media, under the record's own limit, while the file is open.
+export async function keepCaseVideo(
+  db: Database,
+  video: {
+    readonly id: string;
+    readonly fileId: string;
+    readonly recordId: string;
+    readonly objectKey: string;
+    readonly seconds: number;
+    readonly container: string;
+    readonly madeAt: Date | null;
+    readonly point: { readonly lat: number; readonly lon: number } | null;
+    readonly by: string;
+  },
+  max: number,
+  at: Date,
+): Promise<boolean> {
+  const done = await atomically(db, [
+    OPEN(video.fileId),
+    holds(
+      sql`(select count(*) from case_media where record_id = ${video.recordId} and kind = 'video' and erased_at is null)
+        < ${max}`,
+    ),
+    sql`insert into case_media (id, record_id, file_id, kind, object_key, lat, lon, badge, taken_at, by_label, at, seconds,
+        container)
+      values (${video.id}, ${video.recordId}, ${video.fileId}, 'video', ${video.objectKey}, ${video.point?.lat ?? null},
+        ${video.point?.lon ?? null}, ${video.point === null ? "none" : "exif"}, ${video.madeAt}, ${video.by}, ${at},
+        ${video.seconds}, ${video.container})`,
+    trailRow(video.fileId, video.recordId, "media", { kind: "video" }, video.by, at),
+    sql`delete from case_video_upload where id = ${video.id}`,
+  ]);
+  return done !== null;
+}
+
+export const recordVideos = (db: Database, recordId: string) =>
+  rows<{ id: string; seconds: number; container: string; object_key: string }>(
+    db,
+    sql`select id, seconds, container, object_key from case_media
+      where record_id = ${recordId} and kind = 'video' and erased_at is null order by at, id`,
+  );
+
+// A video taken back by the team, its file gone, while the file is open.
+export async function removeCaseVideo(
+  db: Database,
+  remove: { readonly fileId: string; readonly recordId: string; readonly id: string; readonly by: string },
+  at: Date,
+): Promise<boolean> {
+  const done = await atomically(db, [
+    OPEN(remove.fileId),
+    sql`update case_media set erased_at = ${at}
+      where id = ${remove.id} and record_id = ${remove.recordId} and kind = 'video' and erased_at is null`,
+    changedOne,
+    trailRow(remove.fileId, remove.recordId, "media", { kind: "video", removed: true }, remove.by, at),
+  ]);
+  return done !== null;
+}
+
+export const staleCaseUploads = (db: Database, before: Date, limit: number) =>
+  rows<{ id: string; store_key: string; upload_id: string }>(
+    db,
+    sql`select id, store_key, upload_id from case_video_upload where touched_at < ${before} order by touched_at limit ${limit}`,
+  );

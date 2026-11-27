@@ -45,19 +45,22 @@ const refusalOf = (envelope: ErrorEnvelope) => envelope.fields[0]?.copyKey ?? en
 
 // A video of the scene (D77, D89): sent in parts, each tried again, and continued where it stopped.
 // Needs script, so the photo form stays the way to send with none.
+// A report's videos, or a follow-up record's: sent to the API under base, a cut-off send remembered
+// on the phone under resumeKey.
 export function VideoUpload({
-  draftId,
+  base,
+  resumeKey,
   readSeconds = browserSeconds,
   retryMs = 1000,
 }: {
-  readonly draftId: string;
+  readonly base: string;
+  readonly resumeKey: string;
   readonly readSeconds?: (file: File) => Promise<number | null>;
   // The first wait before a part is tried again; each next wait doubles.
   readonly retryMs?: number;
 }) {
   const t = useText();
   const inputId = useId();
-  const base = `/drafts/${encodeURIComponent(draftId)}/videos`;
   const [kept, setKept] = useState<readonly Kept[]>([]);
   const [sending, setSending] = useState<Sending>({ kind: "idle" });
   // An upload a reload cut off, known once the page runs: picking its file again continues it.
@@ -65,12 +68,12 @@ export function VideoUpload({
 
   useEffect(() => {
     void getJson<Kept[]>(base).then((answer) => answer.kind === "ok" && setKept(answer.body));
-    setCutOff(openUpload(draftId));
-  }, [base, draftId]);
+    setCutOff(openUpload(resumeKey));
+  }, [base, resumeKey]);
 
   const settle = (next: Sending) => {
     if (next.kind === "idle" || next.kind === "refused") {
-      dropUpload(draftId);
+      dropUpload(resumeKey);
       setCutOff(null);
     }
     setSending(next);
@@ -117,7 +120,7 @@ export function VideoUpload({
     }
     const started = await postJson<Progress>(base, { bytes: file.size, seconds: await readSeconds(file) });
     if (started.kind === "ok") {
-      keepUpload(draftId, { id: started.body.id, size: file.size, modified: file.lastModified });
+      keepUpload(resumeKey, { id: started.body.id, size: file.size, modified: file.lastModified });
       return send(file, started.body);
     }
     settle({

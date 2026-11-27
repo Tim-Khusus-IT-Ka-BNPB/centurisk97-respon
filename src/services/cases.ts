@@ -289,6 +289,14 @@ async function writable(
 
 const isWritable = (found: Awaited<ReturnType<typeof writable>>): found is Writable => "file" in found;
 
+// A live record of a file this actor may fill, with the writer's label.
+export async function caseRecordFor(bindings: ServiceBindings, actor: CaseActor, fileId: string, recordId: string) {
+  const found = await writable(bindings, actor, fileId);
+  if (!isWritable(found)) return found;
+  const record = found.records.find((one) => one.id === recordId && one.cancelledReason === null);
+  return record === undefined ? ({ kind: "notFound" } as const) : ({ kind: "record", record, by: found.by } as const);
+}
+
 // A record's references: an evacuee's shelter and head of family, a need's shelter, each a live record
 // of the right kind in this file.
 function referencesHold(kind: CaseKind, data: CaseValues, records: readonly CaseRecordRow[], self: string | null) {
@@ -461,13 +469,15 @@ export async function addRecordPhoto(
   return { kind: "photoRefused", rule: "proofTooMany" };
 }
 
-// A photo of a record, to whoever may read the file; logged (D22).
+// A photo or video of a record, to whoever may read the file; logged (D22).
+const VIDEO_TYPES: Readonly<Record<string, string>> = { mp4: "video/mp4", mov: "video/quicktime", webm: "video/webm" };
+
 export async function recordMedia(
   bindings: ServiceBindings,
   actor: CaseActor,
   fileId: string,
   mediaId: string,
-): Promise<CaseAnswer<Uint8Array>> {
+): Promise<CaseAnswer<{ readonly bytes: Uint8Array; readonly contentType: string }>> {
   const file = await caseById(bindings.db, fileId);
   const access = file === null ? null : accessOf(actor, file);
   if (access === null || access === "province") return { kind: "notFound" };
@@ -478,16 +488,13 @@ export async function recordMedia(
   const who = whoOf(actor);
   await logAccess(
     bindings.db,
-    {
-      fileId,
-      recordId: found.record_id,
-      action: "media",
-      whoId: who.id,
-      whoLabel: who.label,
-    },
+    { fileId, recordId: found.record_id, action: "media", whoId: who.id, whoLabel: who.label },
     new Date(bindings.clock.now()),
   );
-  return { kind: "ok", body: bytes };
+  return {
+    kind: "ok",
+    body: { bytes, contentType: found.container === null ? "image/jpeg" : (VIDEO_TYPES[found.container] as string) },
+  };
 }
 
 export type LeadAnswer<T> =

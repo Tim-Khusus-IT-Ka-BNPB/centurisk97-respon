@@ -31,7 +31,7 @@ describe("the follow-up file's screen", () => {
   test("its keeper sees the totals, a tab per kind, the records of the one open, and their tools", async () => {
     draw(CASE_VIEW, { kind: "house", editing: null }, NOTHING, "/lapor/data/f000000000000001?saved=record");
     expect(await screen.findByText("Tiket LA-241126-01")).toBeTruthy();
-    expect(screen.getByRole("status").textContent).toBe("Data tersimpan.");
+    expect((await screen.findByText("Data tersimpan.")).getAttribute("role")).toBe("status");
     const totals = screen.getByRole("region", { name: "Rekap per 2026-11-24" });
     const dead = within(totals).getByText("Meninggal").parentElement as HTMLElement;
     expect(within(dead).getByText("nihil")).toBeTruthy();
@@ -57,15 +57,16 @@ describe("the follow-up file's screen", () => {
     expect(within(house).getByText("Rusak berat")).toBeTruthy();
     expect(within(house).getByText("Ya")).toBeTruthy();
     expect(within(house).getByText("Foto jauh dari titik")).toBeTruthy();
-    expect(
-      within(house)
-        .getAllByRole("img")
-        .map((img) => img.getAttribute("src")),
-    ).toEqual([
+    expect([...house.querySelectorAll("img")].map((img) => img.getAttribute("src"))).toEqual([
       "/api/lapor/cases/f000000000000001/media/11111111-1111-4111-8111-111111111111",
       "/api/lapor/cases/f000000000000001/media/22222222-2222-4222-8222-222222222222",
     ]);
     expect(within(house).getByText("Titik ponsel")).toBeTruthy();
+    const video = within(house).getByLabelText("Video Rumah 1, nomor 3");
+    expect([video.tagName, video.getAttribute("src")]).toEqual([
+      "VIDEO",
+      "/api/lapor/cases/f000000000000001/media/33333333-3333-4333-8333-333333333333",
+    ]);
     expect(within(house).getByRole("link", { name: "Ubah" }).getAttribute("href")).toBe(
       "/lapor/data/f000000000000001?jenis=house&ubah=a000000000000001",
     );
@@ -301,7 +302,7 @@ describe("closing the file", () => {
 
   test("its keeper is asked if the event ended, shown what keeps it noted, and closes it", async () => {
     draw(CASE_VIEW, { kind: "house", editing: null }, NOTHING, "/lapor/data/f000000000000001?saved=close");
-    expect((await screen.findByRole("status")).textContent).toBe("Berkas ditutup dan menunggu diterima BNPB.");
+    expect((await screen.findByText("Berkas ditutup dan menunggu diterima BNPB.")).getAttribute("role")).toBe("status");
     const closing = await screen.findByRole("region", { name: "Kejadian sudah selesai?" });
     expect(within(closing).getByText(/selesai dengan catatan/)).toBeTruthy();
     expect(within(closing).getByText("Hilang: belum didata")).toBeTruthy();

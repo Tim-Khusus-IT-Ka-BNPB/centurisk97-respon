@@ -30,7 +30,10 @@ function answer(routes: Record<string, Answer | Answer[]>) {
 }
 
 const draw = () =>
-  renderPage(<VideoUpload draftId={DRAFT} readSeconds={async () => 12.5} retryMs={0} />, { path: "/lapor/report/d" });
+  renderPage(
+    <VideoUpload base={`/drafts/${DRAFT}/videos`} resumeKey={DRAFT} readSeconds={async () => 12.5} retryMs={0} />,
+    { path: "/lapor/report/d" },
+  );
 // The picker shows once the kept videos are read; a busy machine may take a moment.
 const pick = async (bytes = 6) =>
   fireEvent.change(await screen.findByLabelText("Rekam video", {}, { timeout: 5000 }), {

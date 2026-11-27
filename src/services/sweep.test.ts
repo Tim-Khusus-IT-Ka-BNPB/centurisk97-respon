@@ -130,6 +130,7 @@ describe("the scheduled sweep", () => {
       photoFilesRemoved: 0,
       videoUploadsDropped: 0,
       caseFilesErased: 0,
+      caseVideoUploadsDropped: 0,
     });
   });
 

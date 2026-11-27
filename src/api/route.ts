@@ -29,7 +29,7 @@ const isPhotoUpload = (method: string, path: string) =>
     /\/(?:(?:drafts|emergencies)\/[^/]+\/photos|desk\/reports\/[^/]+\/proofs|cases\/[^/]+\/records\/[^/]+\/media|foto|missing)$/.test(
       path,
     )) ||
-  (method === "PUT" && /\/drafts\/[^/]+\/videos\/[^/]+\/parts\/\d+$/.test(path));
+  (method === "PUT" && /\/(?:drafts\/[^/]+|cases\/[^/]+\/records\/[^/]+)\/videos\/[^/]+\/parts\/\d+$/.test(path));
 // Upstream's route shapes for its gateway (ROADMAP section 7), kept as they are.
 export const isGatewayPath = (path: string) => /^\/api\/lapor\/(?:pesan|foto|izin|bahasa|kabar(?:\/.+)?)$/.test(path);
 const READ_METHODS = new Set(["GET", "HEAD"]);

@@ -299,5 +299,6 @@
   "desk.case.version.by": "Ditutup {by}, {when}",
   "desk.case.saved.close": "Berkas ditutup dan menunggu diterima BNPB.",
   "desk.case.saved.accept": "Penutupan diterima. Tiket laporan ditutup.",
-  "desk.case.saved.reopen": "Berkas dibuka lagi."
+  "desk.case.saved.reopen": "Berkas dibuka lagi.",
+  "desk.case.video.label": "Video {kind} {seq}, nomor {n}"
 }

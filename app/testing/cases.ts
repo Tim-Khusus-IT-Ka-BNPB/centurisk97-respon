@@ -47,6 +47,7 @@ export const CASE_VIEW: CaseView = {
       media: [
         { id: "11111111-1111-4111-8111-111111111111", kind: "photo", badge: "gps" },
         { id: "22222222-2222-4222-8222-222222222222", kind: "photo", badge: "none" },
+        { id: "33333333-3333-4333-8333-333333333333", kind: "video", badge: "exif" },
       ],
       flags: ["farPhoto"],
       missingPhotos: { photo: 0, face: 0 },

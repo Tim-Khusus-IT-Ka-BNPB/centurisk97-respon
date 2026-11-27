@@ -283,6 +283,23 @@ export const COLUMN_CLASSES: Readonly<Record<string, TableClasses>> = {
       by_label: I,
       at: I,
       erased_at: I,
+      seconds: I,
+      container: I,
+    },
+  },
+  case_video_upload: {
+    retention: "while it is sent; dropped a day after its last part, or once whole",
+    columns: {
+      id: I,
+      file_id: I,
+      record_id: I,
+      store_key: I,
+      upload_id: I,
+      bytes: I,
+      parts: I,
+      browser_seconds: I,
+      started_at: I,
+      touched_at: I,
     },
   },
   case_trail: {

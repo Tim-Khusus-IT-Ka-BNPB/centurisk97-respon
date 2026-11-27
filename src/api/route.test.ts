@@ -17,6 +17,7 @@ describe("route list", () => {
   test("every route of the app declares a policy", () => {
     const routes = routeList(api);
     expect(routes).toEqual([
+      { key: "DELETE /api/lapor/cases/:fileId/records/:recordId/videos/:videoId", policy: "caseTeam" },
       { key: "DELETE /api/lapor/desk/pilot/:key", policy: "staff" },
       { key: "DELETE /api/lapor/desk/session", policy: "public" },
       { key: "DELETE /api/lapor/drafts/:draftId/photos/:photoId", policy: "reporter" },
@@ -25,6 +26,8 @@ describe("route list", () => {
       { key: "GET /api/lapor/bahasa", policy: "gateway" },
       { key: "GET /api/lapor/cases/:fileId", policy: "caseTeam" },
       { key: "GET /api/lapor/cases/:fileId/media/:mediaId", policy: "caseTeam" },
+      { key: "GET /api/lapor/cases/:fileId/records/:recordId/videos", policy: "caseTeam" },
+      { key: "GET /api/lapor/cases/:fileId/records/:recordId/videos/:videoId", policy: "caseTeam" },
       { key: "GET /api/lapor/desk/cases", policy: "staff" },
       { key: "GET /api/lapor/desk/emergencies", policy: "staff" },
       { key: "GET /api/lapor/desk/map", policy: "staff" },
@@ -80,6 +83,8 @@ describe("route list", () => {
       { key: "POST /api/lapor/cases/:fileId/records/:recordId/cancel", policy: "caseTeam" },
       { key: "POST /api/lapor/cases/:fileId/records/:recordId/media", policy: "caseTeam" },
       { key: "POST /api/lapor/cases/:fileId/records/:recordId/reveal", policy: "staff" },
+      { key: "POST /api/lapor/cases/:fileId/records/:recordId/videos", policy: "caseTeam" },
+      { key: "POST /api/lapor/cases/:fileId/records/:recordId/videos/:videoId/complete", policy: "caseTeam" },
       { key: "POST /api/lapor/cases/:fileId/reopen", policy: "staff" },
       { key: "POST /api/lapor/consent", policy: "public" },
       { key: "POST /api/lapor/desk/aggregates", policy: "staff" },
@@ -127,6 +132,7 @@ describe("route list", () => {
       { key: "POST /api/lapor/tracking/photos", policy: "public" },
       { key: "POST /api/lapor/warnings/status", policy: "public" },
       { key: "POST /api/lapor/warnings/stop", policy: "public" },
+      { key: "PUT /api/lapor/cases/:fileId/records/:recordId/videos/:videoId/parts/:n", policy: "caseTeam" },
       { key: "PUT /api/lapor/drafts/:draftId/videos/:videoId/parts/:n", policy: "reporter" },
       { key: "PUT /api/lapor/warnings", policy: "public" },
     ]);
@@ -385,6 +391,10 @@ describe("response schemas and the OpenAPI document", () => {
       "/api/lapor/cases/{fileId}/records/{recordId}/cancel",
       "/api/lapor/cases/{fileId}/records/{recordId}/media",
       "/api/lapor/cases/{fileId}/records/{recordId}/reveal",
+      "/api/lapor/cases/{fileId}/records/{recordId}/videos",
+      "/api/lapor/cases/{fileId}/records/{recordId}/videos/{videoId}",
+      "/api/lapor/cases/{fileId}/records/{recordId}/videos/{videoId}/complete",
+      "/api/lapor/cases/{fileId}/records/{recordId}/videos/{videoId}/parts/{n}",
       "/api/lapor/cases/{fileId}/reopen",
       "/api/lapor/consent",
       "/api/lapor/desk/aggregates",
