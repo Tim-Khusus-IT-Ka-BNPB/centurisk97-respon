@@ -7,7 +7,7 @@ import { type FeedPeriod, feedSince } from "../domain/feedPeriod";
 import type { EventTimeValue, PlaceValue } from "../domain/fieldState";
 import { checkForecastFile, warningsOf } from "../domain/forecast";
 import { impactOf } from "../domain/impact";
-import { checkKabarFile, officialEvents } from "../domain/officialEvents";
+import { checkOfficialEventFile, officialEvents } from "../domain/officialEvents";
 import { checkVolcanoFile, volcanoSummary } from "../domain/volcano";
 import { parsed } from "../platform/database";
 import { hmacKey } from "../platform/keys";
@@ -202,7 +202,7 @@ export async function officialView(bindings: ServiceBindings, address: string): 
   const refusal = await checkLimits(bindings, [["address.feed", { kind: "address", bucket: address }]]);
   if (refusal) return { kind: "limit", refusal };
   const [file, provinces] = await Promise.all([
-    referenceFile(bindings.db, "officialEvents").then(checkKabarFile),
+    referenceFile(bindings.db, "officialEvents").then(checkOfficialEventFile),
     provinceNames(bindings.db),
   ]);
   return {

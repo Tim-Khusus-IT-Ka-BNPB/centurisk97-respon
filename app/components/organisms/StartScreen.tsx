@@ -43,7 +43,7 @@ function useStep() {
   const kept = [
     ...(params.has("emergency") ? ["emergency=1"] : []),
     ...(params.has("missing") ? ["missing=1"] : []),
-    ...(POSTER_DESA.test(params.get("village") ?? "") ? [`village=${params.get("village")}`] : []),
+    ...(POSTER_VILLAGE.test(params.get("village") ?? "") ? [`village=${params.get("village")}`] : []),
   ];
   return (step: string) => {
     const search = [step, ...kept].filter(Boolean).join("&");
@@ -51,7 +51,7 @@ function useStep() {
   };
 }
 
-const POSTER_DESA = /^\d{10}$/;
+const POSTER_VILLAGE = /^\d{10}$/;
 
 function KnownRow({ profile }: { readonly profile: Profile }) {
   const t = useText();

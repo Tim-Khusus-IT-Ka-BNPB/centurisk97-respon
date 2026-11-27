@@ -1,6 +1,12 @@
 import { expect, test } from "vitest";
 import SEED from "../../db/reference/kabar.json";
-import { checkKabarFile, type KabarFile, NEWS_SHOWN, officialEvents, regencyKey } from "./officialEvents";
+import {
+  checkOfficialEventFile,
+  NEWS_SHOWN,
+  type OfficialEventFile,
+  officialEvents,
+  regencyKey,
+} from "./officialEvents";
 
 const news = (n: number, url = "https://example.id/berita") => ({
   judul: `Berita ${n}`,
@@ -26,10 +32,10 @@ const event = (fields: object = {}) => ({
 const file = (...kejadian: (object | null)[]) => ({ dibuat: "2026-11-26T17:04+07:00", hari: "2026-11-26", kejadian });
 
 test("the seed passes; a file or an event out of shape does not", () => {
-  expect(checkKabarFile(SEED)).not.toBeNull();
-  expect(checkKabarFile(file())).not.toBeNull();
-  expect(checkKabarFile(file(event({ titik: null })))).not.toBeNull();
-  expect(checkKabarFile(file(event({ angka: { kk: 0, mengungsi: 0, rumah_dampak: 0 } })))).not.toBeNull();
+  expect(checkOfficialEventFile(SEED)).not.toBeNull();
+  expect(checkOfficialEventFile(file())).not.toBeNull();
+  expect(checkOfficialEventFile(file(event({ titik: null })))).not.toBeNull();
+  expect(checkOfficialEventFile(file(event({ angka: { kk: 0, mengungsi: 0, rumah_dampak: 0 } })))).not.toBeNull();
   for (const broken of [
     null,
     { ...file(event()), dibuat: "kemarin" },
@@ -63,12 +69,12 @@ test("the seed passes; a file or an event out of shape does not", () => {
     file(event({ berita: [{ ...news(1), tgl: "kemarin" }] })),
     file(event({ berita: [{ ...news(1), url: 1 }] })),
   ])
-    expect(checkKabarFile(broken), JSON.stringify(broken)).toBeNull();
+    expect(checkOfficialEventFile(broken), JSON.stringify(broken)).toBeNull();
 });
 
 test("ongoing first, then by the latest report; long finished and unknown kinds left out; three headlines at most", () => {
   const events = officialEvents(
-    checkKabarFile(
+    checkOfficialEventFile(
       file(
         event({ id: "a", status: "selesai", lap_terakhir: "2026-11-26" }),
         event({ id: "b", status: "belum" }),
@@ -81,7 +87,7 @@ test("ongoing first, then by the latest report; long finished and unknown kinds 
         event({ id: "e", selesai_lama: true }),
         event({ id: "f", jenis: "wabah" }),
       ),
-    ) as KabarFile,
+    ) as OfficialEventFile,
   );
   expect(events.map((one) => [one.id, one.hazardType])).toEqual([
     ["d", "landslide"],
@@ -104,7 +110,7 @@ test("ongoing first, then by the latest report; long finished and unknown kinds 
     news: [{ title: "Berita 1", outlet: "Media", date: "2026-11-25", url: "https://example.id/berita" }],
     moreNews: 0,
   });
-  expect(officialEvents(checkKabarFile(SEED) as KabarFile).length).toBeGreaterThan(50);
+  expect(officialEvents(checkOfficialEventFile(SEED) as OfficialEventFile).length).toBeGreaterThan(50);
 });
 
 test("each of upstream's kinds is ours by name", () => {
@@ -121,7 +127,9 @@ test("each of upstream's kinds is ours by name", () => {
     tsunami: "tsunami",
   };
   const events = officialEvents(
-    checkKabarFile(file(...Object.keys(kinds).map((jenis) => event({ id: jenis, jenis })))) as KabarFile,
+    checkOfficialEventFile(
+      file(...Object.keys(kinds).map((jenis) => event({ id: jenis, jenis }))),
+    ) as OfficialEventFile,
   );
   expect(Object.fromEntries(events.map((one) => [one.id, one.hazardType]))).toEqual(kinds);
 });

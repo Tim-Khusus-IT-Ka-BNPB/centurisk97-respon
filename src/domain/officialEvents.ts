@@ -1,6 +1,6 @@
 // The events of BNPB's daily report as upstream's Alun-alun gathers them (public/data/alun/
 // kabar.json, kabar-alun K1 to K6): per regency and hazard, the report's own status and figures,
-// and the news found for it. Read as they are. No imports, so the Node import scripts share it.
+// and the news found for it. Its keys are the source's own, read as they are. No imports, so the Node import scripts share it.
 
 // Upstream's kinds as our hazard types; a kind not here is left out.
 const KINDS: Readonly<Record<string, string>> = {
@@ -21,7 +21,7 @@ const STATUSES = ["berjalan", "belum", "selesai"] as const;
 type News = { readonly judul: string; readonly media: string; readonly tgl: string; readonly url: string };
 type Figures = { readonly kk: number | null; readonly mengungsi: number | null; readonly rumah_dampak: number | null };
 
-type KabarEvent = {
+type OfficialEventEntry = {
   readonly id: string;
   readonly jenis: string;
   readonly kab: string;
@@ -35,13 +35,17 @@ type KabarEvent = {
   readonly berita: readonly News[];
 };
 
-export type KabarFile = { readonly dibuat: string; readonly hari: string; readonly kejadian: readonly KabarEvent[] };
+export type OfficialEventFile = {
+  readonly dibuat: string;
+  readonly hari: string;
+  readonly kejadian: readonly OfficialEventEntry[];
+};
 
 const isDate = (value: unknown) => typeof value === "string" && /^\d{4}-\d{2}-\d{2}$/.test(value);
 const isCount = (value: unknown) => value === null || (Number.isInteger(value) && (value as number) >= 0);
 
 const isEvent = (value: unknown) => {
-  const one = value as Partial<KabarEvent> | null;
+  const one = value as Partial<OfficialEventEntry> | null;
   const point = one?.titik as { lat?: unknown; lon?: unknown } | null | undefined;
   const figures = (one?.angka ?? {}) as Partial<Figures>;
   return (
@@ -50,7 +54,7 @@ const isEvent = (value: unknown) => {
     typeof one.kab === "string" &&
     typeof one.prov === "string" &&
     (point === null || (typeof point?.lat === "number" && typeof point.lon === "number")) &&
-    STATUSES.includes(one.status as KabarEvent["status"]) &&
+    STATUSES.includes(one.status as OfficialEventEntry["status"]) &&
     isDate(one.mulai) &&
     isDate(one.lap_terakhir) &&
     typeof one.selesai_lama === "boolean" &&
@@ -68,10 +72,10 @@ const isEvent = (value: unknown) => {
   );
 };
 
-export function checkKabarFile(json: unknown): KabarFile | null {
-  const file = json as Partial<KabarFile> | null;
+export function checkOfficialEventFile(json: unknown): OfficialEventFile | null {
+  const file = json as Partial<OfficialEventFile> | null;
   if (typeof file?.dibuat !== "string" || Number.isNaN(Date.parse(file.dibuat)) || !isDate(file.hari)) return null;
-  return Array.isArray(file.kejadian) && file.kejadian.every(isEvent) ? (file as KabarFile) : null;
+  return Array.isArray(file.kejadian) && file.kejadian.every(isEvent) ? (file as OfficialEventFile) : null;
 }
 
 export type OfficialEvent = {
@@ -80,7 +84,7 @@ export type OfficialEvent = {
   readonly regencyName: string;
   readonly provinceCode: string;
   readonly point: { readonly lat: number; readonly lon: number } | null;
-  readonly status: KabarEvent["status"];
+  readonly status: OfficialEventEntry["status"];
   readonly startedOn: string;
   readonly lastReportOn: string;
   readonly families: number | null;
@@ -101,7 +105,7 @@ const ORDER = { berjalan: 0, belum: 1, selesai: 2 } as const;
 
 // The events still worth showing, ongoing first, then by their latest report. Long finished ones,
 // and kinds we do not report, are left out.
-export function officialEvents(file: KabarFile): readonly OfficialEvent[] {
+export function officialEvents(file: OfficialEventFile): readonly OfficialEvent[] {
   return file.kejadian
     .filter((one) => !one.selesai_lama && KINDS[one.jenis] !== undefined)
     .map((one) => {

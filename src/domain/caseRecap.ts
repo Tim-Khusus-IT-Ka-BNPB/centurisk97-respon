@@ -69,8 +69,8 @@ export function flagsOf(
   )
     flags.push("samePoint");
   // Only evacuees and victims hold a NIK of their own, so people are compared within their kind (D16).
-  const nik = record.personal.nik;
-  if (nik !== undefined && kin.some((one) => one.personal.nik === nik)) flags.push("sameNik");
+  const nationalId = record.personal.nik;
+  if (nationalId !== undefined && kin.some((one) => one.personal.nik === nationalId)) flags.push("sameNik");
   if (point !== null && !context.inRegency(point)) flags.push("outsideRegency");
   return flags;
 }

@@ -35,7 +35,7 @@ const EMAIL = /[A-Za-z0-9._%+-]+@[A-Za-z0-9-]+(?:\.[A-Za-z0-9-]+)*\.[A-Za-z]{2,}
 const PHONE_IN_BRACKETS = /\((?:\+62|62|0)[ .-]?8\d{1,3}\)[ .-]?\d{3,4}(?:[ .-]?\d{2,5}){1,2}(?!\d)/g;
 // At most four digit groups, so a list of counts ("10 20 30 40 50") is never taken for an id.
 const DIGIT_GROUPS = /(?<![\d.,])\d+(?:[ .-]\d+){0,3}(?!\d|[.,-]\d)/g;
-const NIK_DIGITS = 16;
+const NATIONAL_ID_DIGITS = 16;
 const PHONE = /(?<![\d+])(?:\+62|62|0)[ .-]?8(?:[ .-]?\d){7,12}(?!\d)/g;
 
 // Removes the reporter's own full name and own number, then any phone number, NIK and email address.
@@ -48,7 +48,9 @@ export function maskText(text: string, reporter: Reporter): MaskedText {
   result = result
     .replace(EMAIL, MASK_TOKENS.email)
     .replace(PHONE_IN_BRACKETS, MASK_TOKENS.phoneNumber)
-    .replace(DIGIT_GROUPS, (digits) => (digits.replace(/\D/g, "").length === NIK_DIGITS ? MASK_TOKENS.nik : digits))
+    .replace(DIGIT_GROUPS, (digits) =>
+      digits.replace(/\D/g, "").length === NATIONAL_ID_DIGITS ? MASK_TOKENS.nik : digits,
+    )
     .replace(PHONE, MASK_TOKENS.phoneNumber);
   return result as MaskedText;
 }

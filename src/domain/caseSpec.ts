@@ -43,7 +43,8 @@ type FieldType =
   | { readonly type: "date" }
   | { readonly type: "yesNo" }
   | { readonly type: "phone" }
-  | { readonly type: "nik" }
+  // A 16-digit NIK. Fields of this type keep the stored names nik and familyNik.
+  | { readonly type: "nationalId" }
   | { readonly type: "many"; readonly values: readonly string[] }
   // Another record of the same file, by its id: an evacuee's shelter or head of family.
   | { readonly type: "record" };
@@ -78,7 +79,7 @@ export const CASE_SPEC: Readonly<Record<CaseKind, { readonly photos: number; rea
       fields: [
         field("headOfFamily", text(), true, true),
         field("owner", text(), false, true),
-        field("familyNik", { type: "nik" }, false, true),
+        field("familyNik", { type: "nationalId" }, false, true),
         field("village", text(), true),
         field("district", text(), true),
         field("address", text(200), true),
@@ -129,7 +130,7 @@ export const CASE_SPEC: Readonly<Record<CaseKind, { readonly photos: number; rea
         // "self", or the id of the head of family's own record in this file.
         field("head", text(16), true),
         field("phone", { type: "phone" }, (values) => values.head === "self", true),
-        field("nik", { type: "nik" }, false, true),
+        field("nik", { type: "nationalId" }, false, true),
         field("vulnerable", { type: "many", values: VULNERABLE }, false, true),
         field("specialNeeds", text(300), false, true),
         field("refusesPhoto", YES_NO, false),
@@ -153,7 +154,7 @@ export const CASE_SPEC: Readonly<Record<CaseKind, { readonly photos: number; rea
         field("deathPlace", text(), false),
         field("confirmedBy", choice("hospital", "family", "officials"), false),
         field("traits", text(300), false, true),
-        field("nik", { type: "nik" }, false, true),
+        field("nik", { type: "nationalId" }, false, true),
       ],
     },
     business: {
@@ -208,7 +209,7 @@ function readValue(value: unknown, type: FieldType): unknown {
       return typeof value === "boolean" ? value : undefined;
     case "phone":
       return value === "none" ? value : (normaliseNumber(String(value)) ?? undefined);
-    case "nik": {
+    case "nationalId": {
       const digits = String(value).replace(/\D/g, "");
       return digits.length === 16 ? digits : undefined;
     }

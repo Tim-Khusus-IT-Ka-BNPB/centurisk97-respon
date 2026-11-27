@@ -130,7 +130,7 @@ exports[`a record checked against its kind > every kind's form as agreed 1`] = `
     },
     {
       "field": {
-        "type": "nik",
+        "type": "nationalId",
       },
       "id": "nik",
       "personal": true,
@@ -204,7 +204,7 @@ exports[`a record checked against its kind > every kind's form as agreed 1`] = `
     },
     {
       "field": {
-        "type": "nik",
+        "type": "nationalId",
       },
       "id": "familyNik",
       "personal": true,
@@ -774,7 +774,7 @@ exports[`a record checked against its kind > every kind's form as agreed 1`] = `
     },
     {
       "field": {
-        "type": "nik",
+        "type": "nationalId",
       },
       "id": "nik",
       "personal": true,

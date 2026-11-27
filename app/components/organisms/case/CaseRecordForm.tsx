@@ -75,7 +75,13 @@ function Control({
     return <Textarea {...control} defaultValue={value} maxLength={field.max} />;
   const type = field.type === "date" ? "date" : "text";
   const inputMode =
-    field.type === "number" ? "decimal" : field.type === "phone" ? "tel" : field.type === "nik" ? "numeric" : undefined;
+    field.type === "number"
+      ? "decimal"
+      : field.type === "phone"
+        ? "tel"
+        : field.type === "nationalId"
+          ? "numeric"
+          : undefined;
   return <Input {...control} type={type} inputMode={inputMode} defaultValue={value} />;
 }
 
