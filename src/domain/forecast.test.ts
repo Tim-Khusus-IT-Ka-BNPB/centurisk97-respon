@@ -146,10 +146,13 @@ describe("the regencies on watch", () => {
           regency("1102", "Kab. Beta", [1, 0, 0], [0, 1, 0]),
           regency("1103", "Kab. Alfa", [1, 0, 0], [0, 0, 0]),
           regency("1104", "Kab. Zeta", [0, 3, 3], [0, 0, 3]),
+          regency("1105", "Kab. Eta", [2, 0, 0], [1, 0, 0]),
         ),
       ),
     ).toEqual([
       { regencyCode: "11.04", regencyName: "Kab. Zeta", provinceName: "Uji", level: 3, threats: ["Banjir", "Longsor"] },
+      // A threat below the highest is not named.
+      { regencyCode: "11.05", regencyName: "Kab. Eta", provinceName: "Uji", level: 2, threats: ["Banjir"] },
       { regencyCode: "11.03", regencyName: "Kab. Alfa", provinceName: "Uji", level: 1, threats: ["Banjir"] },
       { regencyCode: "11.02", regencyName: "Kab. Beta", provinceName: "Uji", level: 1, threats: ["Banjir", "Longsor"] },
     ]);

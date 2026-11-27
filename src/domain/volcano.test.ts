@@ -10,6 +10,7 @@ describe("the volcano file", () => {
     expect(checkVolcanoFile(SEED)).not.toBeNull();
     expect(checkVolcanoFile(file(one))).not.toBeNull();
     expect(checkVolcanoFile(file({ ...one, radius_km: null, laporan: null }))).not.toBeNull();
+    expect(checkVolcanoFile(file({ ...one, radius_km: 0 }))).not.toBeNull();
     for (const broken of [
       null,
       { ...file(one), sumber: 1 },
@@ -34,7 +35,7 @@ describe("the volcano file", () => {
         file(
           { ...one, nama: "Satu", level: 1 },
           { ...one, nama: "Dua", level: 2 },
-          { ...one, nama: "Bromo", level: 3, laporan: "https://elsewhere.example/x" },
+          { ...one, nama: "Bromo", level: 3, laporan: "https://elsewhere.example/?u=https://magma.esdm.go.id/x" },
           { ...one, nama: "Awas", level: 4, radius_km: undefined },
           { ...one, nama: "Agung", level: 3 },
         ),
