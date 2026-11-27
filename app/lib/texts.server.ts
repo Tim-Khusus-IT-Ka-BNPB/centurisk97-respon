@@ -175,6 +175,8 @@ export const PAGE_TEXTS = {
   desk: [
     ...SHELL,
     "desk.",
+    // The follow-up file's videos are sent with the report's own uploader.
+    "card.video.",
     "missing.",
     "version.",
     "stage.",
