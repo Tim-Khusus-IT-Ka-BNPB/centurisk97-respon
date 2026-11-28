@@ -9,26 +9,6 @@ import { ThemeSwitch } from "../molecules/ThemeSwitch";
 const navLink =
   "inline-flex min-h-target-min items-center whitespace-nowrap rounded-control px-3 text-body font-medium text-ink hover:bg-sunken";
 
-function NavLinks({ className }: { readonly className: string }) {
-  const t = useText();
-  return (
-    <nav className={className}>
-      <Link to="/feed" className={navLink}>
-        {t("nav.feed")}
-      </Link>
-      <Link to="/info" className={navLink}>
-        {t("nav.info")}
-      </Link>
-      <Link to="/help" className={navLink}>
-        {t("help.title")}
-      </Link>
-      <Link to="/about" className={navLink}>
-        {t("nav.about")}
-      </Link>
-    </nav>
-  );
-}
-
 const quickIcon =
   "hidden size-target-min items-center justify-center rounded-control text-ink hover:bg-sunken sm:inline-flex";
 
@@ -48,8 +28,8 @@ function QuickIcons() {
 }
 
 // The band on every page: the way home, the language and the theme. A wide screen has the public
-// links in the side rail; below 1024px they sit in a menu that opens with no script, and closes on
-// each new page.
+// links in the side rail; below 1024px the main ones sit in the tab bar and the rest in a menu that
+// opens with no script, and closes on each new page.
 export function SiteHeader({
   nav,
   width,
@@ -86,9 +66,8 @@ export function SiteHeader({
                 <span className="sr-only">{t("nav.menu")}</span>
               </summary>
               <div className="absolute inset-x-0 top-full z-40 flex flex-col gap-1 border-b border-line bg-header px-4 py-2">
-                <NavLinks className="flex flex-col gap-1" />
-                <Link to="/numbers" className={cn(navLink, "sm:hidden")}>
-                  {t("nav.numbers")}
+                <Link to="/about" className={navLink}>
+                  {t("nav.about")}
                 </Link>
                 {/* Only the page cut off from the service drops the language, and it has no menu. */}
                 <LanguageLink className={cn(navLink, "gap-2 sm:hidden")} />

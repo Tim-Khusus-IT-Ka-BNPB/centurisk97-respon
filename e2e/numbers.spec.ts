@@ -10,10 +10,11 @@ test("Nomor penting opens from the home's door and the header, each number a cal
   for (const number of ["112", "115", "119"])
     await expect(page.locator(`a[href="tel:${number}"]`).first()).toBeVisible();
   await noSidewaysScroll(page);
-  // Beside the theme switch from 640px, in the menu below it.
+  // Beside the theme switch from 640px, in the tab bar below it.
   await page.goto("/help");
-  const header = page.locator("header");
-  if ((page.viewportSize()?.width ?? 0) < 640) await header.locator("summary", { hasText: "Menu" }).click();
-  await header.getByRole("link", { name: "Nomor penting" }).click();
+  const phone = (page.viewportSize()?.width ?? 0) < 640;
+  await (phone ? page.getByRole("navigation", { name: "Menu utama" }) : page.locator("header"))
+    .getByRole("link", { name: "Nomor penting" })
+    .click();
   await expect(page).toHaveURL(/\/numbers$/);
 });

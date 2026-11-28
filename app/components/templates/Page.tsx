@@ -6,6 +6,7 @@ import { type BannerSigap, PageBanner } from "../organisms/PageBanner";
 import { SideRail } from "../organisms/SideRail";
 import { SiteFooter } from "../organisms/SiteFooter";
 import { SiteHeader } from "../organisms/SiteHeader";
+import { TabBar } from "../organisms/TabBar";
 
 const SITE = "max-w-[72rem]";
 
@@ -46,7 +47,14 @@ export function Page({
   const width = wide || aside ? SITE : "max-w-[40rem]";
   return (
     <TextContext.Provider value={text}>
-      <div className={cn("flex min-h-dvh flex-col", publicPage && "lg:ps-[4.75rem]")} lang={text("app.lang")}>
+      <div
+        className={cn(
+          "flex min-h-dvh flex-col",
+          // Room under the footer for the tab bar on a narrow screen, beside the rail on a wide one.
+          publicPage && "pb-[calc(4.5rem+1px+env(safe-area-inset-bottom))] lg:ps-[4.75rem] lg:pb-0",
+        )}
+        lang={text("app.lang")}
+      >
         {publicPage ? <SideRail /> : null}
         <SiteHeader nav={publicPage} width={SITE} />
         {hero}
@@ -70,6 +78,7 @@ export function Page({
           ) : null}
         </main>
         {publicPage ? <SiteFooter width={SITE} /> : null}
+        {publicPage ? <TabBar /> : null}
       </div>
     </TextContext.Provider>
   );

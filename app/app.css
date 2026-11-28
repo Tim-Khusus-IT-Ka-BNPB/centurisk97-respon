@@ -205,6 +205,14 @@
 }
 
 /* Reveals that need no script: a field shows when the answer that asks for it is checked. */
+/* Fixed to the bottom, the tab bar would ride up on the keyboard over the field being typed in. */
+@utility hide-while-typing {
+  body:has(:is(input:not([type="radio"], [type="checkbox"], [type="submit"], [type="button"]), textarea, select):focus)
+    & {
+    display: none;
+  }
+}
+
 @utility reveal-officer {
   display: none;
   form:has(input[name="role"][value="claimedOfficer"]:checked) & {

@@ -14,11 +14,9 @@ test("the home offers one way to report and BNPB's contacts", async ({ page }) =
 
 test("help, about and privacy open from the home with their content", async ({ page }) => {
   await page.goto("/");
-  // On a phone the header's links sit in its menu; on a wide screen in the side rail.
-  const menu = page.getByRole("banner").locator("summary");
-  const phone = await menu.isVisible();
-  if (phone) await menu.click();
-  const links = phone ? page.getByRole("banner") : page.getByRole("navigation", { name: "Menu" });
+  // Below 1024px the main places sit in the tab bar; on a wide screen in the side rail.
+  const bar = page.getByRole("navigation", { name: "Menu utama" });
+  const links = (await bar.isVisible()) ? bar : page.getByRole("navigation", { name: "Menu" });
   await links.getByRole("link", { name: "Bantuan" }).click();
   await expect(page.getByRole("heading", { level: 1 })).toHaveText("Bantuan");
   for (const group of ["Melapor", "Istilah", "Status", "Privasi"])

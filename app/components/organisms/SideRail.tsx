@@ -1,5 +1,6 @@
 import { Link, useLocation } from "react-router";
 import { cn } from "../../lib/cn";
+import { isCurrent } from "../../lib/nav";
 import { useText } from "../../lib/text";
 import { Icon } from "../atoms/Icon";
 import type { IconName } from "../atoms/icons";
@@ -15,7 +16,7 @@ const ITEMS: readonly { readonly to: string; readonly icon: IconName; readonly l
 
 // Upstream's side menu on a wide screen: a column of icons that opens over the page while the
 // pointer is on its items or the keyboard is in it, so the page never moves. A pointer resting in
-// the empty column above or below them leaves it shut. A phone keeps the header's menu.
+// the empty column above or below them leaves it shut. Narrower, the tab bar holds them.
 export function SideRail() {
   const t = useText();
   const { pathname } = useLocation();
@@ -26,7 +27,7 @@ export function SideRail() {
     >
       <ul className="flex flex-col gap-1">
         {ITEMS.map(({ to, icon, label }) => {
-          const here = to === "/" ? pathname === to || pathname === "/" : pathname.startsWith(to);
+          const here = isCurrent(pathname, to);
           return (
             <li key={to}>
               <Link
