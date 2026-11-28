@@ -16,7 +16,7 @@ describe("the Postgres database", () => {
       for (let times = 0; times < 2; times += 1) {
         const { db, close } = await connect(urlOf(name));
         expect(await rows(db, sql`select count(*) as tables from pg_tables where schemaname = 'public'`)).toEqual([
-          { tables: 68 },
+          { tables: 62 },
         ]);
         await close();
       }

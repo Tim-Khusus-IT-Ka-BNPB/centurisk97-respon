@@ -76,12 +76,6 @@ describe("the scheduled sweep", () => {
       ('message.minute', ${subject}, ${at(DAY)}, 4)`;
     await query`insert into model_usage (number_key, wib_date, calls) values
       (${subject}, '2025-11-30', 9), (${subject}, '2025-12-01', 8)`;
-    await query`insert into gateway_message (gateway_id, message_id, received_at) values
-      ('uji', ${`${subject}-old`}, ${at(RETENTION.gatewayMessageMs + MINUTE)}),
-      ('uji', ${`${subject}-new`}, ${at(MINUTE)})`;
-    await query`insert into chat_session (number_key, step, shared_point, updated_at) values
-      (${`${subject}-old`}, null, null, ${at(RETENTION.chatSessionMs + MINUTE)}),
-      (${`${subject}-new`}, null, null, ${at(MINUTE)})`;
 
     const ended = await draftWithTurn();
     const recent = await draftWithTurn();
@@ -107,12 +101,6 @@ describe("the scheduled sweep", () => {
     expect(counters.map((row) => row.count)).toEqual([4]);
     const usage = await query<{ calls: number }>`select calls from model_usage where number_key = ${subject}`;
     expect(usage.map((row) => row.calls)).toEqual([8]);
-    expect(await query`select message_id from gateway_message where message_id like ${`${subject}%`}`).toEqual([
-      { message_id: `${subject}-new` },
-    ]);
-    expect(await query`select number_key from chat_session where number_key like ${`${subject}%`}`).toEqual([
-      { number_key: `${subject}-new` },
-    ]);
     expect(await query`select 1 from device where id = ${deviceId}`).toHaveLength(0);
     expect(await query`select 1 from reporter_profile where device_id = ${deviceId}`).toHaveLength(0);
     expect(await query`select 1 from reporter where id = ${reporterId}`).toHaveLength(0);

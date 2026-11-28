@@ -40,12 +40,6 @@ export async function pruneBatch(db: Database, cutoffs: SweepCutoffs, batch: num
     sql`delete from model_usage where ctid in (
         select ctid from model_usage where wib_date < ${cutoffs.modelUsageBefore} limit ${batch})
       returning 1`,
-    sql`delete from gateway_message where ctid in (
-        select ctid from gateway_message where received_at < ${cutoffs.gatewayMessageBefore} limit ${batch})
-      returning 1`,
-    sql`delete from chat_session where ctid in (
-        select ctid from chat_session where updated_at < ${cutoffs.chatSessionBefore} limit ${batch})
-      returning 1`,
   ]);
 }
 

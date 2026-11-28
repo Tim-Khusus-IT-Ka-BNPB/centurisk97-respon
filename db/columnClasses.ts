@@ -136,7 +136,6 @@ export const COLUMN_CLASSES: Readonly<Record<string, TableClasses>> = {
       tracking_hash: I,
       emergency: I,
       emergency_victims: I,
-      door: I,
     },
   },
   report_version: {
@@ -540,34 +539,9 @@ export const COLUMN_CLASSES: Readonly<Record<string, TableClasses>> = {
       at: I,
     },
   },
-  pilot_number: {
-    retention: "until taken off the list",
-    columns: { number_key: I, number: P, officer_regency: P, added_by: I, added_at: I },
-  },
-  pilot_change: {
-    retention: "kept; append-only, with the number's key alone",
-    columns: { id: I, number_key: I, change: I, by_kind: I, by_id: I, at: I },
-  },
-  gateway_message: {
-    retention: "2 days after received_at, swept",
-    columns: { gateway_id: I, message_id: I, received_at: I },
-  },
-  chat_session: {
-    retention: "24 hours after updated_at, swept",
-    // Before consent the step says only that consent was asked; after it, who the reporter says they are.
-    columns: { number_key: I, step: P, shared_point: P, updated_at: I },
-  },
   notice: {
     retention: "with its report",
-    columns: { id: I, ticket_number: I, kind: I, history_id: I, reply_id: I, version: I, at: I },
-  },
-  notice_delivery: {
-    retention: "with its notice; append-only",
-    columns: { notice_id: I, gateway_id: I, at: I },
-  },
-  news_choice: {
-    retention: "waits on counsel, as the reports of its number; append-only",
-    columns: { id: I, number_key: I, choice: I, at: I },
+    columns: { id: I, ticket_number: I, kind: I, history_id: I, reply_id: I, at: I },
   },
   report_news: {
     retention: "with its report",

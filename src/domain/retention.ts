@@ -10,8 +10,6 @@ export const RETENTION = {
   modelUsageDays: 2,
   deviceUnseenMs: 365 * DAY_MS,
   emptiedDraftMs: 30 * DAY_MS,
-  gatewayMessageMs: 2 * DAY_MS,
-  chatSessionMs: DAY_MS,
   batch: 500,
 } as const;
 
@@ -24,9 +22,6 @@ export type SweepCutoffs = {
   readonly modelUsageBefore: string;
   readonly deviceSeenBefore: Date;
   readonly draftEndedBefore: Date;
-  // Message ids a gateway used before this, and chats quiet since before this, are removed.
-  readonly gatewayMessageBefore: Date;
-  readonly chatSessionBefore: Date;
 };
 
 export function sweepCutoffs(nowMs: number): SweepCutoffs {
@@ -37,7 +32,5 @@ export function sweepCutoffs(nowMs: number): SweepCutoffs {
     modelUsageBefore: localDate(nowMs - (RETENTION.modelUsageDays - 1) * DAY_MS, "WIB"),
     deviceSeenBefore: new Date(nowMs - RETENTION.deviceUnseenMs),
     draftEndedBefore: new Date(nowMs - RETENTION.emptiedDraftMs),
-    gatewayMessageBefore: new Date(nowMs - RETENTION.gatewayMessageMs),
-    chatSessionBefore: new Date(nowMs - RETENTION.chatSessionMs),
   };
 }

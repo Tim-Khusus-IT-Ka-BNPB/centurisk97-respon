@@ -287,7 +287,6 @@ export const report = pgTable(
     tracking_hash: text(),
     emergency: text(),
     emergency_victims: text(),
-    door: text().notNull().default("web"),
   },
   (t) => [
     index("report_sends").on(t.number_key, t.owner_slot, t.sent_at),
@@ -298,7 +297,6 @@ export const report = pgTable(
     check("report_ticket_number", sql.raw(`ticket_number ~ '^LA-[0-9]{6}-[0-9]{2,}$'`)),
     check("report_emergency", oneOf("emergency", ["chat", "oneTap"])),
     check("report_emergency_victims", oneOf("emergency_victims", ["yes", "no", "unknown"])),
-    check("report_door", oneOf("door", ["web", "chat"])),
   ],
 );
 
@@ -570,7 +568,9 @@ export const staffAction = pgTable(
   "staff_action",
   {
     id: serial(),
-    ticket_number: text().references(() => ticket.ticket_number),
+    ticket_number: text()
+      .notNull()
+      .references(() => ticket.ticket_number),
     staff_id: text().notNull(),
     staff_label: text().notNull(),
     staff_kind: text().notNull(),
@@ -592,11 +592,8 @@ export const staffAction = pgTable(
         "handlingProof",
         "take",
         "document",
-        "pilotAllow",
-        "pilotRemove",
       ]),
     ),
-    check("staff_action_ticket", sql`(${t.action} in ('pilotAllow', 'pilotRemove')) = (${t.ticket_number} is null)`),
   ],
 );
 
@@ -650,40 +647,15 @@ export const notice = pgTable(
     // A row of ticket_history; no foreign key, as before.
     history_id: bigint({ mode: "number" }),
     reply_id: bigint({ mode: "number" }).references(() => reportReply.id),
-    version: integer(),
     at: at("at").notNull(),
   },
   (t) => [
     index("notice_ticket").on(t.ticket_number, t.at),
     index("notice_at").on(t.at),
     index("notice_reply").on(t.reply_id),
-    check("notice_kind", oneOf("kind", ["status", "reply", "actions", "correction", "document"])),
-    check("notice_version", sql`${t.version} is null or ${t.version} >= 1`),
+    check("notice_kind", oneOf("kind", ["status", "reply", "actions", "correction"])),
     check("notice_reply", sql`(${t.kind} = 'reply') = (${t.reply_id} is not null)`),
-    check("notice_document", sql`(${t.kind} = 'document') = (${t.version} is not null)`),
-    check("notice_history", sql`(${t.kind} in ('reply', 'document')) = (${t.history_id} is null)`),
-  ],
-);
-
-export const noticeDelivery = pgTable("notice_delivery", {
-  notice_id: bigint({ mode: "number" })
-    .primaryKey()
-    .references(() => notice.id),
-  gateway_id: text().notNull(),
-  at: at("at").notNull(),
-});
-
-export const newsChoice = pgTable(
-  "news_choice",
-  {
-    id: serial(),
-    number_key: text().notNull(),
-    choice: text().notNull(),
-    at: at("at").notNull(),
-  },
-  (t) => [
-    index("news_choice_number").on(t.number_key, t.id),
-    check("news_choice_choice", oneOf("choice", ["asked", "yes", "no"])),
+    check("notice_history", sql`(${t.kind} = 'reply') = (${t.history_id} is null)`),
   ],
 );
 
@@ -883,8 +855,8 @@ export const draftPhoto = pgTable(
     check("draft_photo_lat", sql`${t.lat} is null or ${t.lat} between -90 and 90`),
     check("draft_photo_lon", sql`${t.lon} is null or ${t.lon} between -180 and 180`),
     check("draft_photo_accuracy", sql`${t.accuracy_m} is null or ${t.accuracy_m} >= 0`),
-    check("draft_photo_badge", oneOf("badge", ["deviceGps", "photoData", "chatLocation", "none"])),
-    check("draft_photo_time_source", oneOf("time_source", ["photoData", "deviceGps", "upload", "chatMessage"])),
+    check("draft_photo_badge", oneOf("badge", ["deviceGps", "photoData", "none"])),
+    check("draft_photo_time_source", oneOf("time_source", ["photoData", "deviceGps", "upload"])),
     check("draft_photo_version", sql`${t.version} is null or ${t.version} >= 2`),
     check("draft_photo_point", sql`(${t.lat} is null) = (${t.lon} is null)`),
     check("draft_photo_badge_point", sql`(${t.badge} = 'none') = (${t.lat} is null)`),
@@ -936,56 +908,6 @@ export const draftVideo = pgTable(
     check("draft_video_bytes", sql`${t.bytes} > 0`),
     check("draft_video_container", oneOf("container", ["mp4", "mov", "webm"])),
     check("draft_video_seconds", sql`${t.seconds} between 0 and 61`),
-  ],
-);
-
-// The WhatsApp gateway
-
-export const gatewayMessage = pgTable(
-  "gateway_message",
-  { gateway_id: text().notNull(), message_id: text().notNull(), received_at: at("received_at").notNull() },
-  (t) => [primaryKey({ columns: [t.gateway_id, t.message_id] }), index("gateway_message_received").on(t.received_at)],
-);
-
-export const chatSession = pgTable(
-  "chat_session",
-  { number_key: text().primaryKey(), step: jsonb(), shared_point: jsonb(), updated_at: at("updated_at").notNull() },
-  (t) => [index("chat_session_updated").on(t.updated_at)],
-);
-
-export const pilotNumber = pgTable(
-  "pilot_number",
-  {
-    number_key: text().primaryKey(),
-    number: text().notNull(),
-    officer_regency: text(),
-    // The officer or the gateway that allowed it, as the list names them.
-    added_by: text().notNull(),
-    added_at: at("added_at").notNull(),
-  },
-  (t) => [
-    check("pilot_number_number", sql`${t.number} ${MOBILE}`),
-    check(
-      "pilot_number_officer_regency",
-      sql`${t.officer_regency} is null or length(${t.officer_regency}) between 3 and 80`,
-    ),
-  ],
-);
-
-export const pilotChange = pgTable(
-  "pilot_change",
-  {
-    id: serial(),
-    number_key: text().notNull(),
-    change: text().notNull(),
-    by_kind: text().notNull(),
-    by_id: text().notNull(),
-    at: at("at").notNull(),
-  },
-  (t) => [
-    index("pilot_change_number").on(t.number_key, t.id),
-    check("pilot_change_change", oneOf("change", ["allowed", "removed"])),
-    check("pilot_change_by_kind", oneOf("by_kind", ["staff", "gateway"])),
   ],
 );
 

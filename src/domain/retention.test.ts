@@ -11,8 +11,6 @@ describe("retention", () => {
       modelUsageDays: 2,
       deviceUnseenMs: 365 * day,
       emptiedDraftMs: 30 * day,
-      gatewayMessageMs: 2 * day,
-      chatSessionMs: day,
       batch: 500,
     });
   });
@@ -27,8 +25,6 @@ describe("retention", () => {
       modelUsageBefore: "2026-11-23",
       deviceSeenBefore: new Date("2025-11-23T18:00:00.000Z"),
       draftEndedBefore: new Date("2026-10-24T18:00:00.000Z"),
-      gatewayMessageBefore: new Date("2026-11-21T18:00:00.000Z"),
-      chatSessionBefore: new Date("2026-11-22T18:00:00.000Z"),
     });
   });
 });
