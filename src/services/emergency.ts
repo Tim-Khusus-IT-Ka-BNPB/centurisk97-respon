@@ -16,6 +16,7 @@ import { maskNumber } from "../domain/phoneNumber";
 import { checkPhoto, type DeviceFix } from "../domain/photoChecks";
 import { formatTicketNumber, ticketDay } from "../domain/ticketNumber";
 import { MINUTE_MS } from "../domain/time";
+import { triage } from "../domain/triage";
 import { EMPTY_CONTENT } from "../domain/turn/content";
 import { run } from "../platform/database";
 import { sha256Hex } from "../platform/keys";
@@ -147,6 +148,16 @@ export async function oneTapEmergency(
       consent,
       completePercent: completePercent(states),
       emergency: { kind: "oneTap", victims: reading.victims ?? "unknown" },
+      // A one-tap emergency goes to its BPBD at once, read from the phone's own position.
+      triage: triage({
+        lifeAtRisk: true,
+        place: "gps",
+        livePhotos: 0,
+        otherReporters: 0,
+        history: "none",
+        completePercent: completePercent(states),
+        model: null,
+      }),
     },
     profile.id,
     day,

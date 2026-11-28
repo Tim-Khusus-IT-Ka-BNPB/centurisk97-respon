@@ -29,3 +29,6 @@ export type DeskFilters = {
 
 // A BPBD officer's full number, opened from a report.
 export type OfficerNumber = { readonly profileId: string; readonly number: string };
+
+// A BPBD's area a report can be given to: a province ("11") or a regency ("11.08").
+export type DeskArea = { readonly area: string; readonly name: string; readonly level: "province" | "regency" };

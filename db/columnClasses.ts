@@ -159,7 +159,18 @@ export const COLUMN_CLASSES: Readonly<Record<string, TableClasses>> = {
   },
   ticket: {
     retention: "with the report",
-    columns: { ticket_number: I, report_id: I, status: I, updated_at: I, revision: I },
+    columns: {
+      ticket_number: I,
+      report_id: I,
+      status: I,
+      updated_at: I,
+      revision: I,
+      assigned_area: I,
+      held: I,
+      triage_tier: I,
+      triage_score: I,
+      triage_reasons: I,
+    },
   },
   report_reply: {
     retention: "with the report; append-only",

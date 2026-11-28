@@ -18,6 +18,7 @@ import { FACILITY_KINDS, type FacilityKind } from "../../src/domain/facilities";
 import { MISSING_STATUSES, type MissingStatus } from "../../src/domain/missingPerson";
 import {
   DESK_VIEWS,
+  type DeskArea,
   type DeskFilters,
   type DeskShown,
   type DeskTyped,
@@ -61,6 +62,8 @@ export type DeskReportLoad =
       readonly texts: Texts;
       readonly report: DeskReport;
       readonly summary: DeskSummary | null;
+      // The BPBDs it can be given to, for Pusdalops; null for an account that may not.
+      readonly areas: readonly DeskArea[] | null;
     };
 
 const texts = () => pickTexts(PAGE_TEXTS.desk);
@@ -142,12 +145,19 @@ export async function loadDeskQueue(url: URL, api: ApiCall): Promise<DeskQueueLo
 
 // GET /desk/<ticket>.
 export async function loadDeskReport(ticketNumber: string, api: ApiCall): Promise<DeskReportLoad> {
-  const [response, summary] = await Promise.all([
+  const [response, summary, areas] = await Promise.all([
     api("GET", `/desk/reports/${encodeURIComponent(ticketNumber)}`),
     summaryOf(api, ""),
+    api("GET", "/desk/areas"),
   ]);
-  if (response.ok) return { kind: "report", texts: texts(), report: (await response.json()) as DeskReport, summary };
-  return refusalOf(response);
+  if (!response.ok) return refusalOf(response);
+  return {
+    kind: "report",
+    texts: texts(),
+    report: (await response.json()) as DeskReport,
+    summary,
+    areas: areas.ok ? ((await areas.json()) as { areas: DeskArea[] }).areas : null,
+  };
 }
 
 export type DeskResponseLoad =
@@ -251,6 +261,8 @@ function deskPost(form: FormData): readonly [path: string, body?: unknown] {
       return ["status", { to: text("to"), note: text("note"), revision, ...done }];
     case "reply":
       return ["replies", { text: text("reply") }];
+    case "assign":
+      return ["assignment", { area: text("area"), revision }];
     case "check":
       return [
         "checks",

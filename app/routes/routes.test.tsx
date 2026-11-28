@@ -1404,12 +1404,20 @@ describe("desk routes", () => {
       replies: [],
       versions: [],
       impact: { dead: null, missing: null, injured: null, displaced: null, houses: null },
+      assignment: { area: "11.08", name: "Aceh Utara", held: false },
+      triage: { tier: "sedang", score: 50, reasons: ["searched", "modelLikely"] },
     };
     const load = async (answer: () => Response) =>
       unwrap(
         await deskReport.loader({
           params: { ticketNumber: "LA-241126-01" },
-          context: { api: api({ "GET /desk/reports/LA-241126-01": answer, "GET /desk/summary": json(SUMMARY) }) },
+          context: {
+            api: api({
+              "GET /desk/reports/LA-241126-01": answer,
+              "GET /desk/summary": json(SUMMARY),
+              "GET /desk/areas": json({ areas: [] }),
+            }),
+          },
         } as Args),
       );
     const read = await load(json(REPORT));

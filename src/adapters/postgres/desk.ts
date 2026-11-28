@@ -6,6 +6,7 @@ import type { GpsDoubt } from "../../domain/gpsDoubts";
 import type { TakenAction } from "../../domain/handling";
 import type { KeptPhoto } from "../../domain/photoChecks";
 import type { TicketStatus } from "../../domain/stages";
+import type { TriageReason, TriageTier } from "../../domain/triage";
 import {
   atomically,
   changedOne,
@@ -54,6 +55,9 @@ export type QueueRow = {
   readonly news: boolean;
   // When it came into the status it is in.
   readonly statusSince: Date;
+  // The BPBD that owns it, by its code and name, and whether Pusdalops holds it to check first.
+  readonly assignment: { readonly area: string; readonly name: string; readonly held: boolean };
+  readonly triage: { readonly tier: TriageTier; readonly score: number; readonly reasons: readonly TriageReason[] };
 };
 
 type QueueRecord = {
@@ -76,6 +80,12 @@ type QueueRecord = {
   taker: string | null;
   news: boolean;
   status_since: string;
+  assigned_area: string;
+  assigned_name: string;
+  held: boolean;
+  triage_tier: TriageTier;
+  triage_score: number;
+  triage_reasons: TriageReason[];
 };
 
 // What the desk is told of a report kept on a phone with no signal.
@@ -96,10 +106,20 @@ const NEWS = sql`exists (select 1 from ticket_history n where n.ticket_number = 
 const STATUS_SINCE = sql`(select max(h.at) from ticket_history h where h.ticket_number = r.ticket_number
     and h.event is null) as status_since`;
 
+// The assigned BPBD's area by its name: a regency's, else a province's, from the places in use.
+const AREA_NAME = sql`coalesce(
+    (select a.name from place_regency a join place_snapshot s on s.id = a.snapshot_id and s.active
+      where a.code = t.assigned_area),
+    (select a.province_name from place_regency a join place_snapshot s on s.id = a.snapshot_id and s.active
+      where a.province_code = t.assigned_area limit 1),
+    t.assigned_area) as assigned_name`;
+
+const ASSIGNMENT = sql`t.assigned_area, ${AREA_NAME}, t.held, t.triage_tier, t.triage_score, t.triage_reasons`;
+
 const SELECT = sql`select r.ticket_number, t.status, r.hazard_type, r.village_code, r.sent_at, v.fields,
     v.complete_percent, v.reporter_name, v.reporter_role, r.number_unverified, r.emergency, r.emergency_victims, ${OFFLINE},
     (select k.label from report_taker k where k.ticket_number = r.ticket_number) as taker, ${NEWS} as news,
-    (select count(*) from draft_photo p where p.draft_id = r.draft_id) as photo_count, ${STATUS_SINCE}
+    (select count(*) from draft_photo p where p.draft_id = r.draft_id) as photo_count, ${STATUS_SINCE}, ${ASSIGNMENT}
   from report r
   join ticket t on t.report_id = r.id
   join report_version v on v.report_id = r.id and v.version = ${LATEST}`;
@@ -124,6 +144,7 @@ const HAS: Readonly<Record<DeskHas, Query>> = {
   ),
   photos: sql`exists (select 1 from draft_photo h where h.draft_id = r.draft_id)`,
   news: NEWS,
+  held: sql`t.held`,
 };
 
 const whereAll = (parts: readonly Query[]): Query =>
@@ -164,6 +185,8 @@ const queueRow = (found: QueueRecord): QueueRow => ({
           late: found.offline_late === true,
         }
       : null,
+  assignment: { area: found.assigned_area, name: found.assigned_name, held: found.held },
+  triage: { tier: found.triage_tier, score: found.triage_score, reasons: found.triage_reasons },
 });
 
 // One page of sent reports, newest first, and how many match in all.
@@ -187,7 +210,7 @@ export async function queuePage(
   return { rows: found.map(queueRow), total: (counted as { total: number }).total };
 }
 
-type HistoryEvent = "fieldCheck" | "actions" | "take" | "followUp" | "released" | "commentFigure";
+type HistoryEvent = "fieldCheck" | "actions" | "take" | "followUp" | "released" | "commentFigure" | "assigned";
 
 // What a check found and put right, what was done, or what the reporter added.
 type HistoryDetail = {
@@ -198,6 +221,8 @@ type HistoryDetail = {
   readonly code?: string;
   // The version the reporter's news made.
   readonly version?: number;
+  // The BPBD Pusdalops gave the ticket to, by its area's name.
+  readonly area?: string;
 };
 
 export type DeskReportRecord = QueueRow & {
@@ -246,7 +271,7 @@ export async function deskReport(
     db,
     sql`select r.ticket_number, t.status, r.hazard_type, r.village_code, r.sent_at, v.fields,
         v.complete_percent, v.reporter_name, v.reporter_role, r.number_unverified, r.emergency, r.emergency_victims, ${OFFLINE},
-    (select k.label from report_taker k where k.ticket_number = r.ticket_number) as taker, ${NEWS} as news, r.draft_id, r.id as report_id, t.revision,
+    (select k.label from report_taker k where k.ticket_number = r.ticket_number) as taker, ${NEWS} as news, r.draft_id, r.id as report_id, t.revision, ${ASSIGNMENT},
         v.reporter_number, v.officer_regency, v.officer_position,
         (select count(*) from draft_photo p where p.draft_id = r.draft_id) as photo_count, ${STATUS_SINCE}
       from report r
@@ -312,8 +337,10 @@ export async function deskReport(
 type Move = { readonly from: TicketStatus; readonly to: TicketStatus; readonly note: string | null };
 
 // The ticket moved from the status it is at.
+// Forwarding a ticket held for Pusdalops releases it to its BPBD.
 const moveRow = (ticketNumber: string, { from, to }: Move, at: Date): Query =>
-  sql`update ticket set status = ${to}, revision = revision + 1, updated_at = ${at}
+  sql`update ticket set status = ${to}, revision = revision + 1, updated_at = ${at},
+      held = held and ${to} <> 'forwarded'
     where ticket_number = ${ticketNumber} and status = ${from}`;
 
 // Its history row, written only when the move before it changed the ticket.

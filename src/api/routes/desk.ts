@@ -18,6 +18,7 @@ import { ticketStatusSchema } from "../../contract/tracking";
 import { DESK_HAS, DESK_PERIODS } from "../../domain/deskQueue";
 import { isTicketNumber } from "../../domain/ticketNumber";
 import type { StaffPrincipal } from "../../ports/identity";
+import { assignDeskTicket, deskAreas } from "../../services/assignment";
 import {
   type DeskAnswer,
   type DeskChange,
@@ -249,6 +250,53 @@ export function addDeskRoutes(api: Api): void {
       c.header("x-robots-tag", "noindex");
       const { ticketNumber } = c.req.valid("param");
       return changeAnswered(c, await replyToReporter(c.env, staffOf(c), ticketNumber, c.req.valid("json").text));
+    },
+  );
+
+  addRoute(
+    api,
+    "staff",
+    createRoute({
+      method: "post",
+      path: "/desk/reports/{ticketNumber}/assignment",
+      request: {
+        params: ticketParams,
+        body: jsonBody(z.object({ area: z.string().max(10), revision: z.number().int().nonnegative() })),
+      },
+      responses: {
+        200: jsonResponse(
+          "Given to the area's BPBD and released from any hold, with its history row",
+          deskReportSchema,
+        ),
+        409: refusal("The ticket is closed, or another officer changed it first"),
+        422: refusal("No province or regency has this code, on field area"),
+      },
+    }),
+    async (c) => {
+      c.header("x-robots-tag", "noindex");
+      const { ticketNumber } = c.req.valid("param");
+      return changeAnswered(c, await assignDeskTicket(c.env, staffOf(c), ticketNumber, c.req.valid("json")));
+    },
+  );
+
+  addRoute(
+    api,
+    "staff",
+    createRoute({
+      method: "get",
+      path: "/desk/areas",
+      responses: {
+        200: jsonResponse(
+          "Every province and regency a ticket can be given to, each province before its regencies",
+          z.object({
+            areas: z.array(z.object({ area: z.string(), name: z.string(), level: z.enum(["province", "regency"]) })),
+          }),
+        ),
+      },
+    }),
+    async (c) => {
+      c.header("x-robots-tag", "noindex");
+      return answered(c, await deskAreas(c.env, staffOf(c)));
     },
   );
 

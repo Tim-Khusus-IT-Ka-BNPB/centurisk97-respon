@@ -5,7 +5,7 @@ import type { TicketStatus } from "./stages";
 
 export type HistoryNews = {
   readonly actor: "system" | "staff" | "reporter";
-  readonly event: "fieldCheck" | "actions" | "take" | "followUp" | "released" | null;
+  readonly event: "fieldCheck" | "actions" | "take" | "followUp" | "released" | "assigned" | null;
   readonly fromStatus: TicketStatus | null;
   readonly toStatus: TicketStatus;
   readonly note: string | null;

@@ -112,6 +112,7 @@ const HAS_ICON: Readonly<Record<DeskHas, IconName>> = {
   displaced: "tent",
   houses: "house",
   photos: "camera",
+  held: "clipboardCheck",
 };
 
 function HasLink({

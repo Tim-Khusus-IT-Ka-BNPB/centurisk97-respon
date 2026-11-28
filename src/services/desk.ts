@@ -121,6 +121,8 @@ function queueItem(
     news: found.news,
     overdue: isOverdue(found.status, found.statusSince.getTime(), nowMs),
     impact: impactOf(found.states),
+    assignment: found.assignment,
+    triage: { ...found.triage, reasons: [...found.triage.reasons] },
     cluster: clusterView(clusters.get(found.ticketNumber)),
   };
 }

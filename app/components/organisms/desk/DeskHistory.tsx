@@ -14,6 +14,7 @@ function historyTitle(t: Text, entry: History[number]): string {
   if (entry.event === "followUp") return t("desk.history.followUp", { version: entry.detail?.version as number });
   if (entry.event === "released") return t("desk.history.released", { code: entry.detail?.code as string });
   if (entry.event === "commentFigure") return t("desk.history.commentFigure");
+  if (entry.event === "assigned") return t("desk.history.assigned", { area: entry.detail?.area as string });
   if (entry.event === "fieldCheck")
     return t("desk.history.check", { result: `desk.check.result.${entry.detail?.result}` });
   return t(`stage.long.${entry.status}`);

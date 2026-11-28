@@ -15,9 +15,9 @@ import type { DraftContent } from "../domain/turn/content";
 import type { ServiceBindings } from "./bindings";
 
 // The model is stopped before a turn's 6 seconds run out; its answer is never stored late.
-const MODEL_DEADLINE_MS = 4500;
+export const MODEL_DEADLINE_MS = 4500;
 
-async function withinDeadline(work: Promise<unknown>, ms: number): Promise<unknown> {
+export async function withinDeadline(work: Promise<unknown>, ms: number): Promise<unknown> {
   let timer: ReturnType<typeof setTimeout> | undefined;
   const late = new Promise<null>((resolve) => {
     timer = setTimeout(() => resolve(null), ms);

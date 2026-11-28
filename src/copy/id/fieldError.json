@@ -37,6 +37,7 @@
   "fieldError.check.validWithChanges": "Ada angka yang diubah. Pilih Sebagian benar, atau kembalikan angkanya.",
   "fieldError.check.notValidWithChanges": "Laporan tidak valid tidak dikoreksi angkanya. Kembalikan angkanya, atau pilih Sebagian benar.",
   "fieldError.actions.none": "Pilih paling sedikit satu tindakan, atau tulis tindakan lain.",
+  "fieldError.area.unknown": "Wilayah itu tidak ada dalam daftar. Pilih provinsi, kabupaten atau kota dari daftar.",
   "fieldError.actions.unknown": "Ada tindakan yang tidak dikenal untuk jenis bencana ini. Muat ulang halaman, lalu pilih lagi.",
   "fieldError.photo.proofNotCamera": "Foto ini bukan potretan langsung dari kamera. Potret langsung, atau centang Foto diteruskan lalu pilih foto ini lagi.",
   "fieldError.photo.proofFormat": "Foto harus JPEG dan paling besar 3 MB. Foto ini tidak disimpan. Ambil ulang dengan kamera.",

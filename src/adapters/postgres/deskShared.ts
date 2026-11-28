@@ -4,10 +4,13 @@ import type { StaffPrincipal } from "../../ports/identity";
 
 // What every desk query and write shares: the region an account may read, and the log of its acts.
 
-// The region's condition, by the codes of the report's place; none for a national account.
+// The region's condition, by the BPBD the ticket is assigned to: a regency's own, a province's
+// every one in it. A ticket held for Pusdalops is no BPBD's yet. None for a national account.
 export function regionParts(scope: StaffScope): Query[] {
   if (scope.level === "national") return [];
-  return scope.level === "regency" ? [sql`r.regency_code = ${scope.code}`] : [sql`r.province_code = ${scope.code}`];
+  const area =
+    scope.level === "regency" ? sql`t.assigned_area = ${scope.code}` : sql`left(t.assigned_area, 2) = ${scope.code}`;
+  return [area, sql`not t.held`];
 }
 
 // The region's condition after a where clause.
@@ -24,7 +27,8 @@ type LoggedAction =
   | "handlingProof"
   | "take"
   | "document"
-  | "trackingLink";
+  | "trackingLink"
+  | "assign";
 
 // The act, with the region the account worked in then, so a later change of its scope moves nothing.
 export const actionRow = (staff: StaffPrincipal, ticketNumber: string, action: LoggedAction, at: Date): Query =>

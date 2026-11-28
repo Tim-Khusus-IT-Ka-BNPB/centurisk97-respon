@@ -3,6 +3,7 @@ import { DESK_HAS } from "../domain/deskQueue";
 import { VICTIM_ANSWERS } from "../domain/emergency";
 import { CHECK_RESULTS } from "../domain/fieldCheck";
 import { GPS_DOUBTS } from "../domain/gpsDoubts";
+import { TRIAGE_REASONS, TRIAGE_TIERS } from "../domain/triage";
 import { photoBadgeSchema, summaryGroupSchema } from "./card";
 import { deskCommentsSchema } from "./comments";
 import { hazardTypeSchema, reporterRoleSchema, timeSchema } from "./common";
@@ -50,6 +51,15 @@ const queueItemSchema = z.object({
   news: z.boolean(),
   // Still open after a week in one status (Q40).
   overdue: z.boolean(),
+  // The BPBD that owns it: a regency ("11.08") or a province ("11") by code and name, and whether
+  // Pusdalops holds it to check before any BPBD sees it.
+  assignment: z.object({ area: z.string(), name: z.string(), held: z.boolean() }),
+  // How sure the desk can be of it, decided when it was sent, with the reasons.
+  triage: z.object({
+    tier: z.enum(TRIAGE_TIERS),
+    score: z.number().int().min(0).max(100),
+    reasons: z.array(z.enum(TRIAGE_REASONS)),
+  }),
   impact: impactSchema,
   // Reports of the same hazard close in place and time from two numbers or more (A9): its tickets,
   // oldest first, this one among them. Never called verified, and its figures are never added up.
@@ -246,7 +256,7 @@ export const deskReportSchema = queueItemSchema.extend({
       // The regency whose desk it went to.
       forwardedTo: z.string().nullable(),
       // Work told in the history: what a check found and put right, or what was done.
-      event: z.enum(["fieldCheck", "actions", "take", "followUp", "released", "commentFigure"]).nullable(),
+      event: z.enum(["fieldCheck", "actions", "take", "followUp", "released", "commentFigure", "assigned"]).nullable(),
       detail: z
         .object({
           result: z.enum(CHECK_RESULTS).optional(),
@@ -259,6 +269,8 @@ export const deskReportSchema = queueItemSchema.extend({
           // The event a report was released from.
           code: z.string().optional(),
           version: z.number().int().optional(),
+          // The BPBD Pusdalops gave the ticket to.
+          area: z.string().optional(),
         })
         .nullable(),
     }),

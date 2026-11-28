@@ -1,4 +1,5 @@
 import { DRAFT_LIFE_MS, endDraft, loadDraft, storedReply } from "../adapters/postgres/drafts";
+import { draftPhotos } from "../adapters/postgres/photos";
 import { latestConsent, profileById } from "../adapters/postgres/reporters";
 import {
   insertReport,
@@ -15,6 +16,7 @@ import { applicableFields, completePercent } from "../domain/fields/applicable";
 import type { FieldId } from "../domain/fields/catalogue";
 import { LIMITS, rollingRetryAt } from "../domain/limits";
 import { formatTicketNumber, ticketDay } from "../domain/ticketNumber";
+import type { Triage } from "../domain/triage";
 import type { DraftContent } from "../domain/turn/content";
 import { atomically, changedOne, decide, holds, row, sql } from "../platform/database";
 import { sha256Hex } from "../platform/keys";
@@ -23,6 +25,7 @@ import type { ServiceBindings } from "./bindings";
 import { draftZone, LIFE_LINE } from "./draftView";
 import { type FollowUpSent, sendFollowUp } from "./followUp";
 import { trackingToken } from "./tracking";
+import { triageOnSend } from "./triage";
 import { ownedDraft, viewOf } from "./turn";
 
 // The fault switch of local and test: the send fails after its inserts, before commit.
@@ -52,6 +55,8 @@ async function sendOnce(
   revision: number,
   turnKey: string,
   requestHash: string,
+  // Decided once per send, however often the write is tried again.
+  triaged: (sending: Parameters<typeof triageOnSend>[1]) => Promise<Triage>,
 ): Promise<Sent | null> {
   const db = bindings.db;
   const nowMs = bindings.clock.now();
@@ -79,6 +84,14 @@ async function sendOnce(
   const consent = await latestConsent(db, profile.id);
   // Removed with its number between the reads: decide again on what is there now.
   if (consent === null) return null;
+  const triage = await triaged({
+    draftId: draft.id,
+    numberKey: draft.numberKey,
+    villageCode: draft.villageCode as string,
+    states,
+    emergency: emergency !== null,
+    photos: await draftPhotos(db, draft.id),
+  });
   const joined = content.sameEvent?.joined ?? null;
   const joinedAt =
     joined === null
@@ -118,6 +131,7 @@ async function sendOnce(
       },
       consent,
       completePercent: completePercent(states),
+      triage,
     }),
     ...endDraft(draft.id, "sent", at),
     ...(joined !== null && joinedAt !== null
@@ -151,8 +165,13 @@ export async function sendDraft(
   if (owned.kind !== "owned") return owned;
   if (owned.draft.followUpOf !== null) return sendFollowUp(bindings, owned.draft, revision, turnKey, requestHash);
   let sent: Sent;
+  let triaged: Promise<Triage> | null = null;
+  const triageOnce = (sending: Parameters<typeof triageOnSend>[1]) => {
+    triaged ??= triageOnSend(bindings, sending);
+    return triaged;
+  };
   try {
-    sent = await decide(() => sendOnce(bindings, principal, draftId, revision, turnKey, requestHash));
+    sent = await decide(() => sendOnce(bindings, principal, draftId, revision, turnKey, requestHash, triageOnce));
   } catch (error) {
     if (!(error instanceof SendFault)) throw error;
     return { kind: "failed", draft: await viewOf(bindings, owned.draft, [], turnKey) };

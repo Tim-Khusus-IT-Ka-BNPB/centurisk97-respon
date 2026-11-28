@@ -347,13 +347,26 @@ export const ticket = pgTable(
     status: text().notNull(),
     updated_at: at("updated_at").notNull(),
     revision: integer().notNull().default(0),
+    // The BPBD that owns the report: its regency ("11.08") from the place at send, or one Pusdalops
+    // gave it since, a regency or a province ("11").
+    assigned_area: text().notNull(),
+    // Held for Pusdalops to check before any BPBD sees it.
+    held: boolean().notNull().default(false),
+    // How sure the desk can be of the report, decided at send (src/domain/triage.ts).
+    triage_tier: text().notNull().default("sedang"),
+    triage_score: integer().notNull().default(40),
+    triage_reasons: jsonb().notNull().default([]),
   },
   (t) => [
     index("ticket_status").on(t.status),
+    index("ticket_assigned").on(t.assigned_area),
     check(
       "ticket_status",
       oneOf("status", ["new", "seen", "under_review", "forwarded", "in_handling", "closed", "invalid"]),
     ),
+    check("ticket_assigned_area", sql.raw(String.raw`assigned_area ~ '^[0-9]{2}(\.[0-9]{2})?$'`)),
+    check("ticket_triage_tier", oneOf("triage_tier", ["darurat", "tinggi", "sedang", "rendah"])),
+    check("ticket_triage_score", sql`${t.triage_score} between 0 and 100`),
   ],
 );
 
@@ -385,7 +398,7 @@ export const ticketHistory = pgTable(
     check("ticket_history_actor", oneOf("actor", ["system", "staff", "reporter"])),
     check(
       "ticket_history_event",
-      oneOf("event", ["fieldCheck", "actions", "take", "followUp", "released", "commentFigure"]),
+      oneOf("event", ["fieldCheck", "actions", "take", "followUp", "released", "commentFigure", "assigned"]),
     ),
     check(
       "ticket_history_staff",
@@ -609,6 +622,7 @@ export const staffAction = pgTable(
         "take",
         "document",
         "trackingLink",
+        "assign",
       ]),
     ),
   ],

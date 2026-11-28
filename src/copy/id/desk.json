@@ -154,6 +154,7 @@
   "desk.has.displaced": "Ada pengungsi",
   "desk.has.houses": "Ada rumah rusak",
   "desk.has.photos": "Ada foto",
+  "desk.has.held": "Perlu dicek Pusdalops",
   "desk.actions": "Tindak lanjut",
   "desk.busy": "Menyimpan...",
   "desk.move": "Ubah status",
@@ -466,5 +467,6 @@
   "desk.numbers.error.point": "Titik itu di luar Indonesia. Periksa lintang dan bujurnya, mungkin tertukar.",
   "desk.translated": "Terjemahan: {text}",
   "desk.words.translated": "Terjemahan dari {language}: {text}",
-  "desk.words.otherLanguage": "bahasa lain"
+  "desk.words.otherLanguage": "bahasa lain",
+  "desk.history.assigned": "Diserahkan ke BPBD {area}"
 }

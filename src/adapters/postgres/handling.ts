@@ -188,6 +188,7 @@ export async function proofKey(db: Database, scope: StaffScope, proofId: string)
   const found = await row<{ store_key: string }>(
     db,
     sql`select p.store_key from handling_proof p join report r on r.ticket_number = p.ticket_number
+      join ticket t on t.ticket_number = p.ticket_number
       where p.id = ${proofId}${regionCondition(scope)}`,
   );
   return found?.store_key ?? null;

@@ -1,4 +1,5 @@
 import type { EmergencyKind, VictimAnswer } from "../../domain/emergency";
+import type { Triage } from "../../domain/triage";
 import type { DraftContent } from "../../domain/turn/content";
 import { type Database, type Query, row, sql } from "../../platform/database";
 
@@ -70,6 +71,8 @@ export type NewReport = {
   readonly consent: { readonly privacyVersion: number; readonly agreedAt: Date };
   readonly completePercent: number;
   readonly emergency: { readonly kind: EmergencyKind; readonly victims: VictimAnswer } | null;
+  // How sure the desk can be of it; it goes to the BPBD of its regency unless held for Pusdalops.
+  readonly triage: Triage;
 };
 
 // Report, its first version, the ticket at "new" and its first history row, as one part of the send batch.
@@ -91,7 +94,10 @@ export function insertReport(report: NewReport): Query[] {
       values (${reportId}, 1, ${report.content.states}, ${who.name}, ${who.number}, ${who.role},
         ${who.officerRegency}, ${who.officerPosition}, ${report.consent.privacyVersion}, ${report.consent.agreedAt},
         ${report.completePercent}, ${report.sentAt})`,
-    sql`insert into ticket (ticket_number, report_id, status, updated_at) values (${ticket}, ${reportId}, 'new', ${report.sentAt})`,
+    sql`insert into ticket (ticket_number, report_id, status, updated_at, assigned_area, held, triage_tier, triage_score,
+        triage_reasons)
+      values (${ticket}, ${reportId}, 'new', ${report.sentAt}, ${code.slice(0, 5)}, ${report.triage.held},
+        ${report.triage.tier}, ${report.triage.score}, ${JSON.stringify(report.triage.reasons)})`,
     sql`insert into ticket_history (ticket_number, from_status, to_status, actor, at)
       values (${ticket}, null, 'new', 'system', ${report.sentAt})`,
   ];

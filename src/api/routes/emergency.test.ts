@@ -120,6 +120,9 @@ describe("an emergency told in the short conversation", () => {
       hazardSubtype: "unknown",
       eventTime: { kind: "dateTime", localDate: "2026-11-24", zone: "WIB" },
     });
+    // A life at risk goes to its BPBD at once, as the first to check.
+    expect(report.triage).toMatchObject({ tier: "darurat", reasons: expect.arrayContaining(["lifeAtRisk"]) });
+    expect(report.assignment).toMatchObject({ area: "11.08", held: false });
     // Empty is not zero: what was not asked is not there.
     expect(report.impact.dead).toBeNull();
     const map = deskMapSchema.parse((await desk().call("GET", `/desk/map?ticket=${ticketNumber}`)).json);
@@ -183,7 +186,12 @@ describe("one tap", () => {
       villageName: "Cot Seumiyong",
     });
     const report = deskReportSchema.parse((await desk().call("GET", `/desk/reports/${body.ticketNumber}`)).json);
-    expect(report).toMatchObject({ hazardSubtype: "unknown", emergency: { kind: "oneTap" } });
+    expect(report).toMatchObject({
+      hazardSubtype: "unknown",
+      emergency: { kind: "oneTap" },
+      assignment: { area: "11.08", held: false },
+      triage: { tier: "darurat", reasons: ["lifeAtRisk", "gps", "modelOff"] },
+    });
     const place = report.groups.flatMap((group) => group.rows).find((row) => row.fieldId === "place");
     expect(place).toMatchObject({ origin: "system", value: { precision: "gpsPoint", point: { accuracyM: 12 } } });
     const tracked = await browser(fetchApi).call("POST", "/tracking", { token: body.trackingToken });

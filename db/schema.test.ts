@@ -69,7 +69,8 @@ describe("schema", () => {
     );
     await run(
       db,
-      sql`insert into ticket (ticket_number, report_id, status, updated_at) values (${ticket}, ${reportId}, 'new', ${NOW})`,
+      sql`insert into ticket (ticket_number, report_id, status, assigned_area, updated_at)
+        values (${ticket}, ${reportId}, 'new', '11.08', ${NOW})`,
     );
     await run(
       db,

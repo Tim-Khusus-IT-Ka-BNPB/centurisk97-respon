@@ -122,12 +122,18 @@ describe("the side menu's counts", () => {
       path.startsWith("/desk/summary") ? Response.json(SUMMARY) : Response.json({ items: [] }),
     );
     expect(await loadDeskQueue(new URL("http://x/desk"), read.api)).toMatchObject({ summary: SUMMARY });
-    const limited = fakeApi((_method, path) =>
-      path.startsWith("/desk/summary")
-        ? Response.json(envelope("limit.desk.read"), { status: 429 })
-        : Response.json({ ticketNumber: "LA-1" }),
+    const limited = fakeApi((_method, path) => {
+      if (path.startsWith("/desk/summary")) return Response.json(envelope("limit.desk.read"), { status: 429 });
+      // A BPBD's account may not give a report on, so it gets no list of BPBDs.
+      if (path === "/desk/areas") return Response.json(envelope("desk.notAllowed"), { status: 403 });
+      return Response.json({ ticketNumber: "LA-1" });
+    });
+    expect(await loadDeskReport("LA-1", limited.api)).toMatchObject({ kind: "report", summary: null, areas: null });
+    const AREAS = [{ area: "11", name: "Aceh", level: "province" }];
+    const pusdalops = fakeApi((_method, path) =>
+      path === "/desk/areas" ? Response.json({ areas: AREAS }) : Response.json({ ticketNumber: "LA-1" }),
     );
-    expect(await loadDeskReport("LA-1", limited.api)).toMatchObject({ kind: "report", summary: null });
+    expect(await loadDeskReport("LA-1", pusdalops.api)).toMatchObject({ kind: "report", areas: AREAS });
   });
 });
 
@@ -147,6 +153,7 @@ describe("a report on the desk", () => {
     expect(calls.map((call) => `${call.method} ${call.path}`)).toEqual([
       "GET /desk/reports/LA-241126-01",
       "GET /desk/summary",
+      "GET /desk/areas",
       "POST /desk/reports/LA-241126-01/view",
     ]);
     const refused = await actOnDeskReport(
@@ -174,6 +181,8 @@ describe("a change to a ticket", () => {
     expect(moved).toMatchObject({ kind: "redirect", location: "/desk/LA-241126-01?saved=status" });
     const replied = await actOnDeskReport("LA-241126-01", form({ action: "reply", reply: "Kami cek" }), api);
     expect(replied).toMatchObject({ kind: "redirect", location: "/desk/LA-241126-01?saved=replies" });
+    const given = await actOnDeskReport("LA-241126-01", form({ action: "assign", area: "12.01", revision: "4" }), api);
+    expect(given).toMatchObject({ kind: "redirect", location: "/desk/LA-241126-01?saved=assignment" });
     expect(calls).toEqual([
       {
         method: "POST",
@@ -181,6 +190,7 @@ describe("a change to a ticket", () => {
         body: { to: "under_review", note: "Dicek", revision: 3, actions: [], otherAction: "" },
       },
       { method: "POST", path: "/desk/reports/LA-241126-01/replies", body: { text: "Kami cek" } },
+      { method: "POST", path: "/desk/reports/LA-241126-01/assignment", body: { area: "12.01", revision: 4 } },
     ]);
   });
 

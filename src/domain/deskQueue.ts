@@ -17,7 +17,8 @@ export function periodStart(period: DeskPeriod, nowMs: number): number | null {
 
 // What a report must hold to be shown: news no officer has acted on; someone dead, missing or hurt;
 // someone displaced; a damaged house; or a photo.
-export const DESK_HAS = ["news", "victims", "displaced", "houses", "photos"] as const;
+// "held": waiting for Pusdalops to check before any BPBD sees it.
+export const DESK_HAS = ["news", "victims", "displaced", "houses", "photos", "held"] as const;
 export type DeskHas = (typeof DESK_HAS)[number];
 
 export const DESK_PAGE_SIZE = 50;

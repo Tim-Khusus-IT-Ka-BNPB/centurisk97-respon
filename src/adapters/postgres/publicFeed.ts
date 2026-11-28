@@ -116,5 +116,6 @@ export const markProof = async (
     sql`insert into proof_publication (proof_id, public, staff_id, staff_label, at)
       select p.id, ${shown}, ${staff.staffId}, ${staff.label}, ${at}
       from handling_proof p join report r on r.ticket_number = p.ticket_number
+      join ticket t on t.ticket_number = p.ticket_number
       where p.id = ${proofId} and p.ticket_number = ${ticketNumber} and not p.forwarded${regionCondition(staff.scope)}`,
   )) === 1;
