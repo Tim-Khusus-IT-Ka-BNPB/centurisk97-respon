@@ -1,12 +1,14 @@
 import { createHash } from "node:crypto";
 import { readdir, readFile, stat } from "node:fs/promises";
 import { join } from "node:path";
+import provinceNames from "../../db/reference/provinces.json" with { type: "json" };
 import { checkPlaceFile, type PlaceFileProblem, placeRecords, UPSTREAM_FLOOR } from "../../src/domain/placeFile.ts";
 import { checkShapeFiles, type ShapeFileProblem } from "../../src/domain/shapeFile.ts";
 import type { Database } from "../../src/platform/database.ts";
 import { writeSnapshot } from "./snapshot.ts";
 
-const PROVINCES = "db/reference/provinces.json";
+// Bundled with the code, so the import commands in the image need no file of the repo beside them.
+const PROVINCES: Readonly<Record<string, string>> = provinceNames;
 
 type ImportProblem = PlaceFileProblem | ShapeFileProblem | { readonly kind: "tooFewShapes"; readonly shapes: number };
 
@@ -34,13 +36,12 @@ async function shapeTexts(path: string): Promise<string[]> {
 // the active snapshot. With the floor on, outlines for too few villages are refused as a false empty.
 export async function readPlaceFile(db: Database, path: string, options: Options) {
   const text = await readFile(path, "utf8");
-  const provinces: Record<string, string> = JSON.parse(await readFile(PROVINCES, "utf8"));
-  const checked = checkPlaceFile(JSON.parse(text), provinces, options.withFloor);
+  const checked = checkPlaceFile(JSON.parse(text), PROVINCES, options.withFloor);
   if (!checked.ok) throw new PlaceFileRefused(checked.problem);
   const shapeFiles = await shapeTexts(options.shapesPath);
   const shapes = checkShapeFiles(shapeFiles.map((one) => JSON.parse(one)));
   if (!shapes.ok) throw new PlaceFileRefused(shapes.problem);
-  const records = placeRecords(checked.file, provinces);
+  const records = placeRecords(checked.file, PROVINCES);
   const villages = new Set(records.villages.map((village) => village.code));
   const matched = shapes.shapes.filter((shape) => villages.has(shape.code)).length;
   if (options.withFloor && matched < UPSTREAM_FLOOR.villages)

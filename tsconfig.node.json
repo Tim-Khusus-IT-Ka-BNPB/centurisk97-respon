@@ -45,6 +45,7 @@
     "module": "NodeNext",
     "moduleResolution": "NodeNext",
     "allowImportingTsExtensions": true,
+    "resolveJsonModule": true,
     "erasableSyntaxOnly": true
   }
 }
