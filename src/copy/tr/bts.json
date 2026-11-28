@@ -2056,6 +2056,8 @@
   "official.heading": "Humbani laporan tiap ari BNPB",
   "official.lead": "Kejadian i laporan tiap ari BNPB {day}, rap hu barita na dob dapotan bani.",
   "official.unavailable": "Laporan tiap ari BNPB seng tarbaca ope.",
+  "official.updated": "Ipabaru {date} jam {time} WIB.",
+  "official.stale": "Seng dong laporan tiap ari BNPB na labih baru hun ai.",
   "official.none": "Seng adong kejadian bagei on i laporan tiap ari BNPB.",
   "official.title": "{hazard} i {regency}",
   "official.status.berjalan": "Sedang marjalan",

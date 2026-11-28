@@ -2056,6 +2056,8 @@
   "official.heading": "Battu ri laporan allo-allo BNPB",
   "official.lead": "Kajariang ri laporan allo-allo BNPB {day}, siagang berita nigappa untuk anjo kajariang.",
   "official.unavailable": "Laporan allo-allo BNPB tenapa akkulle nibaca.",
+  "official.updated": "Nipabaru {date} pukul {time} WIB.",
+  "official.stale": "Tenapa nia' laporan allo-allo BNPB ia kaminang baru battu ri anjo.",
   "official.none": "Tena kajariang jenis anne ri laporan allo-allo BNPB.",
   "official.title": "{hazard} ri {regency}",
   "official.status.berjalan": "Tuli lampa",

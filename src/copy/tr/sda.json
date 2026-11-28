@@ -2056,6 +2056,8 @@
   "official.heading": "Mai lan laporan tiap allo BNPB",
   "official.lead": "Kejadian lan laporan tiap allo BNPB {day}, sia berita tu dirapai kenna kejadian iato.",
   "official.unavailable": "Laporan tiap allo BNPB tae' pa' bisa dibaca.",
+  "official.updated": "Dipabaru {date} pukul {time} WIB.",
+  "official.stale": "Tae' pa'den laporan allo-allo BNPB to labu baru mulai tonna iato.",
   "official.none": "Tae' kejadian jenis iate lan laporan tiap allo BNPB.",
   "official.title": "{hazard} dio {regency}",
   "official.status.berjalan": "Masih berlangsung",

@@ -2056,6 +2056,7 @@
   "official.heading": "Hagan laporan harian BNPB",
   "official.lead": "Kajadian dalam laporan harian BNPB {day}, awan barita nang kawa ditemukan hagannya.",
   "official.unavailable": "Laporan harian BNPB kada kawa dibaca ahulu.",
+  "official.updated": "Dipabarui {date} jam {time} WIB.",
   "official.none": "Kada ada kajadian jenis ini dalam laporan harian BNPB.",
   "official.title": "{hazard} di {regency}",
   "official.status.berjalan": "Sedang berlangsung",

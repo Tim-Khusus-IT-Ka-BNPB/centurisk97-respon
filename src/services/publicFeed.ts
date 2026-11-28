@@ -192,6 +192,8 @@ export async function watchView(bindings: ServiceBindings, address: string): Pro
   };
 }
 
+const DAY_MS = 86_400_000;
+
 export type OfficialAnswer =
   | { readonly kind: "ok"; readonly official: Official }
   | { readonly kind: "limit"; readonly refusal: LimitRefusal };
@@ -208,9 +210,11 @@ export async function officialView(bindings: ServiceBindings, address: string): 
     kind: "ok",
     official:
       file === null
-        ? { day: null, events: [] }
+        ? { day: null, builtAt: null, stale: false, events: [] }
         : {
             day: file.hari,
+            builtAt: new Date(Date.parse(file.dibuat)).toISOString(),
+            stale: bindings.clock.now() - Date.parse(file.dibuat) > DAY_MS,
             events: officialEvents(file).map((one) => ({
               ...one,
               provinceName: provinces.get(one.provinceCode) ?? null,

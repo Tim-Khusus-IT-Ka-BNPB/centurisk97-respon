@@ -2056,6 +2056,8 @@
   "official.heading": "Bara laporan harian BNPB",
   "official.lead": "Kejadian dalam laporan harian BNPB {day}, hapan berita je jumpun akan kejadian te.",
   "official.unavailable": "Laporan harian BNPB dia tau dimaca payah.",
+  "official.updated": "Diperbarui {date} jam {time} WIB.",
+  "official.stale": "Dia hindai ada laporan andau-andau BNPB je labih baru sasuah te.",
   "official.none": "Dia jaton kejadian jenis tuh dalam laporan harian BNPB.",
   "official.title": "{hazard} hong {regency}",
   "official.status.berjalan": "Bajalan",

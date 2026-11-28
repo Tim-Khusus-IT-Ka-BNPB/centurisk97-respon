@@ -2056,6 +2056,8 @@
   "official.heading": "Jak laporan harian BNPB",
   "official.lead": "Kejadian di laporan harian BNPB {day}, jama berita yang tinemu gawoh kejadian ney.",
   "official.unavailable": "Laporan harian BNPB lom dapok dibaca.",
+  "official.updated": "Dipebaru {date} jam {time} WIB.",
+  "official.stale": "Mak na wat laporan harian BNPB sai labih baru sejak iku.",
   "official.none": "Mak wat kejadian jenis ney di laporan harian BNPB.",
   "official.title": "{hazard} di {regency}",
   "official.status.berjalan": "Lagi berlangsung",

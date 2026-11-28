@@ -74,9 +74,12 @@ export type Watch = z.infer<typeof watchSchema>;
 
 // The events of BNPB's daily report on the Alun-alun (upstream kabar-alun, row 26): each with the
 // report's status and figures, and a few headlines from the news. The day is null when the file is
-// missing or broken: cannot know.
+// missing or broken: cannot know. builtAt is when upstream made the file, a UTC instant; stale says
+// it was made more than a day ago, so no newer report has come since.
 export const officialSchema = z.strictObject({
   day: z.string().nullable(),
+  builtAt: z.string().nullable(),
+  stale: z.boolean(),
   events: z.array(
     z.strictObject({
       id: z.string(),

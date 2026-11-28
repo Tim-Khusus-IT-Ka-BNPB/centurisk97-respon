@@ -1,12 +1,13 @@
 import { Link } from "react-router";
 import type { FeedEntry, Official } from "../../../src/contract/publicFeed";
 import { hazardKey } from "../../../src/copy/hazardKey";
-import { localShortDate } from "../../../src/copy/time";
+import { clockTime, localShortDate, shortDate } from "../../../src/copy/time";
 import { regencyKey } from "../../../src/domain/officialEvents";
 import { cn } from "../../lib/cn";
 import { hazardIcon } from "../../lib/hazardIcons";
 import { useText } from "../../lib/text";
 import { Icon } from "../atoms/Icon";
+import { Notice } from "../molecules/Notice";
 
 type Event = Official["events"][number];
 
@@ -107,7 +108,8 @@ function EventCard({ event, entries }: { readonly event: Event; readonly entries
 
 // BNPB's daily report on the Alun-alun (upstream kabar-alun, row 26): each event with the report's
 // status and figures, our own handled reports of it, and the news found for it. With a hazard picked,
-// only its events.
+// only its events. When upstream made the file shows under the heading, and a file more than a day
+// old says no newer report has come.
 export function OfficialEvents({
   official,
   entries,
@@ -119,6 +121,7 @@ export function OfficialEvents({
 }) {
   const t = useText();
   const events = (official?.events ?? []).filter((event) => hazard === null || event.hazardType === hazard);
+  const built = official?.builtAt == null ? null : ({ utc: official.builtAt, zone: "WIB" } as const);
   return (
     <section aria-labelledby="official-title" className="flex flex-col gap-3">
       <div className="flex flex-col gap-1">
@@ -129,8 +132,10 @@ export function OfficialEvents({
           {official?.day == null
             ? t("official.unavailable")
             : t("official.lead", { day: localShortDate(official.day) })}
+          {built === null ? null : ` ${t("official.updated", { date: shortDate(built), time: clockTime(built) })}`}
         </p>
       </div>
+      {official?.stale ? <Notice kind="info">{t("official.stale")}</Notice> : null}
       {official?.day != null && events.length === 0 ? <p className="card-surface p-4">{t("official.none")}</p> : null}
       {events.length > 0 ? (
         <ul className="grid gap-3 md:grid-cols-2">

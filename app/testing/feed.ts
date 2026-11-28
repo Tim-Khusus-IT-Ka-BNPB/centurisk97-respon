@@ -58,6 +58,8 @@ export const WATCH: Watch = {
 // BNPB's daily report: an ongoing flood in Aceh Utara with figures and news, a finished landslide.
 export const OFFICIAL: Official = {
   day: "2026-11-26",
+  builtAt: "2026-11-27T00:53:00.000Z",
+  stale: false,
   events: [
     {
       id: "banjir|11|Aceh Utara|2026-11-24",

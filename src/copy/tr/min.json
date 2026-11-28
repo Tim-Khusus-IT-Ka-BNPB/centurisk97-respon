@@ -2056,6 +2056,8 @@
   "official.heading": "Dari laporan harian BNPB",
   "official.lead": "Kejadian dalam laporan harian BNPB {day}, jo barito nan ditemukan untuak kejadian tu.",
   "official.unavailable": "Laporan harian BNPB alun bisa dibaco.",
+  "official.updated": "Dipabaharui {date} pukua {time} WIB.",
+  "official.stale": "Alun ado laporan harian BNPB nan labiah baru sajak tu.",
   "official.none": "Indak ado kejadian jenis ko dalam laporan harian BNPB.",
   "official.title": "{hazard} di {regency}",
   "official.status.berjalan": "Sadang bajalan",

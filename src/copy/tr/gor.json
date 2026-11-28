@@ -2056,6 +2056,8 @@
   "official.heading": "Mai laporan harian BNPB",
   "official.lead": "Kajadian ode laporan harian BNPB {day}, wolo berita u ditemukan lo kajadian ito.",
   "official.unavailable": "Laporan harian BNPB dila bisa dibaca.",
+  "official.updated": "Diperbarui {date} pukul {time} WIB.",
+  "official.stale": "Dila wolo laporan harian BNPB lo wawu sejak boyito.",
   "official.none": "Deu kajadian jenis ito ode laporan harian BNPB.",
   "official.title": "{hazard} ode {regency}",
   "official.status.berjalan": "Berlangsung",

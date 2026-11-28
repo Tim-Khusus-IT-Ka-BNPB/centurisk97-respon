@@ -2056,6 +2056,7 @@
   "official.heading": "Nibak laporan uroë-uroë BNPB",
   "official.lead": "Kejadian dalam laporan uroë-uroë BNPB {day}, ngon barita nyang geuteume keu kejadian nyan.",
   "official.unavailable": "Laporan uroë-uroë BNPB band na ji'eu mantong.",
+  "official.updated": "Geuubah {date} jeum {time} WIB.",
   "official.none": "Hana kejadian jeunis nyoë dalam laporan uroë-uroë BNPB.",
   "official.title": "{hazard} di {regency}",
   "official.status.berjalan": "Sedang berlangsung",

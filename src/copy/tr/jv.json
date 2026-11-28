@@ -2056,6 +2056,8 @@
   "official.heading": "Saking laporan saben dinten BNPB",
   "official.lead": "Kedadosan ing laporan saben dinten BNPB {day}, kaliyan warta ingkang kapanggih kangge kedadosan menika.",
   "official.unavailable": "Laporan saben dinten BNPB dereng saged diwaos.",
+  "official.updated": "Dipunmutakhirkan {date} pukul {time} WIB.",
+  "official.stale": "Dereng wonten laporan harian BNPB ingkang langkung enggal wiwit wekdal punika.",
   "official.none": "Mboten wonten kedadosan jinis menika ing laporan saben dinten BNPB.",
   "official.title": "{hazard} ing {regency}",
   "official.status.berjalan": "Taksih berlangsung",

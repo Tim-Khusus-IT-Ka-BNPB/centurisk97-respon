@@ -2056,6 +2056,8 @@
   "official.heading": "Dari laporan harian BNPB",
   "official.lead": "Kejadian dalam laporan harian BNPB {day}, dengan berita yang ditemukan untuknya.",
   "official.unavailable": "Laporan harian BNPB belum dapat dibaco.",
+  "official.updated": "Dikemaskini {date} pukul {time} WIB.",
+  "official.stale": "Belum ado laporan harian BNPB yang lebih baru sejak tu.",
   "official.none": "Indak ado kejadian jenis ini dalam laporan harian BNPB.",
   "official.title": "{hazard} di {regency}",
   "official.status.berjalan": "Sedang berlangsung",

@@ -286,12 +286,22 @@ describe("BNPB's daily report on the Alun-alun", () => {
     expect(official.events.some((one) => one.provinceName === "Aceh")).toBe(true);
     expect(official.events.some((one) => one.provinceName === null)).toBe(true);
     expect(official.events.every((one) => one.news.length <= 3)).toBe(true);
+    // Made 26 Nov 17.04 WIB: fresh until a day later, then no newer report has come.
+    expect([official.builtAt, official.stale]).toEqual(["2026-11-26T10:04:00.000Z", false]);
+    clock.set(Date.parse("2026-11-27T10:05:00.000Z"));
+    expect(officialSchema.parse((await browser(fetchApi).call("GET", "/feed/official")).json).stale).toBe(true);
+    clock.set(Date.parse("2026-11-24T03:00:00.000Z"));
     const key = await hmacKey(bindings.settings.keyHmacSecret, "address", addressBucket(phone.address) as string);
     const window = new Date(windowStart("clockHour", clock.now())).toISOString();
     await query`insert into rate_counter (limit_id, subject_key, window_start, count) values ('address.feed', ${key}, ${window}, 600)
       on conflict (limit_id, subject_key, window_start) do update set count = 600`;
     expect((await phone.call("GET", "/feed/official")).status).toBe(429);
     await query`delete from reference_file where name = 'officialEvents'`;
-    expect((await browser(fetchApi).call("GET", "/feed/official")).json).toEqual({ day: null, events: [] });
+    expect((await browser(fetchApi).call("GET", "/feed/official")).json).toEqual({
+      day: null,
+      builtAt: null,
+      stale: false,
+      events: [],
+    });
   });
 });

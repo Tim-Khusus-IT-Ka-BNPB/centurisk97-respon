@@ -2056,6 +2056,7 @@
   "official.heading": "Moroi ba laporan harian BNPB",
   "official.lead": "Kejadian ba laporan harian BNPB {day}, hegöi berita si no tefaoli khönia.",
   "official.unavailable": "Laporan harian BNPB lö tola tebaca.",
+  "official.updated": "Ibohou ba {date}, jam {time} WIB.",
   "official.none": "Lö so kejadian jenis andre ba laporan harian BNPB.",
   "official.title": "{hazard} ba {regency}",
   "official.status.berjalan": "Berlangsung",

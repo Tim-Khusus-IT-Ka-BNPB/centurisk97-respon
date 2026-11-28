@@ -2056,6 +2056,8 @@
   "official.heading": "Sian laporan padan ni BNPB",
   "official.lead": "Hajadian na adong di laporan padan ni BNPB {day}, dohot barita na ditiop tu ibana.",
   "official.unavailable": "Laporan padan ni BNPB so tarbaca dope.",
+  "official.updated": "Dipabaru {date} ari {time} WIB.",
+  "official.stale": "Dang adong be laporan arion BNPB na umbaru sian i.",
   "official.none": "Dang adong hajadian songon on di laporan padan ni BNPB.",
   "official.title": "{hazard} di {regency}",
   "official.status.berjalan": "Mangihut",

@@ -2056,6 +2056,7 @@
   "official.heading": "Bas laporan wari-wari BNPB",
   "official.lead": "Kejadin i bas laporan wari-wari BNPB {day}, ras berita si idat man kejadin e.",
   "official.unavailable": "Laporan wari-wari BNPB lenga banci ibaca.",
+  "official.updated": "Ibaruken {date} jam {time} WIB.",
   "official.none": "Lang lit kejadin jenis enda i bas laporan wari-wari BNPB.",
   "official.title": "{hazard} i {regency}",
   "official.status.berjalan": "Lalap erdalan",

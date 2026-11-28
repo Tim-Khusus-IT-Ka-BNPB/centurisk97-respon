@@ -2057,6 +2057,8 @@
   "official.heading": "From BNPB's daily report",
   "official.lead": "Incidents in BNPB's daily report for {day}, with the news found for each.",
   "official.unavailable": "BNPB's daily report cannot be read right now.",
+  "official.updated": "Updated {date} at {time} WIB.",
+  "official.stale": "There has been no newer BNPB daily report since then.",
   "official.none": "There are no incidents of this type in BNPB's daily report.",
   "official.title": "{hazard} in {regency}",
   "official.status.berjalan": "Ongoing",

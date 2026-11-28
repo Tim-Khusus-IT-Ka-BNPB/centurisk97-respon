@@ -2,6 +2,8 @@
   "official.heading": "Dari laporan harian BNPB",
   "official.lead": "Kejadian dalam laporan harian BNPB {day}, dengan berita yang ditemukan untuknya.",
   "official.unavailable": "Laporan harian BNPB belum bisa dibaca.",
+  "official.updated": "Diperbarui {date} pukul {time} WIB.",
+  "official.stale": "Belum ada laporan harian BNPB yang lebih baru sejak itu.",
   "official.none": "Tidak ada kejadian jenis ini dalam laporan harian BNPB.",
   "official.title": "{hazard} di {regency}",
   "official.status.berjalan": "Berlangsung",

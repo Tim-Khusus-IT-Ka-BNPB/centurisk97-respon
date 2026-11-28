@@ -2056,6 +2056,8 @@
   "official.heading": "Sekeng laporan harian BNPB",
   "official.lead": "Kejadian lek laporan harian BNPB {day}, kance berita sak ditemukan gen kejadian nike.",
   "official.unavailable": "Laporan harian BNPB ndekman bisa dibaca.",
+  "official.updated": "Wah diperbarui {date} jam {time} WIB.",
+  "official.stale": "Ndèk man araq laporan harian BNPB sak lebih baru mulai lek to.",
   "official.none": "Ndeq araq kejadian jenis ne lek laporan harian BNPB.",
   "official.title": "{hazard} lek {regency}",
   "official.status.berjalan": "Lagi berlangsung",

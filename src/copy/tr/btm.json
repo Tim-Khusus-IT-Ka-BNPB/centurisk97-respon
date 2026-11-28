@@ -2056,6 +2056,8 @@
   "official.heading": "Sian laporan harian BNPB",
   "official.lead": "Kejadian di laporan harian BNPB {day}, dohot barita na dapot laho tu na.",
   "official.unavailable": "Laporan harian BNPB dope boi dibaca.",
+  "official.updated": "Dipabaru {date} jam {time} WIB.",
+  "official.stale": "Inda adong dope laporan ari-ari BNPB na lobi baru sian i.",
   "official.none": "So adong kejadian jenis on di laporan harian BNPB.",
   "official.title": "{hazard} di {regency}",
   "official.status.berjalan": "Marlangsung",

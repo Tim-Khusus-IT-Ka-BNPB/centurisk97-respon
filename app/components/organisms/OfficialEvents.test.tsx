@@ -11,6 +11,13 @@ const draw = (props: Partial<Parameters<typeof OfficialEvents>[0]> = {}) =>
 
 test("each event of BNPB's report with its status, figures, our own reports of it and its news", async () => {
   draw();
+  // When upstream made the file, in WIB; a fresh one needs no note.
+  expect(
+    await screen.findByText(
+      "Kejadian dalam laporan harian BNPB 26 Nov 2026, dengan berita yang ditemukan untuknya. Diperbarui 27 Nov 2026 pukul 07.53 WIB.",
+    ),
+  ).toBeTruthy();
+  expect(screen.queryByText(/lebih baru sejak itu/)).toBeNull();
   const cards = await screen.findAllByRole("listitem");
   const flood = within(cards[0] as HTMLElement);
   expect(flood.getByRole("heading", { level: 3 }).textContent).toBe("Banjir di Kabupaten Aceh Utara");
@@ -54,7 +61,12 @@ test("a hazard picked shows only its events; none of it, or the report unread, s
 
 test("headlines all shown say no more", async () => {
   const [flood] = OFFICIAL.events;
-  draw({ official: { day: OFFICIAL.day, events: [{ ...(flood as (typeof OFFICIAL.events)[number]), moreNews: 0 }] } });
+  draw({ official: { ...OFFICIAL, events: [{ ...(flood as (typeof OFFICIAL.events)[number]), moreNews: 0 }] } });
   expect(await screen.findByText("Berita (1)")).toBeTruthy();
   expect(screen.queryByText(/berita lain/)).toBeNull();
+});
+
+test("a report made more than a day ago says no newer one has come", async () => {
+  draw({ official: { ...OFFICIAL, stale: true } });
+  expect(await screen.findByText("Belum ada laporan harian BNPB yang lebih baru sejak itu.")).toBeTruthy();
 });

@@ -2056,6 +2056,7 @@
   "official.heading": "Saking laporan harian BNPB",
   "official.lead": "Kadadyan ring laporan harian BNPB {day}, sareng berita sane kepanggihin ngeninin kadadyan punika.",
   "official.unavailable": "Laporan harian BNPB durung dados wacén.",
+  "official.updated": "Karopéa {date} ring jam {time} WIB.",
   "official.none": "Nénten wénten kadadyan soroh puniki ring laporan harian BNPB.",
   "official.title": "{hazard} ring {regency}",
   "official.status.berjalan": "Sedang mamargi",

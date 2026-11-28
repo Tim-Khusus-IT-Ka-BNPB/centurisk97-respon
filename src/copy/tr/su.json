@@ -2056,6 +2056,8 @@
   "official.heading": "Tina laporan harian BNPB",
   "official.lead": "Kajadian dina laporan harian BNPB {day}, sareng béja anu kapendak pikeun éta.",
   "official.unavailable": "Laporan harian BNPB acan tiasa dibaca.",
+  "official.updated": "Diénggalan {date} jam {time} WIB.",
+  "official.stale": "Dugi ka ayeuna acan aya laporan harian BNPB anu langkung énggal.",
   "official.none": "Teu aya kajadian jinis ieu dina laporan harian BNPB.",
   "official.title": "{hazard} di {regency}",
   "official.status.berjalan": "Keur lumangsung",
