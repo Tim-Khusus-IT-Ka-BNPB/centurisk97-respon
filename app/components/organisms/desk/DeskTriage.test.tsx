@@ -19,6 +19,8 @@ const AREAS = [
   { area: "12.01", name: "Nias", level: "regency" as const },
 ];
 const panel = () => within(screen.getByRole("region", { name: "BPBD penanggung jawab" }));
+// The chips on the reports, not the side menu's queue of the same name.
+const heldChips = () => screen.getAllByText("Perlu dicek").filter((one) => one.closest("nav") === null);
 const held = { ...REPORT, assignment: { ...REPORT.assignment, held: true } };
 
 describe("which BPBD has a report, and how sure the desk can be of it", () => {
@@ -66,7 +68,7 @@ describe("which BPBD has a report, and how sure the desk can be of it", () => {
   test("held: no BPBD sees it yet, and Pusdalops releases it to the one it has in one press", async () => {
     await renderDesk(<DeskReportView report={held} summary={SUMMARY} areas={AREAS} />, PATH);
     expect(panel().getByText("Ditahan untuk dicek Pusdalops. BPBD Aceh Utara belum melihat laporan ini.")).toBeTruthy();
-    expect(screen.getAllByText("Perlu dicek")).toHaveLength(2);
+    expect(heldChips()).toHaveLength(2);
     const release = panel().getByRole("button", { name: "Teruskan ke BPBD Aceh Utara" }) as HTMLButtonElement;
     const sent = new FormData(release.form as HTMLFormElement);
     expect(Object.fromEntries(sent)).toEqual({ action: "assign", area: "11.08", revision: String(REPORT.revision) });
@@ -154,6 +156,39 @@ describe("the queue shows each report's BPBD and tier", () => {
     );
     expect(screen.getAllByText("BPBD Aceh Utara")).toHaveLength(4);
     expect(screen.getAllByText("Keyakinan sedang")).toHaveLength(4);
-    expect(screen.getAllByText("Perlu dicek")).toHaveLength(2);
+    expect(heldChips()).toHaveLength(2);
+  });
+});
+
+describe("the held queue in the side menu", () => {
+  const menu = () => within(screen.getAllByRole("navigation", { name: "Antrean kerja" })[0] as HTMLElement);
+  const drawQueue = (summary: typeof SUMMARY, has = "") =>
+    renderDesk(
+      <DeskQueueView shown={list(queue())} filters={{ ...FILTERS, has }} summary={summary} envelope={null} />,
+      { path: "/desk" },
+    );
+
+  test("Pusdalops sees how many wait to be checked, and the queue is marked when open", async () => {
+    const view = await drawQueue({ ...SUMMARY, byHas: { ...SUMMARY.byHas, held: 2 } });
+    const held = menu().getByRole("link", { name: "Perlu dicek, 2 laporan" });
+    expect(held.getAttribute("href")).toBe("/desk?view=list&has=held");
+    expect(held.getAttribute("aria-current")).toBeNull();
+    view.unmount();
+    await drawQueue(SUMMARY, "held");
+    expect(
+      menu()
+        .getByRole("link", { name: /^Perlu dicek/ })
+        .getAttribute("aria-current"),
+    ).toBe("page");
+    expect(
+      menu()
+        .getByRole("link", { name: /^Semua laporan/ })
+        .getAttribute("aria-current"),
+    ).toBeNull();
+  });
+
+  test("a BPBD, which never sees a held report, has no such queue", async () => {
+    await drawQueue({ ...SUMMARY, mayAssign: false });
+    expect(menu().queryByRole("link", { name: /^Perlu dicek/ })).toBeNull();
   });
 });

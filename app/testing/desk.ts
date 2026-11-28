@@ -197,4 +197,5 @@ export const SUMMARY: DeskSummary = {
   mayReadResponse: true,
   missingOpen: 3,
   mayEditNumbers: true,
+  mayAssign: true,
 };

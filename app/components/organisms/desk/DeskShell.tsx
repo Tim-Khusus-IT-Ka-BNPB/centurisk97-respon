@@ -113,7 +113,7 @@ function DeskNav({ place }: { readonly place: DeskPlace }) {
         <li>
           <Link
             to={deskLink(filters, { status: "", page: 1 })}
-            aria-current={current !== null && current.status === "" ? "page" : undefined}
+            aria-current={current !== null && current.status === "" && filters.has !== "held" ? "page" : undefined}
             aria-label={counted(t, t("desk.nav.all"), all)}
             className={item}
           >
@@ -122,6 +122,20 @@ function DeskNav({ place }: { readonly place: DeskPlace }) {
             <Count n={all} />
           </Link>
         </li>
+        {summary?.mayAssign ? (
+          <li>
+            <Link
+              to={deskLink(filters, { status: "", has: "held", page: 1 })}
+              aria-current={current !== null && filters.has === "held" ? "page" : undefined}
+              aria-label={counted(t, t("desk.nav.held"), summary.byHas.held)}
+              className={item}
+            >
+              <Icon name="clipboardCheck" className={cn(navIcon, summary.byHas.held > 0 && "text-warn-icon")} />
+              {t("desk.nav.held")}
+              <Count n={summary.byHas.held} />
+            </Link>
+          </li>
+        ) : null}
         {STATUSES.map((status) => (
           <li key={status}>
             <Link

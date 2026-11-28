@@ -213,6 +213,11 @@ describe("Pusdalops gives a ticket to another BPBD", () => {
     expect(areas.find((one) => one.area === "12")).toEqual({ area: "12", name: names.sumut, level: "province" });
     expect(new Set(codes).size).toBe(codes.length);
     expect((await regency().call("GET", "/desk/areas")).status).toBe(403);
+    // Only who gives reports on is shown the reports held for checking.
+    const mayAssign = async (phone: Phone) =>
+      deskSummarySchema.parse((await phone.call("GET", "/desk/summary")).json).mayAssign;
+    expect(await mayAssign(desk())).toBe(true);
+    expect(await mayAssign(regency())).toBe(false);
   });
 });
 

@@ -114,6 +114,8 @@ export const deskSummarySchema = z.object({
   missingOpen: z.number().int().nonnegative(),
   // This account may keep the BPBD and facility numbers.
   mayEditNumbers: z.boolean(),
+  // This account gives reports to BPBDs, so it checks the ones held before any BPBD sees them.
+  mayAssign: z.boolean(),
 });
 
 export type DeskSummary = z.infer<typeof deskSummarySchema>;
