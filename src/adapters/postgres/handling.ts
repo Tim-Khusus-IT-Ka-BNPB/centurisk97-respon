@@ -18,6 +18,8 @@ export type Handling = {
     readonly staffLabel: string;
     // Shown on the public feed while its report is handled (D88).
     readonly public: boolean;
+    // Sent on to the officer, not taken by them; never on the public feed.
+    readonly forwarded: boolean;
   }[];
 };
 
@@ -28,9 +30,16 @@ export async function handlingOf(db: Database, ticketNumber: string): Promise<Ha
       db,
       sql`select label, staff_label, at from handling_action where ticket_number = ${ticketNumber} order by id`,
     ),
-    rows<{ id: string; lat: number | null; staff_label: string; received_at: string; public: boolean | null }>(
+    rows<{
+      id: string;
+      lat: number | null;
+      staff_label: string;
+      received_at: string;
+      public: boolean | null;
+      forwarded: boolean;
+    }>(
       db,
-      sql`select p.id, p.lat, p.staff_label, p.received_at,
+      sql`select p.id, p.lat, p.staff_label, p.received_at, p.forwarded,
           (select u.public from proof_publication u where u.proof_id = p.id order by u.id desc limit 1) as public
         from handling_proof p where p.ticket_number = ${ticketNumber}
         order by p.received_at, p.id`,
@@ -44,6 +53,7 @@ export async function handlingOf(db: Database, ticketNumber: string): Promise<Ha
       atMs: Date.parse(one.received_at),
       staffLabel: one.staff_label,
       public: one.public === true,
+      forwarded: one.forwarded,
     })),
   };
 }
@@ -150,6 +160,7 @@ export type NewProof = {
   readonly storeKey: string;
   readonly bytes: number;
   readonly fix: DeviceFix | null;
+  readonly forwarded: boolean;
 };
 
 // A photo of the work and its log; false when the report has all it may hold.
@@ -162,9 +173,11 @@ export async function addProof(
 ): Promise<boolean> {
   const done = await atomically(db, [
     holds(sql`(select count(*) from handling_proof where ticket_number = ${ticketNumber}) < ${PROOF.max}`),
-    sql`insert into handling_proof (id, ticket_number, store_key, bytes, lat, lon, accuracy_m, staff_id, staff_label, received_at)
+    sql`insert into handling_proof (id, ticket_number, store_key, bytes, lat, lon, accuracy_m, staff_id, staff_label,
+        received_at, forwarded)
       values (${proof.id}, ${ticketNumber}, ${proof.storeKey}, ${proof.bytes}, ${proof.fix?.lat ?? null},
-        ${proof.fix?.lon ?? null}, ${proof.fix?.accuracyM ?? null}, ${staff.staffId}, ${staff.label}, ${at})`,
+        ${proof.fix?.lon ?? null}, ${proof.fix?.accuracyM ?? null}, ${staff.staffId}, ${staff.label}, ${at},
+        ${proof.forwarded})`,
     actionRow(staff, ticketNumber, "handlingProof", at),
   ]);
   return done !== null;

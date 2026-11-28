@@ -79,10 +79,11 @@ const feed = async (query = "", phone = browser(fetchApi)) => {
   const answer = await phone.call("GET", `/feed${query}`);
   return { ...answer, feed: answer.status === 200 ? feedSchema.parse(answer.json) : (null as unknown as Feed) };
 };
-const proof = async (ticket: string) => {
+const proof = async (ticket: string, forwarded = false) => {
   const form = new FormData();
   const photo = cameraJpeg({ make: "Uji", model: "Kamera", dateTime: exifDateTime(clock.now() - 3_600_000, 420) });
   form.set("photo", new File([new Uint8Array(photo)], "foto.jpg", { type: "image/jpeg" }));
+  if (forwarded) form.set("forwarded", "1");
   for (const [name, value] of Object.entries({
     lat: "5.14705",
     lon: "97.0482",
@@ -213,6 +214,16 @@ describe("the public feed", () => {
       { public: false, staff_label: "Pusdalops BNPB, Petugas Uji" },
     ]);
     expect((await photo(`/feed/proofs/${crypto.randomUUID()}`)).status).toBe(404);
+  });
+
+  test("a forwarded photo of the work is never marked public, so never on the feed", async () => {
+    const { ticket } = await sentReport();
+    await handled(ticket);
+    const proofId = await proof(ticket, true);
+    expect((await mark(ticket, proofId, true)).status).toBe(404);
+    expect((await feed()).feed.entries[0]?.proofs).toEqual([]);
+    expect((await browser(fetchApi).file(`/feed/proofs/${proofId}`)).status).toBe(404);
+    expect(await query`select 1 from proof_publication where proof_id = ${proofId}`).toEqual([]);
   });
 
   test("the 600th open in an hour from one address is the last", async () => {

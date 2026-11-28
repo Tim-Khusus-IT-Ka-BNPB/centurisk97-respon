@@ -101,7 +101,8 @@ export async function publicProofKey(db: Database, proofId: string): Promise<str
   return found?.store_key ?? null;
 }
 
-// Marks one photo of a report in the officer's region; false when there is no such photo.
+// Marks one photo of a report in the officer's region; false when there is no such photo, or it was
+// forwarded to the officer, which the public never sees.
 export const markProof = async (
   db: Database,
   staff: StaffPrincipal,
@@ -115,5 +116,5 @@ export const markProof = async (
     sql`insert into proof_publication (proof_id, public, staff_id, staff_label, at)
       select p.id, ${shown}, ${staff.staffId}, ${staff.label}, ${at}
       from handling_proof p join report r on r.ticket_number = p.ticket_number
-      where p.id = ${proofId} and p.ticket_number = ${ticketNumber}${regionCondition(staff.scope)}`,
+      where p.id = ${proofId} and p.ticket_number = ${ticketNumber} and not p.forwarded${regionCondition(staff.scope)}`,
   )) === 1;

@@ -74,11 +74,16 @@ describe("the reporter's own report", () => {
     );
   });
 
-  test("the photos of the work are read by this phone's own address", async () => {
-    const proofs = [{ proofId: "p1", at: { utc: "2026-11-23T05:00:00.000Z", zone: "WIB" as const } }];
+  test("the photos of the work are read by this phone's own address, a forwarded one marked so", async () => {
+    const at = { utc: "2026-11-23T05:00:00.000Z", zone: "WIB" as const };
+    const proofs = [
+      { proofId: "p1", at, forwarded: false },
+      { proofId: "p2", at, forwarded: true },
+    ];
     draw({ ...OWN_REPORT, tracking: { ...OWN_REPORT.tracking, actions: ["Evakuasi warga"], proofs } });
     const photo = await screen.findByRole("img", { name: "Foto penanganan 1" });
     expect(photo.getAttribute("src")).toBe("/api/reports/LA-231126-01/proofs/p1");
+    expect(screen.getAllByText("Bukan foto langsung")).toHaveLength(1);
   });
 
   test("news may be added until its time, by one button that says it is on the way", async () => {

@@ -224,10 +224,10 @@ type DeskReportActed =
   // The report's tracking link, the same way.
   | { readonly kind: "trackingLink"; readonly link: string };
 
-// The photo and the officer's reading, as the API takes them.
+// The photo, the officer's reading and whether it was forwarded, as the API takes them.
 function proofForm(form: FormData): FormData {
   const proof = new FormData();
-  for (const name of ["photo", "lat", "lon", "accuracy", "readAt"]) {
+  for (const name of ["photo", "lat", "lon", "accuracy", "readAt", "forwarded"]) {
     const value = form.get(name);
     if (value !== null) proof.set(name, value);
   }

@@ -34,9 +34,10 @@ export const trackingSchema = z.object({
   // Set aside, with the reason an officer wrote for the reporter. Of what else staff write, only the
   // tracking page's replies (trackedSchema).
   rejected: z.object({ at: timeSchema, reason: z.string() }).nullable(),
-  // What was done, and once the report is closed the photos of it.
+  // What was done, and once the report is closed the photos of it, each marked when it was
+  // forwarded to the officer rather than taken by them.
   actions: z.array(z.string()),
-  proofs: z.array(z.object({ proofId: z.string(), at: timeSchema })),
+  proofs: z.array(z.object({ proofId: z.string(), at: timeSchema, forwarded: z.boolean() })),
   hazardType: hazardTypeSchema,
   hazardSubtype: z.string().nullable(),
   place: z.object({ villageName: z.string(), districtName: z.string(), regencyName: z.string() }),

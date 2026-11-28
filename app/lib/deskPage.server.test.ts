@@ -284,14 +284,14 @@ describe("a change to a ticket", () => {
 
   test("a photo of the work goes on as a form with only its own boxes, and comes back with none when refused", async () => {
     const photo = new File(["x"], "a.jpg", { type: "image/jpeg" });
-    const proof = form({ action: "proof", lat: "5.1", lon: "97", extra: "x" });
+    const proof = form({ action: "proof", lat: "5.1", lon: "97", forwarded: "1", extra: "x" });
     proof.set("photo", photo);
     const kept = fakeApi(() => Response.json({}));
     expect(await actOnDeskReport("LA-241126-01", proof, kept.api)).toMatchObject({
       location: "/desk/LA-241126-01?saved=proofs",
     });
     const sent = kept.calls[0]?.body as FormData;
-    expect([...sent.keys()].sort()).toEqual(["lat", "lon", "photo"]);
+    expect([...sent.keys()].sort()).toEqual(["forwarded", "lat", "lon", "photo"]);
     const refused = await actOnDeskReport(
       "LA-241126-01",
       proof,

@@ -38,6 +38,7 @@
   "fieldError.check.notValidWithChanges": "Laporan tidak valid tidak dikoreksi angkanya. Kembalikan angkanya, atau pilih Sebagian benar.",
   "fieldError.actions.none": "Pilih paling sedikit satu tindakan, atau tulis tindakan lain.",
   "fieldError.actions.unknown": "Ada tindakan yang tidak dikenal untuk jenis bencana ini. Muat ulang halaman, lalu pilih lagi.",
+  "fieldError.photo.proofNotCamera": "Foto ini bukan potretan langsung dari kamera. Potret langsung, atau centang Foto diteruskan lalu pilih foto ini lagi.",
   "fieldError.photo.proofFormat": "Foto harus JPEG dan paling besar 3 MB. Foto ini tidak disimpan. Ambil ulang dengan kamera.",
   "fieldError.photo.proofTooMany": "Paling banyak 10 foto penanganan per laporan. Foto ini tidak disimpan.",
   "fieldError.emergency.outside": "Titik ini di luar Indonesia. Telepon 112, atau laporkan lewat Lapor darurat dan pilih lokasinya.",

@@ -177,7 +177,8 @@ function AddActions(props: FormProps) {
 }
 
 // Photos of the work. With no script it is a file box and a button; with script a photo goes as
-// soon as it is picked, shrunk, with the officer's reading.
+// soon as it is picked, shrunk, with the officer's reading. One forwarded to the officer is ticked
+// so first: any picture, drawn again as a JPEG, sent with no reading.
 function ProofForm({ report, envelope }: Omit<FormProps, "typed">) {
   const t = useText();
   const hydrated = useHydrated();
@@ -185,17 +186,19 @@ function ProofForm({ report, envelope }: Omit<FormProps, "typed">) {
   const sending = useBusy("proof");
   const [preparing, setPreparing] = useState(false);
   const [unreadable, setUnreadable] = useState(false);
+  const [forwarded, setForwarded] = useState(false);
   const form = useRef<HTMLFormElement>(null);
   const problem = unreadable ? { copyKey: "fieldError.photo.unreadable", params: {} } : problemOf(envelope, "proof");
   const send = async (file: File) => {
     setPreparing(true);
-    const [bytes, reading] = await Promise.all([preparePhoto(file), photoFix()]);
+    const [bytes, reading] = await Promise.all([preparePhoto(file), forwarded ? null : photoFix()]);
     setPreparing(false);
     setUnreadable(bytes === null);
     if (bytes === null) return;
     const body = new FormData();
     body.set("action", "proof");
     body.set("photo", new File([new Uint8Array(bytes)], "foto.jpg", { type: "image/jpeg" }));
+    if (forwarded) body.set("forwarded", "1");
     if (reading !== null) for (const [name, value] of Object.entries(reading)) body.set(name, String(value));
     submit(body, { method: "post", encType: "multipart/form-data", replace: true, preventScrollReset: true });
   };
@@ -205,6 +208,21 @@ function ProofForm({ report, envelope }: Omit<FormProps, "typed">) {
     <Form ref={form} method="post" encType="multipart/form-data" preventScrollReset className="flex flex-col gap-2">
       <input type="hidden" name="action" value="proof" />
       <p className="text-meta text-muted">{t("desk.proof.hint", { count: report.proofs.length, max: PROOF.max })}</p>
+      <label className="flex min-h-target-min cursor-pointer items-start gap-2.5 rounded-control px-2 py-2.5 text-meta hover:bg-sunken has-checked:bg-selected has-focus-visible:outline-2 has-focus-visible:outline-focus">
+        <input
+          type="checkbox"
+          name="forwarded"
+          value="1"
+          checked={forwarded}
+          disabled={busy}
+          onChange={(event) => setForwarded(event.currentTarget.checked)}
+          className="mt-0.5 size-4 shrink-0"
+        />
+        <span className="flex min-w-0 flex-col gap-0.5">
+          <span className="font-semibold">{t("desk.proof.forwarded")}</span>
+          <span className="text-muted">{t("desk.proof.forwardedHint")}</span>
+        </span>
+      </label>
       <label
         htmlFor="proof"
         aria-disabled={busy ? true : undefined}
@@ -217,7 +235,7 @@ function ProofForm({ report, envelope }: Omit<FormProps, "typed">) {
         id="proof"
         name="photo"
         type="file"
-        accept="image/jpeg"
+        accept={forwarded ? "image/*" : "image/jpeg"}
         required
         disabled={busy}
         aria-invalid={problem ? true : undefined}

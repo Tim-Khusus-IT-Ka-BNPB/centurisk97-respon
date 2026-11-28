@@ -98,7 +98,11 @@ export function addDeskHandlingRoutes(api: Api): void {
       path: "/desk/reports/{ticketNumber}/proofs",
       request: {
         params: ticketParams,
-        body: { content: { "multipart/form-data": { schema: photoForm } }, required: true },
+        // forwarded: sent on to the officer, not taken by them.
+        body: {
+          content: { "multipart/form-data": { schema: photoForm.extend({ forwarded: z.enum(["1"]).optional() }) } },
+          required: true,
+        },
       },
       responses: {
         200: jsonResponse("Kept, metadata stripped", deskReportSchema),
@@ -113,7 +117,11 @@ export function addDeskHandlingRoutes(api: Api): void {
       const { ticketNumber } = c.req.valid("param");
       return changeAnswered(
         c,
-        await addHandlingProof(c.env, staffOf(c), ticketNumber, { bytes, device: deviceFix(form) }),
+        await addHandlingProof(c.env, staffOf(c), ticketNumber, {
+          bytes,
+          device: deviceFix(form),
+          forwarded: form.forwarded === "1",
+        }),
       );
     },
   );

@@ -104,7 +104,7 @@ export function addPublicFeedRoutes(api: Api): void {
       },
       responses: {
         200: jsonResponse("Marked, with the report as it is now", deskReportSchema),
-        404: refusal("No such photo of this report in this account's region"),
+        404: refusal("No such photo of this report in this account's region, or it was forwarded"),
       },
     }),
     async (c) => {

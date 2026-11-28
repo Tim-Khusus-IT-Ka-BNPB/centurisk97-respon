@@ -280,7 +280,7 @@ describe("photos of the work", () => {
     const refused = async (form: FormData) => (await upload(ticket, form)).error.fields[0]?.copyKey;
     expect(await refused(proofForm({}, new Uint8Array(2000)))).toBe("fieldError.photo.proofFormat");
     const plain = cameraJpeg({});
-    expect(await refused(proofForm({}, plain))).toBe("fieldError.photo.notCamera");
+    expect(await refused(proofForm({}, plain))).toBe("fieldError.photo.proofNotCamera");
     const broken = cameraJpeg({ make: "Uji", model: "Kamera", dateTime: exifDateTime(clock.now(), 420) });
     expect(await refused(proofForm({}, broken.subarray(0, 1200)))).toBe("fieldError.photo.broken");
     const first = await upload(ticket, proofForm({ lat: "", lon: "", accuracy: "", readAt: "" }));
@@ -288,6 +288,24 @@ describe("photos of the work", () => {
     for (let n = 1; n < 10; n += 1) expect((await upload(ticket)).status).toBe(200);
     expect(await refused(proofForm())).toBe("fieldError.photo.proofTooMany");
     expect((await read(ticket)).proofs).toHaveLength(10);
+  });
+
+  test("one forwarded needs no camera data, keeps no point, and is marked so on the desk and the tracking page", async () => {
+    const ticket = await reportAt("in_handling");
+    const answer = await upload(ticket, proofForm({ forwarded: "1" }, cameraJpeg({})));
+    expect(answer.status, JSON.stringify(answer.json)).toBe(200);
+    expect(deskReportSchema.parse(answer.json).proofs).toMatchObject([{ hasPoint: false, forwarded: true }]);
+    const camera = await upload(ticket);
+    expect(deskReportSchema.parse(camera.json).proofs.map((one) => one.forwarded)).toEqual([true, false]);
+    expect(
+      await query`select forwarded, lat from handling_proof where ticket_number = ${ticket} order by received_at`,
+    ).toEqual([
+      { forwarded: true, lat: null },
+      { forwarded: false, lat: 5.14705 },
+    ]);
+    expect((await move(ticket, "closed")).status).toBe(200);
+    expect((await tracked(ticket)).proofs.map((one) => one.forwarded)).toEqual([true, false]);
+    expect((await upload(ticket, proofForm({ forwarded: "yes" }))).status).toBe(400);
   });
 
   test("the last two at once keep one, and its file goes with the one refused", async () => {

@@ -389,8 +389,8 @@ describe("a report on the desk", () => {
           ],
           actions: [{ label: "Evakuasi warga", at: SENT, actor: "Petugas Uji" }],
           proofs: [
-            { proofId: "p1", hasPoint: true, at: SENT, actor: "Petugas Uji", public: false },
-            { proofId: "p2", hasPoint: false, at: SENT, actor: "Petugas Uji", public: false },
+            { proofId: "p1", hasPoint: true, at: SENT, actor: "Petugas Uji", public: false, forwarded: false },
+            { proofId: "p2", hasPoint: false, at: SENT, actor: "Petugas Uji", public: false, forwarded: false },
           ],
         }}
         summary={SUMMARY}
@@ -411,7 +411,7 @@ describe("a report on the desk", () => {
   });
 
   test("photos with no action told, and actions with no photo, are each shown alone", async () => {
-    const proofs = [{ proofId: "p1", hasPoint: true, at: SENT, actor: "Petugas Uji", public: false }];
+    const proofs = [{ proofId: "p1", hasPoint: true, at: SENT, actor: "Petugas Uji", public: false, forwarded: false }];
     const view = await renderDesk(<DeskReportView report={{ ...REPORT, proofs }} summary={SUMMARY} />, PATH);
     expect(within(screen.getByRole("region", { name: "Penanganan" })).getAllByRole("img")).toHaveLength(1);
     view.unmount();
@@ -626,8 +626,8 @@ describe("a report on the desk", () => {
 
   test("each photo of the work is shown on the Alun-alun or taken off it by its own button", async () => {
     const proofs = [
-      { proofId: "p1", hasPoint: true, at: SENT, actor: "Petugas Uji", public: true },
-      { proofId: "p2", hasPoint: false, at: SENT, actor: "Petugas Uji", public: false },
+      { proofId: "p1", hasPoint: true, at: SENT, actor: "Petugas Uji", public: true, forwarded: false },
+      { proofId: "p2", hasPoint: false, at: SENT, actor: "Petugas Uji", public: false, forwarded: false },
     ];
     const view = await renderDesk(<DeskReportView report={{ ...REPORT, proofs }} summary={SUMMARY} />, PATH);
     const handling = screen.getByRole("region", { name: "Penanganan" });
@@ -645,6 +645,15 @@ describe("a report on the desk", () => {
       entry: `${PATH.path}?saved=proofShown`,
     });
     expect(screen.getByRole("status").textContent).toBe("Foto tampil di Alun-alun.");
+  });
+
+  test("a forwarded photo of the work is marked so, with no button to show it on the Alun-alun", async () => {
+    const proofs = [{ proofId: "p1", hasPoint: false, at: SENT, actor: "Petugas Uji", public: false, forwarded: true }];
+    await renderDesk(<DeskReportView report={{ ...REPORT, proofs }} summary={SUMMARY} />, PATH);
+    const handling = within(screen.getByRole("region", { name: "Penanganan" }));
+    expect(handling.getByText("Bukan foto langsung")).toBeTruthy();
+    expect(handling.queryByText("Tanpa titik GPS")).toBeNull();
+    expect(handling.queryByRole("button", { name: /Alun-alun/ })).toBeNull();
   });
 
   test("who has a report in hand is named; an officer who may take it is told it is for good", async () => {

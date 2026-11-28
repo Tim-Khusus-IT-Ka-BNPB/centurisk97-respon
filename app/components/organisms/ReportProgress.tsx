@@ -49,7 +49,10 @@ function Handling({
       {tracking.proofs.length === 0 ? null : (
         <ul className="grid grid-cols-2 gap-3">
           {tracking.proofs.map((proof, index) => (
-            <li key={proof.proofId}>{photo(proof.proofId, t("tracking.proof.alt", { n: index + 1 }))}</li>
+            <li key={proof.proofId} className="flex flex-col gap-1">
+              {photo(proof.proofId, t("tracking.proof.alt", { n: index + 1 }))}
+              {proof.forwarded ? <span className="text-meta text-muted">{t("tracking.proof.forwarded")}</span> : null}
+            </li>
           ))}
         </ul>
       )}

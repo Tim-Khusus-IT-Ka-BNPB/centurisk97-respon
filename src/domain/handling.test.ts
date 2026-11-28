@@ -60,7 +60,7 @@ describe("a photo of the work", () => {
   };
   const fix = { lat: 5.1, lon: 97, accuracyM: 20, readAtMs: NOW - 60_000 };
   const exif = { camera: true, time: null, point: null } as never;
-  const input = { bytes: jpeg(1000), exif, nowMs: NOW, device: fix, count: 0 };
+  const input = { bytes: jpeg(1000), exif, nowMs: NOW, device: fix, count: 0, forwarded: false };
 
   test("from a camera is kept with the officer's reading when it is good enough", () => {
     expect(checkProof(input)).toEqual({ kind: "kept", fix });
@@ -80,11 +80,24 @@ describe("a photo of the work", () => {
   });
 
   test("a screenshot or a file with no camera data is refused", () => {
-    expect(checkProof({ ...input, exif: null })).toEqual({ kind: "refused", rule: "notCamera" });
+    expect(checkProof({ ...input, exif: null })).toEqual({ kind: "refused", rule: "proofNotCamera" });
     expect(checkProof({ ...input, exif: { camera: false, time: null, point: null } as never })).toEqual({
       kind: "refused",
-      rule: "notCamera",
+      rule: "proofNotCamera",
     });
+  });
+
+  test("one marked forwarded needs no camera data and keeps no reading, but is still a JPEG of the size", () => {
+    const forwarded = { ...input, forwarded: true };
+    expect(checkProof({ ...forwarded, exif: null })).toEqual({ kind: "kept", fix: null });
+    expect(checkProof({ ...forwarded, exif: { camera: false, time: null, point: null } as never })).toEqual({
+      kind: "kept",
+      fix: null,
+    });
+    expect(checkProof(forwarded)).toEqual({ kind: "kept", fix: null });
+    for (const bytes of [new Uint8Array(1000), jpeg(999), jpeg(PROOF.maxBytes + 1)])
+      expect(checkProof({ ...forwarded, bytes })).toEqual({ kind: "refused", rule: "proofFormat" });
+    expect(checkProof({ ...forwarded, count: 10 })).toEqual({ kind: "refused", rule: "proofTooMany" });
   });
 
   test("a report holds 10", () => {

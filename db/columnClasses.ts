@@ -344,6 +344,7 @@ export const COLUMN_CLASSES: Readonly<Record<string, TableClasses>> = {
       staff_id: I,
       staff_label: I,
       received_at: I,
+      forwarded: I,
     },
   },
   aggregate_download: {

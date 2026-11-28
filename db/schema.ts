@@ -478,6 +478,9 @@ export const handlingProof = pgTable(
     staff_id: text().notNull(),
     staff_label: text().notNull(),
     received_at: at("received_at").notNull(),
+    // Sent on by someone else rather than taken by the officer: no camera block, no point, and
+    // never on the public feed.
+    forwarded: boolean().notNull().default(false),
   },
   (t) => [
     index("handling_proof_ticket").on(t.ticket_number, t.received_at),

@@ -73,12 +73,13 @@ const photoError = (rule: string): DeskChange => ({
 });
 
 // A photo of the work, while the report is being handled. Its metadata is stripped and the file
-// stored before its row; a row that does not land takes its file with it.
+// stored before its row; a row that does not land takes its file with it. One forwarded to the
+// officer is kept marked so.
 export async function addHandlingProof(
   bindings: ServiceBindings,
   staff: StaffPrincipal,
   ticketNumber: string,
-  upload: { readonly bytes: Uint8Array; readonly device: DeviceFix | null },
+  upload: { readonly bytes: Uint8Array; readonly device: DeviceFix | null; readonly forwarded: boolean },
 ): Promise<DeskChange> {
   return changeTicket(bindings, staff, "addHandling", ticketNumber, async (found, at) => {
     if (found.status !== "in_handling") return { kind: "transitionRefused" };
@@ -88,6 +89,7 @@ export async function addHandlingProof(
       nowMs: at.getTime(),
       device: upload.device,
       count: found.handling.proofs.length,
+      forwarded: upload.forwarded,
     });
     if (checked.kind === "refused") return photoError(checked.rule);
     const clean = stripJpeg(upload.bytes);
@@ -99,7 +101,7 @@ export async function addHandlingProof(
       bindings.db,
       staff,
       ticketNumber,
-      { id, storeKey, bytes: clean.length, fix: checked.fix },
+      { id, storeKey, bytes: clean.length, fix: checked.fix, forwarded: upload.forwarded },
       at,
     );
     if (kept) return null;

@@ -29,5 +29,6 @@
   "tracking.handling": "Penanganan",
   "tracking.replies": "Balasan petugas",
   "tracking.proof.alt": "Foto penanganan {n}",
+  "tracking.proof.forwarded": "Bukan foto langsung",
   "tracking.proof.unavailable": "Foto belum bisa dimuat."
 }

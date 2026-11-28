@@ -1,0 +1,1 @@
+ALTER TABLE "handling_proof" ADD COLUMN "forwarded" boolean DEFAULT false NOT NULL;

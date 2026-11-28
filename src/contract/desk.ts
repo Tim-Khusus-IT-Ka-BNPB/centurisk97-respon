@@ -267,8 +267,16 @@ export const deskReportSchema = queueItemSchema.extend({
   offeredActions: z.array(z.object({ code: z.string(), label: z.string() })),
   actions: z.array(z.object({ label: z.string(), at: timeSchema, actor: z.string() })),
   proofs: z.array(
-    // public: shown on the public feed while the report is handled (D88).
-    z.object({ proofId: z.string(), hasPoint: z.boolean(), at: timeSchema, actor: z.string(), public: z.boolean() }),
+    // public: shown on the public feed while the report is handled (D88). forwarded: sent on to the
+    // officer, not taken by them, so never public.
+    z.object({
+      proofId: z.string(),
+      hasPoint: z.boolean(),
+      at: timeSchema,
+      actor: z.string(),
+      public: z.boolean(),
+      forwarded: z.boolean(),
+    }),
   ),
   replies: z.array(
     z.object({

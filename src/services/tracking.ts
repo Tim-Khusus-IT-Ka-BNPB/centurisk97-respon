@@ -66,7 +66,9 @@ export async function trackingOf(bindings: ServiceBindings, report: ReportRecord
     ticketNumber: report.ticketNumber,
     sentAt: at(report.sentAt, zone),
     actions: handling.actions.map((action) => action.label),
-    proofs: closed ? handling.proofs.map((proof) => ({ proofId: proof.id, at: at(proof.atMs, zone) })) : [],
+    proofs: closed
+      ? handling.proofs.map((proof) => ({ proofId: proof.id, at: at(proof.atMs, zone), forwarded: proof.forwarded }))
+      : [],
     rejected: rejection === null ? null : { at: at(rejection.atMs, zone), reason: rejection.note as string },
     stages: stagesOf(report.history).map((stage) => ({
       status: stage.status,

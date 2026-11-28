@@ -101,7 +101,10 @@ describe("moving a ticket", () => {
     expect(screen.getByText(/karena belum ada foto penanganan/)).toBeTruthy();
     view.unmount();
     await draw({
-      report: { ...WORKING, proofs: [{ proofId: "1", hasPoint: true, at: SENT, actor: "Petugas", public: false }] },
+      report: {
+        ...WORKING,
+        proofs: [{ proofId: "1", hasPoint: true, at: SENT, actor: "Petugas", public: false, forwarded: false }],
+      },
     });
     fireEvent.click(screen.getByRole("radio", { name: "Selesai ditangani" }));
     expect(screen.getByText(/^Boleh dikosongkan. Hanya petugas/)).toBeTruthy();
@@ -223,6 +226,20 @@ describe("photos of the work", () => {
     const form = router.sent[0] as FormData;
     expect([form.get("action"), form.get("lat"), form.get("accuracy")]).toEqual(["proof", "5.1", "12"]);
     expect(form.get("photo")).toBeInstanceOf(File);
+    expect(form.get("forwarded")).toBeNull();
+    expect(screen.getByLabelText("Tambah foto penanganan").getAttribute("accept")).toBe("image/jpeg");
+  });
+
+  test("one ticked forwarded takes any picture and goes marked so, with no reading", async () => {
+    await draw({ report: WORKING });
+    const box = screen.getByRole("checkbox", { name: /^Foto diteruskan, bukan foto langsung/ }) as HTMLInputElement;
+    expect([box.name, box.value, box.checked]).toEqual(["forwarded", "1", false]);
+    fireEvent.click(box);
+    expect(screen.getByLabelText("Tambah foto penanganan").getAttribute("accept")).toBe("image/*");
+    take();
+    await waitFor(() => expect(router.sent).toHaveLength(1));
+    const form = router.sent[0] as FormData;
+    expect([form.get("forwarded"), form.get("lat")]).toEqual(["1", null]);
   });
 
   test("with no script a file box and its button post the form, and every choice shows", () => {
@@ -261,6 +278,7 @@ describe("photos of the work", () => {
       at: SENT,
       actor: "Petugas",
       public: false,
+      forwarded: false,
     }));
     await draw({ report: { ...WORKING, proofs } });
     expect(screen.getByText(/^Sudah 10 foto penanganan/)).toBeTruthy();

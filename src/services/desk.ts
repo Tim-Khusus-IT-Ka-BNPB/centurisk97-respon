@@ -372,6 +372,7 @@ async function reportBody(bindings: ServiceBindings, staff: StaffPrincipal, tick
       at: at(one.atMs, zone),
       actor: one.staffLabel,
       public: one.public,
+      forwarded: one.forwarded,
     })),
     replies: found.replies.map((one) => ({
       text: one.text,

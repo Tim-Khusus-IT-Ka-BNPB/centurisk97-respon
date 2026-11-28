@@ -155,7 +155,11 @@ function Handling({ report }: { readonly report: DeskReport }) {
                 </a>
                 <figcaption className="flex flex-col text-meta text-muted tabular-nums">
                   <span>{when(t, "desk.history.at", proof.at)}</span>
-                  <span>{t(proof.hasPoint ? "desk.proof.point" : "desk.proof.noPoint")}</span>
+                  {proof.forwarded ? (
+                    <span className="font-semibold text-ink">{t("desk.proof.forwardedBadge")}</span>
+                  ) : (
+                    <span>{t(proof.hasPoint ? "desk.proof.point" : "desk.proof.noPoint")}</span>
+                  )}
                   {proof.public ? (
                     <span className="inline-flex items-center gap-1 font-semibold text-ink">
                       <Icon name="circleCheck" className="size-4 text-primary" />
@@ -163,18 +167,21 @@ function Handling({ report }: { readonly report: DeskReport }) {
                     </span>
                   ) : null}
                 </figcaption>
-                <Form method="post" replace preventScrollReset>
-                  <input type="hidden" name="action" value="proofPublic" />
-                  <input type="hidden" name="proofId" value={proof.proofId} />
-                  <input type="hidden" name="public" value={proof.public ? "0" : "1"} />
-                  <Button
-                    size="min"
-                    className="w-full px-3 text-meta"
-                    aria-label={t(proof.public ? "desk.proof.hideLabel" : "desk.proof.showLabel", { n: index + 1 })}
-                  >
-                    {t(proof.public ? "desk.proof.hide" : "desk.proof.show")}
-                  </Button>
-                </Form>
+                {/* A forwarded photo never goes on the Alun-alun. */}
+                {proof.forwarded ? null : (
+                  <Form method="post" replace preventScrollReset>
+                    <input type="hidden" name="action" value="proofPublic" />
+                    <input type="hidden" name="proofId" value={proof.proofId} />
+                    <input type="hidden" name="public" value={proof.public ? "0" : "1"} />
+                    <Button
+                      size="min"
+                      className="w-full px-3 text-meta"
+                      aria-label={t(proof.public ? "desk.proof.hideLabel" : "desk.proof.showLabel", { n: index + 1 })}
+                    >
+                      {t(proof.public ? "desk.proof.hide" : "desk.proof.show")}
+                    </Button>
+                  </Form>
+                )}
               </figure>
             </li>
           ))}

@@ -54,18 +54,22 @@ type ProofInput = {
   readonly device: DeviceFix | null;
   // Photos of the work already kept for this report.
   readonly count: number;
+  // The officer marked it as sent on by someone else, not taken by them.
+  readonly forwarded: boolean;
 };
 
 export type ProofCheck =
-  | { readonly kind: "refused"; readonly rule: "notCamera" | "proofFormat" | "proofTooMany" }
+  | { readonly kind: "refused"; readonly rule: "proofNotCamera" | "proofFormat" | "proofTooMany" }
   | { readonly kind: "kept"; readonly fix: DeviceFix | null };
 
 // A photo of the work comes from a camera. It may be sent long after it was taken, so unlike a
 // reporter's it is not asked to be new; the officer's own reading is kept when it is good enough.
-export function checkProof({ bytes, exif, nowMs, device, count }: ProofInput): ProofCheck {
+// One marked forwarded needs no camera block and keeps no reading: where the officer stands is not
+// where it was taken.
+export function checkProof({ bytes, exif, nowMs, device, count, forwarded }: ProofInput): ProofCheck {
   if (!isJpeg(bytes) || bytes.length < PHOTO.minBytes || bytes.length > PROOF.maxBytes)
     return { kind: "refused", rule: "proofFormat" };
-  if (exif === null || !exif.camera) return { kind: "refused", rule: "notCamera" };
+  if (!forwarded && !exif?.camera) return { kind: "refused", rule: "proofNotCamera" };
   if (count >= PROOF.max) return { kind: "refused", rule: "proofTooMany" };
-  return { kind: "kept", fix: usableFix(device, nowMs) };
+  return { kind: "kept", fix: forwarded ? null : usableFix(device, nowMs) };
 }
