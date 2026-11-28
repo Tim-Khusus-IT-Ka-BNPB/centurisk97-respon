@@ -328,7 +328,7 @@ test("an officer answers the reporter, moves the ticket to its end, and the trac
   await expect(actions.getByRole("radio")).toHaveCount(1);
   await page.screenshot({ path: info.outputPath("actions.png"), fullPage: true });
 
-  // The reporter sees every stage done, and none of what staff wrote for themselves.
+  // The reporter sees every stage done and the officer's reply, and none of what staff wrote for themselves.
   if (script) {
     const reporterPage = await (await browser.newContext()).newPage();
     await reporterPage.goto(`/track#t=${token}`);
@@ -336,8 +336,8 @@ test("an officer answers the reporter, moves the ticket to its end, and the trac
     await expect(status.getByRole("listitem").filter({ hasText: /pukul \d{2}\.\d{2} WIB/ })).toHaveCount(5);
     await expect(status.getByText("Evakuasi warga")).toBeVisible();
     await expect(status.getByRole("img", { name: "Foto penanganan 1" })).toBeVisible();
-    for (const text of ["Petugas Uji", "Tim berangkat", "kami cek"])
-      await expect(reporterPage.getByText(text)).toHaveCount(0);
+    await expect(reporterPage.getByText("Terima kasih, kami cek")).toBeVisible();
+    for (const text of ["Petugas Uji", "Tim berangkat"]) await expect(reporterPage.getByText(text)).toHaveCount(0);
   }
 });
 
