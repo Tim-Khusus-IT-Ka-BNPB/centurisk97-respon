@@ -209,6 +209,7 @@ describe("the model over HTTP", () => {
     expect(JSON.parse(seen[1]?.body as string)).toMatchObject({
       model: "m",
       messages: [{ role: "user", content: request.user }],
+      thinking: { type: "between_tools" },
       output_config: { format: { type: "json_schema" } },
     });
   });

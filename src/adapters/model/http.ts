@@ -9,6 +9,10 @@ type HttpModelSettings = {
 
 const API_VERSION = "2023-06-01";
 const MAX_TOKENS = 1024;
+// The model answers at once rather than thinking first, so a turn stays inside its deadline. This is
+// how claude-sonnet-5-5 turns thinking off; a model that refuses it answers 400, and every turn falls
+// back to the template questions.
+const NO_THINKING = { type: "between_tools" } as const;
 
 type ProviderAnswer = { readonly content?: readonly { readonly type?: string; readonly text?: string }[] };
 
@@ -27,6 +31,7 @@ export function httpModel(settings: HttpModelSettings, fetchFn: typeof fetch = f
           body: JSON.stringify({
             model: settings.name,
             max_tokens: MAX_TOKENS,
+            thinking: NO_THINKING,
             system: request.system,
             messages: [{ role: "user", content: request.user }],
             output_config: { format: { type: "json_schema", schema: request.schema } },
