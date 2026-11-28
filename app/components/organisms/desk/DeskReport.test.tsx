@@ -259,12 +259,39 @@ describe("a report on the desk", () => {
     const reporter = within(screen.getByRole("region", { name: "Pelapor" }));
     expect(reporter.queryByRole("link")).toBeNull();
     expect(reporter.getByText("Warga")).toBeTruthy();
-    expect(reporter.getByText(/akun Anda dan waktunya dicatat/)).toBeTruthy();
+    expect(reporter.getByText(/Nama dan nomor pelapor disembunyikan/).textContent).toContain(
+      "akun Anda dan waktunya dicatat",
+    );
     reporter.getByRole("button", { name: "Tampilkan identitas pelapor" }).click();
     expect(await reporter.findByRole("button", { name: "Membuka..." })).toBeTruthy();
     view.unmount();
     await renderDesk(<DeskReportView report={hidden} summary={SUMMARY} identity={REPORT.reporter.identity} />, PATH);
     expect(screen.getByRole("link", { name: "Telepon +62 800-0000-0001" })).toBeTruthy();
+  });
+
+  test("the tracking link is asked for with a button that says it is logged, then shown with what to check and a copy", async () => {
+    const posted = vi.fn(never);
+    const view = await renderDesk(<DeskReportView report={REPORT} summary={SUMMARY} />, { ...PATH, action: posted });
+    const reporter = within(screen.getByRole("region", { name: "Pelapor" }));
+    expect(reporter.getByText(/kehilangan tautan lacaknya/).textContent).toContain("akun Anda dan waktunya dicatat");
+    expect(reporter.queryByTestId("desk-tracking-link")).toBeNull();
+    const show = reporter.getByRole("button", { name: "Tampilkan tautan lacak" }) as HTMLButtonElement;
+    expect(new FormData(show.form as HTMLFormElement).get("action")).toBe("trackingLink");
+    show.click();
+    expect(await reporter.findByRole("button", { name: "Membuka..." })).toBeTruthy();
+    view.unmount();
+    const link = "https://respon.example/track#t=00112233445566778899aabbccddeeff";
+    const writeText = vi.fn(async () => undefined);
+    vi.stubGlobal("navigator", { ...navigator, clipboard: { writeText } });
+    await renderDesk(<DeskReportView report={REPORT} summary={SUMMARY} trackingLink={link} />, PATH);
+    const shown = within(screen.getByRole("region", { name: "Pelapor" }));
+    expect(shown.getByTestId("desk-tracking-link").textContent).toBe(link);
+    expect(shown.getByText(/cocokkan nama dan nomor penelepon/)).toBeTruthy();
+    expect(shown.queryByRole("button", { name: "Tampilkan tautan lacak" })).toBeNull();
+    fireEvent.click(shown.getByRole("button", { name: "Salin tautan lacak LA-241126-01" }));
+    expect(await shown.findByText("Tautan tersalin")).toBeTruthy();
+    expect(writeText).toHaveBeenCalledWith(link);
+    vi.unstubAllGlobals();
   });
 
   test("an emergency is marked in its header", async () => {

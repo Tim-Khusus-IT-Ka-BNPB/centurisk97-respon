@@ -23,7 +23,8 @@ type LoggedAction =
   | "handlingAction"
   | "handlingProof"
   | "take"
-  | "document";
+  | "document"
+  | "trackingLink";
 
 export const actionRow = (staff: StaffPrincipal, ticketNumber: string, action: LoggedAction, at: Date): Query =>
   sql`insert into staff_action (ticket_number, staff_id, staff_label, staff_kind, action, at)

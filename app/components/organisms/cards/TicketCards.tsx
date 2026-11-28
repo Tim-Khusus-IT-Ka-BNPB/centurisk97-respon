@@ -93,7 +93,7 @@ export function QrCode({ text, label }: { readonly text: string; readonly label:
 }
 
 // Copies its text once the page runs script; with none there is nothing to press.
-function CopyButton({
+export function CopyButton({
   text,
   label,
   idle,

@@ -7,6 +7,7 @@ import {
   deskQueueSchema,
   deskReportSchema,
   deskSummarySchema,
+  deskTrackingLinkSchema,
 } from "../../contract/desk";
 import { trackingSchema } from "../../contract/tracking";
 import { trackingToken } from "../../services/tracking";
@@ -113,6 +114,7 @@ describe("a regional account's desk", () => {
       ["GET", `/desk/reports/${outside}`, undefined],
       ["POST", `/desk/reports/${outside}/view`, undefined],
       ["POST", `/desk/reports/${outside}/identity`, undefined],
+      ["POST", `/desk/reports/${outside}/tracking-link`, undefined],
       ["POST", `/desk/reports/${outside}/status`, { to: "under_review", note: "", revision }],
       ["POST", `/desk/reports/${outside}/replies`, { text: "Kami cek" }],
     ] as const) {
@@ -180,6 +182,30 @@ describe("a report forwarded", () => {
     const token = await trackingToken(bindings.settings.keyHmacSecret, row?.id as string);
     const tracked = trackingSchema.parse((await browser(fetchApi).call("POST", "/tracking", { token })).json);
     expect(tracked.stages[3]).toMatchObject({ status: "forwarded", reachedAt: { zone: "WIB" } });
+  });
+});
+
+describe("a report's tracking link", () => {
+  test("is given to its region's BPBD and to BNPB each time asked, logged, and opens the report", async () => {
+    const ticket = reports.regency;
+    expect(JSON.stringify((await read(regency(), ticket)) as object)).not.toContain("/track#t=");
+    const before = (await actions(ticket)).length;
+    const [given, again] = [
+      await regency().call("POST", `/desk/reports/${ticket}/tracking-link`),
+      await desk().call("POST", `/desk/reports/${ticket}/tracking-link`),
+    ];
+    expect([given.status, again.status]).toEqual([200, 200]);
+    const { link } = deskTrackingLinkSchema.parse(given.json);
+    expect(deskTrackingLinkSchema.parse(again.json).link).toBe(link);
+    const [report] = await query<{ id: string }>`select id from report where ticket_number = ${ticket}`;
+    const token = await trackingToken(bindings.settings.keyHmacSecret, report?.id as string);
+    expect(link).toBe(`${bindings.settings.appOrigin}/track#t=${token}`);
+    expect((await actions(ticket)).slice(before)).toEqual([
+      { staff_id: "staff-bpbd-1108", staff_kind: "regionalOfficer", action: "trackingLink" },
+      { staff_id: "staff-desk-1", staff_kind: "deskOfficer", action: "trackingLink" },
+    ]);
+    const tracked = trackingSchema.parse((await browser(fetchApi).call("POST", "/tracking", { token })).json);
+    expect(tracked.ticketNumber).toBe(ticket);
   });
 });
 

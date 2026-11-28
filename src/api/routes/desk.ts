@@ -11,6 +11,7 @@ import {
   deskQueueSchema,
   deskReportSchema,
   deskSummarySchema,
+  deskTrackingLinkSchema,
 } from "../../contract/desk";
 import { ticketStatusSchema } from "../../contract/tracking";
 import { DESK_HAS, DESK_PERIODS } from "../../domain/deskQueue";
@@ -25,6 +26,7 @@ import {
   deskPhotoFile,
   deskQueue,
   deskSummary,
+  giveTrackingLink,
   moveDeskTicket,
   readDeskReport,
   replyToReporter,
@@ -161,6 +163,22 @@ export function addDeskRoutes(api: Api): void {
       c.header("x-robots-tag", "noindex");
       c.header("cache-control", "no-store");
       return answered(c, await revealIdentity(c.env, staffOf(c), c.req.valid("param").ticketNumber));
+    },
+  );
+
+  addRoute(
+    api,
+    "staff",
+    createRoute({
+      method: "post",
+      path: "/desk/reports/{ticketNumber}/tracking-link",
+      request: { params: ticketParams },
+      responses: { 200: jsonResponse("Logged; the report's tracking link", deskTrackingLinkSchema) },
+    }),
+    async (c) => {
+      c.header("x-robots-tag", "noindex");
+      c.header("cache-control", "no-store");
+      return answered(c, await giveTrackingLink(c.env, staffOf(c), c.req.valid("param").ticketNumber));
     },
   );
 

@@ -21,6 +21,8 @@ export type DeskCapability =
   | "readResponse"
   | "readIdentity"
   | "revealIdentity"
+  // Give a reporter who calls their report's tracking link again, each time logged.
+  | "giveTrackingLink"
   | "downloadDocument"
   // The weekly counts for research (K62): BNPB only until campus accounts come from the main site.
   | "downloadAggregates"
@@ -57,6 +59,7 @@ const HOLDERS: Readonly<Record<DeskCapability, readonly StaffRole[]>> = {
   readResponse: ["deskOfficer"],
   readIdentity: ["deskOfficer"],
   revealIdentity: ["regionalOfficer"],
+  giveTrackingLink: ["deskOfficer", "regionalOfficer"],
   downloadDocument: ["deskOfficer", "regionalOfficer"],
   downloadAggregates: ["deskOfficer"],
   pauseWarnings: ["deskOfficer"],

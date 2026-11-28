@@ -592,6 +592,7 @@ export const staffAction = pgTable(
         "handlingProof",
         "take",
         "document",
+        "trackingLink",
       ]),
     ),
   ],

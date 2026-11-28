@@ -1280,7 +1280,7 @@ describe("desk routes", () => {
     renderPage(
       routeElement(DeskReportRoute, {
         loaderData: read.data,
-        actionData: { envelope: notAllowed, typed: null, identity: null, officer: null },
+        actionData: { envelope: notAllowed, typed: null, identity: null, officer: null, trackingLink: null },
       }),
       {
         path: "/desk/LA-241126-01",
@@ -1307,7 +1307,7 @@ describe("desk routes", () => {
         context: { api: api({ "POST /desk/reports/LA-241126-01/identity": json(who) }) },
       } as Args),
     );
-    expect(asked.data).toEqual({ envelope: null, typed: null, identity: who, officer: null });
+    expect(asked.data).toEqual({ envelope: null, typed: null, identity: who, officer: null, trackingLink: null });
     const number = { profileId: "profile-a", number: "+628001108001" };
     const opened2 = unwrap(
       await deskReport.action({
@@ -1319,7 +1319,16 @@ describe("desk routes", () => {
         context: { api: api({ "POST /desk/reports/LA-241126-01/officers/profile-a/number": json(number) }) },
       } as Args),
     );
-    expect(opened2.data).toEqual({ envelope: null, typed: null, identity: null, officer: number });
+    expect(opened2.data).toEqual({ envelope: null, typed: null, identity: null, officer: number, trackingLink: null });
+    const link = "https://respon.example/track#t=00112233445566778899aabbccddeeff";
+    const given = unwrap(
+      await deskReport.action({
+        params: { ticketNumber: "LA-241126-01" },
+        request: post("http://x/desk/LA-241126-01", [["action", "trackingLink"]]),
+        context: { api: api({ "POST /desk/reports/LA-241126-01/tracking-link": json({ link }) }) },
+      } as Args),
+    );
+    expect(given.data).toEqual({ envelope: null, typed: null, identity: null, officer: null, trackingLink: link });
     const limited = unwrap(
       await deskReport.action({
         params: { ticketNumber: "LA-241126-01" },

@@ -160,6 +160,11 @@ export const deskIdentitySchema = z.object({
 
 export type DeskIdentity = z.infer<typeof deskIdentitySchema>;
 
+// A report's tracking link, shown to staff each time asked and logged, for a reporter who lost it.
+export const deskTrackingLinkSchema = z.object({ link: z.string() });
+
+export type DeskTrackingLink = z.infer<typeof deskTrackingLinkSchema>;
+
 // The region's BPBD officers as BNPB sees them on a report: numbers masked until opened.
 const deskOfficerSchema = z.object({
   profileId: z.string(),

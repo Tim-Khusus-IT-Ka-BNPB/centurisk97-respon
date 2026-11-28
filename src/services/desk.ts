@@ -6,6 +6,7 @@ import {
   facetCounts,
   galleryPhotos,
   logIdentityView,
+  logTrackingLink,
   type MapPoint,
   mapPoints,
   markViewed,
@@ -27,6 +28,7 @@ import type {
   DeskQueue,
   DeskReport,
   DeskSummary,
+  DeskTrackingLink,
 } from "../contract/desk";
 import type { Cluster } from "../domain/clusters";
 import {
@@ -58,6 +60,7 @@ import { checkLimits, type LimitRefusal } from "./limits";
 import { officersOf } from "./officers";
 import { summaryGroups } from "./summary";
 import { todayFor } from "./todayDesk";
+import { trackingToken } from "./tracking";
 import { versionsOf } from "./versions";
 
 export type Refused =
@@ -423,6 +426,22 @@ export async function revealIdentity(
   if (found === null) return { kind: "notFound" };
   await logIdentityView(bindings.db, staff, ticketNumber, new Date(bindings.clock.now()));
   return { kind: "ok", body: identityOf(found) };
+}
+
+// The report's tracking link, for a reporter who calls having lost it: logged, then shown this once.
+// The link is made again from the report, so nothing new is kept.
+export async function giveTrackingLink(
+  bindings: ServiceBindings,
+  staff: StaffPrincipal,
+  ticketNumber: string,
+): Promise<DeskAnswer<DeskTrackingLink>> {
+  const refused = await admitted(bindings, staff, "giveTrackingLink", "desk.write");
+  if (refused) return refused;
+  const found = await deskReport(bindings.db, staff.scope, ticketNumber);
+  if (found === null) return { kind: "notFound" };
+  await logTrackingLink(bindings.db, staff, ticketNumber, new Date(bindings.clock.now()));
+  const token = await trackingToken(bindings.settings.keyHmacSecret, found.reportId);
+  return { kind: "ok", body: { link: `${bindings.settings.appOrigin}/track#t=${token}` } };
 }
 
 export type DeskChange =

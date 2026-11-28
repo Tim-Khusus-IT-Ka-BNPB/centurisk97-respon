@@ -351,8 +351,8 @@ describe("a report on the desk", () => {
     });
     for (const path of ["/desk/summary", `/desk/reports/${ticket}`])
       expect((await deskOfficer().call("GET", path)).status, path).toBe(429);
-    const write = await deskOfficer().call("POST", `/desk/reports/${ticket}/view`);
-    expect(write.error.error.code).toBe("limit.desk.write");
+    for (const path of [`/desk/reports/${ticket}/view`, `/desk/reports/${ticket}/tracking-link`])
+      expect((await deskOfficer().call("POST", path)).error.error.code, path).toBe("limit.desk.write");
     await query`delete from rate_counter where subject_key = ${key}`;
   });
 });

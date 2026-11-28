@@ -7,6 +7,7 @@ import type {
   DeskReport,
   DeskResponse,
   DeskSummary,
+  DeskTrackingLink,
 } from "../../src/contract/desk";
 import type { ErrorEnvelope } from "../../src/contract/errors";
 import type { WarningControl } from "../../src/contract/warnings";
@@ -219,7 +220,9 @@ type DeskReportActed =
   // Who reported, drawn on the page that asked and kept nowhere.
   | { readonly kind: "identity"; readonly identity: DeskIdentity }
   // A BPBD officer's number, the same way.
-  | { readonly kind: "officerNumber"; readonly officer: OfficerNumber };
+  | { readonly kind: "officerNumber"; readonly officer: OfficerNumber }
+  // The report's tracking link, the same way.
+  | { readonly kind: "trackingLink"; readonly link: string };
 
 // The photo and the officer's reading, as the API takes them.
 function proofForm(form: FormData): FormData {
@@ -260,6 +263,8 @@ function deskPost(form: FormData): readonly [path: string, body?: unknown] {
       return ["proofs", proofForm(form)];
     case "identity":
       return ["identity"];
+    case "trackingLink":
+      return ["tracking-link"];
     case "officerNumber":
       return [`officers/${encodeURIComponent(text("profileId"))}/number`];
     case "take":
@@ -319,6 +324,8 @@ export async function actOnDeskReport(ticketNumber: string, form: FormData, api:
     return { kind: "render", status: response.status, envelope, typed: typedIn(form) };
   }
   if (path === "identity") return { kind: "identity", identity: (await response.json()) as DeskIdentity };
+  if (path === "tracking-link")
+    return { kind: "trackingLink", link: ((await response.json()) as DeskTrackingLink).link };
   if (path.startsWith("officers/")) return { kind: "officerNumber", officer: (await response.json()) as OfficerNumber };
   // A file opened is gone to at once.
   if (path === "case") return redirectTo(`/cases/${((await response.json()) as { fileId: string }).fileId}`, response);

@@ -12,6 +12,7 @@ import { Button, buttonStyles } from "../../atoms/Button";
 import { Icon } from "../../atoms/Icon";
 import { FileFrame, useFileTarget } from "../../molecules/FileFrame";
 import { Notice } from "../../molecules/Notice";
+import { CopyButton } from "../cards/TicketCards";
 import { DeskMapCanvas, SMALL } from "../DeskMapCanvas";
 import { ChangeList, FileButtons, VersionList } from "../VersionList";
 import { DeskActions } from "./DeskActions";
@@ -384,6 +385,49 @@ function Reporter({ report, identity }: { readonly report: DeskReport; readonly 
   );
 }
 
+// The report's tracking link, for a reporter who calls having lost it: asked for each time and
+// logged, shown on this page only, with what to check before it is passed on.
+function TrackingLink({ ticketNumber, link }: { readonly ticketNumber: string; readonly link: string | null }) {
+  const t = useText();
+  const asking = useNavigation().formData?.get("action") === "trackingLink";
+  if (link === null)
+    return (
+      <Form method="post" replace preventScrollReset className="flex flex-col gap-3 border-t border-line pt-3">
+        <input type="hidden" name="action" value="trackingLink" />
+        <p className="text-meta text-muted">{t("desk.trackingLink.hint")}</p>
+        <Button variant="secondary" className="self-start" busyLabel={asking ? t("desk.trackingLink.busy") : null}>
+          <Icon name="link" className="size-5" />
+          {t("desk.trackingLink.show")}
+        </Button>
+      </Form>
+    );
+  return (
+    <div className="flex flex-col gap-2 border-t border-line pt-3">
+      <h3 className="flex items-center gap-2 font-bold">
+        <Icon name="link" className="size-5 text-primary" />
+        {t("desk.trackingLink.title")}
+      </h3>
+      <Notice kind="danger">
+        <p>{t("desk.trackingLink.check")}</p>
+      </Notice>
+      <p
+        data-testid="desk-tracking-link"
+        className="rounded-control border border-line bg-surface px-3 py-2 font-mono text-meta break-all select-all"
+      >
+        {link}
+      </p>
+      <div>
+        <CopyButton
+          text={link}
+          label={t("desk.trackingLink.copyLabel", { ticketNumber })}
+          idle={t("desk.trackingLink.copy")}
+          done={t("desk.trackingLink.copied")}
+        />
+      </div>
+    </div>
+  );
+}
+
 export function DeskReportView({
   report,
   summary,
@@ -391,6 +435,7 @@ export function DeskReportView({
   typed = null,
   identity = null,
   officer = null,
+  trackingLink = null,
 }: {
   readonly report: DeskReport;
   readonly summary: DeskSummary | null;
@@ -401,6 +446,8 @@ export function DeskReportView({
   readonly identity?: DeskIdentity | null;
   // A BPBD officer's number just opened, shown on this page only.
   readonly officer?: OfficerNumber | null;
+  // The report's tracking link just asked for, the same way.
+  readonly trackingLink?: string | null;
 }) {
   const t = useText();
   // Kept the same between renders, so the map is drawn once.
@@ -528,6 +575,7 @@ export function DeskReportView({
           <Documents report={report} />
           <Section id="desk-reporter" title={t("desk.reporter")}>
             <Reporter report={report} identity={report.reporter.identity ?? identity} />
+            <TrackingLink ticketNumber={report.ticketNumber} link={trackingLink} />
           </Section>
           {report.officers === null ? null : (
             <Section id="desk-officers" title={t("desk.officers.title")}>

@@ -17,6 +17,7 @@ const RIGHTS: readonly (readonly [DeskCapability, boolean, boolean])[] = [
   ["readResponse", true, false],
   ["readIdentity", true, false],
   ["revealIdentity", false, true],
+  ["giveTrackingLink", true, true],
   ["downloadDocument", true, true],
   ["downloadAggregates", true, false],
   ["pauseWarnings", true, false],

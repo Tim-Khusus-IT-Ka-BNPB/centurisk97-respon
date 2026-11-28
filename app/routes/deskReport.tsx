@@ -16,17 +16,17 @@ export async function loader({ params, context }: Route.LoaderArgs) {
   return data(load, { status: load.kind === "refused" ? load.status : 200 });
 }
 
+// What an answer on the page shows beside the report; one thing at a time.
+const NOTHING = { envelope: null, typed: null, identity: null, officer: null, trackingLink: null };
+
 export async function action({ params, request, context }: Route.ActionArgs) {
   const acted = await actOnDeskReport(params.ticketNumber, await request.formData(), context.api);
   if (acted.kind === "redirect") return redirect(acted.location, { status: 303, headers: acted.headers });
   if (acted.kind === "done") return null;
-  if (acted.kind === "identity") return data({ envelope: null, typed: null, identity: acted.identity, officer: null });
-  if (acted.kind === "officerNumber")
-    return data({ envelope: null, typed: null, identity: null, officer: acted.officer });
-  return data(
-    { envelope: acted.envelope, typed: acted.typed, identity: null, officer: null },
-    { status: acted.status },
-  );
+  if (acted.kind === "identity") return data({ ...NOTHING, identity: acted.identity });
+  if (acted.kind === "officerNumber") return data({ ...NOTHING, officer: acted.officer });
+  if (acted.kind === "trackingLink") return data({ ...NOTHING, trackingLink: acted.link });
+  return data({ ...NOTHING, envelope: acted.envelope, typed: acted.typed }, { status: acted.status });
 }
 
 export default function DeskReportRoute({ loaderData, actionData }: Route.ComponentProps) {
@@ -41,6 +41,7 @@ export default function DeskReportRoute({ loaderData, actionData }: Route.Compon
           typed={actionData?.typed}
           identity={actionData?.identity}
           officer={actionData?.officer}
+          trackingLink={actionData?.trackingLink}
         />
       </WithTexts>
     );

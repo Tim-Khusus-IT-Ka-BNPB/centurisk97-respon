@@ -339,6 +339,16 @@ export async function logDocument(db: Database, staff: StaffPrincipal, ticketNum
   await run(db, actionRow(staff, ticketNumber, "document", at));
 }
 
+// A report's tracking link given to staff to pass on: who asked, when and which report.
+export async function logTrackingLink(
+  db: Database,
+  staff: StaffPrincipal,
+  ticketNumber: string,
+  at: Date,
+): Promise<void> {
+  await run(db, actionRow(staff, ticketNumber, "trackingLink", at));
+}
+
 // The ticket, its history row and the log together, or nothing: false when another officer
 // changed the ticket after this one read it.
 export async function moveTicket(

@@ -311,6 +311,16 @@ describe("a change to a ticket", () => {
     expect(calls[0]).toMatchObject({ method: "POST", path: "/desk/reports/LA-241126-01/identity" });
   });
 
+  test("asking for the tracking link answers on the page too", async () => {
+    const link = "https://respon.example/track#t=00112233445566778899aabbccddeeff";
+    const { api, calls } = fakeApi(() => Response.json({ link }));
+    expect(await actOnDeskReport("LA-241126-01", form({ action: "trackingLink" }), api)).toEqual({
+      kind: "trackingLink",
+      link,
+    });
+    expect(calls[0]).toMatchObject({ method: "POST", path: "/desk/reports/LA-241126-01/tracking-link" });
+  });
+
   test("opening an officer's number answers on the page too", async () => {
     const number = { profileId: "profile a", number: "+628001108001" };
     const { api, calls } = fakeApi(() => Response.json(number));

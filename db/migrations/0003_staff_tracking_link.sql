@@ -1,0 +1,2 @@
+ALTER TABLE "staff_action" DROP CONSTRAINT "staff_action_action";--> statement-breakpoint
+ALTER TABLE "staff_action" ADD CONSTRAINT "staff_action_action" CHECK (action in ('view', 'identityView', 'status', 'reply', 'fieldCheck', 'handlingAction', 'handlingProof', 'take', 'document', 'trackingLink'));
