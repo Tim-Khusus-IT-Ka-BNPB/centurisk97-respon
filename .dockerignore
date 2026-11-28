@@ -1,0 +1,21 @@
+# Only what the image needs; everything else stays out of the build context.
+*
+!package.json
+!pnpm-lock.yaml
+!.npmrc
+!tsconfig.json
+!tsconfig.app.json
+!tsconfig.node.json
+!react-router.config.ts
+!vite.config.ts
+!vite.server.config.ts
+!app/
+!src/
+!db/
+!public/
+!tools/reference-import/
+!scripts/db/
+**/*.test.ts
+**/*.test.tsx
+app/testing/
+src/testing/

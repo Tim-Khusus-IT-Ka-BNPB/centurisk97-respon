@@ -6,6 +6,7 @@ const stubPort = Number(process.env.MODEL_STUB_PORT ?? "8790");
 const gatewayPort = Number(process.env.TEST_GATEWAY_PORT ?? "8791");
 // Made for this run alone, and good for nothing else.
 const gatewaySecret = "browser-tests-gateway-secret-32-bytes-long";
+const e2eDatabase = process.env.E2E_DATABASE_URL ?? "postgres://localhost:5432/respon_e2e";
 const ci = Boolean(process.env.CI);
 const phone = { ...devices["Pixel 7"], viewport: { width: 390, height: 844 } };
 
@@ -47,13 +48,24 @@ export default defineConfig({
       timeout: 30_000,
     },
     {
-      // A fresh test database each run, migrated and seeded, apart from the dev server's.
-      // Tests never call the model provider, whatever .dev.vars holds.
-      command: `pnpm db:e2e && pnpm preview --port ${appPort} --persist-to .wrangler/e2e --var APP_ENV:test --var APP_ORIGIN:http://localhost:${appPort} --var MODEL_MODE:off --var MODEL_API_KEY: --var GATEWAY_SECRETS:browser-tests=${gatewaySecret}`,
+      // A fresh test database each run, migrated and seeded, apart from the dev server's, and the
+      // production build on Node. Files stay in memory, and the tests never call the model provider,
+      // whatever .env holds: these settings win over its own.
+      command: "pnpm db:e2e && pnpm build && pnpm start",
       url: `http://localhost:${appPort}/api/health`,
-      env: { APP_ENV: "test" },
+      env: {
+        APP_ENV: "test",
+        APP_ORIGIN: `http://localhost:${appPort}`,
+        PORT: String(appPort),
+        DATABASE_URL: e2eDatabase,
+        IDENTITY_ADAPTER: "seeded",
+        MODEL_MODE: "off",
+        MODEL_API_KEY: "",
+        S3_ENDPOINT: "",
+        GATEWAY_SECRETS: `browser-tests=${gatewaySecret}`,
+      },
       reuseExistingServer: false,
-      timeout: 120_000,
+      timeout: 180_000,
     },
     {
       // What stands in for WhatsApp: a walk writes as a number and reads what that number receives.

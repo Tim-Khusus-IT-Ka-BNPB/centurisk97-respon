@@ -28,11 +28,14 @@
     "src/testing/jpegs.ts",
     "src/domain/modelMessage.ts",
     "vite.config.ts",
+    "vite.server.config.ts",
     "vitest.config.ts",
     "vitest.mutation.config.ts",
     "react-router.config.ts",
     "playwright.config.ts"
   ],
+  // Scripts that run the whole app are checked with it, in tsconfig.app.json.
+  "exclude": ["scripts/sweep-local.ts", "scripts/dev.ts"],
   "compilerOptions": {
     "composite": true,
     "tsBuildInfoFile": "./node_modules/.cache/tsbuildinfo/node.json",

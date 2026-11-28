@@ -173,7 +173,7 @@ describe("limits", () => {
     ).toBe(200);
   });
 
-  test("a spoofed x-forwarded-for is ignored and a request with no cf-connecting-ip is refused with 400", async () => {
+  test("a spoofed x-forwarded-for is ignored and a request with no x-client-address is refused with 400", async () => {
     const headers = {
       origin: "http://localhost:5173",
       "x-respon-client": "1",
@@ -199,7 +199,7 @@ describe("limits", () => {
     const spoofed = await fetchApi(
       new Request("http://localhost/api/consent", {
         method: "POST",
-        headers: { ...headers, "cf-connecting-ip": address },
+        headers: { ...headers, "x-client-address": address },
         body,
       }),
     );

@@ -32,7 +32,7 @@ export function gateway(fetchApi: Fetch, defaults: GatewayOptions = {}) {
     const init: RequestInit = {
       method,
       headers: {
-        "cf-connecting-ip": "203.0.113.9",
+        "x-client-address": "203.0.113.9",
         "content-type": "application/json",
         "x-gateway-id": all.id,
         "x-gateway-time": String(call.timeMs),

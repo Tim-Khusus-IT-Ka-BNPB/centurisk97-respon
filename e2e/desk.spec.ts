@@ -27,7 +27,7 @@ async function sendReport(
   const part = () => Math.floor(Math.random() * 250) + 1;
   const context = await browser.newContext({
     extraHTTPHeaders: {
-      "cf-connecting-ip": `10.${part()}.${part()}.${part()}`,
+      "x-client-address": `10.${part()}.${part()}.${part()}`,
       origin: baseURL,
       "x-respon-client": "1",
     },

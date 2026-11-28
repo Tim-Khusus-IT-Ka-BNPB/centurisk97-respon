@@ -57,7 +57,7 @@ const responseHeaders = createMiddleware<ApiEnv>(async (c, next) => {
   });
 });
 
-// The client address comes from cf-connecting-ip only; a request without it is refused.
+// The client address comes from x-client-address only; a request without it is refused.
 const addressCheck = createMiddleware<ApiEnv>(async (c, next) => {
   const address = clientAddress(c.req.raw.headers, c.env.settings.addressFallback);
   if (address === null) return refuse(c, 400, "request.refused");

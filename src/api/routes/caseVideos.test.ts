@@ -91,7 +91,7 @@ const putPart = (path: string, bytes: Uint8Array, phone = staff(REGENCY)) => {
   return fetchApi(
     new Request(`http://localhost/api${path}`, {
       method: "PUT",
-      headers: { "cf-connecting-ip": phone.address, origin: TEST_ORIGIN, "x-respon-client": "1", cookie },
+      headers: { "x-client-address": phone.address, origin: TEST_ORIGIN, "x-respon-client": "1", cookie },
       body: new Uint8Array(bytes),
     }),
   );
@@ -141,7 +141,7 @@ describe("a record's video", () => {
     const part = await fetchApi(
       new Request(`http://localhost/api/cases/${fileId}/media/${progress.id}`, {
         headers: {
-          "cf-connecting-ip": "2001:db8::1",
+          "x-client-address": "2001:db8::1",
           "x-respon-client": "1",
           cookie: `seeded_session=${(SEEDED_SESSIONS[DESK] as { token: string }).token}`,
           range: "bytes=0-99",

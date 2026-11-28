@@ -17,14 +17,11 @@ agents/
 .env
 .env.*
 !.env.example
-.dev.vars
 
 # Dependencies, build output and generated types
 node_modules/
 build/
 .react-router/
-.wrangler/
-worker-configuration.d.ts
 
 # Test and report output
 coverage/
@@ -39,3 +36,7 @@ tools/model-stub/calls.log
 # OS
 .DS_Store
 proof/
+
+# Left from the Cloudflare years on a developer machine: settings that may hold keys, and wrangler state.
+.dev.vars
+.wrangler/

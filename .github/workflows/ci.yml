@@ -29,6 +29,9 @@ jobs:
       CI: "true"
       APP_ENV: test
       TEST_DATABASE_URL: postgres://postgres@localhost:5432/postgres
+      # The bundle check starts the built app on the service's own database.
+      DATABASE_URL: postgres://postgres@localhost:5432/postgres
+      GARAGE: dxflrs/garage:v2.6.0@sha256:4b5a318fc9fe2fbec5d3af590eeafe05d83492e6411266fa0b9e215c20264013
       KEY_HMAC_SECRET: ci-only-sample-hmac-key-at-least-32-bytes
       MODEL_STUB_PORT: "8790"
       MODEL_STUB_DELAY_MS: "0"
@@ -47,10 +50,36 @@ jobs:
         run: pnpm install --frozen-lockfile
       - name: Secret scan
         run: pnpm scan
-      - name: Worker settings for the run
-        run: cp .dev.vars.example .dev.vars
+      - name: Settings for the run
+        run: cp .env.example .env
       - name: Types, lint, unused code
         run: pnpm check
+      # Garage as the server runs it, for the file store's own calls against a real S3.
+      - name: Garage for the store's contract test
+        run: |
+          cat > "$RUNNER_TEMP/garage.toml" <<'TOML'
+          metadata_dir = "/var/lib/garage/meta"
+          data_dir = "/var/lib/garage/data"
+          replication_factor = 1
+          db_engine = "sqlite"
+          rpc_bind_addr = "0.0.0.0:3901"
+          rpc_public_addr = "127.0.0.1:3901"
+          [s3_api]
+          s3_region = "garage"
+          api_bind_addr = "0.0.0.0:3900"
+          TOML
+          key="GK$(openssl rand -hex 16)"
+          secret="$(openssl rand -hex 32)"
+          docker run -d --name garage -p 127.0.0.1:3900:3900 -v "$RUNNER_TEMP/garage.toml:/etc/garage.toml:ro" \
+            -e GARAGE_RPC_SECRET="$(openssl rand -hex 32)" -e GARAGE_DEFAULT_ACCESS_KEY="$key" \
+            -e GARAGE_DEFAULT_SECRET_KEY="$secret" -e GARAGE_DEFAULT_BUCKET=respon-files \
+            "$GARAGE" /garage server --single-node --default-bucket
+          for _ in $(seq 1 30); do docker exec garage /garage bucket info respon-files > /dev/null 2>&1 && break; sleep 1; done
+          {
+            echo "S3_TEST_ENDPOINT=http://127.0.0.1:3900"
+            echo "S3_TEST_ACCESS_KEY=$key"
+            echo "S3_TEST_SECRET_KEY=$secret"
+          } >> "$GITHUB_ENV"
       - name: Unit and integration tests with coverage
         run: pnpm test
       - name: Build
@@ -75,9 +104,20 @@ jobs:
           - webkit-desktop
           - chromium-no-script
           - webkit-no-script
+    # The browser tests' own database, made fresh by the run on this server.
+    services:
+      postgres:
+        image: postgres:18.7-alpine@sha256:0115267ab5a509022df9319c77be365cef335adb71556c75f60f5360ee247e71
+        env:
+          POSTGRES_HOST_AUTH_METHOD: trust
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres" --health-interval 5s --health-timeout 5s --health-retries 20
     env:
       CI: "true"
       APP_ENV: test
+      E2E_DATABASE_URL: postgres://postgres@localhost:5432/respon_e2e
       KEY_HMAC_SECRET: ci-only-sample-hmac-key-at-least-32-bytes
       MODEL_STUB_PORT: "8790"
       MODEL_STUB_DELAY_MS: "0"
@@ -92,8 +132,8 @@ jobs:
         run: npm install -g "$(node -p 'require("./package.json").packageManager')"
       - name: Install
         run: pnpm install --frozen-lockfile
-      - name: Worker settings for the run
-        run: cp .dev.vars.example .dev.vars
+      - name: Settings for the run
+        run: cp .env.example .env
       - name: Browser
         run: pnpm exec playwright install --with-deps "${MATRIX_PROJECT%%-*}"
         env:
@@ -102,6 +142,67 @@ jobs:
         run: pnpm test:e2e --project "$MATRIX_PROJECT"
         env:
           MATRIX_PROJECT: ${{ matrix.project }}
+
+  # The image the server runs, scanned, started as on the server and published from main.
+  image:
+    needs: verify
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    permissions:
+      contents: read
+      packages: write
+    env:
+      POSTGRES: postgres:18.7-alpine@sha256:0115267ab5a509022df9319c77be365cef335adb71556c75f60f5360ee247e71
+      HADOLINT: hadolint/hadolint:v2.15.1@sha256:32dac94127fd60b7b7e3fbfc65e1383b9b5e25c9bfd7b8536de7a539fe68a12d
+      GRYPE: anchore/grype:v0.122.1@sha256:661583704a253c0448ed63998b5ea2cd9d5a76ee71eedc4aed439b8ce3e93a1c
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Lint the Dockerfile
+        run: docker run --rm -i "$HADOLINT" < Dockerfile
+      - name: Build
+        run: |
+          image="ghcr.io/${GITHUB_REPOSITORY,,}"
+          tag="sha-${GITHUB_SHA::12}"
+          echo "IMAGE=$image" >> "$GITHUB_ENV"
+          echo "TAG=$tag" >> "$GITHUB_ENV"
+          docker build \
+            --label "org.opencontainers.image.source=$GITHUB_SERVER_URL/$GITHUB_REPOSITORY" \
+            --label "org.opencontainers.image.revision=$GITHUB_SHA" \
+            --tag "$image:$tag" .
+      - name: Known vulnerabilities that have a fix
+        run: docker run --rm -v /var/run/docker.sock:/var/run/docker.sock "$GRYPE" "$IMAGE:$TAG" --only-fixed --fail-on high
+      # Test-only settings beside a throwaway Postgres: it migrates, answers a page and the API, and
+      # loads the seeded places with the image's own import command.
+      - name: Starts, migrates and answers, locked down as on the server
+        run: |
+          docker network create smoke
+          docker run -d --name db --network smoke -e POSTGRES_HOST_AUTH_METHOD=trust "$POSTGRES"
+          for _ in $(seq 1 30); do docker exec db pg_isready -U postgres > /dev/null 2>&1 && break; sleep 1; done
+          settings=(-e APP_ENV=test -e APP_ORIGIN=http://127.0.0.1:3000 -e IDENTITY_ADAPTER=seeded -e MODEL_MODE=off
+            -e KEY_HMAC_SECRET=ci-only-sample-hmac-key-at-least-32-bytes -e DATABASE_URL=postgres://postgres@db:5432/postgres)
+          docker run -d --name smoke --network smoke --read-only --cap-drop ALL --security-opt no-new-privileges \
+            -p 127.0.0.1:3000:3000 "${settings[@]}" "$IMAGE:$TAG"
+          for _ in $(seq 1 60); do
+            if [ "$(docker inspect -f '{{.State.Health.Status}}' smoke)" = healthy ] && curl -fsS http://127.0.0.1:3000/ > /dev/null; then
+              docker run --rm --network smoke --read-only -v "$PWD/db/reference:/data:ro" "${settings[@]}" "$IMAGE:$TAG" \
+                node build/node/import-file.js responseActions /data/response-actions.json
+              exit 0
+            fi
+            sleep 1
+          done
+          docker logs smoke
+          exit 1
+      - name: Publish
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          echo "$GH_TOKEN" | docker login ghcr.io -u "$GITHUB_ACTOR" --password-stdin
+          docker tag "$IMAGE:$TAG" "$IMAGE:main"
+          docker push "$IMAGE:$TAG"
+          docker push "$IMAGE:main"
 
   # Its own job, so its run beside the browser tests is not inside their time limit.
   mutation:

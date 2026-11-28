@@ -8,7 +8,7 @@ export async function ownAddress(context: BrowserContext): Promise<void> {
   const address = `10.${part()}.${part()}.${part()}`;
   await context.route(
     (url) => url.hostname === "localhost",
-    (route) => route.continue({ headers: { ...route.request().headers(), "cf-connecting-ip": address } }),
+    (route) => route.continue({ headers: { ...route.request().headers(), "x-client-address": address } }),
   );
 }
 

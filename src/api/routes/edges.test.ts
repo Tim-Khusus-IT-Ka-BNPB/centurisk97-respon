@@ -227,7 +227,7 @@ describe("turn edges", () => {
       TEST_ORIGIN,
       new Request(`${TEST_ORIGIN}/report/x`, {
         method: "POST",
-        headers: { origin: TEST_ORIGIN, cookie, "cf-connecting-ip": phone.address },
+        headers: { origin: TEST_ORIGIN, cookie, "x-client-address": phone.address },
       }),
     );
     const form = new FormData();
@@ -249,7 +249,7 @@ describe("dependencies down", () => {
   test("the health check answers 503 when the database cannot be read, and ok when it can", async () => {
     const broken = { ...bindings, db: failingDatabase("network lost") };
     const request = () =>
-      new Request("http://localhost/api/health", { headers: { "cf-connecting-ip": "198.51.100.7" } });
+      new Request("http://localhost/api/health", { headers: { "x-client-address": "198.51.100.7" } });
     expect((await api.app.fetch(request(), broken)).status).toBe(503);
     expect(await (await api.app.fetch(request(), bindings)).text()).toBe("ok");
   });

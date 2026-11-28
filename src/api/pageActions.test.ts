@@ -20,7 +20,7 @@ function page() {
       TEST_ORIGIN,
       new Request(`${TEST_ORIGIN}/report`, {
         method: "POST",
-        headers: { origin: TEST_ORIGIN, "cf-connecting-ip": address, cookie },
+        headers: { origin: TEST_ORIGIN, "x-client-address": address, cookie },
       }),
     );
   const post = async (fields: Record<string, string | string[]>) => {

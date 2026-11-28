@@ -15,7 +15,7 @@ async function sendEmergency(page: Page, baseURL: string): Promise<string> {
   const call = async <T>(method: "GET" | "POST", path: string, data?: unknown): Promise<T> => {
     const response = await page.request.fetch(`/api${path}`, {
       method,
-      headers: { origin: baseURL, "x-respon-client": "1", "cf-connecting-ip": "10.77.0.1" },
+      headers: { origin: baseURL, "x-respon-client": "1", "x-client-address": "10.77.0.1" },
       ...(data === undefined ? {} : { data }),
     });
     expect(response.status(), `${method} ${path}`).toBeLessThan(300);

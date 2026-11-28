@@ -87,7 +87,7 @@ describe("who reaches the desk", () => {
     const response = await fetchApi(
       new Request(`http://localhost/api/desk/reports/${ticket}/view`, {
         method: "POST",
-        headers: { "cf-connecting-ip": "198.51.100.9", origin: "http://localhost:5173", cookie },
+        headers: { "x-client-address": "198.51.100.9", origin: "http://localhost:5173", cookie },
       }),
     );
     expect(response.status).toBe(403);
@@ -381,7 +381,7 @@ describe("seeded staff sign-in", () => {
         new Request(`${origin}/api/desk/session`, {
           method: "POST",
           headers: {
-            "cf-connecting-ip": "198.51.100.77",
+            "x-client-address": "198.51.100.77",
             origin: "http://localhost:5173",
             "x-respon-client": "1",
             "content-type": "application/json",

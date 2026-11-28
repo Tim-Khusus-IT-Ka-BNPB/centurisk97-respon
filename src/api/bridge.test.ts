@@ -31,7 +31,7 @@ describe("page to api bridge", () => {
       headers: {
         origin: ORIGIN,
         cookie: "device_key=abc",
-        "cf-connecting-ip": "198.51.100.2",
+        "x-client-address": "198.51.100.2",
         "x-forwarded-for": "10.0.0.1",
       },
     });
@@ -44,7 +44,7 @@ describe("page to api bridge", () => {
       origin: ORIGIN,
       "x-respon-client": "1",
       cookie: "device_key=abc",
-      "cf-connecting-ip": "198.51.100.2",
+      "x-client-address": "198.51.100.2",
       "content-type": "application/json",
     });
     expect(await call.json()).toEqual({ agree: true });

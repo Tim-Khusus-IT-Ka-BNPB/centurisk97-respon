@@ -45,12 +45,16 @@ function stop(child: ChildProcess): Promise<void> {
   return new Promise((resolve) => {
     if (child.exitCode !== null) return resolve();
     child.once("exit", () => resolve());
-    // The preview runs a chain of processes; signalling the group stops every one of them.
+    // The build and the server run as a chain of processes; signalling the group stops every one.
     if (child.pid) process.kill(-child.pid, "SIGTERM");
   });
 }
 
-const server = spawn("pnpm", ["-s", "preview", "--port", String(PORT)], { stdio: "ignore", detached: true });
+const server = spawn("sh", ["-c", "pnpm -s build && pnpm -s start"], {
+  stdio: "ignore",
+  detached: true,
+  env: { ...process.env, PORT: String(PORT), APP_ORIGIN: ORIGIN },
+});
 let failed = false;
 try {
   await waitForHealth(120_000);

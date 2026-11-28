@@ -6,7 +6,7 @@ import { SEEDED_SESSIONS, SYNTHETIC_REPORTERS } from "../synthetic/reporters.ts"
 // the session rows themselves. Safe to run again.
 export default async function seedIdentities(db: Database): Promise<void> {
   const secret = process.env.KEY_HMAC_SECRET;
-  if (!secret) throw new Error("Setting KEY_HMAC_SECRET is missing. It must equal the one in .dev.vars.");
+  if (!secret) throw new Error("Setting KEY_HMAC_SECRET is missing. Copy it from .env.example into .env.");
   for (const session of SEEDED_SESSIONS) {
     const staff = session.staff as (typeof SEEDED_SESSIONS)[number]["staff"];
     let reporterId: string | null = null;

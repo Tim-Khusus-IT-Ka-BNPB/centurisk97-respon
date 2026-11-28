@@ -42,7 +42,7 @@ export default defineConfig({
         "app/routes.ts",
         "app/entry.server.tsx",
         "app/testing/**",
-        "src/platform/cloudflare/worker.ts",
+        "src/platform/node/**",
         // Test fixtures and helpers; the tests that use them are what is measured.
         "src/testing/**",
         "src/contract/samples.ts",

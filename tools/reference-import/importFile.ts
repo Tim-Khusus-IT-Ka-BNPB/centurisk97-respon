@@ -1,9 +1,10 @@
 import { localDatabase } from "../../scripts/db/local.ts";
+import { sqlState } from "../../src/platform/database.ts";
 import { importReferenceFile, ReferenceFileRefused, type ReferenceName } from "./file.ts";
 
-// pnpm reference:import-file <bpbdContacts|education|responseActions|forecast> <file>: loads upstream's
-// public/data/bpbd_kontak.json, public/lapor/edukasi.json or public/bencana.json into the local D1
-// database of APP_ENV.
+// pnpm reference:import-file <name> <file>: loads one of upstream's reference files (contacts,
+// education, response actions, forecast, volcanoes, facility numbers, official events) into the
+// database at DATABASE_URL, checked against its contract first. In the image: node build/node/import-file.js.
 const [name, path] = process.argv.slice(2);
 const NAMES: readonly (string | undefined)[] = [
   "bpbdContacts",
@@ -29,7 +30,7 @@ try {
   );
 } catch (error: unknown) {
   if (error instanceof ReferenceFileRefused) console.error(error.message);
-  else console.error(`reference:import-file failed, ${/SQLITE_[A-Z_]+/.exec(String(error))?.[0] ?? "unknown"}`);
+  else console.error(`reference:import-file failed, ${sqlState(error) ?? "unknown"}`);
   process.exitCode = 1;
 } finally {
   await close();

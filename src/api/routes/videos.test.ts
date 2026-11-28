@@ -69,7 +69,7 @@ const putPart = (phone: Phone, path: string, bytes: Uint8Array) => {
   return fetchApi(
     new Request(`http://localhost/api${path}`, {
       method: "PUT",
-      headers: { "cf-connecting-ip": phone.address, origin: TEST_ORIGIN, "x-respon-client": "1", cookie },
+      headers: { "x-client-address": phone.address, origin: TEST_ORIGIN, "x-respon-client": "1", cookie },
       body: new Uint8Array(bytes),
     }),
   );
@@ -140,7 +140,7 @@ describe("a video of the scene", () => {
       fetchApi(
         new Request(`http://localhost/api/desk/reports/${ticket}/videos/${id}`, {
           headers: {
-            "cf-connecting-ip": desk.address,
+            "x-client-address": desk.address,
             cookie: `seeded_session=${(SEEDED_SESSIONS[2] as { token: string }).token}`,
             ...(range ? { range } : {}),
           },
@@ -164,7 +164,7 @@ describe("a video of the scene", () => {
     const province = (SEEDED_SESSIONS[4] as { token: string }).token;
     const elsewhere = await fetchApi(
       new Request(`http://localhost/api/desk/reports/${ticket}/videos/${id}`, {
-        headers: { "cf-connecting-ip": desk.address, cookie: `seeded_session=${province}` },
+        headers: { "x-client-address": desk.address, cookie: `seeded_session=${province}` },
       }),
     );
     expect(elsewhere.status).toBe(404);
@@ -177,7 +177,7 @@ describe("a video of the scene", () => {
     const other = await fetchApi(
       new Request(`http://localhost/api/desk/reports/${ticket}/videos/${crypto.randomUUID()}`, {
         headers: {
-          "cf-connecting-ip": desk.address,
+          "x-client-address": desk.address,
           cookie: `seeded_session=${(SEEDED_SESSIONS[2] as { token: string }).token}`,
         },
       }),

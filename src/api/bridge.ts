@@ -7,8 +7,8 @@ type ApiMethod = "GET" | "POST" | "DELETE";
 // policy and schemas are declared once and a page works with no script.
 export type ApiCall = (method: ApiMethod, path: string, body?: unknown) => Promise<Response>;
 
-// The edge's country reading goes on too, for the GPS doubts of a photo (D11).
-const FORWARDED_HEADERS = ["cookie", "cf-connecting-ip", "cf-ipcountry"] as const;
+// A country reading goes on too, for the GPS doubts of a photo (D11), where an edge in front sets one.
+const FORWARDED_HEADERS = ["cookie", "x-client-address", "x-client-country"] as const;
 
 export function createBridge(
   fetchApi: (request: Request) => Promise<Response>,

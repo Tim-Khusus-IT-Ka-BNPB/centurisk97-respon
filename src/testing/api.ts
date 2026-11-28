@@ -137,18 +137,17 @@ export function testBindings(
   options: TestOptions = {},
 ): { bindings: ApiBindings; lines: LogLine[] } {
   const lines: LogLine[] = [];
-  const settings = parseSettings(
-    {
-      APP_ENV: "test",
-      APP_ORIGIN: TEST_ORIGIN,
-      // The seed keyed the seeded numbers with this secret, so the tests use it too.
-      KEY_HMAC_SECRET: import.meta.env.KEY_HMAC_SECRET as string,
-      IDENTITY_ADAPTER: "seeded",
-      MODEL_MODE: "off",
-      ...overrides,
-    },
-    true,
-  );
+  const settings = parseSettings({
+    APP_ENV: "test",
+    APP_ORIGIN: TEST_ORIGIN,
+    // The seed keyed the seeded numbers with this secret, so the tests use it too.
+    KEY_HMAC_SECRET: import.meta.env.KEY_HMAC_SECRET as string,
+    IDENTITY_ADAPTER: "seeded",
+    // The settings name a database; the tests hand in this file's own.
+    DATABASE_URL: "postgres://localhost:5432/respon_test",
+    MODEL_MODE: "off",
+    ...overrides,
+  });
   const db = testDatabase();
   const clock = options.clock ?? { now: Date.now };
   return {
@@ -168,7 +167,7 @@ export function testBindings(
   };
 }
 
-export const fromBrowser = { "cf-connecting-ip": "198.51.100.2" } as const;
+export const fromBrowser = { "x-client-address": "198.51.100.2" } as const;
 export const jsonWrite = {
   ...fromBrowser,
   origin: TEST_ORIGIN,
@@ -197,7 +196,7 @@ export function browser(fetchApi: Fetch, address = freshAddress()) {
   const cookies = new Map<string, string>();
   const call = async (method: string, path: string, body?: unknown) => {
     const headers: Record<string, string> = {
-      "cf-connecting-ip": address,
+      "x-client-address": address,
       origin: TEST_ORIGIN,
       "x-respon-client": "1",
     };
@@ -218,7 +217,7 @@ export function browser(fetchApi: Fetch, address = freshAddress()) {
   // A multipart post, as the page's photo form sends it.
   const upload = async (path: string, form: FormData) => {
     const headers: Record<string, string> = {
-      "cf-connecting-ip": address,
+      "x-client-address": address,
       origin: TEST_ORIGIN,
       "x-respon-client": "1",
     };
@@ -232,7 +231,7 @@ export function browser(fetchApi: Fetch, address = freshAddress()) {
   // A file read, answered as its status, type and bytes; with a body it is asked for by a post.
   const file = async (path: string, body?: unknown) => {
     const headers: Record<string, string> = {
-      "cf-connecting-ip": address,
+      "x-client-address": address,
       origin: TEST_ORIGIN,
       "x-respon-client": "1",
     };

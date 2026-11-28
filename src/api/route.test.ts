@@ -264,8 +264,8 @@ describe("policy, origin, address and size checks", () => {
     }
   });
 
-  test("a request with no cf-connecting-ip is refused, a spoofed x-forwarded-for is ignored", async () => {
-    const { "cf-connecting-ip": _, ...noAddress } = jsonWrite;
+  test("a request with no x-client-address is refused, a spoofed x-forwarded-for is ignored", async () => {
+    const { "x-client-address": _, ...noAddress } = jsonWrite;
     const refused = await call(
       { kind: "device", deviceId: "dev1" },
       post({ text: "air" }, { ...noAddress, "x-forwarded-for": "10.0.0.1" }),

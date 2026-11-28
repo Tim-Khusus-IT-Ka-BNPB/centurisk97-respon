@@ -1,9 +1,11 @@
 import { dirname, resolve } from "node:path";
 import { localDatabase } from "../../scripts/db/local.ts";
+import { sqlState } from "../../src/platform/database.ts";
 import { PlaceFileRefused, readPlaceFile } from "./read.ts";
 
 // pnpm reference:import <file> [outlines]: loads upstream's desa_cari.json and its village
-// outlines into the local D1 database of APP_ENV as the new active place snapshot. The outlines
+// outlines into the database at DATABASE_URL as the new active place snapshot. In the image:
+// node build/node/import-places.js. The outlines
 // default to upstream's layout, public/geo/desa beside public/data.
 // The upstream floor applies, so a broken export that lists too few places is refused.
 const [path, outlines] = process.argv.slice(2);
@@ -24,8 +26,7 @@ try {
 } catch (error: unknown) {
   if (error instanceof PlaceFileRefused) console.error(error.message);
   else {
-    const code = /SQLITE_[A-Z_]+/.exec(String((error as Error | null)?.message))?.[0] ?? "unknown";
-    console.error(`reference:import failed, ${code}`);
+    console.error(`reference:import failed, ${sqlState(error) ?? "unknown"}`);
   }
   process.exitCode = 1;
 } finally {

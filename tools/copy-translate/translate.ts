@@ -1,5 +1,5 @@
 // pnpm copy:translate <language>: drafts src/copy/tr/<language>.json, the report pages' words in one
-// of the offered languages, with the model and the key in .dev.vars. Lines already in the file are
+// of the offered languages, with the model and the key in .env. Lines already in the file are
 // kept, so a speaker's corrections stay. Each line must pass translationProblem() or it is left out
 // and the page shows the Indonesian. A draft until a speaker of the language has read it (Q44).
 import { existsSync, readdirSync, readFileSync, writeFileSync } from "node:fs";
@@ -40,7 +40,7 @@ if (name === undefined) {
   process.exit(1);
 }
 const settings = Object.fromEntries(
-  readFileSync(".dev.vars", "utf8")
+  readFileSync(".env", "utf8")
     .split("\n")
     .flatMap((line) =>
       /^[A-Z_]+=/.test(line) ? [[line.slice(0, line.indexOf("=")), line.slice(line.indexOf("=") + 1)]] : [],
@@ -49,7 +49,7 @@ const settings = Object.fromEntries(
 const apiKey = settings.MODEL_API_KEY ?? "";
 const model = settings.MODEL_NAME || "claude-sonnet-5-5";
 if (apiKey === "") {
-  process.stderr.write("No MODEL_API_KEY in .dev.vars\n");
+  process.stderr.write("No MODEL_API_KEY in .env\n");
   process.exit(1);
 }
 

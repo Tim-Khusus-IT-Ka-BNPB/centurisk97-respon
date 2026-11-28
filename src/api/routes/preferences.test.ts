@@ -32,7 +32,7 @@ describe("theme preference", () => {
         new Request(`${origin}/api/preferences/theme`, {
           method: "POST",
           headers: {
-            "cf-connecting-ip": "198.51.100.40",
+            "x-client-address": "198.51.100.40",
             origin: "http://localhost:5173",
             "x-respon-client": "1",
             "content-type": "application/json",

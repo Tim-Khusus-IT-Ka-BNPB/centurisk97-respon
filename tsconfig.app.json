@@ -6,13 +6,14 @@
     "src/**/*",
     "db/synthetic/reporters.ts",
     "db/testServer.ts",
-    "worker-configuration.d.ts"
+    "scripts/sweep-local.ts",
+    "scripts/dev.ts"
   ],
   "compilerOptions": {
     "composite": true,
-    "tsBuildInfoFile": "./node_modules/.cache/tsbuildinfo/cloudflare.json",
+    "tsBuildInfoFile": "./node_modules/.cache/tsbuildinfo/app.json",
     "lib": ["ES2024", "DOM", "DOM.Iterable"],
-    "types": ["vite/client"],
+    "types": ["vite/client", "node"],
     "target": "ES2024",
     "module": "ESNext",
     "moduleResolution": "Bundler",

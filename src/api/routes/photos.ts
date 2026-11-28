@@ -57,7 +57,7 @@ export function addPhotoRoutes(api: Api): void {
           offsetMinutes: isSet(form.offset) ? form.offset : null,
           phoneZone: isSet(form.zone) ? form.zone : null,
           // The edge's reading of the network's country; absent where no edge stands in front.
-          country: c.req.header("cf-ipcountry") ?? null,
+          country: c.req.header("x-client-country") ?? null,
         },
         await requestHash({ ...rest, fingerprint }),
       );

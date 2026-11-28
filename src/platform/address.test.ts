@@ -27,8 +27,8 @@ describe("client address", () => {
     expect(addressBucket("::ffff:999.0.0.1")).toBeNull();
   });
 
-  test("only cf-connecting-ip is read; x-forwarded-for is ignored", () => {
-    expect(clientAddress(headers({ "cf-connecting-ip": " 198.51.100.2 ", "x-forwarded-for": "10.0.0.1" }), null)).toBe(
+  test("only x-client-address is read; x-forwarded-for is ignored", () => {
+    expect(clientAddress(headers({ "x-client-address": " 198.51.100.2 ", "x-forwarded-for": "10.0.0.1" }), null)).toBe(
       "198.51.100.2",
     );
     expect(clientAddress(headers({ "x-forwarded-for": "10.0.0.1" }), null)).toBeNull();
@@ -36,8 +36,8 @@ describe("client address", () => {
 
   test("with no address header only the test fallback answers", () => {
     expect(clientAddress(headers({}), null)).toBeNull();
-    expect(clientAddress(headers({ "cf-connecting-ip": "  " }), null)).toBeNull();
+    expect(clientAddress(headers({ "x-client-address": "  " }), null)).toBeNull();
     expect(clientAddress(headers({}), "loopback")).toBe("loopback");
-    expect(clientAddress(headers({ "cf-connecting-ip": "bad" }), "loopback")).toBeNull();
+    expect(clientAddress(headers({ "x-client-address": "bad" }), "loopback")).toBeNull();
   });
 });

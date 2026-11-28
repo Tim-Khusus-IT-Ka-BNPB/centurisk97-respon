@@ -54,7 +54,7 @@ describe("consent", () => {
         new Request(`${origin}/api/consent`, {
           method: "POST",
           headers: {
-            "cf-connecting-ip": freshAddress(),
+            "x-client-address": freshAddress(),
             origin,
             "x-respon-client": "1",
             "content-type": "application/json",
@@ -67,7 +67,7 @@ describe("consent", () => {
     const request = new Request("https://localhost/api/consent", {
       method: "POST",
       headers: {
-        "cf-connecting-ip": freshAddress(),
+        "x-client-address": freshAddress(),
         origin: "http://localhost:5173",
         "x-respon-client": "1",
         "content-type": "application/json",

@@ -1,6 +1,5 @@
-// pnpm push:keys: a new VAPID pair for the warnings (M07), printed once for the Worker's secrets.
-// Set all three per environment, never in a file:
-//   npx wrangler secret put PUSH_PRIVATE_KEY --name <worker>
+// pnpm push:keys: a new VAPID pair for the warnings (M07), printed once. Set all three in the
+// environment's secrets file on the server (respon.env in centurisk97-platform's runbook), never in git.
 // A new pair stops every phone subscribed with the old one, so keep the pair for good.
 import { toBase64Url } from "../../src/platform/webPush.ts";
 

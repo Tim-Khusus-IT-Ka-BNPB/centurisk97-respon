@@ -1,5 +1,6 @@
 // The client address as a limit bucket: an IPv4 address whole, an IPv6 address by its /64
-// prefix. Only cf-connecting-ip is read; x-forwarded-for is set by the client and never trusted.
+// prefix. Only x-client-address is read: Caddy sets it to the connection's own address on the server,
+// and the Node server to the socket's on one's own machine. x-forwarded-for is the client's to write.
 const IPV4 = /^(\d{1,3})\.(\d{1,3})\.(\d{1,3})\.(\d{1,3})$/;
 const MAPPED_IPV4 = /^::ffff:(\d{1,3}(?:\.\d{1,3}){3})$/;
 const HEXTET = /^[0-9a-f]{1,4}$/;
@@ -42,7 +43,7 @@ const LOOPBACK_BUCKET = "loopback";
 
 // Null means the request carries no usable address and is refused.
 export function clientAddress(headers: Headers, fallback: "loopback" | null): string | null {
-  const value = headers.get("cf-connecting-ip")?.trim() ?? "";
+  const value = headers.get("x-client-address")?.trim() ?? "";
   if (value === "") return fallback === null ? null : LOOPBACK_BUCKET;
   return addressBucket(value);
 }

@@ -21,7 +21,7 @@ async function reporter() {
   const cookie = [...phone.cookies].map(([name, value]) => `${name}=${value}`).join("; ");
   const load = (query: string, draftId = started.draft.draftId, with_: ApiBindings = bindings) => {
     const page = new Request(`${TEST_ORIGIN}/report/${draftId}?${query}`, {
-      headers: { cookie, "cf-connecting-ip": phone.address },
+      headers: { cookie, "x-client-address": phone.address },
     });
     const bridge = createBridge(async (request) => api.app.fetch(request, with_), TEST_ORIGIN, page);
     return draftPageLoad(draftId, new URL(page.url).searchParams, bridge);

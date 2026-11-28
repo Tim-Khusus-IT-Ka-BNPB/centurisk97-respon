@@ -55,7 +55,7 @@ describe("a gateway's signed calls (AC-05)", () => {
       new Request("http://localhost/api/gateway/messages", {
         method: "POST",
         headers: {
-          "cf-connecting-ip": "203.0.113.9",
+          "x-client-address": "203.0.113.9",
           origin: "http://localhost:5173",
           "x-respon-client": "1",
           "content-type": "application/json",

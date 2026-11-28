@@ -1,4 +1,4 @@
-import { fileURLToPath } from "node:url";
+import { resolve } from "node:path";
 import { drizzle } from "drizzle-orm/node-postgres";
 import { migrate } from "drizzle-orm/node-postgres/migrator";
 import pg from "pg";
@@ -8,7 +8,8 @@ import { type Database, type Query, type Result, runBatch, sqlState } from "./da
 const RETRIED = new Set(["40001", "40P01"]);
 const SERIALIZE_ATTEMPTS = 5;
 
-const MIGRATIONS = fileURLToPath(new URL("../../db/migrations", import.meta.url));
+// The server, the scripts and the tests all run from the repo root, which is /app in the image.
+const MIGRATIONS = resolve("db/migrations");
 
 // Instants come back as ISO 8601 text in UTC and days as YYYY-MM-DD, as the code reads them;
 // counts and sums as numbers.

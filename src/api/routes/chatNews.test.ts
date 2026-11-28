@@ -114,7 +114,7 @@ describe("the document (AC-02, AC-06)", () => {
     expect(words).not.toContain(one.number.slice(3));
     // Anyone but a gateway that signs is refused, and so is a gateway no longer known.
     expect(
-      (await fetchApi(new Request(item?.url as string, { headers: { "cf-connecting-ip": "203.0.113.9" } }))).status,
+      (await fetchApi(new Request(item?.url as string, { headers: { "x-client-address": "203.0.113.9" } }))).status,
     ).toBe(401);
     const { bindings: without } = testBindings({ GATEWAY_SECRETS: other }, { clock });
     const taken = gateway((request) => api.app.fetch(request, without), { now: clock.now });

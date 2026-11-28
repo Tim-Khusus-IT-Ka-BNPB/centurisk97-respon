@@ -171,10 +171,10 @@ describe("photos", () => {
     const second = photoForm(kept.draft, cameraJpeg(camera), fix({ lat: HERE.lat + 1, lon: HERE.lon }, 30, 0));
     second.set("zone", "Asia/Jakarta");
     const headers = {
-      "cf-connecting-ip": phone.address,
+      "x-client-address": phone.address,
       origin: TEST_ORIGIN,
       "x-respon-client": "1",
-      "cf-ipcountry": "SG",
+      "x-client-country": "SG",
       cookie: [...phone.cookies].map(([name, value]) => `${name}=${value}`).join("; "),
     };
     const jumped = await fetchApi(
