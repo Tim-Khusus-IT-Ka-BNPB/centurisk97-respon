@@ -3,8 +3,8 @@ import { useText } from "../../lib/text";
 import { Emblem } from "../atoms/Emblem";
 
 // BNPB's emblem and the Pantau Bencana shield (upstream's mark, chosen by the owner on 25 Nov), with
-// the service's name and BNPB's full name under it. A 320px phone keeps the emblem alone, so the
-// header stays one row.
+// the service's name and BNPB's full name under it. A 320px phone keeps the emblem alone, and a
+// phone drops the full name, which the emblem carries, so the header stays one row.
 export function BrandLockup({ tone = "page" }: { readonly tone?: "page" | "hero" }) {
   const t = useText();
   return (
@@ -28,9 +28,7 @@ export function BrandLockup({ tone = "page" }: { readonly tone?: "page" | "hero"
         >
           {t("app.name")}
         </span>
-        <span
-          className={cn(tone === "hero" ? "text-meta text-on-hero-muted" : "text-[0.75rem] text-muted sm:text-meta")}
-        >
+        <span className={cn(tone === "hero" ? "text-meta text-on-hero-muted" : "hidden text-meta text-muted sm:block")}>
           {t("home.contact.organisation")}
         </span>
       </span>
