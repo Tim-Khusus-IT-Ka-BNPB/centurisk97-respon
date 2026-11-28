@@ -485,9 +485,7 @@ describe("a place named in the story is searched for the reporter", () => {
   test("a place the place data does not hold, or named once the place is given, is not said", async () => {
     const unknown = "banjir di kampung antah berantah";
     const later = "banjir juga sampai desa sukamaju";
-    const w = world(
-      recorded({ [unknown]: answer("kampung antah berantah"), [later]: answer("desa sukamaju") }).port,
-    );
+    const w = world(recorded({ [unknown]: answer("kampung antah berantah"), [later]: answer("desa sukamaju") }).port);
     const { phone, draft } = await start(w);
     const told = await say(phone, draft, unknown);
     expect(namedLines(told.draft)).toEqual([]);
@@ -499,4 +497,3 @@ describe("a place named in the story is searched for the reporter", () => {
     expect(namedLines(after.draft)).toEqual([]);
   });
 });
-

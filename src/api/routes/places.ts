@@ -2,10 +2,10 @@ import { createRoute, z } from "@hono/zod-openapi";
 import { placeResultsSchema } from "../../contract/card";
 import { type AreaLevel, checkPlaceQuery } from "../../domain/placeSearch";
 import { checkLimits } from "../../services/limits";
-import { type Admit, areaVillages, type PlaceAnswer, searchPlaces } from "../../services/places";
+import { type Admit, areaVillages, locatePlace, type PlaceAnswer, searchPlaces } from "../../services/places";
 import type { ApiContext } from "../context";
 import { refuse } from "../envelope";
-import { type Api, addRoute, jsonResponse, refusal } from "../route";
+import { type Api, addRoute, jsonBody, jsonResponse, refusal } from "../route";
 import { fieldErrors, limitRefused } from "./shared";
 
 // Longer than a query may be, so the refusal can name the field instead of a malformed request.
@@ -89,6 +89,55 @@ export function addPlaceRoutes(api: Api): void {
     (c) => {
       const { q } = c.req.valid("query");
       return answerSearch(c, q, false, (admit) => searchPlaces(c.env, q, admit));
+    },
+  );
+  // The phone's reading as a place, for pages that need its regency: never kept, and never in an address.
+  addRoute(
+    api,
+    "public",
+    createRoute({
+      method: "post",
+      path: "/places/at",
+      request: {
+        body: jsonBody(
+          z.object({
+            lat: z.number().min(-90).max(90),
+            lon: z.number().min(-180).max(180),
+            accuracyM: z.number().min(0).max(1e7),
+          }),
+        ),
+      },
+      responses: {
+        200: jsonResponse(
+          "The village at the reading, with its regency",
+          z.object({
+            regency: z.object({ code: z.string(), name: z.string(), provinceName: z.string() }),
+            village: z.object({ name: z.string(), districtName: z.string() }),
+          }),
+        ),
+        404: refusal("The reading is outside Indonesia or near no village"),
+        429: failures[429],
+        503: failures[503],
+      },
+    }),
+    async (c) => {
+      const limited = await checkLimits(c.env, [["address.searches", { kind: "address", bucket: c.var.address }]]);
+      if (limited) return limitRefused(c, limited, null);
+      const located = await locatePlace(c.env, c.req.valid("json"));
+      if (located.kind === "unavailable") return refuse(c, 503, "place.unavailable");
+      if (located.kind !== "found") return refuse(c, 404, "request.refused");
+      const { village } = located.reading;
+      return c.json(
+        {
+          regency: {
+            code: village.villageCode.slice(0, 5),
+            name: village.regencyName,
+            provinceName: village.provinceName,
+          },
+          village: { name: village.villageName, districtName: village.districtName },
+        },
+        200,
+      );
     },
   );
   addAreaRoute(api, "regency", "regencies", /^\d{2}\.\d{2}$/);

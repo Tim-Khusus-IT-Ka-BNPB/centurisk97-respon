@@ -268,6 +268,29 @@ describe("route modules", () => {
       },
     );
     expect(await screen.findByRole("heading", { level: 1, name: "Info daerah" })).toBeTruthy();
+    // The phone's reading, posted: its regency's page, or what went wrong.
+    const located = async (response: () => Response) => {
+      const posted: unknown[] = [];
+      const form = new FormData();
+      for (const [name, value] of Object.entries({ action: "locate", lat: "5.14705", lon: "97.0482", accuracy: "12" }))
+        form.set(name, value);
+      const run = info.action({
+        request: new Request("http://localhost/info", { method: "POST", body: form }),
+        context: {
+          api: async (_method: string, path: string, body: unknown) => {
+            posted.push([path, body]);
+            return response();
+          },
+        },
+      } as Args);
+      return { outcome: await run.catch((thrown: unknown) => thrown), posted };
+    };
+    const regency = await located(json({ regency: { code: "11.08" } }));
+    expect((regency.outcome as Response).headers.get("location")).toBe("/info?regency=11.08");
+    expect(regency.posted).toEqual([["/places/at", { lat: 5.14705, lon: 97.0482, accuracyM: 12 }]]);
+    expect((await located(json({}, 404))).outcome).toEqual({ located: "none" });
+    expect((await located(json({}, 400))).outcome).toEqual({ located: "none" });
+    expect((await located(json({}, 503))).outcome).toEqual({ located: "unavailable" });
   });
 
   test("a missing person: who reports first, a village search, the form, and what was sent", async () => {

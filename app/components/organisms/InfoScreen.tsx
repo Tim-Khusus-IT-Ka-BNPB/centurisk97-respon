@@ -1,6 +1,9 @@
-import { Form, Link } from "react-router";
+import { useState } from "react";
+import { Form, Link, useNavigation, useSubmit } from "react-router";
 import type { OutlookView } from "../../../src/contract/outlook";
 import { cn } from "../../lib/cn";
+import { readPosition } from "../../lib/device";
+import { useHydrated } from "../../lib/hooks";
 import { useText } from "../../lib/text";
 import { Button, buttonStyles } from "../atoms/Button";
 import { Icon } from "../atoms/Icon";
@@ -222,11 +225,63 @@ function Results({ regencies, query }: { readonly regencies: readonly Regency[];
   );
 }
 
+// What reading the phone's place came to on the server: no place of the data, or place data unreadable.
+export type Located = "none" | "unavailable";
+
+type Reading = { readonly kind: "idle" | "reading" } | { readonly kind: "failed"; readonly reason: string };
+
+// Reads the phone's place and opens its regency's three days; the reading goes in a post, never in
+// the address. It needs script, so a page without it keeps the search alone.
+function LocateRegency({ located }: { readonly located: Located | null }) {
+  const t = useText();
+  const hydrated = useHydrated();
+  const submit = useSubmit();
+  const sending = useNavigation().formData?.get("action") === "locate";
+  const [reading, setReading] = useState<Reading>({ kind: "idle" });
+  if (!hydrated) return null;
+  const read = async () => {
+    setReading({ kind: "reading" });
+    const result = await readPosition();
+    if (result.kind !== "read") {
+      setReading({ kind: "failed", reason: result.kind });
+      return;
+    }
+    setReading({ kind: "idle" });
+    const { lat, lon, accuracy } = result.position;
+    submit(
+      { action: "locate", lat: String(lat), lon: String(lon), accuracy: String(accuracy) },
+      { method: "post", action: "/info" },
+    );
+  };
+  const failed = reading.kind === "failed" ? `card.placeSearch.${reading.reason}` : null;
+  const told = failed ?? (located === null ? null : located === "none" ? "info.locate.none" : "info.unavailable");
+  return (
+    <div className="flex max-w-xl flex-col gap-2">
+      {told === null ? null : <Notice kind="error">{t(told)}</Notice>}
+      <Button
+        type="button"
+        variant="primary"
+        size="main"
+        className="self-start"
+        onClick={read}
+        busyLabel={reading.kind === "reading" || sending ? t("card.placeSearch.locating") : null}
+      >
+        <Icon name="locateFixed" />
+        {reading.kind === "failed" && reading.reason === "denied"
+          ? t("card.placeSearch.retry")
+          : t("card.placeSearch.locate")}
+      </Button>
+      <p className="text-meta text-muted">{t("card.placeSearch.locateHint")}</p>
+    </div>
+  );
+}
+
 // A regency's three days, read on the server so it opens with no script (K87).
-export function InfoScreen({ load }: { readonly load: InfoLoad }) {
+export function InfoScreen({ load, located = null }: { readonly load: InfoLoad; readonly located?: Located | null }) {
   const t = useText();
   return (
     <>
+      {load.kind === "outlook" ? null : <LocateRegency located={located} />}
       {load.kind === "outlook" ? null : (
         <Form method="get" action="/info" className="flex max-w-xl flex-wrap items-end gap-3">
           <label className="flex min-w-0 flex-1 flex-col gap-1.5">

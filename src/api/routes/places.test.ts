@@ -165,3 +165,35 @@ describe("the search limit per address", () => {
     expect(refused.error.retryAt).toEqual({ utc: "2026-11-23T04:00:00.000Z", zone: "WIB" });
   });
 });
+
+describe("a phone's reading as a place", () => {
+  // Desa Cot Seumiyong, Aceh Utara, inside its seed outline.
+  const HERE = { lat: 5.14705, lon: 97.0482, accuracyM: 12 };
+  const at = (body: unknown, with_: ApiBindings = bindings) => phoneWith(with_).call("POST", "/places/at", body);
+
+  test("names the village it falls in and its regency, and keeps nothing", async () => {
+    const answer = await at(HERE);
+    expect(answer.status).toBe(200);
+    expect(answer.json).toEqual({
+      regency: { code: "11.08", name: "Aceh Utara", provinceName: "Aceh" },
+      village: { name: "Cot Seumiyong", districtName: "Kuta Makmur" },
+    });
+  });
+
+  test("outside Indonesia is no place, a broken reading is refused, and failing place data says so", async () => {
+    expect((await at({ lat: 48.85, lon: 2.35, accuracyM: 20 })).status).toBe(404);
+    expect((await at({ lat: 120, lon: 97, accuracyM: 20 })).status).toBe(400);
+    const { bindings: faulty } = testBindings({ FAULT_PLACE: "on" }, { clock });
+    expect((await at(HERE, faulty)).status).toBe(503);
+  });
+
+  test("counts against the address's searches", async () => {
+    const phone = phoneWith(bindings);
+    const key = await hmacKey(bindings.settings.keyHmacSecret, "address", addressBucket(phone.address) as string);
+    await query`insert into rate_counter (limit_id, subject_key, window_start, count)
+      values ('address.searches', ${key}, ${new Date(windowStart("clockHour", clock.now()))}, 1000)`;
+    const refused = await phone.call("POST", "/places/at", HERE);
+    expect(refused.status).toBe(429);
+    expect(refused.error.error.code).toBe("limit.address.searches");
+  });
+});

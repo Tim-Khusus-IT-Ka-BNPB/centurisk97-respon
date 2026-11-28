@@ -1,7 +1,7 @@
-import { screen, within } from "@testing-library/react";
-import { describe, expect, test } from "vitest";
+import { fireEvent, screen, waitFor, within } from "@testing-library/react";
+import { afterEach, describe, expect, test, vi } from "vitest";
 import { OUTLOOK } from "../../testing/outlook";
-import { renderPage } from "../../testing/render";
+import { never, renderPage } from "../../testing/render";
 import { analysisOf, type InfoLoad, InfoScreen } from "./InfoScreen";
 
 const draw = (load: InfoLoad) => renderPage(<InfoScreen load={load} />, { path: "/info" });
@@ -104,5 +104,64 @@ describe("the regional outlook", () => {
     expect(await screen.findByRole("searchbox")).toBeTruthy();
     expect(screen.queryByText("Pilih kabupaten atau kota")).toBeNull();
     expect(phones()).toEqual(["tel:112", "tel:117"]);
+  });
+});
+
+describe("the phone's place opens its regency", () => {
+  afterEach(() => vi.unstubAllGlobals());
+  const geolocation = (outcome: { readonly lat: number } | { readonly code: number }) =>
+    vi.stubGlobal("navigator", {
+      ...navigator,
+      geolocation: {
+        getCurrentPosition(ok: PositionCallback, fail: PositionErrorCallback) {
+          if ("code" in outcome) fail({ code: outcome.code } as GeolocationPositionError);
+          else
+            ok({
+              coords: { latitude: outcome.lat, longitude: 97.0482, accuracy: 12 },
+              timestamp: 0,
+            } as GeolocationPosition);
+        },
+      },
+    });
+
+  test("the reading goes in a post, never in the address, and the button says it is reading", async () => {
+    geolocation({ lat: 5.14705 });
+    const posts: Record<string, FormDataEntryValue>[] = [];
+    renderPage(<InfoScreen load={{ kind: "start", query: "" }} />, {
+      path: "/info",
+      action: async ({ request }: { request: Request }) => {
+        posts.push(Object.fromEntries(await request.formData()));
+        return never();
+      },
+    });
+    fireEvent.click(await screen.findByRole("button", { name: "Pakai lokasi saat ini" }));
+    await waitFor(() => expect(posts).toEqual([{ action: "locate", lat: "5.14705", lon: "97.0482", accuracy: "12" }]));
+    expect(await screen.findByRole("button", { name: "Membaca lokasi..." })).toBeTruthy();
+  });
+
+  test("a refused reading says what to do; a place outside the data, or data unreadable, says so", async () => {
+    geolocation({ code: 1 });
+    const view = renderPage(<InfoScreen load={{ kind: "start", query: "" }} />, { path: "/info" });
+    fireEvent.click(await screen.findByRole("button", { name: "Pakai lokasi saat ini" }));
+    expect(await screen.findByText(/Izin lokasi ditolak/)).toBeTruthy();
+    expect(screen.getByRole("button", { name: "Coba lagi" })).toBeTruthy();
+    view.unmount();
+    const none = renderPage(<InfoScreen load={{ kind: "start", query: "" }} located="none" />, { path: "/info" });
+    expect(await screen.findByText(/belum cocok dengan desa mana pun/)).toBeTruthy();
+    none.unmount();
+    renderPage(<InfoScreen load={{ kind: "start", query: "" }} located="unavailable" />, { path: "/info" });
+    expect(await screen.findByRole("button", { name: "Pakai lokasi saat ini" })).toBeTruthy();
+    expect(
+      screen
+        .getAllByRole("alert")
+        .map((one) => one.textContent)
+        .join(" "),
+    ).toMatch(/\S/);
+  });
+
+  test("a regency's own page offers no reading", async () => {
+    draw({ kind: "outlook", query: "", outlook: OUTLOOK });
+    expect(await screen.findByRole("link", { name: "Ganti wilayah" })).toBeTruthy();
+    expect(screen.queryByRole("button", { name: "Pakai lokasi saat ini" })).toBeNull();
   });
 });

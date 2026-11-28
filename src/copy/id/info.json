@@ -64,5 +64,6 @@
   "info.analysis.alertDays": "Hari Waspada ke atas",
   "info.analysis.peakRain": "Hujan terbesar",
   "info.analysis.days": "{count} dari 3 hari",
-  "info.analysis.threatCount": "Ancaman"
+  "info.analysis.threatCount": "Ancaman",
+  "info.locate.none": "Lokasi Anda belum cocok dengan desa mana pun di data wilayah. Cari nama kabupaten, kota, kecamatan, atau desa di bawah."
 }
