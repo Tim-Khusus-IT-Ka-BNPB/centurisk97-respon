@@ -64,7 +64,7 @@ const timeText = (id: string, typed: string) => {
 };
 
 // The reporter's side of a card answer as one line of the conversation: the labels they picked
-// and what they typed, masked.
+// and what they typed, masked. A card with one box needs no label: its question is the line above.
 export function answerLine(
   card: Card,
   optionIds: readonly string[],
@@ -81,7 +81,7 @@ export function answerLine(
   for (const [id, raw] of Object.entries(values)) {
     const typed = raw.trim();
     if (typed === "") continue;
-    const label = textOf(fields.find((field) => field.id === id)?.labelKey ?? "");
+    const label = fields.length > 1 ? textOf(fields.find((field) => field.id === id)?.labelKey ?? "") : null;
     const shown = card.kind === "timeCard" ? timeText(id, typed) : typed;
     parts.push(label ? `${label}: ${shown}` : shown);
   }
