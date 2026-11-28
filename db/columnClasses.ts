@@ -369,7 +369,17 @@ export const COLUMN_CLASSES: Readonly<Record<string, TableClasses>> = {
   },
   staff_action: {
     retention: "with the report; append-only",
-    columns: { id: I, ticket_number: I, staff_id: I, staff_label: I, staff_kind: I, action: I, at: I },
+    columns: {
+      id: I,
+      ticket_number: I,
+      staff_id: I,
+      staff_label: I,
+      staff_kind: I,
+      action: I,
+      at: I,
+      staff_scope_level: I,
+      staff_scope_code: I,
+    },
   },
   ticket_day_counter: { retention: "kept, one row a day", columns: { wib_date: I, last_n: I } },
   rate_counter: {

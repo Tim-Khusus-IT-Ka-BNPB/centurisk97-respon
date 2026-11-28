@@ -30,7 +30,9 @@ export async function takeReport(
   return done !== null;
 }
 
-// A month's reports as the response figures read them: sent, first seen, and taken in hand.
+// A month's reports as the response figures read them: sent, first opened by the BPBD of the
+// report's own regency (an open by BNPB or by the province is not that BPBD's answer), and taken
+// in hand.
 export async function responseRows(
   db: Database,
   from: Date,
@@ -45,7 +47,9 @@ export async function responseRows(
   }>(
     db,
     sql`select r.regency_code, (v.fields #>> '{place,value,regencyName}') as regency_name, r.sent_at,
-        (select min(h.at) from ticket_history h where h.ticket_number = r.ticket_number and h.to_status = 'seen') as seen_at,
+        (select min(a.at) from staff_action a where a.ticket_number = r.ticket_number and a.action = 'view'
+          and a.staff_kind = 'regionalOfficer' and a.staff_scope_level = 'regency'
+          and a.staff_scope_code = r.regency_code) as seen_at,
         (select k.at from report_taker k where k.ticket_number = r.ticket_number) as taken_at
       from report r join report_version v on v.report_id = r.id and v.version = 1
       where r.sent_at >= ${from} and r.sent_at < ${to}`,

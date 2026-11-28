@@ -26,6 +26,9 @@ type LoggedAction =
   | "document"
   | "trackingLink";
 
+// The act, with the region the account worked in then, so a later change of its scope moves nothing.
 export const actionRow = (staff: StaffPrincipal, ticketNumber: string, action: LoggedAction, at: Date): Query =>
-  sql`insert into staff_action (ticket_number, staff_id, staff_label, staff_kind, action, at)
-    values (${ticketNumber}, ${staff.staffId}, ${staff.label}, ${staff.role}, ${action}, ${at})`;
+  sql`insert into staff_action (ticket_number, staff_id, staff_label, staff_kind, action, at, staff_scope_level,
+      staff_scope_code)
+    values (${ticketNumber}, ${staff.staffId}, ${staff.label}, ${staff.role}, ${action}, ${at}, ${staff.scope.level},
+      ${staff.scope.level === "national" ? null : staff.scope.code})`;

@@ -136,4 +136,22 @@ describe("how fast each agency answers", () => {
       deskSummarySchema.parse((await phone.call("GET", "/desk/summary")).json).mayReadResponse;
     expect([await may(desk()), await may(andi())]).toEqual([true, false]);
   });
+
+  test("counts a report opened only when the BPBD of its own regency opens it, even after BNPB did", async () => {
+    clock.set(Date.parse("2026-12-02T03:00:00.000Z"));
+    const own: string[] = [];
+    const elsewhere: string[] = [];
+    for (let n = 0; n < 5; n += 1) own.push(await sentReport());
+    for (let n = 0; n < 5; n += 1) elsewhere.push(await sentReport(provinceVillage));
+    clock.advance(10 * 60_000);
+    for (const ticket of [...own, ...elsewhere]) await desk().call("POST", `/desk/reports/${ticket}/view`);
+    for (const ticket of elsewhere) await province().call("POST", `/desk/reports/${ticket}/view`);
+    clock.advance(20 * 60_000);
+    for (const ticket of own.slice(0, 3)) await andi().call("POST", `/desk/reports/${ticket}/view`);
+    const response = deskResponseSchema.parse((await desk().call("GET", "/desk/response?month=2026-12")).json);
+    const figures = (code: string) => response.agencies.find((one) => one.regencyCode === code)?.figures;
+    expect(figures("11.08")).toMatchObject({ seen: { count: 3 }, notSeen: 2, dropped: 0 });
+    expect(figures("11.08")?.seen?.median).toBeGreaterThanOrEqual(30);
+    expect(figures(provinceVillage.slice(0, 5))).toMatchObject({ seen: null, notSeen: 5 });
+  });
 });

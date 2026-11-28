@@ -576,10 +576,15 @@ export const staffAction = pgTable(
     staff_kind: text().notNull(),
     action: text().notNull(),
     at: at("at").notNull(),
+    // Where the account worked when it acted; null on rows from before it was kept.
+    staff_scope_level: text(),
+    staff_scope_code: text(),
   },
   (t) => [
     index("staff_action_ticket").on(t.ticket_number, t.at),
     check("staff_action_staff_kind", oneOf("staff_kind", STAFF_ROLES)),
+    check("staff_action_staff_scope_level", oneOf("staff_scope_level", SCOPE_LEVELS)),
+    check("staff_action_staff_scope", sql`(${t.staff_scope_level} = 'national') = (${t.staff_scope_code} is null)`),
     check(
       "staff_action_action",
       oneOf("action", [
