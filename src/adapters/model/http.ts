@@ -32,7 +32,8 @@ export function httpModel(settings: HttpModelSettings, fetchFn: typeof fetch = f
             model: settings.name,
             max_tokens: MAX_TOKENS,
             thinking: NO_THINKING,
-            system: request.system,
+            // The instructions never change between turns: cached for an hour, a turn reads only its message.
+            system: [{ type: "text", text: request.system, cache_control: { type: "ephemeral", ttl: "1h" } }],
             messages: [{ role: "user", content: request.user }],
             output_config: { format: { type: "json_schema", schema: request.schema } },
           }),

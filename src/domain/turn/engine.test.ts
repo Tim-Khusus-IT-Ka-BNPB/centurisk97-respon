@@ -47,7 +47,15 @@ const draft = (
   ...extra,
 });
 const said = (text: string): MaskedText => maskText(text, { name: null, number: null });
-const nothing: Extraction = { fields: {}, hazardGuesses: [], lifeAtRisk: false, reply: null, topic: "disaster" };
+const nothing: Extraction = {
+  fields: {},
+  hazardGuesses: [],
+  lifeAtRisk: false,
+  reply: null,
+  topic: "disaster",
+  language: null,
+  indonesian: null,
+};
 const story = (text: string, extraction: Partial<Extraction> = {}): TurnInput => ({
   kind: "story",
   message: said(text),
@@ -145,7 +153,9 @@ describe("a turn", () => {
     expect(asked.notices).toEqual([]);
     const atConfirm = next(
       asked.draft,
-      story("dua meninggal", { fields: { dead: { kind: "count", count: 2, quote: "dua meninggal" } } }),
+      story("dua meninggal", {
+        fields: { dead: { kind: "count", count: 2, quote: "dua meninggal", translation: null } },
+      }),
     );
     expect(atConfirm).toMatchObject({ question: { kind: "cancelConfirm" }, notices: [] });
     expect(atConfirm.draft.content.states).toEqual(placed);
@@ -212,7 +222,9 @@ describe("a turn", () => {
   });
 
   test("the model's topic label does not refuse a message whose checked values survive", () => {
-    const quoted = { housesHeavy: { kind: "count" as const, count: 2, quote: "dua rumah rusak berat" } };
+    const quoted = {
+      housesHeavy: { kind: "count" as const, count: 2, quote: "dua rumah rusak berat", translation: null },
+    };
     const kept = next(draft(placed), story("dua rumah rusak berat", { fields: quoted, topic: "offTopic" }));
     expect(kept.notices).toEqual([]);
     expect(kept.draft).toMatchObject({ offTopicCount: 0, templatesOnly: false });
@@ -243,7 +255,7 @@ describe("a turn", () => {
     const told = next(
       draft(placed),
       story("dua rumah rusak berat", {
-        fields: { housesHeavy: { kind: "count", count: 2, quote: "dua rumah rusak berat" } },
+        fields: { housesHeavy: { kind: "count", count: 2, quote: "dua rumah rusak berat", translation: null } },
         lifeAtRisk: true,
       }),
     );
@@ -328,7 +340,7 @@ describe("a story applied", () => {
   ) => applyStory(at, { ...EMPTY_CONTENT, states, ...content }, {}, said(text), { ...nothing, fields }, context);
 
   test("never replaces a settled answer, except on the summary or in a reopened group", () => {
-    const fields = { dead: { kind: "count", count: 3, quote: "tiga meninggal" } } as const;
+    const fields = { dead: { kind: "count", count: 3, quote: "tiga meninggal", translation: null } } as const;
     const settled = { dead: { state: "none", origin: "boxEntry" } } as FieldStates;
     expect(apply(settled, "tiga meninggal", fields)).toMatchObject({
       kind: "applied",
@@ -345,14 +357,17 @@ describe("a story applied", () => {
     const mixed = apply(
       {},
       "x",
-      { dead: { kind: "count", count: 3, quote: "x" }, housesHeavy: { kind: "count", count: 2, quote: "x" } },
+      {
+        dead: { kind: "count", count: 3, quote: "x", translation: null },
+        housesHeavy: { kind: "count", count: 2, quote: "x", translation: null },
+      },
       { overlay: { kind: "edit", groupId: "victims", done: [] } },
     );
     expect(mixed).toMatchObject({ content: { overlay: { done: ["dead", "missing"] } } });
     const elsewhere = apply(
       {},
       "dua rumah",
-      { housesHeavy: { kind: "count", count: 2, quote: "dua rumah" } },
+      { housesHeavy: { kind: "count", count: 2, quote: "dua rumah", translation: null } },
       { overlay: { kind: "edit", groupId: "victims", done: [] } },
     );
     expect(elsewhere).toMatchObject({ content: { overlay: { done: [] } } });
@@ -363,9 +378,9 @@ describe("a story applied", () => {
       { hazardType: tapped("drought") },
       "tidak ada korban jiwa",
       {
-        dead: { kind: "count", count: 0, quote: "tidak ada korban jiwa" },
-        housesHeavy: { kind: "count", count: 2, quote: "x" },
-        shelters: { kind: "text", text: "balai desa", quote: "ke balai desa" },
+        dead: { kind: "count", count: 0, quote: "tidak ada korban jiwa", translation: null },
+        housesHeavy: { kind: "count", count: 2, quote: "x", translation: null },
+        shelters: { kind: "text", text: "balai desa", quote: "ke balai desa", translation: null },
       },
       { guesses: ["drought"] },
     );
@@ -389,6 +404,31 @@ describe("a story applied", () => {
       context,
     );
     expect(guessed.kind === "applied" && guessed.content.guesses).toEqual(["landslide", "flood"]);
+  });
+
+  test("choices told in words are stored as tapped ones would be, with their words and Indonesian", () => {
+    const result = apply({ hazardType: tapped("flood") }, "banyune sedhadha", {
+      waterDepth: { kind: "options", optionIds: ["chest"], quote: "sedhadha", translation: "setinggi dada" },
+      urgentNeeds: { kind: "options", optionIds: ["readyMeals", "drinkingWater"], quote: "butuh", translation: null },
+      disruptedServices: { kind: "options", optionIds: ["allRunning"], quote: "normal", translation: null },
+      trapped: { kind: "options", optionIds: ["noneKnown"], quote: "ora ana", translation: "tidak ada" },
+      injured: { kind: "count", count: 2, quote: "wong loro", translation: "dua orang" },
+      housesFlooded: { kind: "count", count: 0, quote: "ora ana omah", translation: "tidak ada rumah" },
+    });
+    expect(result.kind === "applied" && result.content.states).toEqual({
+      hazardType: tapped("flood"),
+      waterDepth: { state: "value", value: "chest", origin: "quote", quote: "sedhadha", translation: "setinggi dada" },
+      urgentNeeds: {
+        state: "value",
+        value: { optionIds: ["readyMeals", "drinkingWater"], otherText: null },
+        origin: "quote",
+        quote: "butuh",
+      },
+      disruptedServices: { state: "none", origin: "quote", quote: "normal" },
+      trapped: { state: "none", origin: "quote", quote: "ora ana", translation: "tidak ada" },
+      injured: { state: "value", value: 2, origin: "quote", quote: "wong loro", translation: "dua orang" },
+      housesFlooded: { state: "none", origin: "quote", quote: "ora ana omah", translation: "tidak ada rumah" },
+    });
   });
 
   test("the card's own answer in words: belum tahu, tidak ada, a text, a time", () => {
@@ -525,7 +565,9 @@ describe("news for a sent report", () => {
         ...followUp,
         content: { ...followUp.content, states: { ...base, dead: { state: "none", origin: "boxEntry" } } },
       },
-      story("dua orang meninggal", { fields: { dead: { kind: "count", count: 2, quote: "dua orang meninggal" } } }),
+      story("dua orang meninggal", {
+        fields: { dead: { kind: "count", count: 2, quote: "dua orang meninggal", translation: null } },
+      }),
     );
     expect(told.question).toEqual({ kind: "summary" });
     expect(told.draft.content.states.dead).toMatchObject({ state: "value", value: 2, quote: "dua orang meninggal" });

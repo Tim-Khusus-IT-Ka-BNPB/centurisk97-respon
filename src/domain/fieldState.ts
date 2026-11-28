@@ -42,9 +42,11 @@ type FieldValue = number | string | OptionsValue | EventTimeValue | PlaceValue |
 
 // Where a value came from. A quote is the reporter's own masked words and is required for that
 // origin; an officer's correction carries the note of the check it came from.
+// A value read from words keeps them. Words not in Indonesian, read or typed, keep how they read in
+// Indonesian too, for the desk.
 type Sourced =
-  | { readonly origin: "boxEntry" | "tappedOption" | "system" }
-  | { readonly origin: "quote" | "officer"; readonly quote: string };
+  | { readonly origin: "boxEntry" | "tappedOption" | "system"; readonly translation?: string }
+  | { readonly origin: "quote" | "officer"; readonly quote: string; readonly translation?: string };
 
 // An absent entry is "notAsked". "none" is the only state that stands for zero.
 export type FieldState =
@@ -76,11 +78,20 @@ export function readCountBox(
 }
 
 export function countState(count: number, origin: "boxEntry"): FieldState;
-export function countState(count: number, origin: "quote", quote: string): FieldState;
-export function countState(count: number, origin: "boxEntry" | "quote", quote?: string): FieldState {
-  const source: Sourced = origin === "quote" ? { origin, quote: quote as string } : { origin };
+export function countState(count: number, origin: "quote", quote: string, translation?: string | null): FieldState;
+export function countState(
+  count: number,
+  origin: "boxEntry" | "quote",
+  quote?: string,
+  translation?: string | null,
+): FieldState {
+  const source: Sourced = origin === "quote" ? quoted(quote as string, translation ?? null) : { origin };
   return count === 0 ? { state: "none", ...source } : { state: "value", value: count, ...source };
 }
+
+// The words a value was read from, with their Indonesian when they are in another language.
+export const quoted = (quote: string, translation: string | null): Sourced =>
+  translation === null ? { origin: "quote", quote } : { origin: "quote", quote, translation };
 
 // The count a field stands for: its number, 0 for an explicit none, null when not known.
 export function countOf(state: FieldState | undefined): number | null {

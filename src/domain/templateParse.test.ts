@@ -14,7 +14,9 @@ const counts = (text: string) =>
 
 describe("reading a message with no model", () => {
   test("a count before or after its words, in digits or in words, each with its quote", () => {
-    expect(read("rusak berat 5").fields).toEqual({ housesHeavy: { kind: "count", count: 5, quote: "rusak berat 5" } });
+    expect(read("rusak berat 5").fields).toEqual({
+      housesHeavy: { kind: "count", count: 5, quote: "rusak berat 5", translation: null },
+    });
     expect(counts("tiga rumah rusak berat dan 2 orang meninggal")).toEqual({ housesHeavy: 3, dead: 2 });
     expect(counts("meninggal sebanyak 4, hilang jadi 1.200")).toEqual({ dead: 4, missing: 1200 });
     expect(counts("dua belas keluarga mengungsi, empat puluh orang mengungsi")).toEqual({
@@ -46,7 +48,7 @@ describe("reading a message with no model", () => {
 
   test("tidak ada before the words is a none; words with no number are nothing", () => {
     expect(read("tidak ada korban jiwa").fields).toEqual({
-      dead: { kind: "count", count: 0, quote: "tidak ada korban jiwa" },
+      dead: { kind: "count", count: 0, quote: "tidak ada korban jiwa", translation: null },
     });
     expect(counts("atap rumah rusak berat")).toEqual({});
     expect(counts("beberapa rumah rusak berat")).toEqual({});

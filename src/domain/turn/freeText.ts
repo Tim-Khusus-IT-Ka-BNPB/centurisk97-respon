@@ -1,8 +1,8 @@
 import { parseEventTimeText } from "../eventTime";
-import type { Extraction } from "../extraction";
-import { countState, type FieldState, isSettled } from "../fieldState";
+import type { Extraction, QuotedValue } from "../extraction";
+import { countState, type FieldState, isSettled, quoted } from "../fieldState";
 import { keepableFields } from "../fields/applicable";
-import type { FieldId } from "../fields/catalogue";
+import { type FieldId, fieldById } from "../fields/catalogue";
 import type { FieldError } from "../identityForm";
 import { LENGTHS } from "../limits";
 import type { MaskedText } from "../masking";
@@ -76,6 +76,23 @@ function directAnswer(
   return Object.fromEntries(fields.map((fieldId) => [fieldId, state]));
 }
 
+// A value read from the reporter's words, stored as a tapped answer would be: one option, several,
+// or a none, with the words it came from.
+function storyState(fieldId: FieldId, value: QuotedValue): FieldState {
+  if (value.kind === "count") return countState(value.count, "quote", value.quote, value.translation);
+  const source = quoted(value.quote, value.translation);
+  if (value.kind === "text") return { state: "value", value: value.text, ...source };
+  const field = fieldById(fieldId) as {
+    readonly kind: string;
+    readonly options: readonly { id: string; meaning?: string }[];
+  };
+  const [first] = value.optionIds;
+  if (field.options.some((option) => option.id === first && option.meaning === "none"))
+    return { state: "none", ...source };
+  if (field.kind === "choice") return { state: "value", value: first as string, ...source };
+  return { state: "value", value: { optionIds: value.optionIds, otherText: null }, ...source };
+}
+
 // Applies a story: the card's own answer, then each value the extraction kept. A value never
 // replaces a settled answer, except on the summary or in a reopened group, where words correct it.
 export function applyStory(
@@ -93,10 +110,7 @@ export function applyStory(
   for (const [id, value] of Object.entries(extraction.fields)) {
     const fieldId = id as FieldId;
     if (!correcting && isSettled(content.states[fieldId])) continue;
-    offered[fieldId] =
-      value.kind === "count"
-        ? countState(value.count, "quote", value.quote)
-        : { state: "value", value: value.text, origin: "quote", quote: value.quote };
+    offered[fieldId] = storyState(fieldId, value);
   }
   Object.assign(offered, direct);
   const applicable = new Set(keepableFields({ ...content.states, ...offered }).map((field) => field.id));

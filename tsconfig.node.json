@@ -34,7 +34,7 @@
     "playwright.config.ts"
   ],
   // Scripts that run the whole app are checked with it, in tsconfig.app.json.
-  "exclude": ["scripts/sweep-local.ts", "scripts/dev.ts"],
+  "exclude": ["scripts/sweep-local.ts", "scripts/dev.ts", "tools/model-eval/**/*"],
   "compilerOptions": {
     "composite": true,
     "tsBuildInfoFile": "./node_modules/.cache/tsbuildinfo/node.json",
