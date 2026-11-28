@@ -4,10 +4,21 @@ import { FEED_ALONE, FEED_ENTRY, OFFICIAL } from "../../testing/feed";
 import { renderPage } from "../../testing/render";
 import { OfficialEvents } from "./OfficialEvents";
 
+const pageHref = (page: number) => `/feed?officialPage=${page}#official-title`;
+
 const draw = (props: Partial<Parameters<typeof OfficialEvents>[0]> = {}) =>
-  renderPage(<OfficialEvents official={OFFICIAL} entries={[FEED_ENTRY, FEED_ALONE]} hazard={null} {...props} />, {
-    path: "/feed",
-  });
+  renderPage(
+    <OfficialEvents
+      official={OFFICIAL}
+      entries={[FEED_ENTRY, FEED_ALONE]}
+      hazard={null}
+      pageHref={pageHref}
+      {...props}
+    />,
+    { path: "/feed" },
+  );
+
+type Event = (typeof OFFICIAL.events)[number];
 
 test("each event of BNPB's report with its status, figures, our own reports of it and its news", async () => {
   draw();
@@ -61,7 +72,7 @@ test("a hazard picked shows only its events; none of it, or the report unread, s
 
 test("headlines all shown say no more", async () => {
   const [flood] = OFFICIAL.events;
-  draw({ official: { ...OFFICIAL, events: [{ ...(flood as (typeof OFFICIAL.events)[number]), moreNews: 0 }] } });
+  draw({ official: { ...OFFICIAL, events: [{ ...(flood as Event), moreNews: 0 }] } });
   expect(await screen.findByText("Berita (1)")).toBeTruthy();
   expect(screen.queryByText(/berita lain/)).toBeNull();
 });
@@ -69,4 +80,36 @@ test("headlines all shown say no more", async () => {
 test("a report made more than a day ago says no newer one has come", async () => {
   draw({ official: { ...OFFICIAL, stale: true } });
   expect(await screen.findByText("Belum ada laporan harian BNPB yang lebih baru sejak itu.")).toBeTruthy();
+});
+
+test("a long report shows twelve events a page, linking to its neighbours; a page past the end shows the last", async () => {
+  const [flood] = OFFICIAL.events;
+  const many = Array.from({ length: 30 }, (_, n) => ({
+    ...(flood as Event),
+    id: `banjir|${n}`,
+    regencyName: `Kabupaten ${String(n + 1).padStart(2, "0")}`,
+  }));
+  const first = draw({ official: { ...OFFICIAL, events: many } });
+  expect(await screen.findAllByRole("heading", { level: 3 })).toHaveLength(12);
+  const pages = screen.getByRole("navigation", { name: "Halaman 1 dari 3, 30 kejadian" });
+  expect(within(pages).queryByRole("link", { name: "Sebelumnya" })).toBeNull();
+  expect(within(pages).getByRole("link", { name: "Berikutnya" }).getAttribute("href")).toBe(
+    "/feed?officialPage=2#official-title",
+  );
+  first.unmount();
+  draw({ official: { ...OFFICIAL, events: many }, page: 9 });
+  const last = await screen.findAllByRole("heading", { level: 3 });
+  expect(last.map((one) => one.textContent)).toEqual([
+    "Banjir di Kabupaten 25",
+    "Banjir di Kabupaten 26",
+    "Banjir di Kabupaten 27",
+    "Banjir di Kabupaten 28",
+    "Banjir di Kabupaten 29",
+    "Banjir di Kabupaten 30",
+  ]);
+  const end = screen.getByRole("navigation", { name: "Halaman 3 dari 3, 30 kejadian" });
+  expect(within(end).getByRole("link", { name: "Sebelumnya" }).getAttribute("href")).toBe(
+    "/feed?officialPage=2#official-title",
+  );
+  expect(within(end).queryByRole("link", { name: "Berikutnya" })).toBeNull();
 });

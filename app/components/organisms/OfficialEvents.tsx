@@ -8,8 +8,12 @@ import { hazardIcon } from "../../lib/hazardIcons";
 import { useText } from "../../lib/text";
 import { Icon } from "../atoms/Icon";
 import { Notice } from "../molecules/Notice";
+import { Pagination } from "../molecules/Pagination";
 
 type Event = Official["events"][number];
+
+// Six rows of two on a wide screen; a day's report can hold more than a hundred events.
+const OFFICIAL_PAGE_SIZE = 12;
 
 const STATUS_STYLE: Record<Event["status"], string> = {
   berjalan: "bg-signal-tint text-ink",
@@ -107,20 +111,27 @@ function EventCard({ event, entries }: { readonly event: Event; readonly entries
 }
 
 // BNPB's daily report on the Alun-alun (upstream kabar-alun, row 26): each event with the report's
-// status and figures, our own handled reports of it, and the news found for it. With a hazard picked,
-// only its events. When upstream made the file shows under the heading, and a file more than a day
-// old says no newer report has come.
+// status and figures, our own handled reports of it, and the news found for it, a page at a time,
+// ongoing first. With a hazard picked, only its events. When upstream made the file shows under the
+// heading, and a file more than a day old says no newer report has come.
 export function OfficialEvents({
   official,
   entries,
   hazard,
+  page = 1,
+  pageHref,
 }: {
   readonly official: Official | null;
   readonly entries: readonly FeedEntry[];
   readonly hazard: string | null;
+  readonly page?: number;
+  readonly pageHref: (page: number) => string;
 }) {
   const t = useText();
   const events = (official?.events ?? []).filter((event) => hazard === null || event.hazardType === hazard);
+  const pages = Math.max(1, Math.ceil(events.length / OFFICIAL_PAGE_SIZE));
+  const shown = Math.min(Math.max(1, page), pages);
+  const onPage = events.slice((shown - 1) * OFFICIAL_PAGE_SIZE, shown * OFFICIAL_PAGE_SIZE);
   const built = official?.builtAt == null ? null : ({ utc: official.builtAt, zone: "WIB" } as const);
   return (
     <section aria-labelledby="official-title" className="flex flex-col gap-3">
@@ -137,13 +148,23 @@ export function OfficialEvents({
       </div>
       {official?.stale ? <Notice kind="info">{t("official.stale")}</Notice> : null}
       {official?.day != null && events.length === 0 ? <p className="card-surface p-4">{t("official.none")}</p> : null}
-      {events.length > 0 ? (
+      {onPage.length > 0 ? (
         <ul className="grid gap-3 md:grid-cols-2">
-          {events.map((event) => (
+          {onPage.map((event) => (
             <EventCard key={event.id} event={event} entries={entries} />
           ))}
         </ul>
       ) : null}
+      <Pagination
+        page={shown}
+        pages={pages}
+        hrefFor={pageHref}
+        labels={{
+          summary: t("official.page", { page: shown, pages, total: events.length }),
+          previous: t("official.previous"),
+          next: t("official.next"),
+        }}
+      />
     </section>
   );
 }

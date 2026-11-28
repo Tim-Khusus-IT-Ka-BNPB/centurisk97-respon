@@ -2074,6 +2074,8 @@
   "official.news.none": "Ghi' tadâ' berita se cocok.",
   "official.news.source": "{outlet}, {date}",
   "official.news.more": "{count} berita laèn",
+  "official.page": "Kaca {page} dâri {pages}, {total} kajhâdiyân",
+  "official.previous": "Sabellunna",
   "option.roadPassable.allVehicles.label": "Bisa elèwâtè sadhâjâ kendaraan",
   "option.roadPassable.allVehicles.note": "Mobil bân truk ghi' bisa lèwat, mungkin alon",
   "option.roadPassable.motorbikesAndWalkers.label": "Namong motor bân oreng sè ajâlân",

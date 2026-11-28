@@ -2075,6 +2075,8 @@
   "official.news.none": "Kada ada barita nang cocok.",
   "official.news.source": "{outlet}, {date}",
   "official.news.more": "{count} barita lain",
+  "official.page": "Halaman {page} dari {pages}, {total} kejadian",
+  "official.previous": "Sabalumnya",
   "option.roadPassable.allVehicles.label": "Kawa dilalui sabarataan kendaraan",
   "option.roadPassable.allVehicles.note": "Mobil wan truk masih kawa lewat, mungkin lambat",
   "option.roadPassable.motorbikesAndWalkers.label": "Cuma motor wan nang bajalan kaki",

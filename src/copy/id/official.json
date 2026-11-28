@@ -21,5 +21,8 @@
   "official.residents.some": "{count} laporan warga ditangani di daerah ini",
   "official.news.none": "Belum ada berita yang cocok.",
   "official.news.source": "{outlet}, {date}",
-  "official.news.more": "{count} berita lain"
+  "official.news.more": "{count} berita lain",
+  "official.page": "Halaman {page} dari {pages}, {total} kejadian",
+  "official.previous": "Sebelumnya",
+  "official.next": "Berikutnya"
 }

@@ -13,6 +13,7 @@ import { buttonStyles } from "../../atoms/Button";
 import { Icon } from "../../atoms/Icon";
 import type { IconName } from "../../atoms/icons";
 import { Notice } from "../../molecules/Notice";
+import { Pagination } from "../../molecules/Pagination";
 import { FilterBar, ViewTabs } from "./DeskFilters";
 import { DeskMapView } from "./DeskMap";
 import { DeskShell } from "./DeskShell";
@@ -277,26 +278,16 @@ function ListView({ queue, filters }: { readonly queue: DeskQueue; readonly filt
     <>
       <QueueTable items={queue.items} />
       <QueueCards items={queue.items} />
-      {queue.pageCount > 1 ? (
-        <nav
-          aria-label={t("desk.page", { page: queue.page, pages: queue.pageCount })}
-          className="flex flex-wrap items-center justify-between gap-3"
-        >
-          <span className="text-muted">{t("desk.page", { page: queue.page, pages: queue.pageCount })}</span>
-          <span className="flex flex-wrap gap-3">
-            {queue.page > 1 ? (
-              <Link to={deskLink(filters, { page: queue.page - 1 })} className={buttonStyles({ variant: "secondary" })}>
-                {t("desk.previous")}
-              </Link>
-            ) : null}
-            {queue.page < queue.pageCount ? (
-              <Link to={deskLink(filters, { page: queue.page + 1 })} className={buttonStyles({ variant: "secondary" })}>
-                {t("desk.next")}
-              </Link>
-            ) : null}
-          </span>
-        </nav>
-      ) : null}
+      <Pagination
+        page={queue.page}
+        pages={queue.pageCount}
+        hrefFor={(page) => deskLink(filters, { page })}
+        labels={{
+          summary: t("desk.page", { page: queue.page, pages: queue.pageCount }),
+          previous: t("desk.previous"),
+          next: t("desk.next"),
+        }}
+      />
     </>
   );
 }

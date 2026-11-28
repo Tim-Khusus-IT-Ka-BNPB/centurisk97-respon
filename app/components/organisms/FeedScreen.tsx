@@ -24,8 +24,12 @@ export const chip =
   "inline-flex min-h-target-min shrink-0 items-center gap-2 rounded-control border border-line bg-surface px-3 text-ink no-underline transition-colors duration-100 motion-reduce:transition-none hover:border-control aria-[current=true]:border-primary aria-[current=true]:bg-selected aria-[current=true]:font-semibold aria-[current=true]:text-primary";
 
 // The feed's query: a hazard, a period other than all, or neither. Each filter keeps the other.
-export function feedQuery(hazard: string | null, period: FeedPeriod): string {
-  const parts = [...(hazard === null ? [] : [`hazard=${hazard}`]), ...(period === "all" ? [] : [`period=${period}`])];
+export function feedQuery(hazard: string | null, period: FeedPeriod, officialPage = 1): string {
+  const parts = [
+    ...(hazard === null ? [] : [`hazard=${hazard}`]),
+    ...(period === "all" ? [] : [`period=${period}`]),
+    ...(officialPage > 1 ? [`officialPage=${officialPage}`] : []),
+  ];
   return parts.length === 0 ? "" : `?${parts.join("&")}`;
 }
 
@@ -303,12 +307,15 @@ export function FeedScreen({
   hazard,
   period = "all",
   official = null,
+  officialPage = 1,
 }: {
   readonly load: FeedLoad;
   readonly hazard: string | null;
   readonly period?: FeedPeriod;
   // BNPB's daily report with its news (row 26); null when it could not be read.
   readonly official?: Official | null;
+  // Which page of the report's events.
+  readonly officialPage?: number;
 }) {
   const t = useText();
   const all = load.kind === "feed" ? load.feed.entries : [];
@@ -360,7 +367,13 @@ export function FeedScreen({
           </section>
         </div>
       )}
-      <OfficialEvents official={official} entries={all} hazard={hazard} />
+      <OfficialEvents
+        official={official}
+        entries={all}
+        hazard={hazard}
+        page={officialPage}
+        pageHref={(page) => `/feed${feedQuery(hazard, period, page)}#official-title`}
+      />
     </div>
   );
 }
