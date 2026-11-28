@@ -2,7 +2,8 @@ import { fireEvent, screen, within } from "@testing-library/react";
 import { describe, expect, test, vi } from "vitest";
 import { envelope } from "../../../../src/api/envelope";
 import { fieldErrors } from "../../../../src/api/routes/shared";
-import { FILTERS, ITEM, list, queue, REPORT, renderDesk, SUMMARY } from "../../../testing/desk";
+import { FILTERS, ITEM, list, queue, REPORT, renderDesk, SENT, SUMMARY } from "../../../testing/desk";
+import { never } from "../../../testing/render";
 
 vi.mock("../DeskMapCanvas", () => ({ SMALL: {}, DeskMapCanvas: () => null }));
 
@@ -107,6 +108,28 @@ describe("which BPBD has a report, and how sure the desk can be of it", () => {
     await renderDesk(<DeskReportView report={{ ...held, status: "closed" }} summary={SUMMARY} areas={AREAS} />, PATH);
     expect(panel().queryByText("Serahkan ke BPBD lain")).toBeNull();
     expect(panel().queryByRole("button", { name: /Teruskan/ })).toBeNull();
+  });
+
+  test("a give on its way says so, and the history names the BPBD it went to", async () => {
+    const given = {
+      ...held,
+      history: [
+        ...REPORT.history,
+        {
+          status: "new" as const,
+          at: SENT,
+          actor: "Pusdalops BNPB, Petugas Uji",
+          note: null,
+          forwardedTo: null,
+          event: "assigned" as const,
+          detail: { area: "Jawa Barat" },
+        },
+      ],
+    };
+    await renderDesk(<DeskReportView report={given} summary={SUMMARY} areas={AREAS} />, { ...PATH, action: never });
+    expect(screen.getByText("Diserahkan ke BPBD Jawa Barat")).toBeTruthy();
+    fireEvent.click(panel().getByRole("button", { name: "Teruskan ke BPBD Aceh Utara" }));
+    expect(await panel().findAllByRole("button", { name: "Menyimpan..." })).toHaveLength(2);
   });
 
   test("a province's BPBD is named as one, on the page and in what was saved", async () => {
