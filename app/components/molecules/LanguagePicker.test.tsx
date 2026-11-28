@@ -24,7 +24,7 @@ vi.mock("../../../src/copy/languages", async (actual) => ({
 }));
 
 describe("the language chooser", () => {
-  test("offers each language by its island, in as many columns as fit it, and keeps the one picked", async () => {
+  test("offers each language by its island, in as many columns as fit it, each tile keeping its own", async () => {
     renderPage(<LanguageChooser back="/report?village=1108012005" onClose={<button type="button">x</button>} />, {
       path: "/report",
     });
@@ -36,20 +36,16 @@ describe("the language chooser", () => {
       expect.stringContaining("sm:grid-cols-3"),
       expect.stringContaining("sm:grid-cols-4"),
     ]);
-    const radios = screen.getAllByRole("radio") as HTMLInputElement[];
-    expect(
-      radios.slice(0, 3).map((radio) => [radio.value, radio.checked, radio.closest("label")?.textContent]),
-    ).toEqual([
-      ["id", true, "Indonesia"],
-      ["en", false, "English"],
-      ["jv", false, "Jawa"],
+    const tiles = within(groups[0] as HTMLElement).getAllByRole("button") as HTMLButtonElement[];
+    expect(tiles.map((tile) => [tile.name, tile.value, tile.type, tile.lang, tile.textContent])).toEqual([
+      ["language", "id", "submit", "id", "Indonesia"],
+      ["language", "en", "submit", "en", "English"],
     ]);
-    const form = radios[0]?.closest("form") as HTMLFormElement;
+    expect(tiles.map((tile) => tile.getAttribute("aria-current"))).toEqual(["true", null]);
+    const form = tiles[0]?.closest("form") as HTMLFormElement;
     expect([form.method, form.getAttribute("action")]).toEqual(["post", "/language"]);
     expect((form.elements.namedItem("back") as HTMLInputElement).value).toBe("/report?village=1108012005");
-    expect(await screen.findByRole("button", { name: "Lanjut dalam Bahasa Indonesia" })).toBeTruthy();
-    fireEvent.click(screen.getByLabelText("English"));
-    expect(screen.getByRole("button", { name: "Lanjut dalam English" })).toBeTruthy();
+    expect(screen.queryByRole("button", { name: /Lanjut|Pakai/ })).toBeNull();
   });
 });
 
@@ -68,6 +64,14 @@ describe("the language picker", () => {
     expect(
       within(dialog).getByRole("button", { name: "Tutup", hidden: true }).closest("form")?.getAttribute("method"),
     ).toBe("dialog");
+    // The page is drawn again behind the dialog in the language picked, so a tap closes it too.
+    const close = vi.fn();
+    dialog.close = close;
+    within(dialog)
+      .getByRole("button", { name: "English", hidden: true })
+      .closest("form")
+      ?.dispatchEvent(new Event("submit", { bubbles: true, cancelable: true }));
+    expect(close).toHaveBeenCalledOnce();
   });
 
   test("in a phone's menu it names the language and opens the chooser as its page", async () => {

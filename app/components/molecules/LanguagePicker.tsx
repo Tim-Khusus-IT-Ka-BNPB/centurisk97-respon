@@ -1,9 +1,8 @@
-import { type MouseEvent, type ReactNode, useEffect, useRef, useState } from "react";
+import { type MouseEvent, type ReactNode, useRef } from "react";
 import { Form, useLocation } from "react-router";
 import { LANGUAGE_GROUPS, OFFERED } from "../../../src/copy/languages";
 import { cn } from "../../lib/cn";
 import { useText } from "../../lib/text";
-import { Button } from "../atoms/Button";
 import { Icon } from "../atoms/Icon";
 
 // "Bahasa Batak Toba" reads as "Batak Toba" on a tile under its island; "Bahasa Indonesia" as "Indonesia".
@@ -13,16 +12,13 @@ const shortName = (name: string) => name.replace(/^Bahasa /, "");
 const COLUMNS: Readonly<Record<number, string>> = { 3: "sm:grid-cols-3", 4: "sm:grid-cols-4" };
 const columnsFor = (count: number) => (count % 3 === 0 ? COLUMNS[3] : count === 4 ? COLUMNS[4] : "");
 
-// The languages with words of their own, grouped by where each is spoken, and the button that keeps
-// the one picked. Before the page runs its script the button cannot follow the pick, so it says
-// only that it keeps it.
+// The languages with words of their own, grouped by where each is spoken. Each tile is the button
+// that keeps its language, so one tap applies it; in the header's dialog it also closes the dialog,
+// since the page drawn again behind it keeps it mounted.
 export function LanguageChooser({ back, onClose }: { readonly back: string; readonly onClose: ReactNode }) {
   const t = useText();
   const current = t("app.lang");
   const named = new Map<string, string>(OFFERED);
-  const [picked, setPicked] = useState(current);
-  const [live, setLive] = useState(false);
-  useEffect(() => setLive(true), []);
   const groups = LANGUAGE_GROUPS.map(([group, ids]) => [group, ids.filter((id) => named.has(id))] as const).filter(
     ([, ids]) => ids.length > 0,
   );
@@ -35,7 +31,12 @@ export function LanguageChooser({ back, onClose }: { readonly back: string; read
         </h2>
         {onClose}
       </div>
-      <Form method="post" action="/language" className="flex min-h-0 flex-1 flex-col">
+      <Form
+        method="post"
+        action="/language"
+        onSubmit={(event) => event.currentTarget.closest("dialog")?.close()}
+        className="flex min-h-0 flex-1 flex-col"
+      >
         <input type="hidden" name="back" value={back} />
         <div className="flex min-h-0 flex-1 flex-col gap-5 overflow-y-auto px-5 py-5 md:px-8 md:py-6">
           {groups.map(([group, ids]) => (
@@ -46,32 +47,22 @@ export function LanguageChooser({ back, onClose }: { readonly back: string; read
               </legend>
               <div className={cn("grid grid-cols-2 gap-2.5", columnsFor(ids.length))}>
                 {ids.map((id) => (
-                  <label
+                  <button
                     key={id}
+                    type="submit"
+                    name="language"
+                    value={id}
                     lang={id}
-                    className="group/tile flex min-h-12 cursor-pointer items-center gap-2 rounded-xl border-2 border-transparent bg-sunken px-3 font-bold sm:min-h-14 sm:px-4 sm:text-card text-ink transition-colors duration-100 motion-reduce:transition-none hover:border-line has-[:checked]:border-primary has-[:checked]:bg-primary has-[:checked]:text-on-primary has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-offset-2 has-[:focus-visible]:outline-primary"
+                    aria-current={id === current ? "true" : undefined}
+                    className="group/tile flex min-h-12 items-center gap-2 rounded-xl border-2 border-transparent bg-sunken px-3 text-start font-bold text-ink transition-colors duration-100 hover:border-line aria-[current=true]:border-primary aria-[current=true]:bg-primary aria-[current=true]:text-on-primary motion-reduce:transition-none sm:min-h-14 sm:px-4 sm:text-card"
                   >
-                    <input
-                      type="radio"
-                      name="language"
-                      value={id}
-                      defaultChecked={id === current}
-                      onChange={() => setPicked(id)}
-                      className="sr-only"
-                    />
                     <span className="min-w-0 flex-1">{shortName(named.get(id) as string)}</span>
-                    <Icon name="check" className="hidden size-5 shrink-0 group-has-[:checked]/tile:block" />
-                  </label>
+                    <Icon name="check" className="hidden size-5 shrink-0 group-aria-[current=true]/tile:block" />
+                  </button>
                 ))}
               </div>
             </fieldset>
           ))}
-        </div>
-        <div className="border-t border-line px-5 py-4 md:px-8 md:py-5">
-          <Button type="submit" variant="primary" size="main" className="w-full">
-            <Icon name="check" className="size-5" />
-            {live ? t("app.language.continue", { name: named.get(picked) as string }) : t("app.language.submit")}
-          </Button>
         </div>
       </Form>
     </div>

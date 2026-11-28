@@ -44,13 +44,11 @@ describe("copy for a page", () => {
       "app.lang",
       "app.language.change",
       "app.language.close",
-      "app.language.continue",
       ...["baliNusa", "java", "kalimantan", "malukuPapua", "national", "sulawesi", "sumatra"].map(
         (group) => `app.language.group.${group}`,
       ),
       "app.language.label",
       "app.language.open",
-      "app.language.submit",
       "app.language.title",
       "app.name",
     ]);

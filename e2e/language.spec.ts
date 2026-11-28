@@ -15,14 +15,11 @@ test("a language picked from the header is the whole public site's, the desk sta
   else await expect(page).toHaveURL(/\/language\?back=/);
   await expect(page.getByRole("group", { name: "Sumatra" })).toBeVisible();
   await noSidewaysScroll(page);
-  // The header's own chooser stays closed on the page of its own, so only the open one is picked.
-  await page
-    .locator("label")
-    .filter({ has: page.getByRole("radio", { name: "English" }) })
-    .click();
-  await page.getByRole("button", { name: script ? "Lanjut dalam English" : "Pakai bahasa ini" }).click();
+  // One tap keeps the language and, with a script, closes the dialog over the page drawn again.
+  await page.getByRole("button", { name: "English", exact: true }).click();
 
   await expect(page).toHaveURL(/\/missing$/);
+  await expect(page.getByRole("dialog")).toBeHidden();
   await expect(page.locator("html")).toHaveAttribute("lang", "en");
   await expect(page.getByRole("heading", { level: 1, name: "Report a missing person" })).toBeVisible();
   // Kept into the report, and on every other public page.
