@@ -17,6 +17,7 @@ import { Pagination } from "../../molecules/Pagination";
 import { FilterBar, ViewTabs } from "./DeskFilters";
 import { DeskMapView } from "./DeskMap";
 import { DeskShell } from "./DeskShell";
+import { AssignedLine, HeldChip, TriageChip } from "./DeskTriage";
 import {
   ClusterChip,
   clearedLink,
@@ -152,6 +153,8 @@ function QueueTable({ items }: { readonly items: readonly Item[] }) {
                     </Link>
                     <span className="flex flex-wrap gap-1.5">
                       <StatusChip status={item.status} />
+                      <TriageChip triage={item.triage} />
+                      {item.assignment.held ? <HeldChip /> : null}
                       {item.emergency === null || item.offline?.late ? null : <EmergencyChip />}
                       {item.offline === null ? null : <OfflineChip offline={item.offline} />}
                       {item.news ? <NewsChip /> : null}
@@ -161,7 +164,12 @@ function QueueTable({ items }: { readonly items: readonly Item[] }) {
                   </span>
                 </td>
                 <td className={cell}>
-                  <Hazard item={item} place={placeOf(t, item)} />
+                  <span className="flex flex-col gap-2">
+                    <Hazard item={item} place={placeOf(t, item)} />
+                    <span className="ps-13">
+                      <AssignedLine assignment={item.assignment} />
+                    </span>
+                  </span>
                 </td>
                 <td className={cell}>
                   <Impact impact={item.impact} />
@@ -215,6 +223,8 @@ function QueueCards({ items }: { readonly items: readonly Item[] }) {
             <span className="flex flex-wrap items-start justify-between gap-x-3 gap-y-2">
               <span className="font-bold whitespace-nowrap tabular-nums">{item.ticketNumber}</span>
               <span className="flex flex-wrap justify-end gap-1.5">
+                <TriageChip triage={item.triage} />
+                {item.assignment.held ? <HeldChip /> : null}
                 {item.emergency === null || item.offline?.late ? null : <EmergencyChip />}
                 {item.offline === null ? null : <OfflineChip offline={item.offline} />}
                 {item.news ? <NewsChip /> : null}
@@ -224,6 +234,7 @@ function QueueCards({ items }: { readonly items: readonly Item[] }) {
               </span>
             </span>
             <Hazard item={item} place={placeOf(t, item)} />
+            <AssignedLine assignment={item.assignment} />
             <Impact impact={item.impact} />
             {item.taker === null ? null : <Taker taker={item.taker} />}
             <span className="flex flex-wrap items-center justify-between gap-2 mt-auto border-t border-line pt-2.5 text-meta">

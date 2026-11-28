@@ -6,7 +6,7 @@ import { hazardKey } from "../../../../src/copy/hazardKey";
 import { LANGUAGES } from "../../../../src/copy/languages";
 import type { Text } from "../../../../src/copy/text";
 import { cn } from "../../../lib/cn";
-import type { DeskTyped, OfficerNumber } from "../../../lib/deskTypes";
+import type { DeskArea, DeskTyped, OfficerNumber } from "../../../lib/deskTypes";
 import { cardProblem, isLimit } from "../../../lib/envelope";
 import { limitText } from "../../../lib/status";
 import { useText } from "../../../lib/text";
@@ -25,6 +25,7 @@ import { DeskOfficers } from "./DeskOfficers";
 import { Hazard, PhotoFigure } from "./DeskQueue";
 import { DeskShell } from "./DeskShell";
 import { DeskToday } from "./DeskToday";
+import { bpbdOf, DeskAssignment, HeldChip, TriageChip } from "./DeskTriage";
 import { DeskValues } from "./DeskValues";
 import {
   ALL_FILTERS,
@@ -53,6 +54,7 @@ const SAVED = [
   "actions",
   "proofs",
   "take",
+  "assignment",
   "proofShown",
   "proofHidden",
   "released",
@@ -444,6 +446,7 @@ function TrackingLink({ ticketNumber, link }: { readonly ticketNumber: string; r
 export function DeskReportView({
   report,
   summary,
+  areas = null,
   refusal = null,
   typed = null,
   identity = null,
@@ -452,6 +455,8 @@ export function DeskReportView({
 }: {
   readonly report: DeskReport;
   readonly summary: DeskSummary | null;
+  // The BPBDs it can be given to, for Pusdalops; null for an account that may not.
+  readonly areas?: readonly DeskArea[] | null;
   // A refused change on this page: a move, a reply, or marking it seen past the hourly limit.
   readonly refusal?: ErrorEnvelope | null;
   readonly typed?: DeskTyped | null;
@@ -491,7 +496,9 @@ export function DeskReportView({
       {refusal === null && saved !== null && SAVED.includes(saved) ? (
         <div role="status">
           <Notice kind="info">
-            <p>{t(`desk.saved.${saved}`, { status: `stage.long.${report.status}` })}</p>
+            <p>
+              {t(`desk.saved.${saved}`, { status: `stage.long.${report.status}`, bpbd: bpbdOf(t, report.assignment) })}
+            </p>
           </Notice>
         </div>
       ) : null}
@@ -501,6 +508,8 @@ export function DeskReportView({
             <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
               <h1 className="text-ticket font-bold tabular-nums">{report.ticketNumber}</h1>
               <StatusChip status={report.status} />
+              <TriageChip triage={report.triage} />
+              {report.assignment.held ? <HeldChip /> : null}
               {report.emergency === null || report.offline?.late ? null : <EmergencyChip />}
               {report.offline === null ? null : <OfflineChip offline={report.offline} />}
               {report.news ? <NewsChip /> : null}
@@ -582,6 +591,9 @@ export function DeskReportView({
           <DeskValues report={report} />
         </div>
         <div className="flex min-w-0 flex-col gap-5 xl:col-start-2 xl:row-start-1">
+          <Section id="desk-assignment" title={t("desk.assign.title")}>
+            <DeskAssignment report={report} areas={areas} envelope={refusal} />
+          </Section>
           <Section id="desk-actions" title={t("desk.actions")}>
             <DeskActions report={report} envelope={refusal} typed={typed} />
           </Section>

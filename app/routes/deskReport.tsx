@@ -37,6 +37,7 @@ export default function DeskReportRoute({ loaderData, actionData }: Route.Compon
         <DeskReportView
           report={load.report}
           summary={load.summary}
+          areas={load.areas}
           refusal={actionData?.envelope}
           typed={actionData?.typed}
           identity={actionData?.identity}
