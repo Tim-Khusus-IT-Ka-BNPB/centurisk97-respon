@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router";
 import type { ErrorEnvelope } from "../../../src/contract/errors";
-import type { Feed, FeedEntry, Official } from "../../../src/contract/publicFeed";
+import type { Feed, FeedEntry } from "../../../src/contract/publicFeed";
 import { hazardKey } from "../../../src/copy/hazardKey";
 import { FEED_PERIODS, type FeedPeriod } from "../../../src/domain/feedPeriod";
 import { SELECTABLE_HAZARD_TYPES } from "../../../src/domain/hazards";
@@ -18,18 +18,13 @@ import { Icon } from "../atoms/Icon";
 import { SigapSays } from "../molecules/Sigap";
 import { eventShort, Impact, StatusDot, whenShort } from "./desk/parts";
 import { FeedMap } from "./FeedMap";
-import { OfficialEvents } from "./OfficialEvents";
 
 export const chip =
   "inline-flex min-h-target-min shrink-0 items-center gap-2 rounded-control border border-line bg-surface px-3 text-ink no-underline transition-colors duration-100 motion-reduce:transition-none hover:border-control aria-[current=true]:border-primary aria-[current=true]:bg-selected aria-[current=true]:font-semibold aria-[current=true]:text-primary";
 
 // The feed's query: a hazard, a period other than all, or neither. Each filter keeps the other.
-export function feedQuery(hazard: string | null, period: FeedPeriod, officialPage = 1): string {
-  const parts = [
-    ...(hazard === null ? [] : [`hazard=${hazard}`]),
-    ...(period === "all" ? [] : [`period=${period}`]),
-    ...(officialPage > 1 ? [`officialPage=${officialPage}`] : []),
-  ];
+export function feedQuery(hazard: string | null, period: FeedPeriod): string {
+  const parts = [...(hazard === null ? [] : [`hazard=${hazard}`]), ...(period === "all" ? [] : [`period=${period}`])];
   return parts.length === 0 ? "" : `?${parts.join("&")}`;
 }
 
@@ -282,20 +277,15 @@ export function FeedHeader({ mode }: { readonly mode: "events" | "watch" }) {
   );
 }
 
-// The map's province rings: the handled reports shown, and BNPB's events whose province we know.
-export function ringsOf(entries: readonly FeedEntry[], official: Official | null) {
-  return provinceRings([
-    ...entries.map((entry) => ({
+// The map's province rings: the handled reports shown.
+export function ringsOf(entries: readonly FeedEntry[]) {
+  return provinceRings(
+    entries.map((entry) => ({
       provinceName: entry.place.provinceName,
       hazardType: entry.hazardType,
       point: entry.centre,
     })),
-    ...(official?.events ?? []).flatMap((event) =>
-      event.provinceName === null
-        ? []
-        : [{ provinceName: event.provinceName, hazardType: event.hazardType, point: event.point }],
-    ),
-  ]);
+  );
 }
 
 export type FeedLoad =
@@ -306,16 +296,10 @@ export function FeedScreen({
   load,
   hazard,
   period = "all",
-  official = null,
-  officialPage = 1,
 }: {
   readonly load: FeedLoad;
   readonly hazard: string | null;
   readonly period?: FeedPeriod;
-  // BNPB's daily report with its news (row 26); null when it could not be read.
-  readonly official?: Official | null;
-  // Which page of the report's events.
-  readonly officialPage?: number;
 }) {
   const t = useText();
   const all = load.kind === "feed" ? load.feed.entries : [];
@@ -353,7 +337,7 @@ export function FeedScreen({
               "lg:sticky lg:top-6 lg:order-2 lg:h-[calc(100dvh-8rem)]",
             )}
           >
-            <FeedMap markers={feedMarkers(entries, t)} rings={ringsOf(entries, official)} />
+            <FeedMap markers={feedMarkers(entries, t)} rings={ringsOf(entries)} />
           </div>
           <section aria-labelledby="feed-count" className="flex min-w-0 flex-col gap-3 lg:order-1">
             <h2 id="feed-count" className="text-meta font-semibold text-muted">
@@ -367,13 +351,6 @@ export function FeedScreen({
           </section>
         </div>
       )}
-      <OfficialEvents
-        official={official}
-        entries={all}
-        hazard={hazard}
-        page={officialPage}
-        pageHref={(page) => `/feed${feedQuery(hazard, period, page)}#official-title`}
-      />
     </div>
   );
 }

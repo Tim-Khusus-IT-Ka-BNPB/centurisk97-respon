@@ -373,7 +373,7 @@ describe("route modules", () => {
       request: new Request("http://localhost/feed?hazard=other"),
       context: { api: answering(json({ entries: [] })) },
     } as Args);
-    expect(asked).toEqual(["/feed?hazard=flood", "/feed/official", "/feed", "/feed/official"]);
+    expect(asked).toEqual(["/feed?hazard=flood", "/feed"]);
     const limited = apiEnvelope("limit.address.feed", { params: { limit: 600 } });
     const refused = await feed.loader({
       request: new Request("http://localhost/feed"),

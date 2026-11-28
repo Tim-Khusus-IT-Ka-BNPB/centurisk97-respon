@@ -1,5 +1,5 @@
 import type { ErrorEnvelope } from "../../src/contract/errors";
-import type { Feed, Official, Watch } from "../../src/contract/publicFeed";
+import type { Feed, Watch } from "../../src/contract/publicFeed";
 import { FEED_PERIODS } from "../../src/domain/feedPeriod";
 import { SELECTABLE_HAZARD_TYPES } from "../../src/domain/hazards";
 import { type FeedLoad, FeedScreen, feedQuery } from "../components/organisms/FeedScreen";
@@ -29,17 +29,11 @@ export async function loader({ request, context }: Route.LoaderArgs) {
   const asked = search.get("hazard");
   const hazard = SELECTABLE_HAZARD_TYPES.find((id) => id === asked) ?? null;
   const period = FEED_PERIODS.find((id) => id === search.get("period")) ?? "all";
-  const officialPage = Number.parseInt(search.get("officialPage") ?? "", 10) || 1;
-  const [response, officialAnswer] = await Promise.all([
-    context.api("GET", `/feed${feedQuery(hazard, period)}`),
-    context.api("GET", "/feed/official"),
-  ]);
+  const response = await context.api("GET", `/feed${feedQuery(hazard, period)}`);
   const load: FeedLoad = response.ok
     ? { kind: "feed", feed: (await response.json()) as Feed }
     : { kind: "unavailable", envelope: (await response.json().catch(() => null)) as ErrorEnvelope | null };
-  // BNPB's daily report beside them; not read, it says so on its own.
-  const official = officialAnswer.ok ? ((await officialAnswer.json()) as Official) : null;
-  return { mode: "events" as const, load, hazard, period, official, officialPage, texts };
+  return { mode: "events" as const, load, hazard, period, texts };
 }
 
 export default function FeedRoute({ loaderData }: Route.ComponentProps) {
@@ -48,13 +42,7 @@ export default function FeedRoute({ loaderData }: Route.ComponentProps) {
       {loaderData.mode === "watch" ? (
         <WatchScreen load={loaderData.watch} />
       ) : (
-        <FeedScreen
-          load={loaderData.load}
-          hazard={loaderData.hazard}
-          period={loaderData.period}
-          official={loaderData.official}
-          officialPage={loaderData.officialPage}
-        />
+        <FeedScreen load={loaderData.load} hazard={loaderData.hazard} period={loaderData.period} />
       )}
     </Page>
   );

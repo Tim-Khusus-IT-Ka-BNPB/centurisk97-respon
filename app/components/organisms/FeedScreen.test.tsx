@@ -1,7 +1,7 @@
 import { fireEvent, screen, within } from "@testing-library/react";
 import { describe, expect, test, vi } from "vitest";
 import type { ErrorEnvelope } from "../../../src/contract/errors";
-import { FEED_ALONE, FEED_ENTRY, OFFICIAL } from "../../testing/feed";
+import { FEED_ALONE, FEED_ENTRY } from "../../testing/feed";
 import { renderPage } from "../../testing/render";
 import { FeedScreen, feedQuery, ringsOf } from "./FeedScreen";
 
@@ -123,30 +123,6 @@ describe("the public feed page", () => {
   });
 });
 
-test("the map's rings hold the reports shown and BNPB's events whose province is known", () => {
-  expect(ringsOf([FEED_ENTRY], OFFICIAL).map((ring) => [ring.provinceName, ring.total])).toEqual([["Aceh", 2]]);
-  expect(ringsOf([FEED_ENTRY], null).map((ring) => ring.total)).toEqual([1]);
-});
-
-test("the report's pages keep the hazard and period, and land back on the report", async () => {
-  const [flood] = OFFICIAL.events;
-  const events = Array.from({ length: 13 }, (_, n) => ({
-    ...(flood as (typeof OFFICIAL.events)[number]),
-    id: `e${n}`,
-  }));
-  renderPage(
-    <FeedScreen
-      load={{ kind: "feed", feed: { entries: [FEED_ENTRY] } }}
-      hazard="flood"
-      period="7"
-      official={{ ...OFFICIAL, events }}
-      officialPage={2}
-    />,
-    { path: "/feed" },
-  );
-  const pages = await screen.findByRole("navigation", { name: "Halaman 2 dari 2, 13 kejadian" });
-  expect(within(pages).getByRole("link", { name: "Sebelumnya" }).getAttribute("href")).toBe(
-    "/feed?hazard=flood&period=7#official-title",
-  );
-  expect(feedQuery("flood", "all", 3)).toBe("?hazard=flood&officialPage=3");
+test("the map's rings hold the reports shown", () => {
+  expect(ringsOf([FEED_ENTRY]).map((ring) => [ring.provinceName, ring.total])).toEqual([["Aceh", 1]]);
 });
