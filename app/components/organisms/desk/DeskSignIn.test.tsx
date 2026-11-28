@@ -40,7 +40,7 @@ describe("signing in and refusals", () => {
       path: "/desk/response",
       entry: "/desk/response?period=7d",
     });
-    const button = screen.getByRole("link", { name: "Masuk dengan akun centurisk97" });
+    const button = screen.getByRole("link", { name: "Masuk dengan akun petugas" });
     expect(button.getAttribute("href")).toBe(
       `/api/auth/sign-in?back=${encodeURIComponent("/desk/response?period=7d")}`,
     );
@@ -54,7 +54,7 @@ describe("signing in and refusals", () => {
       entry: "/desk?signIn=noAccess",
     });
     expect(screen.getByText(/belum punya akses ke meja laporan/)).toBeTruthy();
-    expect(screen.getByRole("link", { name: "Masuk dengan akun centurisk97" }).getAttribute("href")).toBe(
+    expect(screen.getByRole("link", { name: "Masuk dengan akun petugas" }).getAttribute("href")).toBe(
       "/api/auth/sign-in?back=%2Fdesk",
     );
     view.unmount();
