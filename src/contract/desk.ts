@@ -290,8 +290,9 @@ const spreadSchema = z.object({
   p90: z.number().int().nonnegative(),
 });
 
-// How fast each agency answered the month's reports, in whole minutes; figures are null under 5
-// reports. Ordered by name, never ranked.
+// How fast each agency answered the month's reports, in whole minutes, and how easy its reporters
+// found reporting (1 hard to 5 easy; null under 5 answers): it rates the reporting, not the agency.
+// Figures are null under 5 reports. Ordered by name, never ranked.
 export const deskResponseSchema = z.object({
   account: accountSchema,
   month: z.string(),
@@ -307,6 +308,7 @@ export const deskResponseSchema = z.object({
           notSeen: z.number().int().nonnegative(),
           notTaken: z.number().int().nonnegative(),
           dropped: z.number().int().nonnegative(),
+          ease: z.object({ count: z.number().int().positive(), average: z.number().min(1).max(5) }).nullable(),
         })
         .nullable(),
     }),

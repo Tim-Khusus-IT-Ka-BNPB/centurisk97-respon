@@ -13,6 +13,7 @@ import { ALL_FILTERS } from "./parts";
 
 type Agency = DeskResponse["agencies"][number];
 type Spread = NonNullable<Agency["figures"]>["seen"];
+type Ease = NonNullable<Agency["figures"]>["ease"];
 
 // Minutes as a person reads them: under an hour in minutes, else hours and minutes.
 const minutesText = (t: Text, minutes: number) =>
@@ -47,6 +48,18 @@ function Figure({ spread, missing }: { readonly spread: Spread; readonly missing
   );
 }
 
+// How easy the reporters found reporting, as they answered after sending: never a mark of the BPBD.
+function EaseFigure({ ease }: { readonly ease: Ease }) {
+  const t = useText();
+  if (ease === null) return <span className="text-muted">{t("desk.response.ease.tooFew")}</span>;
+  return (
+    <span className="flex flex-col gap-0.5">
+      <span className="font-semibold tabular-nums">{t("desk.response.ease", { average: ease.average })}</span>
+      <span className="text-meta text-muted tabular-nums">{t("desk.response.ease.count", { count: ease.count })}</span>
+    </span>
+  );
+}
+
 const cell = "border-t border-line px-4 py-3.5 align-top";
 
 function AgencyRow({ agency }: { readonly agency: Agency }) {
@@ -59,7 +72,7 @@ function AgencyRow({ agency }: { readonly agency: Agency }) {
       </th>
       <td className={`${cell} tabular-nums`}>{agency.reports.toLocaleString("id-ID")}</td>
       {figures === null ? (
-        <td colSpan={2} className={`${cell} text-muted`}>
+        <td colSpan={3} className={`${cell} text-muted`}>
           {t("desk.response.tooFew")}
         </td>
       ) : (
@@ -69,6 +82,9 @@ function AgencyRow({ agency }: { readonly agency: Agency }) {
           </td>
           <td className={cell}>
             <Figure spread={figures.taken} missing={figures.notTaken} />
+          </td>
+          <td className={cell}>
+            <EaseFigure ease={figures.ease} />
           </td>
         </>
       )}
@@ -196,10 +212,10 @@ export function DeskResponseView({
         </Notice>
       ) : (
         <div className="overflow-x-auto card-surface">
-          <table className="w-full min-w-[34rem] border-separate border-spacing-0 text-start">
+          <table className="w-full min-w-[42rem] border-separate border-spacing-0 text-start">
             <thead>
               <tr className="bg-sunken/60 text-meta text-muted">
-                {(["agency", "reports", "seen", "taken"] as const).map((column) => (
+                {(["agency", "reports", "seen", "taken", "ease"] as const).map((column) => (
                   <th key={column} scope="col" className="px-4 py-3 text-start font-semibold">
                     {t(`desk.response.col.${column}`)}
                   </th>
@@ -215,6 +231,7 @@ export function DeskResponseView({
         </div>
       )}
       <p className="text-meta text-muted">{t("desk.response.method")}</p>
+      <p className="text-meta text-muted">{t("desk.response.ease.hint")}</p>
       <Aggregates />
       <Warnings warnings={warnings} />
     </DeskShell>

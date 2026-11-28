@@ -19,6 +19,7 @@ const RESPONSE: DeskResponse = {
         notSeen: 2,
         notTaken: 12,
         dropped: 0,
+        ease: { count: 7, average: 4.2 },
       },
     },
     {
@@ -31,6 +32,7 @@ const RESPONSE: DeskResponse = {
         notSeen: 0,
         notTaken: 0,
         dropped: 0,
+        ease: null,
       },
     },
     { regencyCode: "81.71", regencyName: "Kota Tual", reports: 3, figures: null },
@@ -58,6 +60,24 @@ describe("how fast each agency answers", () => {
     expect(second.getByText("1 jam 0 menit")).toBeTruthy();
     expect(second.queryByText(/laporan belum/)).toBeNull();
     expect(within(tual as HTMLElement).getByText("Belum cukup data, kurang dari 5 laporan.")).toBeTruthy();
+  });
+
+  test("how easy reporters found reporting stands beside it, said to rate the reporting and not the BPBD", async () => {
+    await draw();
+    const table = within(screen.getByRole("table"));
+    expect(table.getByRole("columnheader", { name: "Kemudahan melapor" })).toBeTruthy();
+    const [aceh, deli, tual] = table.getAllByRole("row").slice(1) as HTMLElement[];
+    expect(within(aceh as HTMLElement).getByText("4,2 dari 5")).toBeTruthy();
+    expect(within(aceh as HTMLElement).getByText("dari 7 jawaban pelapor")).toBeTruthy();
+    expect(within(deli as HTMLElement).getByText("Belum cukup, kurang dari 5 jawaban")).toBeTruthy();
+    expect(
+      within(tual as HTMLElement)
+        .getByRole("cell", { name: /Belum cukup data/ })
+        .getAttribute("colspan"),
+    ).toBe("3");
+    expect(screen.getByText(/1 sulit sampai 5 mudah/).textContent).toContain(
+      "bukan pelayanan BPBD, dan bukan peringkat",
+    );
   });
 
   test("leads to the months around it, and says when a month has no report", async () => {

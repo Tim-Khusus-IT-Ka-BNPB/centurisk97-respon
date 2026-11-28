@@ -1,7 +1,7 @@
 import { MINUTE_MS } from "./time";
 
 // How fast each agency answers (K12): from a report sent to its first seen and to it being taken in
-// hand. Never a ranking; too few reports say nothing.
+// hand, beside how easy its reporters found reporting. Never a ranking; too few say nothing.
 
 const RESPONSE_MIN_REPORTS = 5;
 
@@ -10,10 +10,16 @@ export type ResponseRow = {
   readonly sentMs: number;
   readonly seenMs: number | null;
   readonly takenMs: number | null;
+  // How easy the reporter found reporting, 1 hard to 5 easy, asked right after sending; null when
+  // not answered. It rates the reporting, not the agency.
+  readonly rating: number | null;
 };
 
 // Whole minutes.
 type Spread = { readonly count: number; readonly median: number; readonly p90: number };
+
+// The reporters' answers on how easy reporting was: how many, and their mean to one decimal.
+type Ease = { readonly count: number; readonly average: number };
 
 type ResponseFigures = {
   readonly seen: Spread | null;
@@ -22,6 +28,8 @@ type ResponseFigures = {
   readonly notTaken: number;
   // Gaps that ran backwards, left out of the figures.
   readonly dropped: number;
+  // Null under 5 answers.
+  readonly ease: Ease | null;
 };
 
 export type AgencyResponse = {
@@ -43,6 +51,13 @@ function spreadOf(gaps: readonly number[]): Spread | null {
   return { count: sorted.length, median: minutes(0.5), p90: minutes(0.9) };
 }
 
+function easeOf(reports: readonly ResponseRow[]): Ease | null {
+  const ratings = reports.flatMap((report) => (report.rating === null ? [] : [report.rating]));
+  if (ratings.length < RESPONSE_MIN_REPORTS) return null;
+  const mean = ratings.reduce((sum, rating) => sum + rating, 0) / ratings.length;
+  return { count: ratings.length, average: Math.round(mean * 10) / 10 };
+}
+
 function figuresOf(reports: readonly ResponseRow[]): ResponseFigures {
   const gaps = (at: (report: ResponseRow) => number | null) =>
     reports.flatMap((report) => {
@@ -58,6 +73,7 @@ function figuresOf(reports: readonly ResponseRow[]): ResponseFigures {
     notSeen: reports.length - seen.length,
     notTaken: reports.length - taken.length,
     dropped: seen.length + taken.length - kept(seen).length - kept(taken).length,
+    ease: easeOf(reports),
   };
 }
 

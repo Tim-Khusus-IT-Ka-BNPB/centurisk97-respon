@@ -2,11 +2,17 @@ import { describe, expect, test } from "vitest";
 import { monthOf, monthSpan, type ResponseRow, responseByAgency } from "./response";
 
 const MINUTE = 60_000;
-const row = (regencyCode: string, seen: number | null, taken: number | null): ResponseRow => ({
+const row = (
+  regencyCode: string,
+  seen: number | null,
+  taken: number | null,
+  rating: number | null = null,
+): ResponseRow => ({
   regencyCode,
   sentMs: 1_000_000,
   seenMs: seen === null ? null : 1_000_000 + seen * MINUTE,
   takenMs: taken === null ? null : 1_000_000 + taken * MINUTE,
+  rating,
 });
 
 describe("how fast an agency answers", () => {
@@ -22,6 +28,7 @@ describe("how fast an agency answers", () => {
           notSeen: 1,
           notTaken: 2,
           dropped: 0,
+          ease: null,
         },
       },
     ]);
@@ -48,6 +55,7 @@ describe("how fast an agency answers", () => {
       notSeen: 0,
       notTaken: 0,
       dropped: 2,
+      ease: null,
     });
   });
 
@@ -57,6 +65,15 @@ describe("how fast an agency answers", () => {
     const unseen = Array.from({ length: 5 }, () => row("12.01", null, null));
     expect(responseByAgency(unseen)[0]?.figures).toMatchObject({ seen: null, taken: null, notSeen: 5, notTaken: 5 });
     expect(responseByAgency([])).toEqual([]);
+  });
+
+  test("how easy reporting was is the mean of its reporters' answers to one decimal, said only from 5 of them", () => {
+    const rated = (ratings: readonly (number | null)[]) =>
+      responseByAgency(ratings.map((rating) => row("11.08", 1, 1, rating)))[0]?.figures?.ease;
+    expect(rated([5, 4, 4, 3, null, 1])).toEqual({ count: 5, average: 3.4 });
+    expect(rated([5, 5, 4, 4, 4, 1])).toEqual({ count: 6, average: 3.8 });
+    expect(rated([2, 2, 2, 2, 3])).toEqual({ count: 5, average: 2.2 });
+    expect(rated([5, 5, 5, 5, null, null])).toBeNull();
   });
 
   test("each agency stands alone, in the order of its code", () => {
