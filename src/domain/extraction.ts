@@ -36,6 +36,8 @@ export type Extraction = {
   readonly language: MessageLanguage | "other" | null;
   // The message in Indonesian, for a message in another language; null otherwise.
   readonly indonesian: string | null;
+  // The place the message names, in the reporter's own words, for the place search; null for none.
+  readonly place: string | null;
 };
 
 const NEGATION = /(?<![\p{L}\p{N}])(?:tidak ada|tidak|nihil|tanpa|nol|belum ada)(?![\p{L}\p{N}])/u;
@@ -44,6 +46,8 @@ const MAX_GUESSES = 4;
 const MIN_CHECKED_WORD = 3;
 // A translation runs longer than its message, but never this long.
 const MAX_TRANSLATION = 4000;
+// A place name is searched as typed: as long as the search takes.
+const MAX_PLACE = 60;
 
 type Fillable = Extract<FieldDefinition, { kind: "count" | "text" | "choice" | "multiChoice" }>;
 type Item = {
@@ -129,6 +133,15 @@ function guesses(value: unknown): Extraction["hazardGuesses"] {
     });
 }
 
+// A place name is kept only when every word of it is the reporter's own and it has letters to search.
+function placeOf(value: unknown, said: string): string | null {
+  if (typeof value !== "string") return null;
+  const name = value.trim();
+  if (name.length > MAX_PLACE || name.replace(/\P{L}/gu, "").length < MIN_CHECKED_WORD) return null;
+  const own = new Set(wordsOf(said));
+  return wordsOf(name).every((word) => own.has(word)) ? name : null;
+}
+
 function languageOf(value: unknown): Extraction["language"] {
   if (value === "other") return "other";
   return MESSAGE_LANGUAGES.find((id) => id === value) ?? null;
@@ -161,5 +174,6 @@ export function validateExtraction(output: unknown, message: MaskedText, hazardT
   const language = languageOf(answer.language);
   const rendered = typeof answer.indonesian === "string" ? answer.indonesian.trim().slice(0, MAX_TRANSLATION) : "";
   const indonesian = language === null || language === "id" || rendered === "" ? null : rendered;
-  return { fields, hazardGuesses, lifeAtRisk: answer.lifeAtRisk === true, reply, topic, language, indonesian };
+  const place = placeOf(answer.place, said);
+  return { fields, hazardGuesses, lifeAtRisk: answer.lifeAtRisk === true, reply, topic, language, indonesian, place };
 }

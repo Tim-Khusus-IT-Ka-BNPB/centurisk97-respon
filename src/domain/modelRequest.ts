@@ -132,6 +132,7 @@ const SYSTEM = [
   "lifeAtRisk is true when someone is in danger now and needs help at once: trapped, swept away or missing in the ongoing event, caught in rising water, fire or rubble, or seriously hurt with no help; or the reporter asks for rescue. False for damage alone or danger that has passed.",
   `language: the message's language code, one of ${MESSAGE_LANGUAGES.join(", ")}, or other.`,
   "indonesian: the whole message in plain, natural Indonesian for officers who read only Indonesian: translate the meaning, not word by word (a regional word for a flood is banjir), write numbers as digits, keep names and places. Empty when the message is already in Indonesian.",
+  "place: the name of the village, kelurahan, district or regency where the event is, copied from the message exactly as written, with words like desa or kecamatan when they are written with it; empty when no place is named. Never a street, a building, a river or a place the reporter is only near.",
   "reply: sympathy when there is damage or victims, thanks for an ordinary report, calm when the reporter panics, none when the message is not a disaster report.",
   "topic: disaster when the message tells or answers about the event; dataRequest when it asks for data, lists, numbers or other reports; offTopic for anything else.",
 ].join("\n");
@@ -140,7 +141,7 @@ const SYSTEM = [
 export const EXTRACTION_SCHEMA = {
   type: "object",
   additionalProperties: false,
-  required: ["fields", "hazardGuesses", "lifeAtRisk", "language", "indonesian", "reply", "topic"],
+  required: ["fields", "hazardGuesses", "lifeAtRisk", "language", "indonesian", "place", "reply", "topic"],
   properties: {
     fields: {
       type: "array",
@@ -168,6 +169,7 @@ export const EXTRACTION_SCHEMA = {
     lifeAtRisk: { type: "boolean" },
     language: { type: "string", enum: [...MESSAGE_LANGUAGES, "other"] },
     indonesian: { type: "string" },
+    place: { type: "string" },
     reply: { type: "string", enum: ["sympathy", "thanks", "calm", "none"] },
     topic: { type: "string", enum: ["disaster", "dataRequest", "offTopic"] },
   },

@@ -36,6 +36,26 @@ const withCard = (
 
 const placesOf = ({ items, total, cut, dataDate }: Results): Results => ({ items, total, cut, dataDate });
 
+// The place the reporter last named in their own words, which Sigap said back.
+function namedPlace(draft: DraftBody): string | null {
+  const line = draft.transcript.findLast(
+    (entry) => entry.speaker === "assistant" && entry.copyKey === "reply.notedPlace",
+  );
+  return line?.speaker === "assistant" ? String(line.params.place) : null;
+}
+
+// Nothing typed yet: the place the reporter named is searched for them, so they only pick their
+// village. A search that finds nothing or is refused leaves the card as it was.
+async function namedSearch(draft: DraftBody, card: Card & { readonly kind: "placeSearch" }, api: ApiCall) {
+  const named = namedPlace(draft);
+  if (named === null) return withCard(draft, card);
+  const found = await api("GET", `/places/search?q=${encodeURIComponent(named)}`);
+  const places = found.ok ? placesOf((await found.json()) as Results) : null;
+  return places === null || places.total === 0
+    ? withCard(draft, card)
+    : withCard(draft, { ...card, query: named, places, named: true });
+}
+
 export async function draftPageLoad(draftId: string, search: URLSearchParams, api: ApiCall): Promise<DraftPageLoad> {
   const response = await api("GET", `/drafts/${encodeURIComponent(draftId)}`);
   if (!response.ok)
@@ -68,7 +88,7 @@ export async function draftPageLoad(draftId: string, search: URLSearchParams, ap
     // An area not in the place data is ignored: the reporter searches the country again.
     if (found.status !== 404) return withCard(draft, typed, found.status, (await found.json()) as ErrorEnvelope);
   }
-  if (query === "") return withCard(draft, card);
+  if (query === "") return namedSearch(draft, card, api);
   const found = await api("GET", `/places/search?q=${q}`);
   if (!found.ok) return withCard(draft, typed, found.status, (await found.json()) as ErrorEnvelope);
   return withCard(draft, { ...typed, places: placesOf((await found.json()) as Results) });

@@ -29,6 +29,7 @@ import type { FieldError, ReporterRole } from "../domain/identityForm";
 import { maskText } from "../domain/masking";
 import { nearestFacilities } from "../domain/nearFacilities";
 import { ownsDraft } from "../domain/ownership";
+import { placeTries } from "../domain/placeText";
 import { newlyChosenHazard, notedFacts, typedWords, withTranslation } from "../domain/turn/acknowledge";
 import type { DraftContent, PlaceReading, Question } from "../domain/turn/content";
 import {
@@ -47,7 +48,7 @@ import { cardFor } from "./cards";
 import { draftView, draftZone, LIFE_LINE, type Notice, noticesOnRead, type SentTicket } from "./draftView";
 import { answerLine, extractFrom } from "./extract";
 import { checkLimits, type LimitRefusal } from "./limits";
-import { locatePlace } from "./places";
+import { locatePlace, searchPlaces } from "./places";
 import { withSameEvent } from "./sameEvent";
 import { phraseOf } from "./summary";
 import { myReports, trackingOf, trackingToken } from "./tracking";
@@ -385,7 +386,10 @@ export async function takeTurn(
       : outcome;
   const lines =
     offered.kind === "next"
-      ? [...prepared.messages, ...acknowledgement(before, offered.draft, prepared.input)]
+      ? [
+          ...prepared.messages,
+          ...acknowledgement(before, offered, prepared.input, await namedPlace(bindings, offered, prepared.input)),
+        ]
       : prepared.messages;
   return commit(bindings, draft, request, requestHash, offered, lines, photos);
 }
@@ -398,9 +402,30 @@ function translatedDraft(next: TurnDraft, typed: Typed | null | undefined): Turn
   return { ...next, content: { ...next.content, states } };
 }
 
-// What Sigap says back before the next question: what it read from the reporter's words, and the
-// safety line of a hazard type chosen this turn.
-function acknowledgement(before: TurnDraft, after: TurnDraft, input: TurnInput): NewMessage[] {
+// The place the reporter named, when the place is asked next and the place data knows it, so the
+// page can search it for them; null otherwise.
+async function namedPlace(
+  bindings: ServiceBindings,
+  { question }: { readonly question: Question },
+  input: TurnInput,
+): Promise<string | null> {
+  const place = input.kind === "story" ? input.extraction.place : null;
+  if (place === null || question.kind !== "place") return null;
+  for (const tried of placeTries(place)) {
+    const found = await searchPlaces(bindings, tried, async () => null);
+    if (found.kind === "ok" && found.value.total > 0) return tried;
+  }
+  return null;
+}
+
+// What Sigap says back before the next question: what it read from the reporter's words, the place
+// they named, and the safety line of a hazard type chosen this turn.
+function acknowledgement(
+  before: TurnDraft,
+  { draft: after }: { readonly draft: TurnDraft },
+  input: TurnInput,
+  place: string | null,
+): NewMessage[] {
   const lines: NewMessage[] = [];
   const facts = input.kind === "story" ? notedFacts(before.content.states, after.content.states) : [];
   if (facts.length > 0)
@@ -410,6 +435,8 @@ function acknowledgement(before: TurnDraft, after: TurnDraft, input: TurnInput):
       params: { facts: JSON.stringify(facts) },
       cardKind: null,
     });
+  if (place !== null)
+    lines.push({ speaker: "assistant", copyKey: "reply.notedPlace", params: { place }, cardKind: null });
   const hazard = newlyChosenHazard(before.content.states, after.content.states);
   if (hazard !== null) lines.push({ speaker: "assistant", copyKey: `safety.${hazard}`, params: {}, cardKind: null });
   return lines;

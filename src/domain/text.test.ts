@@ -1,5 +1,5 @@
 import { describe, expect, test } from "vitest";
-import { modernSpelling, nearWords, placeQueryWords, placeSearchText } from "./placeText";
+import { modernSpelling, nearWords, placeQueryWords, placeSearchText, placeTries } from "./placeText";
 import { folded, tidy, wordsOf } from "./text";
 
 describe("text helpers", () => {
@@ -75,5 +75,18 @@ describe("near spellings of a place word", () => {
     expect(modernSpelling("njamuk sjarif")).toBe("nyamuk syarif");
     expect(modernSpelling("chairul")).toBe("khairul");
     expect(modernSpelling("sukamaju")).toBe("sukamayu");
+  });
+});
+
+describe("a place named in a message, tried for the search", () => {
+  test("whole, then with each last part left off", () => {
+    expect(placeTries("desa Cot Seumiyong, kec. Samudera, Aceh Utara")).toEqual([
+      "desa Cot Seumiyong, kec. Samudera, Aceh Utara",
+      "desa Cot Seumiyong, kec. Samudera",
+      "desa Cot Seumiyong",
+    ]);
+    expect(placeTries(" Sukamaju ")).toEqual(["Sukamaju"]);
+    expect(placeTries("Sukamaju,, ")).toEqual(["Sukamaju"]);
+    expect(placeTries(" , ")).toEqual([]);
   });
 });

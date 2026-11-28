@@ -453,3 +453,50 @@ describe("words in another language reach the desk in Indonesian", () => {
     });
   });
 });
+
+describe("a place named in the story is searched for the reporter", () => {
+  const tick = (w: ReturnType<typeof world>) => () => w.clock.advance(4000);
+  const answer = (place: string) => ({
+    topic: "disaster",
+    reply: "thanks",
+    lifeAtRisk: false,
+    language: "id",
+    indonesian: "",
+    hazardGuesses: [],
+    fields: [],
+    place,
+  });
+  const namedLines = (draft: DraftBody) =>
+    draft.transcript.flatMap((line) =>
+      line.speaker === "assistant" && line.copyKey === "reply.notedPlace" ? [line.params.place] : [],
+    );
+
+  test("Sigap says it back, as far as the place data holds it, while the place is still asked", async () => {
+    const story = "banjir di desa cot seumiyong, kec. samudera";
+    const w = world(recorded({ [story]: answer("desa Cot Seumiyong, kec. Samudera") }).port);
+    const { phone, draft } = await start(w);
+    const told = await say(phone, draft, story);
+    expect(told.status).toBe(200);
+    // Cot Seumiyong is in Kuta Makmur: the wrong district is left off, the village is kept.
+    expect(namedLines(told.draft)).toEqual(["desa Cot Seumiyong"]);
+    expect(told.draft.card.kind).toBe("placeSearch");
+  });
+
+  test("a place the place data does not hold, or named once the place is given, is not said", async () => {
+    const unknown = "banjir di kampung antah berantah";
+    const later = "banjir juga sampai desa sukamaju";
+    const w = world(
+      recorded({ [unknown]: answer("kampung antah berantah"), [later]: answer("desa sukamaju") }).port,
+    );
+    const { phone, draft } = await start(w);
+    const told = await say(phone, draft, unknown);
+    expect(namedLines(told.draft)).toEqual([]);
+    const { draft: placed } = await walkTo(phone, told.draft, village, {
+      tick: tick(w),
+      stopAt: (current) => current.card.kind !== "placeSearch" && current.card.kind !== "regencyVillages",
+    });
+    const after = await say(phone, placed, later);
+    expect(namedLines(after.draft)).toEqual([]);
+  });
+});
+

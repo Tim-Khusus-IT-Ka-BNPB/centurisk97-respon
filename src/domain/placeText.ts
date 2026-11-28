@@ -50,3 +50,13 @@ export function nearWords(word: string): readonly string[] {
   for (let at = 0; at <= word.length; at++) near.add(`${word.slice(0, at)}_${word.slice(at)}`);
   return [...near];
 }
+
+// A place named with its district or regency after commas, tried whole, then with the last part left
+// off, down to its first: a district named wrongly still finds the village.
+export function placeTries(name: string): readonly string[] {
+  const parts = name
+    .split(",")
+    .map((part) => part.trim())
+    .filter((part) => part !== "");
+  return parts.map((_, left) => parts.slice(0, parts.length - left).join(", "));
+}

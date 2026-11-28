@@ -177,6 +177,8 @@ export const cardSchema = z.discriminatedUnion("kind", [
     kind: z.literal("placeSearch"),
     query: z.string().nullable(),
     places: placeResultsSchema.nullable(),
+    // The query is the place the reporter named in their words, searched for them, not typed here.
+    named: z.boolean().optional(),
   }),
   z.object({
     ...base,

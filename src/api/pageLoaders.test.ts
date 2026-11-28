@@ -32,6 +32,35 @@ async function reporter() {
 
 const cardOf = (loaded: DraftPageLoad) => (loaded.kind === "draft" ? loaded.draft.card : null);
 
+// Sigap said back a place the reporter named, as the turn writes it.
+const named = (draftId: string, place: string) =>
+  query`insert into draft_message (draft_id, seq, speaker, copy_key, params, created_at)
+    values (${draftId}, (select coalesce(max(seq), 0) + 1 from draft_message where draft_id = ${draftId}), 'assistant',
+      'reply.notedPlace', ${JSON.stringify({ place })}::jsonb, now())`;
+
+describe("a place the reporter named", () => {
+  test("is searched for them, marked as named, so they only pick their village", async () => {
+    const { draft, load } = await reporter();
+    await named(draft.draftId, "Sukamaju");
+    await named(draft.draftId, "desa Cot Seumiyong");
+    const card = cardOf(await load(""));
+    expect(card).toMatchObject({ kind: "placeSearch", query: "desa Cot Seumiyong", named: true, places: { total: 1 } });
+    // What the reporter types instead is searched as typed.
+    expect(cardOf(await load("q=sukamaju"))).toMatchObject({ query: "sukamaju", places: { total: 72 } });
+    expect(cardOf(await load("q=sukamaju"))).not.toHaveProperty("named");
+  });
+
+  test("a name the place data does not hold, or a search refused, leaves the card as stored", async () => {
+    const { draft, load } = await reporter();
+    await named(draft.draftId, "Kampung Antah Berantah");
+    expect(cardOf(await load(""))).toMatchObject({ kind: "placeSearch", query: null, places: null });
+    const other = await reporter();
+    await named(other.draft.draftId, "Sukamaju");
+    const { bindings: failing } = testBindings({ FAULT_PLACE: "on" }, { clock });
+    expect(cardOf(await other.load("", other.draft.draftId, failing))).toMatchObject({ query: null, places: null });
+  });
+});
+
 describe("the draft page with no script", () => {
   test("with no query the place card is drawn as stored", async () => {
     const { load } = await reporter();

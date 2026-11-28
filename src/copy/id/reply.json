@@ -23,5 +23,6 @@
   "reply.notedCount.schools": "{count} sekolah rusak atau terendam",
   "reply.notedCount.healthFacilities": "{count} fasilitas kesehatan rusak atau terendam",
   "reply.notedCount.worshipPlaces": "{count} tempat ibadah rusak atau terendam",
-  "reply.notedCount.roads": "{count} titik jalan atau jembatan rusak"
+  "reply.notedCount.roads": "{count} titik jalan atau jembatan rusak",
+  "reply.notedPlace": "Tempat yang Anda sebut: {place}. Saya sudah mencarinya. Pilih desa atau kelurahan yang benar di bawah."
 }

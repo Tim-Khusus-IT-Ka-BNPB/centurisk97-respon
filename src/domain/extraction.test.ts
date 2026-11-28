@@ -31,6 +31,7 @@ const EMPTY = {
   topic: "disaster",
   language: null,
   indonesian: null,
+  place: null,
 };
 
 describe("model answer kept only where the reporter's words support it", () => {
@@ -349,5 +350,29 @@ describe("the message's language and its Indonesian", () => {
     expect(read("jv", "   ")).toEqual(["jv", null]);
     expect(read("jv", 5)).toEqual(["jv", null]);
     expect(read("jv", `${"a".repeat(4000)}b`)).toEqual(["jv", "a".repeat(4000)]);
+  });
+});
+
+describe("the place the message names", () => {
+  const place = (value: unknown, message = "Banyu wis tekan dengkul ing Desa Sukamaju, Kec. Baktiya") =>
+    validateExtraction({ place: value }, said(message), null).place;
+
+  test("kept as written when every word of it is the reporter's own", () => {
+    expect(place("Desa Sukamaju")).toBe("Desa Sukamaju");
+    expect(place("  sukamaju ")).toBe("sukamaju");
+    expect(place("Kec. Baktiya")).toBe("Kec. Baktiya");
+  });
+
+  test("a word the reporter did not write, too few letters, too long, or no text names no place", () => {
+    expect(place("Desa Sukamaju Baru")).toBeNull();
+    expect(place("Kelurahan Sukamaju")).toBeNull();
+    expect(place("Ka", "banjir di Ka")).toBeNull();
+    expect(place("Kai", "banjir di Kai")).toBe("Kai");
+    expect(place("12 3", "banjir di 12 3")).toBeNull();
+    expect(place(`${"a".repeat(60)}`, `banjir di ${"a".repeat(60)}`)).toBe("a".repeat(60));
+    expect(place(`${"a".repeat(61)}`, `banjir di ${"a".repeat(61)}`)).toBeNull();
+    expect(place("")).toBeNull();
+    expect(place(7)).toBeNull();
+    expect(place(undefined)).toBeNull();
   });
 });

@@ -282,7 +282,9 @@ export function PlaceCard({ card }: { readonly card: SearchCard }) {
   const { envelope } = useDraftView();
   const problem = problemOf(envelope, "q");
   const unavailable = envelope?.error.code === "place.unavailable";
-  const searched = card.query !== null || unavailable || problem !== null;
+  // A place the reporter named is searched for them: the card arrives as any other, keyboard closed.
+  const typed = card.query !== null && !(card.kind === "placeSearch" && card.named === true);
+  const searched = typed || unavailable || problem !== null;
   const area = card.kind === "regencyVillages";
   return (
     <CardShell

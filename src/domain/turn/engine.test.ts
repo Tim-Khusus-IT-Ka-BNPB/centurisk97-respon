@@ -55,6 +55,7 @@ const nothing: Extraction = {
   topic: "disaster",
   language: null,
   indonesian: null,
+  place: null,
 };
 const story = (text: string, extraction: Partial<Extraction> = {}): TurnInput => ({
   kind: "story",

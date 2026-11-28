@@ -55,6 +55,17 @@ describe("place search", () => {
     fireEvent.click(village);
   });
 
+  test("a place the reporter named arrives searched, its words in the box, with the keyboard closed", async () => {
+    renderDraft(
+      <CardView card={{ ...placeCard, query: "desa Sukamaju", named: true }} />,
+      SAMPLE_DRAFTS.placeSearch,
+    );
+    const heading = await screen.findByRole("heading", { name: "Lokasi kejadian" });
+    await waitFor(() => expect(document.activeElement).toBe(heading));
+    expect((screen.getByRole("searchbox", { name: "Cari tempat" }) as HTMLInputElement).value).toBe("desa Sukamaju");
+    expect(screen.getByRole("button", { name: /Desa\/Kel\. Sukamaju/ })).toBeTruthy();
+  });
+
   test("places found by a close spelling say so", async () => {
     const places: Places = { ...(placeCard.places as Places), similar: true };
     renderDraft(<CardView card={{ ...placeCard, places }} />, SAMPLE_DRAFTS.placeSearch, { action: never });
