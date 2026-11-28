@@ -1,7 +1,7 @@
 // The service worker of / (LR-03): a page seen before opens again with no signal, from the copy
 // kept here. Pages: the network first, the kept copy when it fails. Built files, whose names carry
 // their content's hash: the kept copy first. The API is never kept. Raise VERSION when this file changes.
-const VERSION = "lapor-5";
+const VERSION = "lapor-6";
 const KEPT = `${VERSION}-pages`;
 // Kept at install: the home and the emergency page, so a report can be made with no signal.
 const FIRST = ["/", "/emergency"];
