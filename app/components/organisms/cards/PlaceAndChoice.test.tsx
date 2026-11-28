@@ -56,10 +56,7 @@ describe("place search", () => {
   });
 
   test("a place the reporter named arrives searched, its words in the box, with the keyboard closed", async () => {
-    renderDraft(
-      <CardView card={{ ...placeCard, query: "desa Sukamaju", named: true }} />,
-      SAMPLE_DRAFTS.placeSearch,
-    );
+    renderDraft(<CardView card={{ ...placeCard, query: "desa Sukamaju", named: true }} />, SAMPLE_DRAFTS.placeSearch);
     const heading = await screen.findByRole("heading", { name: "Lokasi kejadian" });
     await waitFor(() => expect(document.activeElement).toBe(heading));
     expect((screen.getByRole("searchbox", { name: "Cari tempat" }) as HTMLInputElement).value).toBe("desa Sukamaju");
