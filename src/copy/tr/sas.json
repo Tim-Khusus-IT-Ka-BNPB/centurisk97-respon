@@ -1174,7 +1174,6 @@
   "common.charCount": "{length} lekan {max} huruf",
   "common.retryTime.today": "jam {time} {zone}",
   "common.retryTime.otherDay": "jam {time} {zone}, {date}",
-  "consent.short": "Data side tepake BNPB gen penanganan bencana dait ndaq tetampilin ojok publik.",
   "consent.privacyOpen": "Bace kebijakan privasi lengkap",
   "consent.privacyClose": "Tutup kebijakan privasi",
   "consent.agree": "Setuju",

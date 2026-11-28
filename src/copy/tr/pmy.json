@@ -1174,7 +1174,6 @@
   "common.charCount": "{length} dari {max} huruf",
   "common.retryTime.today": "pukul {time} {zone}",
   "common.retryTime.otherDay": "pukul {time} {zone}, {date}",
-  "consent.short": "Data Anda dipakai BNPB untuk penanganan bencana dan tidak ditampilkan ke publik.",
   "consent.privacyOpen": "Baca kebijakan privasi lengkap",
   "consent.privacyClose": "Tutup kebijakan privasi",
   "consent.agree": "Setuju",

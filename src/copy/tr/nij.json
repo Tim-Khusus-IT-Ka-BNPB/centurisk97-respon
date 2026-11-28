@@ -1174,7 +1174,6 @@
   "common.charCount": "{length} bara {max} huruf",
   "common.retryTime.today": "jam {time} {zone}",
   "common.retryTime.otherDay": "jam {time} {zone}, {date}",
-  "consent.short": "Data itah dipake BNPB gawi pananganan bencana tuntang dia ditampilkan ayun publik.",
   "consent.privacyOpen": "Baca kebijakan privasi lengkap",
   "consent.privacyClose": "Tutup kebijakan privasi",
   "consent.agree": "Setuju",

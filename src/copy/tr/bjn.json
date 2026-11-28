@@ -1174,7 +1174,6 @@
   "common.charCount": "{length} dari {max} huruf",
   "common.retryTime.today": "pukul {time} {zone}",
   "common.retryTime.otherDay": "pukul {time} {zone}, {date}",
-  "consent.short": "Data pian dipakai BNPB gasan pananganan bencana wan kada ditampilakan ka publik.",
   "consent.privacyOpen": "Baca kabijakan privasi sakalengkapnya",
   "consent.privacyClose": "Tutup kabijakan privasi",
   "consent.agree": "Satuju",

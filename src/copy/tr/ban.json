@@ -1174,7 +1174,6 @@
   "common.charCount": "{length} saking {max} aksara",
   "common.retryTime.today": "ring jam {time} {zone}",
   "common.retryTime.otherDay": "ring jam {time} {zone}, {date}",
-  "consent.short": "Data Ragané kaanggén olih BNPB anggén nanganin bencana tur nenten kapertontonang ring umum.",
   "consent.privacyOpen": "Wacen kebijakan privasi sané lengkap",
   "consent.privacyClose": "Tutup kebijakan privasi",
   "consent.agree": "Manut",

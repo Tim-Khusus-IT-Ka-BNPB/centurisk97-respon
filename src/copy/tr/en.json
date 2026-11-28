@@ -1174,7 +1174,6 @@
   "common.charCount": "{length} of {max} characters",
   "common.retryTime.today": "at {time} {zone}",
   "common.retryTime.otherDay": "at {time} {zone}, {date}",
-  "consent.short": "Your data is used by BNPB to handle the disaster and is not shown to the public.",
   "consent.privacyOpen": "Read the full privacy policy",
   "consent.privacyClose": "Close the privacy policy",
   "consent.agree": "Agree",

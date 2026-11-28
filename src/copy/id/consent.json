@@ -1,6 +1,6 @@
 {
-  "consent.text": "Percakapan, nomor HP, lokasi, dan foto yang Anda kirim dipakai BNPB untuk penanganan bencana dan dapat dibaca petugas. Data tidak ditampilkan ke publik. Apakah Anda setuju?",
-  "consent.short": "Data Anda dipakai BNPB untuk penanganan bencana dan tidak ditampilkan ke publik.",
+  "consent.text": "Percakapan, nomor HP, lokasi, dan foto yang Anda kirim dipakai BNPB untuk penanganan bencana dan dapat dibaca petugas. Bila laporan ditangani, Alun-alun hanya menampilkan nama desa, jenis kejadian, dan angka dampaknya, tanpa nama, nomor, foto, atau titik lokasi Anda. Apakah Anda setuju?",
+  "consent.short": "Data Anda dipakai BNPB untuk penanganan bencana. Nama, nomor, foto, dan titik lokasi Anda tidak ditampilkan ke publik.",
   "consent.privacyOpen": "Baca kebijakan privasi lengkap",
   "consent.privacyClose": "Tutup kebijakan privasi",
   "consent.agree": "Setuju",

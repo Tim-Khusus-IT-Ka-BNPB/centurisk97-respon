@@ -1174,7 +1174,6 @@
   "common.charCount": "{length} sian {max} hurup",
   "common.retryTime.today": "jam {time} {zone}",
   "common.retryTime.otherDay": "jam {time} {zone}, {date}",
-  "consent.short": "Data muna dipakei BNPB laho penanganan bencana jala inda ditampilkon tu publik.",
   "consent.privacyOpen": "Baca kebijakan privasi na lengkap",
   "consent.privacyClose": "Tutup kebijakan privasi",
   "consent.agree": "Satuju",

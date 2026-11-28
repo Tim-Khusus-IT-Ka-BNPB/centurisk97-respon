@@ -1174,7 +1174,6 @@
   "common.charCount": "{length} dâri {max} hurup",
   "common.retryTime.today": "jâm {time} {zone}",
   "common.retryTime.otherDay": "jâm {time} {zone}, {date}",
-  "consent.short": "Data sampèyan èangghuy BNPB kaangghuy panganananna bencana ban ta' èpaneddhâr ka ommom.",
   "consent.privacyOpen": "Baca kebijakan privasi sadhâjâ",
   "consent.privacyClose": "Totop kebijakan privasi",
   "consent.agree": "Sètojhu",

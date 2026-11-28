@@ -1174,7 +1174,6 @@
   "common.charCount": "{length} dari {max} huruf",
   "common.retryTime.today": "pukua {time} {zone}",
   "common.retryTime.otherDay": "pukua {time} {zone}, {date}",
-  "consent.short": "Data Ambo/Waang dipakai BNPB untuak pananganan bencana dan indak ditampilkan ka publik.",
   "consent.privacyOpen": "Baco kabijakan privasi lengkap",
   "consent.privacyClose": "Tutuik kabijakan privasi",
   "consent.agree": "Satuju",

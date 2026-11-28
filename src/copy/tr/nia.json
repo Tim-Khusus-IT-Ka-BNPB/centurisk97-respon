@@ -1174,7 +1174,6 @@
   "common.charCount": "{length} ba {max} huruf",
   "common.retryTime.today": "ba jam {time} {zone}",
   "common.retryTime.otherDay": "ba jam {time} {zone}, {date}",
-  "consent.short": "Data ndra'ugö ni'andrö BNPB ba wamaigi bencana ba lö ni'ila ba ndraono fefu.",
   "consent.privacyOpen": "A'a kebijakan privasi fefu",
   "consent.privacyClose": "Tutupi kebijakan privasi",
   "consent.agree": "Mondrongo",

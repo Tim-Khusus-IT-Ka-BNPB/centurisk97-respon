@@ -1174,7 +1174,6 @@
   "common.charCount": "{length} battu ri {max} huruf",
   "common.retryTime.today": "pukul {time} {zone}",
   "common.retryTime.otherDay": "pukul {time} {zone}, {date}",
-  "consent.short": "Data nipake BNPB untuk penanganan bencana siagang tena nitampilkang ri publik.",
   "consent.privacyOpen": "Baca kebijakan privasi lengkap",
   "consent.privacyClose": "Tutu'i kebijakan privasi",
   "consent.agree": "Setuju",

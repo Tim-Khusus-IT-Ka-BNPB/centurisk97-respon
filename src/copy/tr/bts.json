@@ -1174,7 +1174,6 @@
   "common.charCount": "{length} humbani {max} huruf",
   "common.retryTime.today": "pukul {time} {zone}",
   "common.retryTime.otherDay": "pukul {time} {zone}, {date}",
-  "consent.short": "Data nasiam ipakei BNPB laho manangani bencana ampa seng itampilhon hu publik.",
   "consent.privacyOpen": "Baca kebijakan privasi na lengkap",
   "consent.privacyClose": "Tutup kebijakan privasi",
   "consent.agree": "Satuju",

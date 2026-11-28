@@ -1174,7 +1174,6 @@
   "common.charCount": "{length} tina {max} hurup",
   "common.retryTime.today": "jam {time} {zone}",
   "common.retryTime.otherDay": "jam {time} {zone}, {date}",
-  "consent.short": "Data Anjeun dianggo ku BNPB pikeun penanganan bencana sareng teu ditingalikeun ka umum.",
   "consent.privacyOpen": "Baca kabijakan privasi lengkep",
   "consent.privacyClose": "Tutup kabijakan privasi",
   "consent.agree": "Satuju",

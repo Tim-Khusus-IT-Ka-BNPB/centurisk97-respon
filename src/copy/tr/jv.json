@@ -1174,7 +1174,6 @@
   "common.charCount": "{length} saking {max} aksara",
   "common.retryTime.today": "jam {time} {zone}",
   "common.retryTime.otherDay": "jam {time} {zone}, {date}",
-  "consent.short": "Data panjenengan dipun-enggo BNPB kangge nangani bencana lan boten dipun-tampilaken dhateng umum.",
   "consent.privacyOpen": "Waos kabijakan privasi kanthi lengkap",
   "consent.privacyClose": "Tutup kabijakan privasi",
   "consent.agree": "Sarujuk",
