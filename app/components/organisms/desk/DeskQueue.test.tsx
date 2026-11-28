@@ -159,6 +159,9 @@ describe("the side menu", () => {
     expect(screen.getAllByRole("button", { name: "Keluar" })).toHaveLength(2);
     expect(screen.getAllByRole("link", { name: "Form lapor warga" })[0]?.getAttribute("href")).toBe("/");
     expect(screen.getAllByRole("link", { name: "Poster QR desa" })[0]?.getAttribute("href")).toBe("/poster");
+    // The missing persons still looked for are counted as the queues are.
+    const missing = screen.getAllByRole("link", { name: "Orang dicari, 3 laporan" })[0];
+    expect([missing?.getAttribute("href"), missing?.textContent]).toEqual(["/desk/missing", "Orang dicari3"]);
     expect(screen.getByText("Antrean Ditelaah")).toBeTruthy();
   });
 
@@ -169,6 +172,7 @@ describe("the side menu", () => {
     const queues = within(screen.getAllByRole("navigation", { name: "Antrean kerja" })[0] as HTMLElement);
     expect(queues.getByRole("link", { name: "Semua laporan" }).getAttribute("aria-current")).toBe("page");
     expect(queues.getByRole("link", { name: "Diterima" })).toBeTruthy();
+    expect(screen.getAllByRole("link", { name: "Orang dicari" })[0]?.getAttribute("href")).toBe("/desk/missing");
     // The hazard chips list every type when their counts are unknown.
     const chips = within(screen.getByRole("navigation", { name: "Jenis bencana" }));
     expect(chips.getAllByRole("link")).toHaveLength(11);

@@ -180,4 +180,5 @@ export const SUMMARY: DeskSummary = {
   byHas: { news: 2, victims: 3, displaced: 1, houses: 5, photos: 0 },
   emergencies: [],
   mayReadResponse: true,
+  missingOpen: 3,
 };

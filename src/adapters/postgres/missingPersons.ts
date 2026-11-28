@@ -77,6 +77,15 @@ export const missingList = (db: Database, scope: StaffScope, status: MissingStat
       order by created_at desc limit 200`,
   );
 
+// How many of the region's missing persons are still looked for, for the desk's menu.
+export async function openMissingCount(db: Database, scope: StaffScope): Promise<number> {
+  const counted = await row<{ total: number }>(
+    db,
+    sql`select count(*) as total from missing_person where status = 'open' ${inRegion(scope)}`,
+  );
+  return (counted as { total: number }).total;
+}
+
 export const missingOf = (db: Database, scope: StaffScope, id: string) =>
   row<MissingRow>(db, sql`select * from missing_person where id = ${id} ${inRegion(scope)}`);
 

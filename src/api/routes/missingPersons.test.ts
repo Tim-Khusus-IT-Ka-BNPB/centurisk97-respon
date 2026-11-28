@@ -200,6 +200,23 @@ describe("the desk's work on a missing person", () => {
     expect((await query`select closed_at from missing_person where id = ${id}`)[0]).toEqual({ closed_at: null });
   });
 
+  test("the desk's menu counts the region's missing persons still looked for", async () => {
+    const counts = async () =>
+      Promise.all(
+        [national(), regency(), province()].map(
+          async (phone) => ((await phone.call("GET", "/desk/summary")).json as { missingOpen: number }).missingOpen,
+        ),
+      );
+    const before = await counts();
+    const [all, own, elsewhere] = before as [number, number, number];
+    expect(elsewhere).toBe(0);
+    const id = await sent(await reporter());
+    expect(await counts()).toEqual([all + 1, own + 1, 0]);
+    clock.advance(60_000);
+    expect((await regency().call("POST", `/desk/missing/${id}/status`, { to: "toSar" })).status).toBe(200);
+    expect(await counts()).toEqual(before);
+  });
+
   test("two officers at once: the one who lost is told, and nothing is written twice", async () => {
     const id = await sent(await reporter());
     const racer = (request: Request) =>

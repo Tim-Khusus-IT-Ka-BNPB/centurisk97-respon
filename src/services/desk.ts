@@ -18,6 +18,7 @@ import {
   sentPhoto,
 } from "../adapters/postgres/desk";
 import { eventOf } from "../adapters/postgres/events";
+import { openMissingCount } from "../adapters/postgres/missingPersons";
 import { referenceFile } from "../adapters/postgres/reports";
 import { reportVideos } from "../adapters/postgres/videos";
 import type {
@@ -252,6 +253,7 @@ export async function deskSummary(
       byHas: counts.byHas,
       emergencies: await emergencyList(bindings, staff),
       mayReadResponse: mayUse(staff.role, "readResponse"),
+      missingOpen: await openMissingCount(bindings.db, staff.scope),
     },
   };
 }

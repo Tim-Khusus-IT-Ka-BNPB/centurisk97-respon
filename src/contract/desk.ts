@@ -100,6 +100,8 @@ export const deskSummarySchema = z.object({
   emergencies: z.array(deskEmergencySchema),
   // This account may read how fast each agency answers.
   mayReadResponse: z.boolean(),
+  // The region's missing persons still looked for.
+  missingOpen: z.number().int().nonnegative(),
 });
 
 export type DeskSummary = z.infer<typeof deskSummarySchema>;

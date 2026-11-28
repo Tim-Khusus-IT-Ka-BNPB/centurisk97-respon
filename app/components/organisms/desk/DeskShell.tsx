@@ -146,9 +146,15 @@ function DeskNav({ place }: { readonly place: DeskPlace }) {
           </li>
         ) : null}
         <li>
-          <Link to={MISSING} aria-current={pathname === MISSING ? "page" : undefined} className={item}>
+          <Link
+            to={MISSING}
+            aria-current={pathname === MISSING ? "page" : undefined}
+            aria-label={counted(t, t("missing.desk.title"), summary?.missingOpen)}
+            className={item}
+          >
             <Icon name="userSearch" className={navIcon} />
             {t("missing.desk.title")}
+            <Count n={summary?.missingOpen} />
           </Link>
         </li>
         <li>
