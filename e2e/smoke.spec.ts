@@ -6,7 +6,7 @@ test.beforeEach(async ({ context }) => ownAddress(context));
 test("the home offers one way to report and BNPB's contacts", async ({ page }) => {
   const response = await page.goto("/");
   expect(response?.status()).toBe(200);
-  await expect(page.getByRole("heading", { level: 1 })).toHaveText("Laporkan kejadian bencana di sekitar Anda");
+  await expect(page.getByRole("heading", { level: 1 })).toHaveText("Ada bencana di sekitar Anda?");
   await expect(page.getByRole("link", { name: "Lapor kejadian" })).toHaveAttribute("href", "/report");
   await expect(page.getByRole("heading", { name: "Kontak BNPB" })).toBeVisible();
   await noSidewaysScroll(page);
