@@ -844,15 +844,7 @@ export const referenceFile = pgTable(
   () => [
     check(
       "reference_file_name",
-      oneOf("name", [
-        "bpbdContacts",
-        "education",
-        "responseActions",
-        "forecast",
-        "volcanoes",
-        "facilityNumbers",
-        "officialEvents",
-      ]),
+      oneOf("name", ["bpbdContacts", "education", "responseActions", "forecast", "volcanoes", "facilityNumbers"]),
     ),
   ],
 );

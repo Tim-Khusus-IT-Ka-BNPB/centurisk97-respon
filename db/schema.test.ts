@@ -136,6 +136,11 @@ describe("schema", () => {
       await refusal(sql`insert into report_draft (id, reporter_id, owner_slot, state, fields, created_at, last_acted_at)
       values (${crypto.randomUUID()}, ${crypto.randomUUID()}, 'x', 'place', 'not json', ${NOW}, ${NOW})`),
     ).toMatch(/invalid input syntax for type json/);
+    // BNPB's daily events are no longer a reference file.
+    expect(
+      await refusal(sql`insert into reference_file (name, data_date, source, body, checksum, imported_at)
+      values ('officialEvents', '2026-11-26', 'seed', '{}', 'x', ${NOW})`),
+    ).toBe("CHECK");
   });
 
   test("place codes keep their shape", async () => {
