@@ -45,8 +45,8 @@ test("the api answers health", async ({ request }) => {
   expect(await response.text()).toBe("ok");
 });
 
-test("the site root leads to the service", async ({ page }) => {
+test("the site root is the service's home", async ({ page }) => {
   await page.goto("/");
-  await expect(page).toHaveURL(/\/lapor$/);
+  await expect(page).toHaveURL(/:\d+\/$/);
   await expect(page.getByRole("link", { name: "Lapor kejadian" })).toBeVisible();
 });
