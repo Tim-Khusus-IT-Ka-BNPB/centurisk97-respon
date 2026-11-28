@@ -75,6 +75,7 @@ export const PAGE_TEXTS = {
     "value.",
     "refusal.",
     "reply.",
+    "safety.",
     "resume.",
     "identity.role.",
     "field.",

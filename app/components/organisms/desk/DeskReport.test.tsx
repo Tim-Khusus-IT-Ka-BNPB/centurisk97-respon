@@ -91,7 +91,9 @@ describe("a report on the desk", () => {
     expect(values.getByText("Banjir")).toBeTruthy();
     expect(values.getByText("Dipilih pelapor")).toBeTruthy();
     expect(values.getByText("2 orang")).toBeTruthy();
-    expect(values.getByText("dua orang meninggal")).toBeTruthy();
+    // A value read from Javanese words keeps them, and how they read in Indonesian.
+    expect(values.getByText("wong loro mati")).toBeTruthy();
+    expect(values.getByText("Terjemahan: dua orang meninggal")).toBeTruthy();
     expect(values.getByText("Diisi pelapor di kotak isian")).toBeTruthy();
     expect(values.getByText("tidak tahu")).toBeTruthy();
     expect(values.getByText("belum didata")).toBeTruthy();
@@ -106,9 +108,11 @@ describe("a report on the desk", () => {
     expect(history.getByText("Sistem")).toBeTruthy();
     expect(history.getByText("Pusdalops BNPB, Petugas Uji")).toBeTruthy();
     expect(history.getByText("Dicek")).toBeTruthy();
-    expect(
-      within(screen.getByRole("region", { name: "Jawaban pelapor" })).getByText("banjir, dua orang meninggal"),
-    ).toBeTruthy();
+    const words = within(screen.getByRole("region", { name: "Jawaban pelapor" }));
+    expect(words.getByText("banjir, dua orang meninggal")).toBeTruthy();
+    expect(words.getByText("banjir, wong loro mati")).toBeTruthy();
+    expect(words.getByText("Terjemahan dari Bahasa Jawa: banjir, dua orang meninggal")).toBeTruthy();
+    expect(words.getByText("Terjemahan dari bahasa lain: banjir, dua meninggal")).toBeTruthy();
     expect(
       within(screen.getByRole("region", { name: "Foto pelapor" })).getByText("Pelapor tidak mengirim foto."),
     ).toBeTruthy();

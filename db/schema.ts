@@ -229,6 +229,9 @@ export const draftMessage = pgTable(
     seq: integer().notNull(),
     speaker: text().notNull(),
     text_masked: text(),
+    // A reporter's line in another language: which one, and how it reads in Indonesian for the desk.
+    text_language: text(),
+    text_indonesian: text(),
     copy_key: text(),
     // The question an assistant line asked, beside its heading, so the history shows the question
     // itself (a guided step's heading is only its progress).
@@ -244,6 +247,10 @@ export const draftMessage = pgTable(
     check(
       "draft_message_text",
       sql`(${t.speaker} = 'reporter') = (${t.text_masked} is not null and ${t.copy_key} is null)`,
+    ),
+    check(
+      "draft_message_translation",
+      sql`${t.speaker} = 'reporter' or (${t.text_language} is null and ${t.text_indonesian} is null)`,
     ),
   ],
 );

@@ -3,6 +3,8 @@ import { Form, Link, useFetcher, useNavigation, useSearchParams } from "react-ro
 import type { DeskIdentity, DeskReport, DeskSummary } from "../../../../src/contract/desk";
 import type { ErrorEnvelope } from "../../../../src/contract/errors";
 import { hazardKey } from "../../../../src/copy/hazardKey";
+import { LANGUAGES } from "../../../../src/copy/languages";
+import type { Text } from "../../../../src/copy/text";
 import { cn } from "../../../lib/cn";
 import type { DeskTyped, OfficerNumber } from "../../../lib/deskTypes";
 import { cardProblem, isLimit } from "../../../lib/envelope";
@@ -39,6 +41,10 @@ import {
   UnverifiedChip,
   when,
 } from "./parts";
+
+// The language a reporter wrote in, by its Indonesian name.
+const languageName = (t: Text, code: string | null) =>
+  LANGUAGES.find(([id]) => id === code)?.[1] ?? t("desk.words.otherLanguage");
 
 const SAVED = [
   "status",
@@ -624,6 +630,14 @@ export function DeskReportView({
                     // biome-ignore lint/suspicious/noArrayIndexKey: the list is append-only and never reordered
                     <li key={index} className="flex flex-col">
                       <q>{word.text}</q>
+                      {word.indonesian === null ? null : (
+                        <span className="text-meta">
+                          {t("desk.words.translated", {
+                            language: languageName(t, word.language),
+                            text: word.indonesian,
+                          })}
+                        </span>
+                      )}
                       <span className="text-meta text-muted tabular-nums">{when(t, "desk.history.at", word.at)}</span>
                     </li>
                   ))}

@@ -154,7 +154,13 @@ export async function transcript(db: Database, draftId: string): Promise<Transcr
 }
 
 export type NewMessage =
-  | { readonly speaker: "reporter"; readonly textMasked: string }
+  | {
+      readonly speaker: "reporter";
+      readonly textMasked: string;
+      // A line in another language: which one, and how it reads in Indonesian, for the desk.
+      readonly language?: string | null;
+      readonly indonesian?: string | null;
+    }
   | {
       readonly speaker: "assistant";
       readonly copyKey: string;
@@ -194,8 +200,9 @@ export function addMessages(draftId: string, messages: readonly NewMessage[], at
   const next = sql`(select coalesce(max(seq), 0) + 1 from draft_message where draft_id = ${draftId})`;
   return messages.map((message) =>
     message.speaker === "reporter"
-      ? sql`insert into draft_message (draft_id, seq, speaker, text_masked, created_at)
-          values (${draftId}, ${next}, 'reporter', ${message.textMasked}, ${at})`
+      ? sql`insert into draft_message (draft_id, seq, speaker, text_masked, text_language, text_indonesian, created_at)
+          values (${draftId}, ${next}, 'reporter', ${message.textMasked}, ${message.language ?? null},
+            ${message.indonesian ?? null}, ${at})`
       : sql`insert into draft_message (draft_id, seq, speaker, copy_key, prompt_key, params, card_kind, created_at)
           values (${draftId}, ${next}, 'assistant', ${message.copyKey}, ${message.promptKey ?? null},
             ${message.params}, ${message.cardKind}, ${at})`,

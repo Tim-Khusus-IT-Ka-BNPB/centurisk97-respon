@@ -53,7 +53,7 @@ export const OFFERED = LANGUAGES.filter(([id]) => id === "id" || HAVE.has(id));
 export const LANGUAGE_COOKIE = "bahasa";
 
 // The language a browser picked, when it is still offered; Indonesian otherwise.
-export function languageFrom(cookieHeader: string | null): LanguageId {
+export function languageFrom(cookieHeader: string | null | undefined): LanguageId {
   const picked = /(?:^|;\s*)bahasa=([a-z]{2,3})(?:;|$)/.exec(cookieHeader ?? "")?.[1];
   return OFFERED.find(([id]) => id === picked)?.[0] ?? "id";
 }

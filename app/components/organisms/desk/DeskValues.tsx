@@ -21,6 +21,9 @@ function ValueRow({ row, hazardType }: { readonly row: Row; readonly hazardType:
           parts.value
         )}
         {row.quote === null ? null : <q className="block text-meta text-muted italic">{row.quote}</q>}
+        {row.translation === null ? null : (
+          <span className="block text-meta text-muted">{t("desk.translated", { text: row.translation })}</span>
+        )}
       </dd>
       {origin === null ? null : <dd className="text-meta text-muted sm:text-end">{t(`desk.origin.${origin}`)}</dd>}
     </div>

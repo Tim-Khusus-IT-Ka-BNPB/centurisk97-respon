@@ -19,15 +19,17 @@ import { draftPhotos, type PhotoRecord } from "../adapters/postgres/photos";
 import { activeVillage, villageCentre } from "../adapters/postgres/places";
 import { type ReportRecord, referenceFile, reportByDraft } from "../adapters/postgres/reports";
 import type { DraftBody } from "../contract/draft";
+import type { LanguageId } from "../copy/languages";
 import { isFinal } from "../domain/draftStates";
 import { checkFacilityFile } from "../domain/facilities";
 import type { PlaceValue } from "../domain/fieldState";
 import { chosenHazardType } from "../domain/fields/applicable";
-import type { GroupId } from "../domain/fields/catalogue";
+import type { FieldId, GroupId } from "../domain/fields/catalogue";
 import type { FieldError, ReporterRole } from "../domain/identityForm";
 import { maskText } from "../domain/masking";
 import { nearestFacilities } from "../domain/nearFacilities";
 import { ownsDraft } from "../domain/ownership";
+import { newlyChosenHazard, notedFacts, typedWords, withTranslation } from "../domain/turn/acknowledge";
 import type { DraftContent, PlaceReading, Question } from "../domain/turn/content";
 import {
   currentQuestion,
@@ -205,7 +207,12 @@ function noticesOf(outcome: Extract<TurnOutcome, { kind: "next" }>, extraLife: b
   return life ? [LIFE_LINE, ...notices] : notices;
 }
 
-type Prepared = { readonly input: TurnInput; readonly messages: NewMessage[] } | { readonly errors: FieldError[] };
+// A text typed on a card in another language, and how it reads in Indonesian.
+type Typed = { readonly fieldId: FieldId | null; readonly indonesian: string };
+
+type Prepared =
+  | { readonly input: TurnInput; readonly messages: NewMessage[]; readonly typed?: Typed | null }
+  | { readonly errors: FieldError[] };
 
 // A reading the page took: coordinates and accuracy as numbers, accuracy never negative.
 function readingOf(values: Readonly<Record<string, string>>) {
@@ -222,6 +229,23 @@ function nearbyVillage(content: DraftContent, code: string | null) {
   return reading?.nearby.find((one) => one.village.villageCode === code)?.village ?? null;
 }
 
+// Words typed on a card while the page is in another language are read for their Indonesian only:
+// the card's own answer decides the values.
+async function typedTranslation(
+  bindings: ServiceBindings,
+  draft: DraftRecord,
+  question: Question,
+  values: Readonly<Record<string, string>>,
+  language: LanguageId,
+): Promise<{ readonly language: string; readonly indonesian: string } | null> {
+  const typed = typedWords(question, values);
+  if (typed === null || language === "id") return null;
+  const reporter = { name: draft.name, number: draft.number };
+  const message = maskText(typed, reporter);
+  const read = await extractFrom(bindings, draft, draft.content as DraftContent, message, draft.templatesOnly);
+  return read.indonesian === null ? null : { language: read.language as string, indonesian: read.indonesian };
+}
+
 async function prepare(
   bindings: ServiceBindings,
   principal: Principal,
@@ -229,6 +253,7 @@ async function prepare(
   request: TurnRequest,
   question: Question,
   photos: readonly PhotoRecord[],
+  language: LanguageId,
 ): Promise<Prepared> {
   const reporter = { name: draft.name, number: draft.number };
   const content = draft.content as DraftContent;
@@ -247,7 +272,9 @@ async function prepare(
     }
     const message = maskText(request.text, reporter);
     const extraction = await extractFrom(bindings, draft, content, message, draft.templatesOnly);
-    const messages: NewMessage[] = [{ speaker: "reporter", textMasked: message }];
+    const messages: NewMessage[] = [
+      { speaker: "reporter", textMasked: message, language: extraction.language, indonesian: extraction.indonesian },
+    ];
     if (extraction.reply && extraction.reply !== "none" && extraction.topic === "disaster")
       messages.push({ speaker: "assistant", copyKey: `reply.${extraction.reply}`, params: {}, cardKind: null });
     return { input: { kind: "story", message, extraction }, messages };
@@ -278,9 +305,14 @@ async function prepare(
         : null;
     const named = village ?? confirmed;
     const line = named ? named.villageName : answerLine(card, request.optionIds, request.values, reporter);
+    const translated = await typedTranslation(bindings, draft, question, request.values, language);
     return {
       input: { kind: "answer", answer: { optionIds: request.optionIds, values: request.values }, village },
-      messages: line === "" ? [] : [{ speaker: "reporter", textMasked: line }],
+      messages: line === "" ? [] : [{ speaker: "reporter", textMasked: line, ...translated }],
+      typed:
+        translated === null
+          ? null
+          : { fieldId: question.kind === "textQuestion" ? question.fieldId : null, indonesian: translated.indonesian },
     };
   }
   if (request.kind === "editGroup")
@@ -297,6 +329,8 @@ export async function takeTurn(
   draftId: string,
   request: TurnRequest,
   requestHash: string,
+  // The language the page is in: words typed on a card in another one are read for their Indonesian.
+  language: LanguageId = "id",
 ): Promise<Answer> {
   const owned = await ownedDraft(bindings, principal, draftId);
   if (owned.kind !== "owned") return owned;
@@ -313,7 +347,7 @@ export async function takeTurn(
   const before = turnDraft(draft);
   const question = currentQuestion(before);
   const photos = await draftPhotos(bindings.db, draft.id);
-  const prepared = await prepare(bindings, principal, draft, request, question, photos);
+  const prepared = await prepare(bindings, principal, draft, request, question, photos, language);
   if ("errors" in prepared)
     return {
       kind: "invalid",
@@ -346,8 +380,39 @@ export async function takeTurn(
       draft: await viewOf(bindings, draft, [], request.turnKey),
     };
   const offered =
-    outcome.kind === "next" ? { ...outcome, draft: await withSameEvent(bindings, before, outcome.draft) } : outcome;
-  return commit(bindings, draft, request, requestHash, offered, prepared.messages, photos);
+    outcome.kind === "next"
+      ? { ...outcome, draft: await withSameEvent(bindings, before, translatedDraft(outcome.draft, prepared.typed)) }
+      : outcome;
+  const lines =
+    offered.kind === "next"
+      ? [...prepared.messages, ...acknowledgement(before, offered.draft, prepared.input)]
+      : prepared.messages;
+  return commit(bindings, draft, request, requestHash, offered, lines, photos);
+}
+
+// A text answer typed on a card in another language keeps its Indonesian, for the desk.
+function translatedDraft(next: TurnDraft, typed: Typed | null | undefined): TurnDraft {
+  const fieldId = typed?.fieldId ?? null;
+  if (fieldId === null) return next;
+  const states = withTranslation(next.content.states, fieldId, (typed as Typed).indonesian);
+  return { ...next, content: { ...next.content, states } };
+}
+
+// What Sigap says back before the next question: what it read from the reporter's words, and the
+// safety line of a hazard type chosen this turn.
+function acknowledgement(before: TurnDraft, after: TurnDraft, input: TurnInput): NewMessage[] {
+  const lines: NewMessage[] = [];
+  const facts = input.kind === "story" ? notedFacts(before.content.states, after.content.states) : [];
+  if (facts.length > 0)
+    lines.push({
+      speaker: "assistant",
+      copyKey: "reply.noted",
+      params: { facts: JSON.stringify(facts) },
+      cardKind: null,
+    });
+  const hazard = newlyChosenHazard(before.content.states, after.content.states);
+  if (hazard !== null) lines.push({ speaker: "assistant", copyKey: `safety.${hazard}`, params: {}, cardKind: null });
+  return lines;
 }
 
 async function commit(

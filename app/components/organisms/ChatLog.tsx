@@ -1,6 +1,7 @@
 import type { DraftBody } from "../../../src/contract/draft";
 import type { Text } from "../../../src/copy/text";
 import { cn } from "../../lib/cn";
+import { factText, parseFacts } from "../../lib/noted";
 import { breakAfterSlash } from "../../lib/slash";
 import { useText } from "../../lib/text";
 import { Icon } from "../atoms/Icon";
@@ -24,6 +25,22 @@ function questionText(t: Text, entry: Extract<Entry, { speaker: "assistant" }>) 
   return t(entry.promptKey ?? entry.copyKey, entry.params);
 }
 
+// What Sigap read from a message, listed so the reporter can check it and correct it.
+function Noted({ facts }: { readonly facts: unknown }) {
+  const t = useText();
+  return (
+    <div className="flex flex-col gap-1.5">
+      <p>{t("reply.noted")}</p>
+      <ul className="flex list-disc flex-col gap-0.5 ps-5">
+        {parseFacts(facts).map((fact) => (
+          <li key={fact.field}>{factText(t, fact)}</li>
+        ))}
+      </ul>
+      <p className="text-meta text-muted">{t("reply.notedHint")}</p>
+    </div>
+  );
+}
+
 function Lines({ entries, keys }: { readonly entries: readonly Entry[]; readonly keys: readonly string[] }) {
   const t = useText();
   return (
@@ -40,7 +57,13 @@ function Lines({ entries, keys }: { readonly entries: readonly Entry[]; readonly
                 : "self-start rounded-es-chip border border-line bg-surface break-words",
             )}
           >
-            {own ? entry.textMasked : breakAfterSlash(questionText(t, entry))}
+            {own ? (
+              entry.textMasked
+            ) : entry.copyKey === "reply.noted" ? (
+              <Noted facts={entry.params.facts} />
+            ) : (
+              breakAfterSlash(questionText(t, entry))
+            )}
           </li>
         );
       })}

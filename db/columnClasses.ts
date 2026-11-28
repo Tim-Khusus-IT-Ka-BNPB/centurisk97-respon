@@ -106,6 +106,8 @@ export const COLUMN_CLASSES: Readonly<Record<string, TableClasses>> = {
       seq: I,
       speaker: I,
       text_masked: P,
+      text_language: I,
+      text_indonesian: P,
       copy_key: I,
       params: I,
       card_kind: I,

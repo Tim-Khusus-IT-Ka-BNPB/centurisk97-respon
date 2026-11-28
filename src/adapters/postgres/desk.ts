@@ -212,7 +212,13 @@ export type DeskReportRecord = QueueRow & {
     readonly event: HistoryEvent | null;
     readonly detail: HistoryDetail | null;
   }[];
-  readonly reporterWords: readonly { readonly text: string; readonly atMs: number }[];
+  // A line in another language comes with which one and its Indonesian.
+  readonly reporterWords: readonly {
+    readonly text: string;
+    readonly language: string | null;
+    readonly indonesian: string | null;
+    readonly atMs: number;
+  }[];
   readonly replies: readonly { readonly text: string; readonly atMs: number; readonly staffLabel: string }[];
   // Grows with every status change; a change names the one it read.
   readonly revision: number;
@@ -261,9 +267,9 @@ export async function deskReport(
       db,
       sql`select to_status, at, actor_label, note, event, detail from ticket_history where ticket_number = ${ticketNumber} order by at, id`,
     ),
-    rows<{ text_masked: string; created_at: string }>(
+    rows<{ text_masked: string; text_language: string | null; text_indonesian: string | null; created_at: string }>(
       db,
-      sql`select text_masked, created_at from draft_message
+      sql`select text_masked, text_language, text_indonesian, created_at from draft_message
         where speaker = 'reporter' and draft_id in (
           select ${found.draft_id}
           union all select d.id from report_draft d where d.follow_up_of = ${found.report_id} and d.state = 'sent')
@@ -289,7 +295,12 @@ export async function deskReport(
       event: one.event,
       detail: one.detail as HistoryDetail | null,
     })),
-    reporterWords: words.map((one) => ({ text: one.text_masked, atMs: Date.parse(one.created_at) })),
+    reporterWords: words.map((one) => ({
+      text: one.text_masked,
+      language: one.text_language,
+      indonesian: one.text_indonesian,
+      atMs: Date.parse(one.created_at),
+    })),
     replies: replies.map((one) => ({ text: one.text, atMs: Date.parse(one.at), staffLabel: one.staff_label })),
     revision: found.revision,
     reportId: found.report_id,

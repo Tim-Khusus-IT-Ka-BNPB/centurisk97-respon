@@ -110,7 +110,10 @@ export type DeskSummary = z.infer<typeof deskSummarySchema>;
 
 // A summary row with the reporter's own words when the value was read from them.
 const deskGroupSchema = summaryGroupSchema.extend({
-  rows: z.array(summaryGroupSchema.shape.rows.element.extend({ quote: z.string().nullable() })),
+  // The words a value came from, and how they read in Indonesian when they are in another language.
+  rows: z.array(
+    summaryGroupSchema.shape.rows.element.extend({ quote: z.string().nullable(), translation: z.string().nullable() }),
+  ),
 });
 
 // A reporter's photo on the desk, with how its place is known (the reporter flow's badges).
@@ -260,7 +263,10 @@ export const deskReportSchema = queueItemSchema.extend({
         .nullable(),
     }),
   ),
-  reporterWords: z.array(z.object({ text: z.string(), at: timeSchema })),
+  // A line in another language comes with its language code and how it reads in Indonesian.
+  reporterWords: z.array(
+    z.object({ text: z.string(), language: z.string().nullable(), indonesian: z.string().nullable(), at: timeSchema }),
+  ),
   // Where the ticket may go from here, and what the note must hold for each.
   nextStatuses: z.array(
     z.object({ status: ticketStatusSchema, note: z.enum(["optional", "required", "reason", "closing"]) }),

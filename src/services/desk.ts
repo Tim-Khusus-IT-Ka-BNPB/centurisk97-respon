@@ -341,7 +341,11 @@ async function reportBody(bindings: ServiceBindings, staff: StaffPrincipal, tick
       ...group,
       rows: group.rows.map((one) => {
         const state = states[one.fieldId as keyof FieldStates];
-        return { ...one, quote: state !== undefined && "quote" in state ? state.quote : null };
+        return {
+          ...one,
+          quote: state !== undefined && "quote" in state ? state.quote : null,
+          translation: (state as { readonly translation?: string } | undefined)?.translation ?? null,
+        };
       }),
     })),
     history: found.history.map((one) => ({
@@ -354,7 +358,12 @@ async function reportBody(bindings: ServiceBindings, staff: StaffPrincipal, tick
       event: one.event,
       detail: one.detail,
     })),
-    reporterWords: found.reporterWords.map((one) => ({ text: one.text, at: at(one.atMs, zone) })),
+    reporterWords: found.reporterWords.map((one) => ({
+      text: one.text,
+      language: one.language,
+      indonesian: one.indonesian,
+      at: at(one.atMs, zone),
+    })),
     photos: (await reportPhotos(bindings.db, ticketNumber)).map(photoView),
     newsStopped: found.newsStopped,
     versions: await versionsOf(bindings, ticketNumber, found.villageCode),

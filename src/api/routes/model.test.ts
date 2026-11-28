@@ -97,8 +97,14 @@ describe("the model only extracts, code keeps what the words hold", () => {
     const told = await say(phone, draft, story);
     expect(told.status).toBe(200);
     expect(
-      told.draft.transcript.slice(-3).map((line) => (line.speaker === "assistant" ? line.copyKey : line.textMasked)),
-    ).toEqual([story, "reply.sympathy", "card.placeSearch.title"]);
+      told.draft.transcript.slice(-4).map((line) => (line.speaker === "assistant" ? line.copyKey : line.textMasked)),
+    ).toEqual([story, "reply.sympathy", "reply.noted", "card.placeSearch.title"]);
+    // Sigap says back what it kept, never the count whose words do not hold it.
+    const noted = told.draft.transcript.at(-2);
+    expect(noted?.speaker === "assistant" && JSON.parse(String(noted.params.facts))).toEqual([
+      { field: "dead", value: null },
+      { field: "housesHeavy", value: 3 },
+    ]);
     const states = (await storedStates(draft.draftId)).fields.states;
     expect(states.housesHeavy).toEqual({ state: "value", value: 3, origin: "quote", quote: "tiga rumah rusak berat" });
     expect(states.dead).toEqual({ state: "none", origin: "quote", quote: "tidak ada korban jiwa" });
@@ -264,5 +270,186 @@ describe("the model only extracts, code keeps what the words hold", () => {
     const { phone, draft } = await start(w);
     expect((await say(phone, draft, "dua rumah rusak berat")).status).toBe(200);
     expect(model.inputs).toHaveLength(0);
+  });
+});
+
+describe("words in another language reach the desk in Indonesian", () => {
+  const tick = (w: ReturnType<typeof world>) => () => w.clock.advance(4000);
+  const reporterLine = async (draftId: string) => {
+    const [line] = await query<{ text_masked: string; text_language: string | null; text_indonesian: string | null }>`
+      select text_masked, text_language, text_indonesian from draft_message
+      where draft_id = ${draftId} and speaker = 'reporter' order by seq desc limit 1`;
+    return line;
+  };
+
+  test("a story in Javanese keeps its language and Indonesian, on its line and on each value read from it", async () => {
+    const jv = "banjir teka, omah sing kelebon ana telung puluh";
+    const model = recorded({
+      [jv]: {
+        topic: "disaster",
+        reply: "sympathy",
+        lifeAtRisk: false,
+        language: "jv",
+        indonesian: "Banjir datang, rumah yang kemasukan air ada 30.",
+        hazardGuesses: [{ hazardType: "flood", subtype: "riverOverflow", confidence: 0.9 }],
+        fields: [
+          {
+            field: "housesFlooded",
+            value: "30",
+            quote: "omah sing kelebon ana telung puluh",
+            quoteIndonesian: "rumah yang kemasukan air ada 30",
+          },
+        ],
+      },
+    });
+    const w = world(model.port);
+    const { phone, draft } = await start(w);
+    expect((await say(phone, draft, jv)).status).toBe(200);
+    expect((await storedStates(draft.draftId)).fields.states.housesFlooded).toEqual({
+      state: "value",
+      value: 30,
+      origin: "quote",
+      quote: "omah sing kelebon ana telung puluh",
+      translation: "rumah yang kemasukan air ada 30",
+    });
+    expect(await reporterLine(draft.draftId)).toEqual({
+      text_masked: jv,
+      text_language: "jv",
+      text_indonesian: "Banjir datang, rumah yang kemasukan air ada 30.",
+    });
+  });
+
+  test("choosing the hazard type says its safety line once, before the next question", async () => {
+    const w = world(recorded({}).port);
+    const { phone, draft } = await start(w);
+    const { draft: atType } = await walkTo(phone, draft, village, {
+      tick: tick(w),
+      stopAt: (current) => "fieldId" in current.card && current.card.fieldId === "hazardType",
+    });
+    const chosen = await phone.call("POST", `/drafts/${atType.draftId}/turns`, turn(atType, { optionIds: ["flood"] }));
+    const lines = (current: DraftBody) =>
+      current.transcript.map((line) => (line.speaker === "assistant" ? line.copyKey : line.textMasked));
+    expect(lines(chosen.draft).slice(-3, -1)).toEqual(["Banjir", "safety.flood"]);
+    const { draft: later } = await walkTo(phone, chosen.draft, village, {
+      tick: tick(w),
+      stopAt: (current) => current.card.kind === "chronologyReview",
+    });
+    expect(lines(later).filter((line) => line.startsWith("safety."))).toEqual(["safety.flood"]);
+  });
+
+  test("words typed on a card while the page is in Javanese are read for their Indonesian, and kept on the value", async () => {
+    const note = "kali mbludak tekan dalan";
+    const model = recorded({
+      [note]: {
+        topic: "disaster",
+        reply: "none",
+        lifeAtRisk: false,
+        language: "jv",
+        indonesian: "Sungai meluap sampai ke jalan.",
+        hazardGuesses: [],
+        fields: [],
+      },
+      "bale desa": {
+        topic: "disaster",
+        reply: "none",
+        lifeAtRisk: false,
+        language: "jv",
+        indonesian: "balai desa",
+        hazardGuesses: [],
+        fields: [],
+      },
+    });
+    const w = world(model.port);
+    const javanese = browser(w.fetchApi);
+    javanese.cookies.set("bahasa", "jv");
+    const { phone, draft } = await start(w, freshNumber().typed, javanese);
+    const { draft: review } = await walkTo(phone, draft, village, {
+      tick: tick(w),
+      stopAt: (current) => current.card.kind === "chronologyReview",
+    });
+    const added = await phone.call(
+      "POST",
+      `/drafts/${review.draftId}/turns`,
+      turn(review, { optionIds: ["add"], values: { note } }),
+    );
+    expect(added.status).toBe(200);
+    expect(await reporterLine(draft.draftId)).toEqual({
+      text_masked: note,
+      text_language: "jv",
+      text_indonesian: "Sungai meluap sampai ke jalan.",
+    });
+    const { draft: shelters } = await walkTo(phone, added.draft, village, {
+      tick: tick(w),
+      overrides: {
+        numberForm: (card) =>
+          card.kind === "numberForm" && card.groupId === "displacement"
+            ? { optionIds: [], values: { displacedPeople: "12", displacedFamilies: "3" } }
+            : { optionIds: ["allNone"] },
+      },
+      stopAt: (current) => current.card.kind === "textQuestion" && current.card.fieldId === "shelters",
+    });
+    const typed = await phone.call(
+      "POST",
+      `/drafts/${shelters.draftId}/turns`,
+      turn(shelters, { optionIds: [], values: { shelters: "bale desa" } }),
+    );
+    expect(typed.status).toBe(200);
+    expect((await storedStates(draft.draftId)).fields.states.shelters).toEqual({
+      state: "value",
+      value: "bale desa",
+      origin: "boxEntry",
+      translation: "balai desa",
+    });
+  });
+
+  test("a note the model gives no Indonesian for is kept as typed", async () => {
+    const note = "ndak tahu";
+    const model = recorded({
+      [note]: {
+        topic: "disaster",
+        reply: "none",
+        lifeAtRisk: false,
+        language: "jv",
+        indonesian: "",
+        hazardGuesses: [],
+        fields: [],
+      },
+    });
+    const w = world(model.port);
+    const javanese = browser(w.fetchApi);
+    javanese.cookies.set("bahasa", "jv");
+    const { phone, draft } = await start(w, freshNumber().typed, javanese);
+    const { draft: review } = await walkTo(phone, draft, village, {
+      tick: tick(w),
+      stopAt: (current) => current.card.kind === "chronologyReview",
+    });
+    await phone.call("POST", `/drafts/${review.draftId}/turns`, turn(review, { optionIds: ["add"], values: { note } }));
+    expect(await reporterLine(draft.draftId)).toEqual({
+      text_masked: note,
+      text_language: null,
+      text_indonesian: null,
+    });
+  });
+
+  test("on a page in Indonesian, words typed on a card are not sent to the model", async () => {
+    const model = recorded({});
+    const w = world(model.port);
+    const { phone, draft } = await start(w);
+    const { draft: review } = await walkTo(phone, draft, village, {
+      tick: tick(w),
+      stopAt: (current) => current.card.kind === "chronologyReview",
+    });
+    const before = model.inputs.length;
+    await phone.call(
+      "POST",
+      `/drafts/${review.draftId}/turns`,
+      turn(review, { optionIds: ["add"], values: { note: "kali meluap" } }),
+    );
+    expect(model.inputs).toHaveLength(before);
+    expect(await reporterLine(draft.draftId)).toEqual({
+      text_masked: "kali meluap",
+      text_language: null,
+      text_indonesian: null,
+    });
   });
 });

@@ -1,0 +1,12 @@
+{
+  "safety.flood": "Jauhi arus air dan saluran yang meluap. Bila air mulai masuk rumah, matikan listrik dari meteran dan pindah ke tempat yang lebih tinggi.",
+  "safety.landslide": "Menjauhlah dari lereng dan jalur longsoran. Longsor susulan bisa terjadi, terutama bila hujan turun lagi.",
+  "safety.tidalWaveAbrasion": "Menjauhlah dari bibir pantai selama gelombang tinggi. Pindahkan perahu dan barang ke tempat yang lebih tinggi.",
+  "safety.extremeWeather": "Berlindunglah di bangunan yang kokoh. Jauhi pohon besar, papan reklame, dan tiang listrik.",
+  "safety.drought": "Simpan air bersih untuk minum dan memasak. Bila sumber air warga sudah habis, sebutkan di laporan ini.",
+  "safety.forestFire": "Jangan mendekati api; tunggu petugas pemadam. Kurangi kegiatan di luar rumah dan pakai masker saat asap tebal.",
+  "safety.earthquake": "Gempa susulan bisa terjadi. Jangan masuk ke bangunan yang retak, dan berkumpullah di tempat terbuka.",
+  "safety.tsunami": "Segera menuju tempat tinggi atau menjauh dari pantai. Jangan kembali sebelum petugas menyatakan boleh kembali.",
+  "safety.volcanicEruption": "Ikuti arahan petugas untuk menjauh dari kawasan rawan. Pakai masker dan lindungi mata dari abu.",
+  "safety.buildingFire": "Keluar dari bangunan dan jauhi asap. Telepon pemadam kebakaran di 113."
+}

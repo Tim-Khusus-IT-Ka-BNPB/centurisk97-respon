@@ -57,6 +57,13 @@
       "when": 1795883671894,
       "tag": "0007_reference_change",
       "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "7",
+      "when": 1795889211480,
+      "tag": "0008_message_translation",
+      "breakpoints": true
     }
   ]
 }

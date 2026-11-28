@@ -1,5 +1,6 @@
 import { createRoute, z } from "@hono/zod-openapi";
 import { draftBodySchema, sentResponseSchema } from "../../contract/draft";
+import { languageFrom } from "../../copy/languages";
 import { GROUP_IDS } from "../../domain/fields/catalogue";
 import { checkLimits } from "../../services/limits";
 import { sendDraft } from "../../services/send";
@@ -73,6 +74,7 @@ export function addDraftRoutes(api: Api): void {
         c.req.valid("param").draftId,
         request,
         await requestHash(body),
+        languageFrom(c.req.header("cookie")),
       );
       return answered(c, answer);
     },

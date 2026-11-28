@@ -463,5 +463,8 @@
   "desk.numbers.error.kind": "Pilih jenis fasilitas.",
   "desk.numbers.error.name": "Tulis nama fasilitas, 2 sampai 120 huruf.",
   "desk.numbers.error.phone": "Nomor belum terbaca. Tulis nomor telepon seperti 0651 22222, atau nomor layanan seperti 110.",
-  "desk.numbers.error.point": "Titik itu di luar Indonesia. Periksa lintang dan bujurnya, mungkin tertukar."
+  "desk.numbers.error.point": "Titik itu di luar Indonesia. Periksa lintang dan bujurnya, mungkin tertukar.",
+  "desk.translated": "Terjemahan: {text}",
+  "desk.words.translated": "Terjemahan dari {language}: {text}",
+  "desk.words.otherLanguage": "bahasa lain"
 }
