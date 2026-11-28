@@ -51,10 +51,14 @@ describe("the desk account claims make", () => {
     expect(staffAccountOf(claimsWith(regency))).toMatchObject({
       role: "regionalOfficer",
       agency: "BPBD Kabupaten Uji",
+      position: "",
       scope: { level: "regency", code: "11.08" },
     });
     const province = { organization: organization("bpbd", "province", "11"), role: "officer", position: "Kepala" };
-    expect(staffAccountOf(claimsWith(province))).toMatchObject({ scope: { level: "province", code: "11" } });
+    expect(staffAccountOf(claimsWith(province))).toMatchObject({
+      position: "Kepala",
+      scope: { level: "province", code: "11" },
+    });
   });
 
   test("a BNPB desk role wins over a BPBD one", () => {
@@ -69,6 +73,8 @@ describe("the desk account claims make", () => {
       { organization: organization("basarnas", "regency", "11.08"), role: "officer", position: null },
       { organization: organization("bpbd", "regency", "11.08"), role: "viewer", position: null },
       { organization: organization("bpbd", "national", null), role: "officer", position: null },
+      { organization: organization("bpbd", "national", "11"), role: "officer", position: null },
+      { organization: organization("bpbd", "regency", "11.08"), role: "pusdalops", position: null },
       { organization: organization("bpbd", "regency", null), role: "officer", position: null },
       { organization: organization("bpbd", "regency", "11"), role: "officer", position: null },
       { organization: organization("bpbd", "province", "11.08"), role: "officer", position: null },

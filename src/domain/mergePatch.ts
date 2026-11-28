@@ -13,5 +13,6 @@ export function mergePatch(
   return merged;
 }
 
+// A JSON object: not null, not an array, not a plain value.
 const isObject = (value: unknown): value is Readonly<Record<string, unknown>> =>
-  typeof value === "object" && value !== null && !Array.isArray(value);
+  Object.prototype.toString.call(value) === "[object Object]";

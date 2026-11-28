@@ -57,6 +57,7 @@ export function staffAccountOf(raw: unknown): StaffAccount | null {
       kind !== "bpbd" ||
       one.role !== "officer" ||
       level === "national" ||
+      // Stryker disable next-line ConditionalExpression: a null region never matches a region pattern either
       region === null ||
       !REGION[level].test(region)
     )
