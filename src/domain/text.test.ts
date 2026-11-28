@@ -23,14 +23,19 @@ describe("place text", () => {
     expect(placeSearchText("Sukamaju", "Kab. Contoh-2", "Cibeber (Kota)")).toBe("sukamaju kab contoh 2 cibeber kota");
   });
 
-  test("query words: one letter words dropped, five at most", () => {
-    expect(placeQueryWords("  Desa  a Sukamaju, Kec. B Cibeber satu dua tiga")).toEqual([
-      "desa",
+  test("query words: one letter words and kind words dropped, five at most", () => {
+    expect(placeQueryWords("  Desa  a Sukamaju, Kec. B Cibeber satu dua tiga empat")).toEqual([
       "sukamaju",
-      "kec",
       "cibeber",
       "satu",
+      "dua",
+      "tiga",
     ]);
+    expect(placeQueryWords("Kelurahan Kampung Melayu")).toEqual(["kampung", "melayu"]);
+    expect(placeQueryWords("kabupaten Bogor, kel. Tegal")).toEqual(["bogor", "tegal"]);
+    expect(placeQueryWords("Kab. Aceh Utara kecamatan Baktiya")).toEqual(["aceh", "utara", "baktiya"]);
+    // Kind words alone are all there is to search.
+    expect(placeQueryWords("desa kec")).toEqual(["desa", "kec"]);
     expect(placeQueryWords("!!")).toEqual([]);
   });
 });

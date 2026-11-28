@@ -9,12 +9,18 @@ export function placeSearchText(...parts: readonly string[]): string {
 
 const MAX_QUERY_WORDS = 5;
 
-// The words of a place query that must all match: one letter words are ignored, five at most.
+// Words that name the kind of place, not the place: "desa sukamaju" or "kec. baktiya" is searched by
+// its name, as a place's own words never hold them.
+const KIND_WORDS = new Set(["desa", "kelurahan", "kel", "kecamatan", "kec", "kabupaten", "kab"]);
+
+// The words of a place query that must all match: one letter words and kind words are ignored, five
+// at most. A query of kind words alone keeps them.
 export function placeQueryWords(query: string): readonly string[] {
-  return placeSearchText(query)
+  const words = placeSearchText(query)
     .split(" ")
-    .filter((word) => word.length > 1)
-    .slice(0, MAX_QUERY_WORDS);
+    .filter((word) => word.length > 1);
+  const named = words.filter((word) => !KIND_WORDS.has(word));
+  return (named.length > 0 ? named : words).slice(0, MAX_QUERY_WORDS);
 }
 
 // A place word in the new spelling, from the old one still typed (Soerabaja, Djakarta, Tjilatjap,
