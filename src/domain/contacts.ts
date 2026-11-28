@@ -1,6 +1,7 @@
 // Upstream's BPBD contact file (public/data/bpbd_kontak.json): per province ("16") and regency
-// ("1101") the agency's numbers, each with its kind and source page, some marked old. No imports,
-// so the Node import scripts share this contract.
+// ("1101") the agency's numbers, each with its kind and source page, some marked old. Since
+// 2026-11 an area may list its fire brigade's numbers (damkar) beside or instead of its BPBD's; only
+// the BPBD's are ever shown. No imports, so the Node import scripts share this contract.
 
 type ContactNumber = {
   readonly nomor: string;
@@ -9,7 +10,11 @@ type ContactNumber = {
   readonly lama?: boolean;
 };
 
-type AreaEntry = { readonly nama: string; readonly bpbd: readonly ContactNumber[] };
+type AreaEntry = {
+  readonly nama: string;
+  readonly bpbd?: readonly ContactNumber[];
+  readonly damkar?: readonly ContactNumber[];
+};
 
 export type ContactFile = {
   readonly sumber: string;
@@ -30,9 +35,16 @@ const isNumber = (value: unknown): value is ContactNumber => {
   );
 };
 
+const isNumbers = (value: unknown) => value === undefined || (Array.isArray(value) && value.every(isNumber));
+
 const isEntry = (value: unknown): value is AreaEntry => {
   const entry = value as Partial<AreaEntry> | null;
-  return typeof entry?.nama === "string" && Array.isArray(entry.bpbd) && entry.bpbd.every(isNumber);
+  return (
+    typeof entry?.nama === "string" &&
+    (entry.bpbd !== undefined || entry.damkar !== undefined) &&
+    isNumbers(entry.bpbd) &&
+    isNumbers(entry.damkar)
+  );
 };
 
 // The file as its contract says, or null. An empty list of areas is a broken export, not a country.

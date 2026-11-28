@@ -26,10 +26,13 @@ export const TOPIC_LISTS = ["tanda", "sebelum", "saat", "sesudah", "butir"] as c
 
 const isText = (value: unknown): value is string => typeof value === "string" && value.trim() !== "";
 const isList = (value: unknown) => value === undefined || (Array.isArray(value) && value.every(isText));
-const isSource = (value: unknown) => {
+const isSource = (value: unknown): value is Source => {
   const source = value as Partial<Source> | null;
-  return isText(source?.lembaga) && isText(source.judul) && isText(source.url) && /^https:\/\//.test(source.url);
+  return isText(source?.lembaga) && isText(source.judul) && isText(source.url);
 };
+
+// Only a source over https is shown as a link; one that is not is left out of its topic.
+const overHttps = (source: Source) => /^https:\/\//.test(source.url);
 
 const isTopic = (value: unknown): value is EducationTopic => {
   const topic = value as Partial<EducationTopic> | null;
@@ -39,12 +42,13 @@ const isTopic = (value: unknown): value is EducationTopic => {
     isText(topic.ringkas) &&
     TOPIC_LISTS.every((list) => isList(topic[list])) &&
     Array.isArray(topic.sumber) &&
-    topic.sumber.length > 0 &&
-    topic.sumber.every(isSource)
+    topic.sumber.every(isSource) &&
+    topic.sumber.some(overHttps)
   );
 };
 
-// The file as its contract says, or null. Every topic must name at least one source over https.
+// The file as its contract says, or null. Every topic must name at least one source over https,
+// and only those are kept.
 export function checkEducationFile(json: unknown): EducationFile | null {
   const file = json as Partial<EducationFile> | null;
   if (!isText(file?.dibuat) || !/^\d{4}-\d{2}-\d{2}$/.test(file.dibuat) || typeof file.catatan !== "string")
@@ -52,5 +56,5 @@ export function checkEducationFile(json: unknown): EducationFile | null {
   const topics = file.topik;
   if (!Array.isArray(topics) || topics.length === 0 || !topics.every(isTopic)) return null;
   if (new Set(topics.map((topic) => topic.id)).size !== topics.length) return null;
-  return file as EducationFile;
+  return { ...(file as EducationFile), topik: topics.map((one) => ({ ...one, sumber: one.sumber.filter(overHttps) })) };
 }

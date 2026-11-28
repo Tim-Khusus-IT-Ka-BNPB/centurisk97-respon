@@ -12,6 +12,11 @@ describe("education file", () => {
     expect(checkEducationFile(file([topic]))?.dibuat).toBe("2026-11-19");
   });
 
+  test("a source not over https is left out, and the topic stands on the ones that are", () => {
+    const plain = { ...source, url: "http://www.kemkes.go.id/" };
+    expect(checkEducationFile(file([{ ...topic, sumber: [plain, source] }]))?.topik[0]?.sumber).toEqual([source]);
+  });
+
   test("a file or topic that breaks its contract is refused", () => {
     for (const broken of [
       null,

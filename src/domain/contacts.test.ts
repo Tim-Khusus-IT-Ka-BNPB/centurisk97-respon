@@ -63,6 +63,9 @@ describe("contact file", () => {
         wilayah: { "11": { nama: "A", bpbd: [item("1", "x", { lama: "ya" })] } },
       },
       { sumber: "x", diperbarui: "2026-11-22", wilayah: { "11": null } },
+      { sumber: "x", diperbarui: "2026-11-22", wilayah: { "11": { nama: "A" } } },
+      { sumber: "x", diperbarui: "2026-11-22", wilayah: { "11": { nama: "A", damkar: "x" } } },
+      { sumber: "x", diperbarui: "2026-11-22", wilayah: { "11": { nama: "A", damkar: [{ nomor: 1, jenis: "x" }] } } },
     ])
       expect(checkContactFile(broken)).toBeNull();
     expect(checkContactFile({ sumber: "x", diperbarui: "2026-11-22", wilayah: { "11": good } })).not.toBeNull();
@@ -91,6 +94,18 @@ describe("contact file", () => {
       [Object.assign(() => undefined, { "1108": good }), {}],
     ] as const)
       expect(at(wilayah, extra), JSON.stringify([wilayah, extra])).toBeNull();
+  });
+
+  test("an area may list its fire brigade beside or instead of its BPBD; only the BPBD is shown", () => {
+    const damkar = [item("0851-0500-4113", "damkar")];
+    const onlyFire = file({
+      "1173": { nama: "Kota Lhokseumawe", damkar },
+      "11": { nama: "Aceh", bpbd: [item("0651-34783", "kantor")] },
+    });
+    expect(onlyFire).not.toBeNull();
+    expect(pickContact(onlyFire, "11.73.01.1001")).toEqual({ level: "province", phone: "0651-34783", kind: "kantor" });
+    const both = file({ "1173": { nama: "Kota Lhokseumawe", damkar, bpbd: [item("0645-40001", "kantor")] } });
+    expect(pickContact(both, "11.73.01.1001")).toEqual({ level: "regency", phone: "0645-40001", kind: "kantor" });
   });
 
   test("six digits is a number to show; five with a dash in them is not", () => {
