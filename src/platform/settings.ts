@@ -21,8 +21,6 @@ export type Settings = {
   readonly faultPlace: boolean;
   readonly todayPage: boolean;
   readonly addressFallback: "loopback" | null;
-  // One secret per WhatsApp gateway, by its id. Empty: that door is shut.
-  readonly gatewaySecrets: ReadonlyMap<string, string>;
   // The VAPID pair the warnings are signed with, and who the push services may write to. Null:
   // warnings are shut.
   readonly push: { readonly publicKey: string; readonly privateKey: string; readonly subject: string } | null;
@@ -67,20 +65,6 @@ function hostOf(url: string): string | null {
   }
 }
 
-const GATEWAY_ENTRY = /^([a-z0-9-]{2,40})=([^\s=]{32,})$/;
-
-// "id=secret id=secret": one secret per gateway, so one can be taken away alone. Null when an entry
-// cannot be read or an id comes twice.
-function readGatewaySecrets(text: string): ReadonlyMap<string, string> | null {
-  const secrets = new Map<string, string>();
-  for (const entry of text.split(" ").filter(Boolean)) {
-    const match = GATEWAY_ENTRY.exec(entry);
-    if (!match || secrets.has(match[1] as string)) return null;
-    secrets.set(match[1] as string, match[2] as string);
-  }
-  return secrets;
-}
-
 const raw = z.object({
   APP_ENV: z.enum(APP_ENVS),
   APP_ORIGIN: z.url(),
@@ -99,10 +83,6 @@ const raw = z.object({
   // The public today page (upstream LAPOR_HARI_INI): off unless "on"; off, its page and API answer 404.
   TODAY_PAGE: z.enum(["", "on"]).default(""),
   ADDRESS_FALLBACK: z.enum(["", "loopback"]).default(""),
-  GATEWAY_SECRETS: z
-    .string()
-    .refine((value) => readGatewaySecrets(value) !== null)
-    .default(""),
   // base64url: an uncompressed P-256 point, its private scalar, and a contact the push services accept.
   PUSH_PUBLIC_KEY: z.union([z.literal(""), z.string().regex(/^B[A-Za-z0-9_-]{86}$/)]).default(""),
   PUSH_PRIVATE_KEY: z.union([z.literal(""), z.string().regex(/^[A-Za-z0-9_-]{43}$/)]).default(""),
@@ -213,7 +193,6 @@ export function parseSettings(source: Readonly<Record<string, unknown>>): Settin
     faultPlace: values.FAULT_PLACE === "on",
     todayPage: values.TODAY_PAGE === "on",
     addressFallback: values.ADDRESS_FALLBACK === "" ? null : "loopback",
-    gatewaySecrets: readGatewaySecrets(values.GATEWAY_SECRETS) as ReadonlyMap<string, string>,
     push:
       values.PUSH_PUBLIC_KEY === ""
         ? null

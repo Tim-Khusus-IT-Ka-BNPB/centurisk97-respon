@@ -1,7 +1,6 @@
-import type { Point } from "../../domain/geo";
 import type { GpsDoubt } from "../../domain/gpsDoubts";
 import type { KeptPhoto } from "../../domain/photoChecks";
-import { type Database, type Query, row, rows, run, sql } from "../../platform/database";
+import { type Database, type Query, row, rows, sql } from "../../platform/database";
 
 export type PhotoRecord = KeptPhoto & {
   readonly id: string;
@@ -82,19 +81,6 @@ export const insertPhoto = (
 // Its file is queued to go with its row.
 export const deletePhoto = (draftId: string, photoId: string): Query =>
   sql`delete from draft_photo where draft_id = ${draftId} and id = ${photoId}`;
-
-// Photos of the chat kept without a place since then, placed now.
-export const placeChatPhotos = (
-  db: Database,
-  draftId: string,
-  place: { readonly badge: KeptPhoto["badge"]; readonly point: Point; readonly far: boolean },
-  since: Date,
-): Promise<number> =>
-  run(
-    db,
-    sql`update draft_photo set badge = ${place.badge}, lat = ${place.point.lat}, lon = ${place.point.lon}, far = ${place.far}
-      where draft_id = ${draftId} and badge = 'none' and time_source = 'chatMessage' and received_at >= ${since}`,
-  );
 
 // Files whose rows are gone, oldest first.
 export async function queuedRemovals(db: Database, batch: number): Promise<string[]> {

@@ -88,7 +88,7 @@ export function addReporterRoutes(api: Api): void {
       const limited = await checkLimits(c.env, [["address.bindings", { kind: "address", bucket: c.var.address }]]);
       if (limited) return limitRefused(c, limited, null);
       const village = await posterVillage(c.env, body.villageCode ?? null);
-      const result = await giveConsent(c.env, principal, checked.identity, body.emergency, null, village);
+      const result = await giveConsent(c.env, principal, checked.identity, body.emergency, village);
       if (result.kind === "deviceFull") return limitRefused(c, { limitId: "device.numbers", retryAtMs: null }, null);
       if (result.deviceKey !== null) {
         setCookie(c, DEVICE_COOKIE, result.deviceKey, {

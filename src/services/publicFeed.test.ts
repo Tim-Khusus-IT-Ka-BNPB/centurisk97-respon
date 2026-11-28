@@ -64,6 +64,8 @@ describe("a report read for the clusters", () => {
     expect(clusterInput(clusterRow({ place: place(), eventTime: { state: "notYetKnown" } })).atMs).toBe(
       Date.parse(SENT),
     );
+    // A row written by hand may hold no place at all.
+    expect(clusterInput(clusterRow({})).point).toBeNull();
   });
 });
 

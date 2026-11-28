@@ -11,8 +11,6 @@ type ApiVariables = {
   address: string;
   // Set by the identity adapter; a route that needs a reporter refuses when it is absent.
   principal: Principal;
-  // The gateway whose signature a call carries, on the gateway's own routes.
-  gatewayId: string;
   // A member of a BPBD follow-up file, by their own cookie, on the file's routes.
   caseMember: CaseMember;
 };

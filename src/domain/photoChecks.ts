@@ -115,7 +115,7 @@ export const CHAT_PHOTO = {
   locationMs: 30 * MINUTE_MS,
 } as const;
 
-export type SharedPoint = Point & { readonly atMs: number };
+type SharedPoint = Point & { readonly atMs: number };
 
 export type ChatPhotoInput = {
   readonly bytes: Uint8Array;

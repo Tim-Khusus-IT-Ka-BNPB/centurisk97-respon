@@ -145,8 +145,6 @@ export async function giveConsent(
   principal: Principal,
   identity: Identity,
   emergency: boolean,
-  // When they agreed, if that was before this request: a chat asks who they are after its "Setuju".
-  agreedAt: Date | null = null,
   village: PlaceValue | null = null,
 ): Promise<ConsentResult> {
   const at = new Date(bindings.clock.now());
@@ -168,7 +166,7 @@ export async function giveConsent(
     } else {
       key = numberKey as string;
       if (principal.kind === "device") deviceId = principal.deviceId;
-      else if (principal.kind === "anonymous") {
+      else {
         deviceId = crypto.randomUUID();
         writes.push(createDevice(deviceId, fingerprint as string, at));
       }
@@ -186,7 +184,7 @@ export async function giveConsent(
     writes.push(saveProfile(crypto.randomUUID(), key, slot, deviceId, identity, at));
     // A second number on the same device in the same moment cannot pass the cap either.
     if (deviceId !== null) writes.push(holds(sql`${profileCount(deviceId)} <= ${max}`));
-    writes.push(addConsent(crypto.randomUUID(), profileIdOf, PRIVACY.version, agreedAt ?? at));
+    writes.push(addConsent(crypto.randomUUID(), profileIdOf, PRIVACY.version, at));
     const open = reporterId === null ? null : await openDraftOf(db, reporterId, slot);
     const live = open !== null && isLive(open, at);
     if (open && live && !open.followUp) {

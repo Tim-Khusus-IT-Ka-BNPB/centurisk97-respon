@@ -158,7 +158,7 @@ function writtenDate(text: string, localNowMs: number): { date: string; matched:
 }
 
 // The hour told in folded words: "14.30", "jam 5 sore". Null when none is.
-export function readClock(text: string): string | null {
+function readClock(text: string): string | null {
   const clock = CLOCK.exec(text);
   const spoken = clock ? null : SPOKEN_HOUR.exec(text);
   if (!clock && !spoken) return null;

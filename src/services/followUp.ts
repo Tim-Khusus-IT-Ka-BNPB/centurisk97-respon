@@ -32,11 +32,7 @@ export async function startFollowUp(
   if (owned === null) return { kind: "notFound" };
   const { numberKey, ownerSlot } = owned;
   const reporterId = owned.reporterId as string;
-  // A message of the chat was counted at its door.
-  const refusal =
-    principal.kind === "chat"
-      ? null
-      : await checkLimits(bindings, [["message.minute", { kind: "numberSlot", numberKey, ownerSlot }]]);
+  const refusal = await checkLimits(bindings, [["message.minute", { kind: "numberSlot", numberKey, ownerSlot }]]);
   if (refusal) return { kind: "limit", refusal };
   const { db } = bindings;
   return decide(async (): Promise<FollowUpStart | null> => {

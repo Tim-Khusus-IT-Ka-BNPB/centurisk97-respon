@@ -29,8 +29,6 @@ const ERROR_CODES = [
   "ticket.transitionRefused",
   "ticket.changed",
   "ticket.taken",
-  "gateway.refused",
-  "gateway.replayed",
   "feed.photoNotFound",
   "today.closed",
   "comments.unknownReporter",

@@ -3,15 +3,7 @@ import { describe, expect, test } from "vitest";
 import type { Principal } from "../ports/identity";
 import { fromBrowser, jsonWrite, testBindings } from "../testing/api";
 import { api } from "./app";
-import {
-  addRoute,
-  createApi,
-  isGatewayPath,
-  jsonResponse,
-  openApiDocument,
-  responsesWithoutSchema,
-  routeList,
-} from "./route";
+import { addRoute, createApi, jsonResponse, openApiDocument, responsesWithoutSchema, routeList } from "./route";
 
 describe("route list", () => {
   test("every route of the app declares a policy", () => {
@@ -55,10 +47,6 @@ describe("route list", () => {
       { key: "GET /api/feed/cards/:cardId/comments", policy: "public" },
       { key: "GET /api/feed/proofs/:proofId", policy: "public" },
       { key: "GET /api/feed/watch", policy: "public" },
-      { key: "GET /api/gateway/languages", policy: "gateway" },
-      { key: "GET /api/gateway/news", policy: "gateway" },
-      { key: "GET /api/gateway/news/:id/document", policy: "gateway" },
-      { key: "GET /api/gateway/pilot-numbers", policy: "gateway" },
       { key: "GET /api/health", policy: "public" },
       { key: "GET /api/me", policy: "public" },
       { key: "GET /api/missing/mine", policy: "reporter" },
@@ -119,10 +107,6 @@ describe("route list", () => {
       { key: "POST /api/emergencies/:clientId/photos", policy: "reporter" },
       { key: "POST /api/feed/cards/:cardId/comments", policy: "reporter" },
       { key: "POST /api/feed/comments/:commentId/report", policy: "reporter" },
-      { key: "POST /api/gateway/messages", policy: "gateway" },
-      { key: "POST /api/gateway/news/:id/delivered", policy: "gateway" },
-      { key: "POST /api/gateway/photos", policy: "gateway" },
-      { key: "POST /api/gateway/pilot-numbers", policy: "gateway" },
       { key: "POST /api/missing", policy: "reporter" },
       { key: "POST /api/preferences/language", policy: "public" },
       { key: "POST /api/preferences/theme", policy: "public" },
@@ -138,15 +122,6 @@ describe("route list", () => {
       { key: "PUT /api/warnings", policy: "public" },
     ]);
     expect(routes.filter((route) => route.policy === null)).toEqual([]);
-  });
-
-  test("the paths that skip the browser's checks are the gateway's own, and no other", () => {
-    for (const { key, policy } of routeList(api)) {
-      const path = (key.split(" ")[1] as string).replace(/:\w+/g, "x");
-      expect(isGatewayPath(path), key).toBe(policy === "gateway");
-    }
-    expect(isGatewayPath("/api/gateway/messages/x")).toBe(false);
-    expect(isGatewayPath("/api/desk/gateway/messages")).toBe(false);
   });
 
   test("a route added without the helper shows up with no policy", () => {
@@ -454,13 +429,6 @@ describe("response schemas and the OpenAPI document", () => {
       "/api/feed/comments/{commentId}/report",
       "/api/feed/proofs/{proofId}",
       "/api/feed/watch",
-      "/api/gateway/languages",
-      "/api/gateway/messages",
-      "/api/gateway/news",
-      "/api/gateway/news/{id}/delivered",
-      "/api/gateway/news/{id}/document",
-      "/api/gateway/photos",
-      "/api/gateway/pilot-numbers",
       "/api/health",
       "/api/me",
       "/api/me/profiles/{profileId}",

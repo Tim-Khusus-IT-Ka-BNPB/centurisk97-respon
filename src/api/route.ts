@@ -8,16 +8,14 @@ import { clientAddress } from "../platform/address";
 import { sqlState } from "../platform/database";
 import type { Principal } from "../ports/identity";
 import { CASE_COOKIE, caseMemberOf } from "../services/cases";
-import { admitCall } from "../services/gateway";
 import type { ApiEnv } from "./context";
 import { refuse } from "./envelope";
 
 // Who may call a route. "reporter" needs a device or session principal; a draft it does not own
 // answers 404 inside the handler, the same as a draft that does not exist. "staff" needs a staff
 // account; what it may do there is decided in the service, by role and region.
-// "gateway" is a WhatsApp gateway: it signs each call and no cookie or Origin speaks for it.
 // "caseTeam" is a staff account, or a member of a BPBD follow-up file by their own cookie (D20).
-export type Policy = "public" | "reporter" | "staff" | "gateway" | "caseTeam";
+export type Policy = "public" | "reporter" | "staff" | "caseTeam";
 
 export const API_BASE = "/api";
 const MAX_BODY_BYTES = 16 * 1024;
@@ -26,13 +24,10 @@ const MAX_BODY_BYTES = 16 * 1024;
 const PHOTO_BODY_BYTES = 12 * 1024 * 1024;
 const isPhotoUpload = (method: string, path: string) =>
   (method === "POST" &&
-    /\/(?:(?:drafts|emergencies)\/[^/]+\/photos|desk\/reports\/[^/]+\/proofs|cases\/[^/]+\/records\/[^/]+\/media|gateway\/photos|missing)$/.test(
+    /\/(?:(?:drafts|emergencies)\/[^/]+\/photos|desk\/reports\/[^/]+\/proofs|cases\/[^/]+\/records\/[^/]+\/media|missing)$/.test(
       path,
     )) ||
   (method === "PUT" && /\/(?:drafts\/[^/]+|cases\/[^/]+\/records\/[^/]+)\/videos\/[^/]+\/parts\/\d+$/.test(path));
-// The WhatsApp gateway's own calls, signed by the gateway rather than sent from the page.
-export const isGatewayPath = (path: string) =>
-  /^\/api\/gateway\/(?:messages|photos|languages|pilot-numbers|news(?:\/[^/]+\/(?:document|delivered))?)$/.test(path);
 const READ_METHODS = new Set(["GET", "HEAD"]);
 
 export type Api = {
@@ -66,35 +61,15 @@ const addressCheck = createMiddleware<ApiEnv>(async (c, next) => {
 });
 
 // Writes must come from our own origin and, for JSON, carry the client header a cross-site form cannot set.
-// A gateway is no browser: its signature is checked by its routes' policy.
 const writeCheck = createMiddleware<ApiEnv>(async (c, next) => {
-  if (!READ_METHODS.has(c.req.method) && !isGatewayPath(c.req.path)) {
+  if (!READ_METHODS.has(c.req.method)) {
     const sameOrigin = c.req.header("origin") === c.env.settings.appOrigin;
     if (!sameOrigin || c.req.header("x-respon-client") !== "1") return refuse(c, 403, "request.refused");
   }
   await next();
 });
 
-// A signed call, once. A write that fails on our side gives its message id back, so the gateway may
-// send it again.
-const gatewayGuard = createMiddleware<ApiEnv>(async (c, next) => {
-  const url = new URL(c.req.url);
-  const call = await admitCall(c.env, {
-    method: c.req.method,
-    path: `${url.pathname}${url.search}`,
-    header: (name) => c.req.header(name),
-    body: new Uint8Array(await c.req.arrayBuffer()),
-    once: !READ_METHODS.has(c.req.method),
-  });
-  if (call.kind === "refused") return refuse(c, 401, "gateway.refused");
-  if (call.kind === "replayed") return refuse(c, 409, "gateway.replayed");
-  c.set("gatewayId", call.gatewayId);
-  await next();
-  if (c.res.status === 503) await call.giveBack();
-});
-
 function policyGuard(policy: Policy) {
-  if (policy === "gateway") return gatewayGuard;
   return createMiddleware<ApiEnv>(async (c, next) => {
     if (policy === "reporter") {
       const principal = c.var.principal as Principal | undefined;
@@ -157,9 +132,6 @@ function sharedResponses(method: string, policy: Policy) {
       ? {}
       : { 403: refusal("Not sent from this site"), 413: refusal("Body over 16 KB, or 12 MB for a photo") }),
     ...(policy === "reporter" ? { 401: refusal("No reporter"), 404: refusal("Not found for this reporter") } : {}),
-    ...(policy === "gateway"
-      ? { 401: refusal("Not signed by a known gateway, or not now"), 409: refusal("The message id was used before") }
-      : {}),
     ...(policy === "caseTeam" ? { 401: refusal("No staff account, and no team member's cookie") } : {}),
     ...(policy === "staff"
       ? {

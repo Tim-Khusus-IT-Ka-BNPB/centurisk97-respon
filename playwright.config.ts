@@ -3,9 +3,6 @@ import { defineConfig, devices } from "@playwright/test";
 // Another checkout on the same machine may hold the default port.
 const appPort = Number(process.env.E2E_PORT ?? "8787");
 const stubPort = Number(process.env.MODEL_STUB_PORT ?? "8790");
-const gatewayPort = Number(process.env.TEST_GATEWAY_PORT ?? "8791");
-// Made for this run alone, and good for nothing else.
-const gatewaySecret = "browser-tests-gateway-secret-32-bytes-long";
 const e2eDatabase = process.env.E2E_DATABASE_URL ?? "postgres://localhost:5432/respon_e2e";
 const ci = Boolean(process.env.CI);
 const phone = { ...devices["Pixel 7"], viewport: { width: 390, height: 844 } };
@@ -62,24 +59,9 @@ export default defineConfig({
         MODEL_MODE: "off",
         MODEL_API_KEY: "",
         S3_ENDPOINT: "",
-        GATEWAY_SECRETS: `browser-tests=${gatewaySecret}`,
       },
       reuseExistingServer: false,
       timeout: 180_000,
-    },
-    {
-      // What stands in for WhatsApp: a walk writes as a number and reads what that number receives.
-      command: "pnpm test-gateway",
-      url: `http://127.0.0.1:${gatewayPort}/health`,
-      env: {
-        TEST_GATEWAY_PORT: String(gatewayPort),
-        TEST_GATEWAY_APP: `http://localhost:${appPort}`,
-        TEST_GATEWAY_ID: "browser-tests",
-        TEST_GATEWAY_SECRET: gatewaySecret,
-        TEST_GATEWAY_PULL_MS: "1000",
-      },
-      reuseExistingServer: false,
-      timeout: 30_000,
     },
   ],
 });

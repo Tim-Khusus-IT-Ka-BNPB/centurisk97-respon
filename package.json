@@ -12,7 +12,6 @@
     "build": "react-router build && vite build --config vite.server.config.ts --logLevel warn",
     "start": "NODE_ENV=production node --env-file-if-exists=.env build/node/main.js",
     "typegen": "react-router typegen",
-    "test-gateway": "tsx --env-file-if-exists=.env tools/test-gateway/server.ts",
     "model-stub": "tsx --env-file-if-exists=.env tools/model-stub/server.ts",
     "sweep:local": "tsx --env-file-if-exists=.env scripts/sweep-local.ts",
     "reference:import": "tsx --env-file-if-exists=.env tools/reference-import/import.ts",

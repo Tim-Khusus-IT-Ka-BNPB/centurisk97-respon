@@ -12,7 +12,6 @@
     "src/adapters/s3/memoryBucket.ts",
     "src/ports/photoStore.ts",
     "src/platform/keys.ts",
-    "src/domain/gateway.ts",
     "src/domain/placeText.ts",
     "src/domain/placeFile.ts",
     "src/domain/shapeFile.ts",

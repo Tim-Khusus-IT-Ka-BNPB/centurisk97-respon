@@ -1,19 +1,12 @@
 import { type DraftRecord, loadDraft, photosChanged, storedReply, storeReply } from "../adapters/postgres/drafts";
-import { deletePhoto, draftPhotos, insertPhoto, photoOf, placeChatPhotos } from "../adapters/postgres/photos";
+import { deletePhoto, draftPhotos, insertPhoto, photoOf } from "../adapters/postgres/photos";
 import { villageCentre } from "../adapters/postgres/places";
 import { zoneOffsetMs } from "../domain/eventTime";
 import type { PlaceValue } from "../domain/fieldState";
 import type { Point } from "../domain/geo";
 import { gpsDoubts } from "../domain/gpsDoubts";
 import { readExif, stripJpeg } from "../domain/jpeg";
-import {
-  CHAT_PHOTO,
-  chatPhotoPlace,
-  checkChatPhoto,
-  checkPhoto,
-  type DeviceFix,
-  type SharedPoint,
-} from "../domain/photoChecks";
+import { checkPhoto, type DeviceFix } from "../domain/photoChecks";
 import { MINUTE_MS } from "../domain/time";
 import { type DraftContent, photoMax } from "../domain/turn/content";
 import { atomically, changedOne } from "../platform/database";
@@ -29,10 +22,8 @@ export type PhotoUpload = {
   readonly device: DeviceFix | null;
   // The page's own offset from UTC, for a camera time written with none. Absent with no script.
   readonly offsetMinutes: number | null;
-  // A photo of the chat: when its message was sent, and the location last shared there.
-  readonly chat?: { readonly sentAtMs: number; readonly shared: SharedPoint | null };
   // The phone's own time zone and the network's country, for the GPS doubts (D11). Absent with no
-  // script, and for a photo of the chat.
+  // script.
   readonly phoneZone?: string | null;
   readonly country?: string | null;
 };
@@ -61,8 +52,7 @@ const refused = async (
 export async function addPhoto(
   bindings: ServiceBindings,
   principal: Principal,
-  // Null for a photo of the chat, whose door has counted it.
-  address: string | null,
+  address: string,
   draftId: string,
   upload: PhotoUpload,
   requestHash: string,
@@ -72,7 +62,7 @@ export async function addPhoto(
   const { draft } = owned;
   const stored = await storedReply(bindings.db, draft.id, upload.turnKey);
   if (stored) return replayOf(stored, requestHash);
-  const refusal = address === null ? null : await checkMessageLimits(bindings, principal, address, draft);
+  const refusal = await checkMessageLimits(bindings, principal, address, draft);
   if (refusal) return { kind: "limit", refusal, draft: await viewOf(bindings, draft, [], upload.turnKey) };
   if (draft.state !== "photos") return refused(bindings, draft, "notNow", upload.turnKey);
   if (upload.revision !== draft.revision)
@@ -81,31 +71,29 @@ export async function addPhoto(
   const zone = draftZone(draft.villageCode);
   const kept = await draftPhotos(bindings.db, draft.id);
   const { bytes } = upload;
-  const common = { bytes, nowMs, placePoint: await placePoint(bindings, draft), count: kept.length };
-  const checked = upload.chat
-    ? checkChatPhoto({ ...common, ...upload.chat })
-    : checkPhoto({
-        ...common,
-        exif: readExif(bytes),
-        device: upload.device,
-        fallbackOffsetMinutes: upload.offsetMinutes ?? zoneOffsetMs(zone) / MINUTE_MS,
-      });
+  const checked = checkPhoto({
+    bytes,
+    nowMs,
+    placePoint: await placePoint(bindings, draft),
+    count: kept.length,
+    exif: readExif(bytes),
+    device: upload.device,
+    fallbackOffsetMinutes: upload.offsetMinutes ?? zoneOffsetMs(zone) / MINUTE_MS,
+  });
   if (checked.kind === "refused") return refused(bindings, draft, checked.rule, upload.turnKey);
   if (kept.length >= photoMax(draft.content as DraftContent))
     return refused(bindings, draft, "tooMany", upload.turnKey);
   const clean = stripJpeg(upload.bytes);
   if (clean === null) return refused(bindings, draft, "broken", upload.turnKey);
   const before = kept.filter((one) => one.point !== null).at(-1);
-  const doubts = upload.chat
-    ? []
-    : gpsDoubts({
-        point: checked.point,
-        atMs: checked.takenAtMs,
-        phoneZone: upload.phoneZone ?? null,
-        placeZone: zone,
-        country: upload.country ?? null,
-        previous: before ? { point: before.point as Point, atMs: before.takenAtMs } : null,
-      });
+  const doubts = gpsDoubts({
+    point: checked.point,
+    atMs: checked.takenAtMs,
+    phoneZone: upload.phoneZone ?? null,
+    placeZone: zone,
+    country: upload.country ?? null,
+    previous: before ? { point: before.point as Point, atMs: before.takenAtMs } : null,
+  });
   const id = crypto.randomUUID();
   const storeKey = `photos/${draft.id}/${id}.jpg`;
   await bindings.photos.put(storeKey, clean);
@@ -146,8 +134,7 @@ async function overtaken(
 export async function removePhoto(
   bindings: ServiceBindings,
   principal: Principal,
-  // Null for a message of the chat, whose door has counted it.
-  address: string | null,
+  address: string,
   draftId: string,
   photoId: string,
   { revision, turnKey }: { readonly revision: number; readonly turnKey: string },
@@ -158,7 +145,7 @@ export async function removePhoto(
   const { draft } = owned;
   const stored = await storedReply(bindings.db, draft.id, turnKey);
   if (stored) return replayOf(stored, requestHash);
-  const refusal = address === null ? null : await checkMessageLimits(bindings, principal, address, draft);
+  const refusal = await checkMessageLimits(bindings, principal, address, draft);
   if (refusal) return { kind: "limit", refusal, draft: await viewOf(bindings, draft, [], turnKey) };
   if (draft.state !== "photos") return refused(bindings, draft, "notNow", turnKey);
   if (revision !== draft.revision) return { kind: "changed", draft: await viewOf(bindings, draft, [], turnKey) };
@@ -174,13 +161,6 @@ export async function removePhoto(
     storeReply(draft.id, turnKey, { requestHash, status: 200, body }, at),
   ]);
   return done === null ? overtaken(bindings, draft, turnKey, requestHash) : { kind: "ok", status: 200, body };
-}
-
-// A location shared after photos of the chat places those still without one that came shortly
-// before. Answers how many.
-export async function placePhotos(bindings: ServiceBindings, draft: DraftRecord, shared: SharedPoint): Promise<number> {
-  const since = new Date(shared.atMs - CHAT_PHOTO.locationMs);
-  return placeChatPhotos(bindings.db, draft.id, chatPhotoPlace(shared, await placePoint(bindings, draft)), since);
 }
 
 export type PhotoFile = { readonly kind: "file"; readonly bytes: Uint8Array } | { readonly kind: "notFound" };

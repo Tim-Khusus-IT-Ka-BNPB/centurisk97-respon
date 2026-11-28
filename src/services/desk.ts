@@ -50,7 +50,6 @@ import { checkMove, checkReply, moveCapability, noteRule, offeredStatuses } from
 import type { StaffPrincipal } from "../ports/identity";
 import type { ServiceBindings } from "./bindings";
 import { caseOfReport } from "./cases";
-import { deskDelivery } from "./chatNews";
 import { clusterMap } from "./clusters";
 import { commentsFor } from "./comments";
 import { at, draftZone } from "./draftView";
@@ -313,7 +312,6 @@ async function reportBody(bindings: ServiceBindings, staff: StaffPrincipal, tick
   const states = found.states as FieldStates;
   const place = fieldValue<PlaceValue>(found.states, "place");
   const only = { status: null, hazardType: null, sentFromMs: null, ticketNumber, has: null };
-  const delivery = await deskDelivery(bindings, ticketNumber, found.villageCode);
   const [point] = await mapPoints(bindings.db, { scope: staff.scope, ...only }, 1);
   const body: DeskReport = {
     ...queueItem(staff, found, await clusterMap(bindings, staff.scope), bindings.clock.now()),
@@ -373,13 +371,13 @@ async function reportBody(bindings: ServiceBindings, staff: StaffPrincipal, tick
       actor: one.staffLabel,
       public: one.public,
     })),
-    replies: found.replies.map((one, index) => ({
+    replies: found.replies.map((one) => ({
       text: one.text,
       at: at(one.atMs, zone),
       actor: one.staffLabel,
-      chat: delivery?.replies[index] ?? null,
+      chat: null,
     })),
-    chatNews: delivery?.report ?? null,
+    chatNews: null,
   };
   return body;
 }
