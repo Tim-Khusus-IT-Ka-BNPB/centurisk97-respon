@@ -101,14 +101,13 @@ function EventCard({ event, entries }: { readonly event: Event; readonly entries
           </ul>
         )}
       </details>
-      <p className="border-t border-line pt-3 text-meta text-muted">{t("official.band.social")}</p>
     </li>
   );
 }
 
 // BNPB's daily report on the Alun-alun (upstream kabar-alun, row 26): each event with the report's
-// status and figures, our own handled reports of it, the news found for it, and social media, not
-// yet connected. With a hazard picked, only its events.
+// status and figures, our own handled reports of it, and the news found for it. With a hazard picked,
+// only its events.
 export function OfficialEvents({
   official,
   entries,

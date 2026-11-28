@@ -9,7 +9,7 @@ const draw = (props: Partial<Parameters<typeof OfficialEvents>[0]> = {}) =>
     path: "/feed",
   });
 
-test("each event of BNPB's report with its status, figures, our own reports of it, its news and social media", async () => {
+test("each event of BNPB's report with its status, figures, our own reports of it and its news", async () => {
   draw();
   const cards = await screen.findAllByRole("listitem");
   const flood = within(cards[0] as HTMLElement);
@@ -29,7 +29,8 @@ test("each event of BNPB's report with its status, figures, our own reports of i
     "noopener noreferrer",
   ]);
   expect(flood.getByText("2 berita lain")).toBeTruthy();
-  expect(flood.getByText("Media sosial belum tersambung.")).toBeTruthy();
+  // Social media is not connected, so the card does not mention it.
+  expect(flood.queryByText(/Media sosial/)).toBeNull();
   const slide = within(cards.find((card) => card.textContent?.includes("Bogor")) as HTMLElement);
   expect(slide.getByText("Selesai")).toBeTruthy();
   expect(slide.getByText("Angka dampak belum didata.")).toBeTruthy();

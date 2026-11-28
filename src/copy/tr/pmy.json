@@ -2064,7 +2064,6 @@
   "official.band.bnpb": "Resmi BNPB",
   "official.band.residents": "Laporan warga",
   "official.band.news": "Berita ({count})",
-  "official.band.social": "Media sosial belum tersambung.",
   "official.dates": "Sejak {started}, laporan terakhir {last}.",
   "official.noFigures": "Angka dampak belum didata.",
   "official.figure.families": "{count} KK terdampak",

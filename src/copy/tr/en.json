@@ -2065,7 +2065,6 @@
   "official.band.bnpb": "BNPB official",
   "official.band.residents": "Resident reports",
   "official.band.news": "News ({count})",
-  "official.band.social": "Social media is not connected yet.",
   "official.dates": "Since {started}, last report {last}.",
   "official.noFigures": "Impact figures have not been recorded yet.",
   "official.figure.families": "{count} families affected",
