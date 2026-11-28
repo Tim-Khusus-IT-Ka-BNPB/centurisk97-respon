@@ -1,4 +1,4 @@
-import { act, fireEvent, screen, within } from "@testing-library/react";
+import { act, screen, within } from "@testing-library/react";
 import { renderToString } from "react-dom/server";
 import { createRoutesStub } from "react-router";
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
@@ -7,13 +7,8 @@ import { TextContext } from "../../../lib/text";
 import { renderDesk, SENT } from "../../../testing/desk";
 import { text } from "../../../testing/render";
 
-const alarm = vi.hoisted(() => ({ ready: false, sound: vi.fn(), notify: vi.fn(), ask: vi.fn(async () => true) }));
-vi.mock("../../../lib/alarm", () => ({
-  alarmReady: () => alarm.ready,
-  alarmSound: alarm.sound,
-  notify: alarm.notify,
-  askForAlarm: alarm.ask,
-}));
+const alarm = vi.hoisted(() => ({ sound: vi.fn(), notify: vi.fn() }));
+vi.mock("../../../lib/alarm", () => ({ alarmSound: alarm.sound, notify: alarm.notify }));
 
 import { EmergencyBanner } from "./EmergencyBanner";
 
@@ -44,8 +39,7 @@ const later = (ms: number) => act(() => vi.advanceTimersByTimeAsync(ms));
 
 beforeEach(() => {
   vi.useFakeTimers({ shouldAdvanceTime: true });
-  alarm.ready = false;
-  for (const one of [alarm.sound, alarm.notify, alarm.ask]) one.mockClear();
+  for (const one of [alarm.sound, alarm.notify]) one.mockClear();
 });
 afterEach(() => {
   vi.useRealTimers();
@@ -110,14 +104,7 @@ describe("the desk's emergencies", () => {
     expect(alarm.sound).not.toHaveBeenCalled();
   });
 
-  test("the officer turns sound and notifications on once; where they are on there is no button", async () => {
-    const view = await draw([FIRST]);
-    fireEvent.click(screen.getByRole("button", { name: "Nyalakan suara dan notifikasi" }));
-    await later(10);
-    expect(alarm.ask).toHaveBeenCalledTimes(1);
-    expect(screen.queryByRole("button")).toBeNull();
-    view.unmount();
-    alarm.ready = true;
+  test("has no button of its own: the alarm is turned on from the menu", async () => {
     await draw([FIRST]);
     await later(10);
     expect(screen.queryByRole("button")).toBeNull();

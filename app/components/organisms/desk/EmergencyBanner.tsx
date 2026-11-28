@@ -2,9 +2,8 @@ import { useEffect, useRef, useState } from "react";
 import { Link } from "react-router";
 import type { DeskEmergencies, DeskEmergency } from "../../../../src/contract/desk";
 import { hazardKey } from "../../../../src/copy/hazardKey";
-import { alarmReady, alarmSound, askForAlarm, notify } from "../../../lib/alarm";
+import { alarmSound, notify } from "../../../lib/alarm";
 import { getJson } from "../../../lib/clientApi";
-import { useHydrated } from "../../../lib/hooks";
 import { useText } from "../../../lib/text";
 import { Icon } from "../../atoms/Icon";
 import { whenShort } from "./parts";
@@ -34,14 +33,11 @@ function useEmergencies(initial: readonly DeskEmergency[]): readonly DeskEmergen
 }
 
 // Emergencies on top of every desk page until an officer opens them, with a sound and a
-// notification for each new one once the officer has turned them on.
+// notification for each new one once the officer has turned the alarm on in the menu.
 export function EmergencyBanner({ initial }: { readonly initial: readonly DeskEmergency[] }) {
   const t = useText();
-  const hydrated = useHydrated();
   const emergencies = useEmergencies(initial);
   const known = useRef(new Set(initial.map((one) => one.ticketNumber)));
-  const [ready, setReady] = useState(false);
-  useEffect(() => setReady(alarmReady()), []);
   useEffect(() => {
     const fresh = emergencies.filter((one) => !known.current.has(one.ticketNumber));
     known.current = new Set(emergencies.map((one) => one.ticketNumber));
@@ -87,17 +83,6 @@ export function EmergencyBanner({ initial }: { readonly initial: readonly DeskEm
           </li>
         ))}
       </ul>
-      {hydrated && !ready ? (
-        <button
-          type="button"
-          title={t("desk.emergency.turnOn")}
-          className="ms-auto inline-flex min-h-target-min min-w-target-min shrink-0 items-center justify-center gap-2 rounded-control px-3 text-meta font-semibold hover:bg-signal-deep lg:ms-0"
-          onClick={async () => setReady(await askForAlarm())}
-        >
-          <Icon name="bell" className="size-5" />
-          <span className="max-2xl:sr-only">{t("desk.emergency.turnOn")}</span>
-        </button>
-      ) : null}
     </section>
   );
 }

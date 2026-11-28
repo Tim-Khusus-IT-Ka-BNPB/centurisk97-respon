@@ -9,6 +9,7 @@ import { Emblem } from "../../atoms/Emblem";
 import { Icon } from "../../atoms/Icon";
 import type { IconName } from "../../atoms/icons";
 import { ThemeSwitch } from "../../molecules/ThemeSwitch";
+import { AlarmSwitch } from "./AlarmSwitch";
 import { EmergencyBanner } from "./EmergencyBanner";
 import { deskLink, STATUSES, StatusDot } from "./parts";
 
@@ -57,7 +58,7 @@ export type DeskPlace = {
   readonly summary: DeskSummary | null;
 };
 
-// Who is signed in, the theme and the way out.
+// Who is signed in, the emergency alarm, the theme and the way out.
 function Account({ account, className }: { readonly account: string; readonly className?: string }) {
   const t = useText();
   return (
@@ -71,6 +72,7 @@ function Account({ account, className }: { readonly account: string; readonly cl
         </span>
         <span className="min-w-0 text-muted">{t("desk.account", { label: account })}</span>
       </p>
+      <AlarmSwitch />
       <div className="flex items-center justify-between gap-2">
         <Form method="post" action="/desk" className="flex-1">
           <input type="hidden" name="action" value="signOut" />
