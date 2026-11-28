@@ -56,7 +56,7 @@ Needs Node 26.3 (see `.nvmrc`) and pnpm 10.34.5 (the `packageManager` field; `np
    pnpm sweep:local         # the run every 15 minutes, once and now, on the database in .env
    ```
 
-   Contacts and preparedness topics. The seed loads synthetic stand-ins: the BPBD numbers there are 0800 numbers, never an agency's real line. Upstream's real files load with `reference:import-file`, each checked against its contract first.
+   Contacts and preparedness topics. The seed loads synthetic stand-ins: the BPBD numbers there are 0800 numbers, never an agency's real line. Upstream's real files load with `reference:import-file`, each checked against its contract first. BNPB keeps the BPBD numbers and the facility numbers on the desk (Nomor BPBD dan fasilitas), and every change there is logged with who made it. Once a file has desk edits, `reference:import-file` refuses to replace it; add `--replace-desk-edits` only to throw those edits away on purpose.
 
    Place data. The seed loads a small pinned cut of the village file and the outlines of those villages, which GPS reads a point against. To cover the whole country, import upstream's `public/data/desa_cari.json`; its outlines are read from `public/geo/desa/` beside it, or from a folder given as a second argument. A file under 80,000 villages or 500 regencies, or outlines for fewer than 80,000 of its villages, is refused, and the same files twice write nothing. The image carries both commands as `node build/node/import-places.js` and `node build/node/import-file.js`.
 

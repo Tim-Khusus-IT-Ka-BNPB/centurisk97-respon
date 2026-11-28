@@ -36,6 +36,7 @@ const DISTRICT_CODE = String.raw`'^[0-9]{2}\.[0-9]{2}\.[0-9]{2}$'`;
 const VILLAGE_CODE = String.raw`'^[0-9]{2}\.[0-9]{2}\.[0-9]{2}\.[0-9]{4}$'`;
 const STAFF_ROLES = ["deskOfficer", "regionalOfficer"];
 const SCOPE_LEVELS = ["national", "province", "regency"];
+const REFERENCE_NAMES = ["bpbdContacts", "education", "responseActions", "forecast", "volcanoes", "facilityNumbers"];
 const REPORTER_ROLES = ["citizen", "claimedOfficer"];
 const WARNING_HAZARDS = ["BNJ", "LSR", "ASP", "CEX"];
 
@@ -822,11 +823,31 @@ export const referenceFile = pgTable(
     checksum: text().notNull(),
     imported_at: at("imported_at").notNull(),
   },
-  () => [
-    check(
-      "reference_file_name",
-      oneOf("name", ["bpbdContacts", "education", "responseActions", "forecast", "volcanoes", "facilityNumbers"]),
-    ),
+  () => [check("reference_file_name", oneOf("name", REFERENCE_NAMES))],
+);
+
+// Every change to a reference file, made on the desk or by an import: who, when, and the entry before
+// and after. Append-only.
+export const referenceChange = pgTable(
+  "reference_change",
+  {
+    id: serial(),
+    name: text().notNull(),
+    // The area code or the facility's name; null when a whole file was imported.
+    entry: text(),
+    change: text().notNull(),
+    before: jsonb(),
+    after: jsonb(),
+    // Null when an import made the change.
+    staff_id: text(),
+    staff_label: text(),
+    at: at("at").notNull(),
+  },
+  (t) => [
+    index("reference_change_by_name").on(t.name, t.id),
+    check("reference_change_name", oneOf("name", REFERENCE_NAMES)),
+    check("reference_change_change", oneOf("change", ["added", "changed", "removed", "imported"])),
+    check("reference_change_staff", sql`(${t.staff_id} is null) = (${t.staff_label} is null)`),
   ],
 );
 

@@ -254,6 +254,7 @@ export async function deskSummary(
       emergencies: await emergencyList(bindings, staff),
       mayReadResponse: mayUse(staff.role, "readResponse"),
       missingOpen: await openMissingCount(bindings.db, staff.scope),
+      mayEditNumbers: mayUse(staff.role, "editNumbers"),
     },
   };
 }

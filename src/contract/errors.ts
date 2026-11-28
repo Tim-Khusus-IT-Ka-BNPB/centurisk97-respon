@@ -45,6 +45,9 @@ const ERROR_CODES = [
   "missing.placeUnknown",
   "missing.tooMany",
   "missing.moveRefused",
+  "numbers.changed",
+  "numbers.notFound",
+  "numbers.emptied",
 ] as const;
 
 export type ErrorCode = (typeof ERROR_CODES)[number] | `limit.${LimitId}`;

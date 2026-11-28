@@ -2,8 +2,8 @@ import { mkdtemp, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterAll, beforeAll, describe, expect, test } from "vitest";
-import { type Database, rows, sql } from "../src/platform/database.ts";
-import { importReferenceFile, ReferenceFileRefused } from "../tools/reference-import/file.ts";
+import { type Database, rows, run, sql } from "../src/platform/database.ts";
+import { DeskEditsKept, importReferenceFile, ReferenceFileRefused } from "../tools/reference-import/file.ts";
 
 const db = (globalThis as { testDb?: Database }).testDb as Database;
 let folder = "";
@@ -65,6 +65,39 @@ describe("reference file importer", () => {
     for (const name of ["forecast", "volcanoes", "facilityNumbers"] as const)
       await expect(importReferenceFile(db, name, path, "upstream")).rejects.toBeInstanceOf(ReferenceFileRefused);
     expect(await stored()).toEqual(before);
+    await importReferenceFile(db, "bpbdContacts", "db/reference/bpbd-contacts.json", "seed");
+  });
+
+  test("a file edited on the desk is kept unless the import is told to replace it, and each import is logged", async () => {
+    await run(db, sql`update reference_file set source = 'desk', checksum = 'desk' where name = 'bpbdContacts'`);
+    const path = join(folder, "kontak-baru.json");
+    const file = {
+      sumber: "uji",
+      diperbarui: "2026-12-01",
+      wilayah: { "11": { nama: "A", bpbd: [{ nomor: "0800-1100-0010", jenis: "kantor", url: null }] } },
+    };
+    await writeFile(path, JSON.stringify(file));
+    await expect(importReferenceFile(db, "bpbdContacts", path, "upstream")).rejects.toBeInstanceOf(DeskEditsKept);
+    await expect(importReferenceFile(db, "bpbdContacts", path, "upstream")).rejects.toThrow("--replace-desk-edits");
+    expect(await importReferenceFile(db, "bpbdContacts", path, "upstream", true)).toEqual({
+      written: true,
+      dataDate: "2026-12-01",
+    });
+    const latest = await rows(
+      db,
+      sql`select name, entry, change, before, after, staff_id, staff_label from reference_change order by id desc limit 1`,
+    );
+    expect(latest).toEqual([
+      {
+        name: "bpbdContacts",
+        entry: null,
+        change: "imported",
+        before: null,
+        after: null,
+        staff_id: null,
+        staff_label: null,
+      },
+    ]);
     await importReferenceFile(db, "bpbdContacts", "db/reference/bpbd-contacts.json", "seed");
   });
 });

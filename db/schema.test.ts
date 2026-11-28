@@ -157,6 +157,19 @@ describe("schema", () => {
     expect(await refusal(village("99.99.012.001"))).toBe("CHECK");
     expect(await refusal(village("99.99.01.200a"))).toBe("CHECK");
   });
+
+  test("a reference change names its file, its kind and who made it, and is never changed after", async () => {
+    const change = (name: string, kind: string, id: string | null, label: string | null) =>
+      sql`insert into reference_change (name, entry, change, before, after, staff_id, staff_label, at)
+        values (${name}, '1108', ${kind}, null, '{"nomor":"0800"}', ${id}, ${label}, ${NOW})`;
+    expect(await refusal(change("officialEvents", "added", "s1", "Uji"))).toBe("CHECK");
+    expect(await refusal(change("bpbdContacts", "moved", "s1", "Uji"))).toBe("CHECK");
+    expect(await refusal(change("bpbdContacts", "added", "s1", null))).toBe("CHECK");
+    expect(await refusal(change("bpbdContacts", "added", "s1", "Uji"))).toBe("ok");
+    expect(await refusal(change("facilityNumbers", "imported", null, null))).toBe("ok");
+    expect(await refusal(sql`update reference_change set entry = '12'`)).toBe("append-only");
+    expect(await refusal(sql`delete from reference_change`)).toBe("append-only");
+  });
 });
 
 describe("seed", () => {

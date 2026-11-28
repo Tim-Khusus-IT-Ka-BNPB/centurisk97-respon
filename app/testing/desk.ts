@@ -181,4 +181,5 @@ export const SUMMARY: DeskSummary = {
   emergencies: [],
   mayReadResponse: true,
   missingOpen: 3,
+  mayEditNumbers: true,
 };

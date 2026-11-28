@@ -3,7 +3,7 @@
 // 2026-11 an area may list its fire brigade's numbers (damkar) beside or instead of its BPBD's; only
 // the BPBD's are ever shown. No imports, so the Node import scripts share this contract.
 
-type ContactNumber = {
+export type ContactNumber = {
   readonly nomor: string;
   readonly jenis: string;
   readonly url: string | null;

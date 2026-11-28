@@ -20,6 +20,7 @@ import DeskRoute, * as desk from "./desk";
 import * as deskAggregates from "./deskAggregates";
 import * as deskDocument from "./deskDocument";
 import DeskMissingRoute, * as deskMissing from "./deskMissing";
+import DeskNumbersRoute, * as deskNumbers from "./deskNumbers";
 import DeskReportRoute, * as deskReport from "./deskReport";
 import DeskResponseRoute, * as deskResponse from "./deskResponse";
 import DraftRoute, * as draft from "./draft";
@@ -1179,6 +1180,168 @@ describe("desk routes", () => {
     expect(again.init?.status).toBe(409);
     show(listed.data, again.data);
     expect(await screen.findByText(/^Akun ini belum berhak/)).toBeTruthy();
+  });
+
+  test("numbers: either list by the address, the sign-in form, a refusal, and each edit sent and led back", async () => {
+    expect(deskNumbers.headers()).toEqual({ "cache-control": "private, no-store", "x-robots-tag": "noindex" });
+    expect(deskNumbers.meta({ data: { texts: pickTexts(PAGE_TEXTS.desk) }, matches: [] } as Args)[0]).toEqual({
+      title: "Meja laporan, Pantau Bencana BNPB",
+    });
+    const list = { checksum: "abc", total: 0, page: 1, pages: 1, changes: [] };
+    const asked: string[] = [];
+    const load = async (url: string, answer: () => Response) =>
+      unwrap(
+        await deskNumbers.loader({
+          request: new Request(url),
+          context: {
+            api: async (_method: string, path: string) => {
+              asked.push(path);
+              return path === "/desk/summary" ? json(SUMMARY)() : answer();
+            },
+          },
+        } as Args),
+      );
+    const show = (loaderData: unknown, actionData?: unknown) =>
+      renderPage(routeElement(DeskNumbersRoute, { loaderData, actionData }), { path: "/desk/numbers" });
+    const areas = await load("http://x/desk/numbers?q=aceh&empty=1&page=2&saved=changed", json({ ...list, areas: [] }));
+    expect(areas.data).toMatchObject({
+      kind: "numbers",
+      saved: "changed",
+      view: { tab: "bpbd", search: { q: "aceh", empty: true } },
+    });
+    const places = await load(
+      `http://x/desk/numbers?tab=facilities&kind=polisi&page=x&saved=gone&q=${"a".repeat(70)}`,
+      json({ ...list, facilities: [] }),
+    );
+    expect(places.data).toMatchObject({ saved: null, view: { tab: "facilities", search: { kind: "polisi" } } });
+    await load("http://x/desk/numbers?tab=facilities&kind=klinik&page=-3", json({ ...list, facilities: [] }));
+    expect(asked.filter((path) => path !== "/desk/summary")).toEqual([
+      "/desk/numbers/bpbd?q=aceh&page=2&empty=1",
+      `/desk/numbers/facilities?q=${"a".repeat(60)}&page=1&kind=polisi`,
+      "/desk/numbers/facilities?q=&page=1",
+    ]);
+    show(areas.data);
+    expect(await screen.findByRole("heading", { level: 1, name: "Nomor BPBD dan fasilitas" })).toBeTruthy();
+    cleanup();
+    show((await load("http://x/desk/numbers", json(signInFirst, 401))).data);
+    expect(await screen.findByRole("heading", { name: "Masuk meja laporan" })).toBeTruthy();
+    cleanup();
+    const refused = await load("http://x/desk/numbers", json(notAllowed, 403));
+    expect(refused.init?.status).toBe(403);
+    show(refused.data);
+    expect(await screen.findByRole("heading", { name: "Meja laporan belum bisa dibuka" })).toBeTruthy();
+    cleanup();
+    const sent: unknown[] = [];
+    const act = (url: string, entries: [string, string][], answer: () => Response = json({ checksum: "new" })) =>
+      deskNumbers.action({
+        request: post(url, entries),
+        context: {
+          api: async (_method: string, path: string, body: unknown) => {
+            sent.push([path, body]);
+            return answer();
+          },
+        },
+      } as Args);
+    const at = async (done: unknown) => {
+      const response = done as Response;
+      return [response.status, response.headers.get("location")];
+    };
+    const number: [string, string][] = [
+      ["nomor", "0811 2222 3333"],
+      ["jenis", "wa"],
+      ["url", ""],
+    ];
+    expect(
+      await at(
+        await act("http://x/desk/numbers?q=aceh&empty=1&page=2", [
+          ["tab", "bpbd"],
+          ["edit", "change"],
+          ["checksum", "abc"],
+          ["code", "1108"],
+          ["index", "1"],
+          ["lama", "on"],
+          ...number,
+        ]),
+      ),
+    ).toEqual([303, "/desk/numbers?q=aceh&empty=1&page=2&saved=changed#wilayah-1108"]);
+    expect(
+      await at(
+        await act("http://x/desk/numbers", [
+          ["tab", "bpbd"],
+          ["edit", "add"],
+          ["checksum", ""],
+          ["code", "11"],
+          ...number,
+        ]),
+      ),
+    ).toEqual([303, "/desk/numbers?saved=added#wilayah-11"]);
+    expect(
+      await at(
+        await act("http://x/desk/numbers?tab=facilities&kind=rs", [
+          ["tab", "facilities"],
+          ["edit", "add"],
+          ["checksum", "abc"],
+          ["kind", "rs"],
+          ["name", " RSUD Uji "],
+          ["phone", "0651 22222"],
+          ["lat", "4,1"],
+          ["lon", "96.1"],
+        ]),
+      ),
+    ).toEqual([303, "/desk/numbers?tab=facilities&q=RSUD+Uji&saved=added"]);
+    expect(
+      await at(
+        await act("http://x/desk/numbers?tab=facilities&kind=rs&page=3", [
+          ["tab", "facilities"],
+          ["edit", "remove"],
+          ["checksum", "abc"],
+          ["index", "7"],
+        ]),
+      ),
+    ).toEqual([303, "/desk/numbers?tab=facilities&kind=rs&page=3&saved=removed"]);
+    expect(sent).toEqual([
+      [
+        "/desk/numbers/bpbd",
+        {
+          checksum: "abc",
+          edit: {
+            kind: "change",
+            code: "1108",
+            index: 1,
+            number: { nomor: "0811 2222 3333", jenis: "wa", url: "", lama: true },
+          },
+        },
+      ],
+      [
+        "/desk/numbers/bpbd",
+        {
+          checksum: null,
+          edit: { kind: "add", code: "11", number: { nomor: "0811 2222 3333", jenis: "wa", url: "", lama: false } },
+        },
+      ],
+      [
+        "/desk/numbers/facilities",
+        {
+          checksum: "abc",
+          edit: {
+            kind: "add",
+            facility: { kind: "rs", name: " RSUD Uji ", phone: "0651 22222", lat: "4,1", lon: "96.1" },
+          },
+        },
+      ],
+      ["/desk/numbers/facilities", { checksum: "abc", edit: { kind: "remove", index: 7 } }],
+    ]);
+    const again = unwrap(
+      await act(
+        "http://x/desk/numbers",
+        [["tab", "bpbd"], ["form", "add-11"], ["edit", "add"], ["code", "11"], ...number],
+        json(apiEnvelope("numbers.changed"), 409),
+      ),
+    );
+    expect(again.init?.status).toBe(409);
+    expect(again.data).toMatchObject({ typed: { values: { form: "add-11", nomor: "0811 2222 3333" } } });
+    show(areas.data, again.data);
+    expect(await screen.findByText(/^Data nomor sudah diubah petugas lain/)).toBeTruthy();
   });
 
   test("signing in redirects with the cookie; a refused code renders with its status", async () => {

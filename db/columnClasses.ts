@@ -563,8 +563,22 @@ export const COLUMN_CLASSES: Readonly<Record<string, TableClasses>> = {
     columns: { report_id: I, rating: I, rated_at: I },
   },
   reference_file: {
-    retention: "replaced by the next import of the same file",
+    retention: "replaced by the next import of the same file, or changed entry by entry on the desk",
     columns: { name: I, data_date: PUB, source: PUB, body: PUB, checksum: I, imported_at: I },
+  },
+  reference_change: {
+    retention: "kept with the file; append-only",
+    columns: {
+      id: I,
+      name: I,
+      entry: PUB,
+      change: I,
+      before: PUB,
+      after: PUB,
+      staff_id: I,
+      staff_label: I,
+      at: I,
+    },
   },
   warning_subscription: {
     retention: "until the phone stops it, or the push service no longer knows it",

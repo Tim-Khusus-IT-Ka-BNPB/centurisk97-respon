@@ -16,6 +16,7 @@ import { deskLink, STATUSES, StatusDot } from "./parts";
 const NONE: DeskSummary["emergencies"] = [];
 const RESPONSE = "/desk/response";
 const MISSING = "/desk/missing";
+const NUMBERS = "/desk/numbers";
 
 const VIEW_ICON: Readonly<Record<DeskView, IconName>> = { list: "list", map: "map", gallery: "images" };
 
@@ -159,6 +160,14 @@ function DeskNav({ place }: { readonly place: DeskPlace }) {
             <Count n={summary?.missingOpen} />
           </Link>
         </li>
+        {summary?.mayEditNumbers ? (
+          <li>
+            <Link to={NUMBERS} aria-current={pathname === NUMBERS ? "page" : undefined} className={item}>
+              <Icon name="phone" className={navIcon} />
+              {t("desk.nav.numbers")}
+            </Link>
+          </li>
+        ) : null}
         <li>
           <Link to="/poster" className={item}>
             <Icon name="scan" className={navIcon} />

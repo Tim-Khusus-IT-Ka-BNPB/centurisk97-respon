@@ -41,7 +41,9 @@ export type DeskCapability =
   | "readCases"
   | "leadCase"
   | "revealCase"
-  | "acceptCase";
+  | "acceptCase"
+  // Keep the BPBD numbers and the facility numbers a reporter is shown: BNPB only.
+  | "editNumbers";
 
 // The roles holding each capability. A regional officer works only its own region (StaffScope),
 // asks for a reporter's identity each time, and neither forwards nor reopens.
@@ -71,6 +73,7 @@ const HOLDERS: Readonly<Record<DeskCapability, readonly StaffRole[]>> = {
   leadCase: ["regionalOfficer"],
   revealCase: ["deskOfficer"],
   acceptCase: ["deskOfficer"],
+  editNumbers: ["deskOfficer"],
 };
 
 export const mayUse = (role: StaffRole, capability: DeskCapability): boolean => HOLDERS[capability].includes(role);

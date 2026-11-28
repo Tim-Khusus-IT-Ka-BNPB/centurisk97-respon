@@ -102,6 +102,8 @@ export const deskSummarySchema = z.object({
   mayReadResponse: z.boolean(),
   // The region's missing persons still looked for.
   missingOpen: z.number().int().nonnegative(),
+  // This account may keep the BPBD and facility numbers.
+  mayEditNumbers: z.boolean(),
 });
 
 export type DeskSummary = z.infer<typeof deskSummarySchema>;

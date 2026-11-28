@@ -5,7 +5,7 @@
 export const FACILITY_KINDS = ["rs", "puskesmas", "polisi", "damkar"] as const;
 export type FacilityKind = (typeof FACILITY_KINDS)[number];
 
-type Facility = readonly [kind: FacilityKind, lat: number, lon: number, name: string, phone: string];
+export type Facility = readonly [kind: FacilityKind, lat: number, lon: number, name: string, phone: string];
 
 export type FacilityFile = {
   readonly dibuat: string;
@@ -14,7 +14,7 @@ export type FacilityFile = {
 };
 
 // A number a phone can call: a plus and digits, or a short service number.
-const PHONE = /^(\+\d{8,15}|\d{3,12})$/;
+export const FACILITY_PHONE = /^(\+\d{8,15}|\d{3,12})$/;
 
 const isFacility = (value: unknown) => {
   const one = value as readonly unknown[] | null;
@@ -24,7 +24,7 @@ const isFacility = (value: unknown) => {
     typeof one[1] === "number" &&
     typeof one[2] === "number" &&
     typeof one[3] === "string" &&
-    PHONE.test(String(one[4]))
+    FACILITY_PHONE.test(String(one[4]))
   );
 };
 

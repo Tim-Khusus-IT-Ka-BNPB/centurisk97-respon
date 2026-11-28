@@ -11,8 +11,10 @@ import type {
   DeskTrackingLink,
 } from "../../src/contract/desk";
 import type { ErrorEnvelope } from "../../src/contract/errors";
+import type { DeskBpbdNumbers, DeskFacilityNumbers } from "../../src/contract/numbers";
 import type { WarningControl } from "../../src/contract/warnings";
 import type { Texts } from "../../src/copy/text";
+import { FACILITY_KINDS, type FacilityKind } from "../../src/domain/facilities";
 import { MISSING_STATUSES, type MissingStatus } from "../../src/domain/missingPerson";
 import {
   DESK_VIEWS,
@@ -23,6 +25,7 @@ import {
   type OfficerNumber,
 } from "./deskTypes";
 import type { DeskMissingOne } from "./missingTypes";
+import { type NumbersSaved, type NumbersView, numbersLink } from "./numbersView";
 import { documentOrBack } from "./ownReportPage.server";
 import { PAGE_TEXTS, pickTexts } from "./texts.server";
 
@@ -399,4 +402,96 @@ export async function actOnDeskMissing(form: FormData, api: ApiCall, url: URL): 
   if (response.ok) return redirectTo(back, response);
   const envelope = (await response.json()) as ErrorEnvelope;
   return { kind: "render", status: response.status, envelope, typed: typedIn(form) };
+}
+
+export type DeskNumbersLoad =
+  | DeskRefusal
+  | {
+      readonly kind: "numbers";
+      readonly texts: Texts;
+      readonly view: NumbersView;
+      readonly summary: DeskSummary | null;
+      readonly saved: NumbersSaved | null;
+    };
+
+const SAVED: Readonly<Record<string, NumbersSaved>> = { add: "added", change: "changed", remove: "removed" };
+
+// The list the address asks for, its search kept within what the API takes.
+function numbersSearch(search: URLSearchParams) {
+  const page = Number(search.get("page"));
+  const kind = search.get("kind");
+  return {
+    tab: search.get("tab") === "facilities" ? ("facilities" as const) : ("bpbd" as const),
+    q: (search.get("q") ?? "").slice(0, 60),
+    page: Number.isInteger(page) && page > 1 ? page : 1,
+    empty: search.get("empty") === "1",
+    kind: (FACILITY_KINDS as readonly (string | null)[]).includes(kind) ? (kind as FacilityKind) : null,
+  };
+}
+
+// GET /desk/numbers: a page of the BPBD numbers, or of the facility numbers.
+export async function loadDeskNumbers(url: URL, api: ApiCall): Promise<DeskNumbersLoad> {
+  const asked = numbersSearch(url.searchParams);
+  const query = new URLSearchParams({ q: asked.q, page: String(asked.page) });
+  if (asked.tab === "bpbd" && asked.empty) query.set("empty", "1");
+  if (asked.tab === "facilities" && asked.kind !== null) query.set("kind", asked.kind);
+  const [response, summary] = await Promise.all([
+    api("GET", `/desk/numbers/${asked.tab}?${query}`),
+    summaryOf(api, ""),
+  ]);
+  if (!response.ok) return refusalOf(response);
+  const body = await response.json();
+  const view: NumbersView =
+    asked.tab === "bpbd"
+      ? { tab: "bpbd", search: { q: asked.q, empty: asked.empty }, list: body as DeskBpbdNumbers }
+      : { tab: "facilities", search: { q: asked.q, kind: asked.kind }, list: body as DeskFacilityNumbers };
+  const saved = url.searchParams.get("saved");
+  return {
+    kind: "numbers",
+    texts: texts(),
+    view,
+    summary,
+    saved: (Object.values(SAVED) as (string | null)[]).includes(saved) ? (saved as NumbersSaved) : null,
+  };
+}
+
+// What one of the page's forms sends: an entry added, changed or removed, over the file it was read from.
+function numbersEdit(form: FormData) {
+  const text = (name: string) => formText(form, name);
+  const kind = text("edit");
+  const at = kind === "add" ? {} : { index: Number(text("index")) };
+  const typed =
+    kind === "remove"
+      ? {}
+      : text("tab") === "facilities"
+        ? {
+            facility: {
+              kind: text("kind"),
+              name: text("name"),
+              phone: text("phone"),
+              lat: text("lat"),
+              lon: text("lon"),
+            },
+          }
+        : { number: { nomor: text("nomor"), jenis: text("jenis"), url: text("url"), lama: form.get("lama") === "on" } };
+  const area = text("tab") === "facilities" ? {} : { code: text("code") };
+  return { checksum: text("checksum") === "" ? null : text("checksum"), edit: { kind, ...area, ...at, ...typed } };
+}
+
+// POST /desk/numbers: one entry kept, then the list as it was, saying so; or the form again with
+// what was typed and why not. A facility added is searched for, since it joins the end of the list.
+export async function actOnDeskNumbers(form: FormData, api: ApiCall, url: URL): Promise<DeskPosted> {
+  const asked = numbersSearch(url.searchParams);
+  const kind = formText(form, "edit");
+  const response = await api("POST", `/desk/numbers/${asked.tab}`, numbersEdit(form));
+  if (!response.ok) {
+    const envelope = (await response.json()) as ErrorEnvelope;
+    return { kind: "render", status: response.status, envelope, typed: typedIn(form) };
+  }
+  const added = asked.tab === "facilities" && kind === "add";
+  const back = added
+    ? numbersLink({ tab: "facilities", q: formText(form, "name").trim() })
+    : numbersLink(asked, asked.page);
+  const anchor = asked.tab === "bpbd" ? `#wilayah-${formText(form, "code")}` : "";
+  return redirectTo(`${back}${back.includes("?") ? "&" : "?"}saved=${SAVED[kind] as NumbersSaved}${anchor}`, response);
 }
