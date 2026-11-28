@@ -9,7 +9,7 @@
   "help.reporting.placeRequired.q": "Kenapa lokasi wajib?",
   "help.reporting.placeRequired.a": "Laporan perlu menyebut desa yang terdampak supaya bisa diperiksa. Desa yang Anda pilih dicatat beserta kecamatan, kabupaten/kota, dan provinsinya.",
   "help.reporting.official.q": "Apakah laporan saya langsung dianggap resmi?",
-  "help.reporting.official.a": "Belum. Laporan warga tetap laporan dan tidak langsung menjadi data kejadian resmi. Laporan juga tidak tampil ke publik.",
+  "help.reporting.official.a": "Belum. Laporan warga tetap laporan dan tidak langsung menjadi data kejadian resmi. Sesudah diperiksa dan ditangani petugas, laporan bisa tampil di Alun-alun: jenis kejadian, desa, dan perkiraan dampaknya. Nama, nomor, dan titik lokasi Anda tidak pernah ditampilkan.",
   "help.reporting.words.q": "Kata apa yang bisa saya ketik?",
   "help.reporting.words.a": "\"kembali\" membatalkan jawaban terakhir. \"batal\" membatalkan laporan yang sedang diisi, sesudah Anda memastikannya.",
   "help.reporting.unsent.q": "Berapa lama laporan yang belum dikirim disimpan?",
