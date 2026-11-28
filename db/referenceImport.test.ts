@@ -27,7 +27,6 @@ describe("reference file importer", () => {
       { name: "education", data_date: "2026-11-19", source: "seed" },
       { name: "facilityNumbers", data_date: "2026-11-27", source: "seed" },
       { name: "forecast", data_date: "2026-11-26", source: "seed" },
-      { name: "officialEvents", data_date: "2026-11-26", source: "seed" },
       { name: "responseActions", data_date: "versi 1", source: "seed" },
       { name: "volcanoes", data_date: "2026-11-10", source: "seed" },
     ]);
@@ -63,7 +62,7 @@ describe("reference file importer", () => {
     await expect(importReferenceFile(db, "responseActions", path, "upstream")).rejects.toBeInstanceOf(
       ReferenceFileRefused,
     );
-    for (const name of ["forecast", "volcanoes", "facilityNumbers", "officialEvents"] as const)
+    for (const name of ["forecast", "volcanoes", "facilityNumbers"] as const)
       await expect(importReferenceFile(db, name, path, "upstream")).rejects.toBeInstanceOf(ReferenceFileRefused);
     expect(await stored()).toEqual(before);
     await importReferenceFile(db, "bpbdContacts", "db/reference/bpbd-contacts.json", "seed");

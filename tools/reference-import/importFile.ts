@@ -3,8 +3,8 @@ import { sqlState } from "../../src/platform/database.ts";
 import { importReferenceFile, ReferenceFileRefused, type ReferenceName } from "./file.ts";
 
 // pnpm reference:import-file <name> <file>: loads one of upstream's reference files (contacts,
-// education, response actions, forecast, volcanoes, facility numbers, official events) into the
-// database at DATABASE_URL, checked against its contract first. In the image: node build/node/import-file.js.
+// education, response actions, forecast, volcanoes, facility numbers) into the database at
+// DATABASE_URL, checked against its contract first. In the image: node build/node/import-file.js.
 const [name, path] = process.argv.slice(2);
 const NAMES: readonly (string | undefined)[] = [
   "bpbdContacts",
@@ -13,11 +13,10 @@ const NAMES: readonly (string | undefined)[] = [
   "forecast",
   "volcanoes",
   "facilityNumbers",
-  "officialEvents",
 ];
 if (!NAMES.includes(name) || !path) {
   console.error(
-    "Usage: pnpm reference:import-file <bpbdContacts|education|responseActions|forecast> <path to the file>",
+    "Usage: pnpm reference:import-file <bpbdContacts|education|responseActions|forecast|volcanoes|facilityNumbers> <path to the file>",
   );
   process.exit(2);
 }

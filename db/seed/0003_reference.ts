@@ -15,6 +15,4 @@ export default async function seedReference(db: Database): Promise<void> {
   await importReferenceFile(db, "volcanoes", "db/reference/volcanoes.json", "seed");
   // Upstream's facility numbers for all of Indonesia, as built on its date (pnpm reference:facilities).
   await importReferenceFile(db, "facilityNumbers", "db/reference/facility-numbers.json", "seed");
-  // Upstream's gathering of BNPB's daily report and its news, as it was on its day.
-  await importReferenceFile(db, "officialEvents", "db/reference/kabar.json", "seed");
 }
