@@ -47,8 +47,6 @@ export type QueueRow = {
   readonly reporterRole: "citizen" | "claimedOfficer";
   readonly numberUnverified: boolean;
   readonly door: Door;
-  // The pilot list names its number as an officer's.
-  readonly officerConfirmed: boolean;
   readonly emergency: { readonly kind: EmergencyKind; readonly victims: VictimAnswer } | null;
   // Kept on the reporter's phone with no signal: when it was saved there (null when the phone's clock
   // could not be believed), and whether it came more than 2 hours late (LR-09).
@@ -73,7 +71,6 @@ type QueueRecord = {
   reporter_role: "citizen" | "claimedOfficer";
   number_unverified: boolean;
   door: Door;
-  officer_confirmed: boolean;
   emergency: EmergencyKind | null;
   emergency_victims: VictimAnswer | null;
   offline_kept: boolean | null;
@@ -102,12 +99,8 @@ const NEWS = sql`exists (select 1 from ticket_history n where n.ticket_number = 
 const STATUS_SINCE = sql`(select max(h.at) from ticket_history h where h.ticket_number = r.ticket_number
     and h.event is null) as status_since`;
 
-// A number typed by somebody is never confirmed by the list (D101).
-const CONFIRMED = sql`(v.reporter_role = 'claimedOfficer' and not r.number_unverified and exists (
-    select 1 from pilot_number a where a.number_key = r.number_key and a.officer_regency is not null))`;
-
 const SELECT = sql`select r.ticket_number, t.status, r.hazard_type, r.village_code, r.sent_at, v.fields,
-    v.complete_percent, v.reporter_name, v.reporter_role, r.number_unverified, r.door, ${CONFIRMED} as officer_confirmed, r.emergency, r.emergency_victims, ${OFFLINE},
+    v.complete_percent, v.reporter_name, v.reporter_role, r.number_unverified, r.door, r.emergency, r.emergency_victims, ${OFFLINE},
     (select k.label from report_taker k where k.ticket_number = r.ticket_number) as taker, ${NEWS} as news,
     (select count(*) from draft_photo p where p.draft_id = r.draft_id) as photo_count, ${STATUS_SINCE}
   from report r
@@ -163,7 +156,6 @@ const queueRow = (found: QueueRecord): QueueRow => ({
   reporterRole: found.reporter_role,
   numberUnverified: found.number_unverified === true,
   door: found.door,
-  officerConfirmed: found.officer_confirmed === true,
   taker: found.taker,
   news: found.news === true,
   statusSince: new Date(found.status_since),
@@ -251,7 +243,7 @@ export async function deskReport(
   >(
     db,
     sql`select r.ticket_number, t.status, r.hazard_type, r.village_code, r.sent_at, v.fields,
-        v.complete_percent, v.reporter_name, v.reporter_role, r.number_unverified, r.door, ${CONFIRMED} as officer_confirmed, r.emergency, r.emergency_victims, ${OFFLINE},
+        v.complete_percent, v.reporter_name, v.reporter_role, r.number_unverified, r.door, r.emergency, r.emergency_victims, ${OFFLINE},
     (select k.label from report_taker k where k.ticket_number = r.ticket_number) as taker, ${NEWS} as news, r.draft_id, r.id as report_id, t.revision,
         v.reporter_number, v.officer_regency, v.officer_position,
         (select count(*) from draft_photo p where p.draft_id = r.draft_id) as photo_count, ${STATUS_SINCE}

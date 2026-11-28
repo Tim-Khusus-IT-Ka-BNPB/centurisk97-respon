@@ -38,14 +38,10 @@ describe("a report on the desk", () => {
     expect(screen.getByRole("alert").textContent).toContain("Dokumen belum bisa diunduh.");
   });
 
-  test("a claimed officer whose number the pilot list names is confirmed", async () => {
+  test("a claimed officer is named by role", async () => {
     const officer = { ...REPORT, reporter: { ...REPORT.reporter, role: "claimedOfficer" as const } };
-    const view = await renderDesk(<DeskReportView report={officer} summary={SUMMARY} />, PATH);
+    await renderDesk(<DeskReportView report={officer} summary={SUMMARY} />, PATH);
     expect(screen.getAllByText("Petugas BPBD (belum dikonfirmasi)").length).toBeGreaterThan(0);
-    view.unmount();
-    await renderDesk(<DeskReportView report={{ ...officer, officerConfirmed: true }} summary={SUMMARY} />, PATH);
-    expect(screen.getAllByText("Petugas BPBD (dikonfirmasi)").length).toBeGreaterThan(0);
-    expect(screen.queryByText("Petugas BPBD (belum dikonfirmasi)")).toBeNull();
   });
 
   test("one that came through WhatsApp says so, and where its values were written", async () => {

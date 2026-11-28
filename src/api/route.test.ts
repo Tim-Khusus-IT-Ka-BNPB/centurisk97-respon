@@ -10,7 +10,6 @@ describe("route list", () => {
     const routes = routeList(api);
     expect(routes).toEqual([
       { key: "DELETE /api/cases/:fileId/records/:recordId/videos/:videoId", policy: "caseTeam" },
-      { key: "DELETE /api/desk/pilot/:key", policy: "staff" },
       { key: "DELETE /api/desk/session", policy: "public" },
       { key: "DELETE /api/drafts/:draftId/photos/:photoId", policy: "reporter" },
       { key: "DELETE /api/drafts/:draftId/videos/:videoId", policy: "reporter" },
@@ -29,7 +28,6 @@ describe("route list", () => {
       { key: "GET /api/desk/missing/:id/photo", policy: "staff" },
       { key: "GET /api/desk/photos", policy: "staff" },
       { key: "GET /api/desk/photos/:photoId", policy: "staff" },
-      { key: "GET /api/desk/pilot", policy: "staff" },
       { key: "GET /api/desk/proofs/:proofId", policy: "staff" },
       { key: "GET /api/desk/reports", policy: "staff" },
       { key: "GET /api/desk/reports/:ticketNumber", policy: "staff" },
@@ -78,7 +76,6 @@ describe("route list", () => {
       { key: "POST /api/consent", policy: "public" },
       { key: "POST /api/desk/aggregates", policy: "staff" },
       { key: "POST /api/desk/missing/:id/status", policy: "staff" },
-      { key: "POST /api/desk/pilot", policy: "staff" },
       { key: "POST /api/desk/reports/:ticketNumber/actions", policy: "staff" },
       { key: "POST /api/desk/reports/:ticketNumber/case", policy: "staff" },
       { key: "POST /api/desk/reports/:ticketNumber/checks", policy: "staff" },
@@ -384,8 +381,6 @@ describe("response schemas and the OpenAPI document", () => {
       "/api/desk/missing/{id}/status",
       "/api/desk/photos",
       "/api/desk/photos/{photoId}",
-      "/api/desk/pilot",
-      "/api/desk/pilot/{key}",
       "/api/desk/proofs/{proofId}",
       "/api/desk/reports",
       "/api/desk/reports/{ticketNumber}",

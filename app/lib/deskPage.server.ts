@@ -3,7 +3,6 @@ import type {
   DeskGallery,
   DeskIdentity,
   DeskMap,
-  DeskPilot,
   DeskQueue,
   DeskReport,
   DeskResponse,
@@ -180,22 +179,6 @@ export async function pauseWarnings(form: FormData, api: ApiCall): Promise<boole
   return (await api("POST", "/desk/warnings", { paused: formText(form, "paused") === "1" })).ok;
 }
 
-export type DeskPilotLoad =
-  | DeskRefusal
-  | {
-      readonly kind: "pilot";
-      readonly texts: Texts;
-      readonly pilot: DeskPilot;
-      readonly summary: DeskSummary | null;
-    };
-
-// GET /desk/pilot: the numbers the WhatsApp pilot serves.
-export async function loadDeskPilot(api: ApiCall): Promise<DeskPilotLoad> {
-  const [response, summary] = await Promise.all([api("GET", "/desk/pilot"), summaryOf(api, "")]);
-  if (!response.ok) return refusalOf(response);
-  return { kind: "pilot", texts: texts(), pilot: (await response.json()) as DeskPilot, summary };
-}
-
 export type DeskActed =
   | { readonly kind: "redirect"; readonly location: string; readonly headers: Headers }
   | { readonly kind: "render"; readonly status: number; readonly envelope: ErrorEnvelope };
@@ -350,20 +333,6 @@ export async function actOnDeskReport(ticketNumber: string, form: FormData, api:
         ? "released"
         : (TOGGLED[String(action)]?.[formText(form, TOGGLE_FIELD[String(action)] as string) === "1" ? 1 : 0] ?? path);
   return redirectTo(`/desk/${ticket}${path === "view" ? "" : `?saved=${saved}`}`, response);
-}
-
-// POST /desk/pilot: a number allowed, or taken away after its confirm.
-export async function actOnDeskPilot(form: FormData, api: ApiCall): Promise<DeskPosted> {
-  const remove = formText(form, "action") === "remove";
-  const response = remove
-    ? await api("DELETE", `/desk/pilot/${encodeURIComponent(formText(form, "key"))}`, { confirm: true })
-    : await api("POST", "/desk/pilot", {
-        number: formText(form, "number"),
-        officerRegency: formText(form, "officerRegency"),
-      });
-  if (response.ok) return redirectTo(`/desk/pilot?saved=${remove ? "removed" : "allowed"}`, response);
-  const envelope = (await response.json()) as ErrorEnvelope;
-  return { kind: "render", status: response.status, envelope, typed: typedIn(form) };
 }
 
 // POST /desk/<ticket>/documents: a version as a file.

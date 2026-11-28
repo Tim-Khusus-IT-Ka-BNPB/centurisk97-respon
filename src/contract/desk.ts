@@ -39,8 +39,6 @@ const queueItemSchema = z.object({
   // The name is null for an account that must ask for identity on the report.
   reporter: z.object({ name: z.string().nullable(), role: reporterRoleSchema }),
   numberUnverified: z.boolean(),
-  // The pilot list names this number as an officer's, so a claimed officer is confirmed (D19).
-  officerConfirmed: z.boolean(),
   // Which door it came through; a chat proves its number.
   door: z.enum(["web", "chat"]),
   // Raised as an emergency, and what the reporter said of victims. One tap's kind is not known.
@@ -104,8 +102,6 @@ export const deskSummarySchema = z.object({
   emergencies: z.array(deskEmergencySchema),
   // This account may read how fast each agency answers.
   mayReadResponse: z.boolean(),
-  // This account may say which numbers the WhatsApp pilot serves.
-  mayManagePilot: z.boolean(),
 });
 
 export type DeskSummary = z.infer<typeof deskSummarySchema>;
@@ -330,23 +326,3 @@ export const deskResponseSchema = z.object({
 });
 
 export type DeskResponse = z.infer<typeof deskResponseSchema>;
-
-// The numbers the WhatsApp pilot serves, the newest first.
-export const deskPilotSchema = z.object({
-  account: accountSchema,
-  max: z.number().int().positive(),
-  items: z.array(
-    z.object({
-      // Names the number in an address, which never holds the number itself.
-      key: z.string(),
-      number: z.string(),
-      officerRegency: z.string().nullable(),
-      addedBy: z.string(),
-      addedAt: timeSchema,
-      reports: z.number().int().nonnegative(),
-      lastReportAt: timeSchema.nullable(),
-    }),
-  ),
-});
-
-export type DeskPilot = z.infer<typeof deskPilotSchema>;

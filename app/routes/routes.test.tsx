@@ -20,7 +20,6 @@ import DeskRoute, * as desk from "./desk";
 import * as deskAggregates from "./deskAggregates";
 import * as deskDocument from "./deskDocument";
 import DeskMissingRoute, * as deskMissing from "./deskMissing";
-import DeskPilotRoute, * as deskPilot from "./deskPilot";
 import DeskReportRoute, * as deskReport from "./deskReport";
 import DeskResponseRoute, * as deskResponse from "./deskResponse";
 import DraftRoute, * as draft from "./draft";
@@ -1116,47 +1115,6 @@ describe("desk routes", () => {
       303,
       "/desk/response?refused=warnings",
     ]);
-  });
-
-  test("the pilot's numbers: the page, the sign-in form, a refusal, and its forms", async () => {
-    expect(deskPilot.headers()).toEqual({ "cache-control": "private, no-store", "x-robots-tag": "noindex" });
-    expect(deskPilot.meta({ data: { texts: pickTexts(PAGE_TEXTS.desk) }, matches: [] } as Args)[0]).toEqual({
-      title: "Meja laporan, Pantau Bencana BNPB",
-    });
-    const load = async (answer: () => Response) =>
-      unwrap(
-        await deskPilot.loader({
-          context: { api: api({ "GET /desk/pilot": answer, "GET /desk/summary": json(SUMMARY) }) },
-        } as Args),
-      );
-    const show = (loaderData: unknown, actionData?: unknown) =>
-      renderPage(routeElement(DeskPilotRoute, { loaderData, actionData }), { path: "/desk/pilot" });
-    const list = json({ account: { label: "Petugas Uji" }, max: 500, items: [] });
-    show((await load(list)).data);
-    expect(await screen.findByRole("heading", { level: 1, name: "Nomor uji WhatsApp" })).toBeTruthy();
-    cleanup();
-    show((await load(json(signInFirst, 401))).data);
-    expect(await screen.findByRole("heading", { name: "Masuk meja laporan" })).toBeTruthy();
-    cleanup();
-    const refused = await load(json(notAllowed, 403));
-    expect(refused.init?.status).toBe(403);
-    show(refused.data);
-    expect(await screen.findByRole("heading", { name: "Meja laporan belum bisa dibuka" })).toBeTruthy();
-    cleanup();
-    const posted = (answer: () => Response) =>
-      deskPilot.action({
-        request: post("http://x/desk/pilot", [
-          ["action", "add"],
-          ["number", "12"],
-        ]),
-        context: { api: api({ "POST /desk/pilot": answer }) },
-      } as Args);
-    const done = (await posted(json({}))) as Response;
-    expect([done.status, done.headers.get("location")]).toEqual([303, "/desk/pilot?saved=allowed"]);
-    const again = unwrap(await posted(json(notAllowed, 403)));
-    expect(again.init?.status).toBe(403);
-    show((await load(list)).data, again.data);
-    expect(((await screen.findByLabelText("Nomor WhatsApp")) as HTMLInputElement).value).toBe("12");
   });
 
   test("missing persons: the list by status, the sign-in form, a refusal, and a move", async () => {

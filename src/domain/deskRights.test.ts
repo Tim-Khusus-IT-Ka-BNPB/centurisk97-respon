@@ -15,7 +15,6 @@ const RIGHTS: readonly (readonly [DeskCapability, boolean, boolean])[] = [
   ["addHandling", true, true],
   ["takeReport", false, true],
   ["readResponse", true, false],
-  ["managePilot", true, false],
   ["readIdentity", true, false],
   ["revealIdentity", false, true],
   ["downloadDocument", true, true],

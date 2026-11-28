@@ -35,7 +35,6 @@ export const ITEM: DeskQueue["items"][number] = {
   photoCount: 2,
   reporter: { name: "Uji Satu", role: "citizen" },
   door: "web",
-  officerConfirmed: false,
   numberUnverified: true,
   emergency: null,
   offline: null,
@@ -184,5 +183,4 @@ export const SUMMARY: DeskSummary = {
   byHas: { news: 2, victims: 3, displaced: 1, houses: 5, photos: 0 },
   emergencies: [],
   mayReadResponse: true,
-  mayManagePilot: true,
 };

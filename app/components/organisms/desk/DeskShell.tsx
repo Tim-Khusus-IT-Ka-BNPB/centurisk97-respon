@@ -145,8 +145,6 @@ function DeskNav({ place }: { readonly place: DeskPlace }) {
             </Link>
           </li>
         ) : null}
-        {/* The WhatsApp pilot numbers (/desk/pilot) are left out of the menu while WhatsApp waits
-            (owner, 26 Nov 2026); the page itself still opens. */}
         <li>
           <Link to={MISSING} aria-current={pathname === MISSING ? "page" : undefined} className={item}>
             <Icon name="userSearch" className={navIcon} />

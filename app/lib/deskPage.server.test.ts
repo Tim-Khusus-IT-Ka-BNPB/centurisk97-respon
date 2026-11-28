@@ -3,10 +3,8 @@ import type { ApiCall } from "../../src/api/bridge";
 import { envelope } from "../../src/api/envelope";
 import {
   actOnDesk,
-  actOnDeskPilot,
   actOnDeskReport,
   filtersOf,
-  loadDeskPilot,
   loadDeskQueue,
   loadDeskReport,
   loadDeskResponse,
@@ -386,39 +384,6 @@ describe("pausing the warnings", () => {
     ]);
     const refused = fakeApi(() => Response.json(envelope("desk.notAllowed"), { status: 403 }));
     expect(await pauseWarnings(form({}), refused.api)).toBe(false);
-  });
-});
-
-describe("the numbers of the pilot", () => {
-  test("the list is read with the menu's counts, or refused", async () => {
-    const { api, calls } = fakeApi(() => Response.json({ items: [] }));
-    expect(await loadDeskPilot(api)).toMatchObject({ kind: "pilot", pilot: { items: [] } });
-    expect(calls.map((call) => call.path)).toEqual(["/desk/pilot", "/desk/summary"]);
-    const refused = fakeApi(() => Response.json(envelope("desk.notAllowed"), { status: 403 }));
-    expect(await loadDeskPilot(refused.api)).toMatchObject({ kind: "refused", status: 403 });
-  });
-
-  test("a number is posted, or taken away by its key, and named on the page after", async () => {
-    const { api, calls } = fakeApi(() => Response.json({}));
-    expect(await actOnDeskPilot(form({ action: "add", number: "0800", officerRegency: "Uji" }), api)).toMatchObject({
-      location: "/desk/pilot?saved=allowed",
-    });
-    expect(await actOnDeskPilot(form({ action: "remove", key: "abc" }), api)).toMatchObject({
-      location: "/desk/pilot?saved=removed",
-    });
-    expect(calls).toEqual([
-      { method: "POST", path: "/desk/pilot", body: { number: "0800", officerRegency: "Uji" } },
-      { method: "DELETE", path: "/desk/pilot/abc", body: { confirm: true } },
-    ]);
-  });
-
-  test("a refused one is drawn again with what was typed", async () => {
-    const { api } = fakeApi(() => Response.json(envelope("request.invalidFields"), { status: 422 }));
-    expect(await actOnDeskPilot(form({ action: "add", number: "12" }), api)).toMatchObject({
-      kind: "render",
-      status: 422,
-      typed: { values: { number: "12" } },
-    });
   });
 });
 

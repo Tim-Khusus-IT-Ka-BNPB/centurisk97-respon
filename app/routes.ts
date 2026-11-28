@@ -21,7 +21,6 @@ export default [
   route("desk", "routes/desk.tsx"),
   route("desk/response", "routes/deskResponse.tsx"),
   route("desk/response/aggregates", "routes/deskAggregates.tsx"),
-  route("desk/pilot", "routes/deskPilot.tsx"),
   route("desk/missing", "routes/deskMissing.tsx"),
   route("desk/:ticketNumber", "routes/deskReport.tsx"),
   route("cases/join/:token", "routes/caseJoin.tsx"),
