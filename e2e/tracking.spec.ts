@@ -61,6 +61,7 @@ test("a sent report thanks, asks a rating, shows its ticket, and its link opens 
   await ticket.screenshot({ path: test.info().outputPath("ticket.png") });
   const link = (await ticket.getByRole("link", { name: "Lacak laporan" }).getAttribute("href")) as string;
   expect(link).toMatch(/^\/track#t=[0-9a-f]{32}$/);
+  await expect(ticket.getByTestId("tracking-link")).toHaveText(`${new URL(page.url()).origin}${link}`);
 
   // Laporan saya on the home lists it.
   await page.goto("/");

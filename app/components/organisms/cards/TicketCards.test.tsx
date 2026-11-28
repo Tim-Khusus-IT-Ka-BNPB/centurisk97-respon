@@ -41,6 +41,13 @@ describe("ticket card", () => {
     expect(screen.getByRole("link", { name: "Lacak laporan" }).getAttribute("href")).toBe(
       "/track#t=0123456789abcdef0123456789abcdef",
     );
+    // The link itself, whole and to keep, under the number.
+    const kept = within(screen.getByRole("region", { name: "Tautan lacak" }));
+    expect(kept.getByText(/hanya tautan ini yang bisa membuka laporan Anda/)).toBeTruthy();
+    expect(kept.getByTestId("tracking-link").textContent).toBe(
+      "http://localhost:5173/track#t=0123456789abcdef0123456789abcdef",
+    );
+    expect(kept.getByRole("button", { name: "Salin tautan lacak LA-231126-01" })).toBeTruthy();
     expect(screen.getByText("BPBD Aceh Utara")).toBeTruthy();
     expect(screen.getByRole("link", { name: "Telepon 0800-1111-2222" }).getAttribute("href")).toBe("tel:080011112222");
     expect(screen.getByRole("link", { name: "Buat laporan baru" }).getAttribute("href")).toBe("/report");
@@ -74,6 +81,16 @@ describe("ticket card", () => {
     fireEvent.click(await screen.findByRole("button", { name: "Salin nomor tiket LA-231126-01" }));
     await screen.findByText("Tersalin");
     expect(writeText).toHaveBeenCalledWith("LA-231126-01");
+  });
+
+  test("Salin tautan copies the whole tracking link and says so", async () => {
+    const writeText = vi.fn(async () => undefined);
+    vi.stubGlobal("navigator", { ...navigator, clipboard: { writeText } });
+    draw(withCard({ rating: 4 }));
+    fireEvent.click(await screen.findByRole("button", { name: "Salin tautan lacak LA-231126-01" }));
+    await screen.findByText("Tautan tersalin");
+    expect(writeText).toHaveBeenCalledWith("http://localhost:5173/track#t=0123456789abcdef0123456789abcdef");
+    expect(screen.getByText("Salin")).toBeTruthy();
   });
 
   test("Salin says it copied even when the browser refuses the clipboard, or has none", async () => {

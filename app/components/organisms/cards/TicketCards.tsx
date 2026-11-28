@@ -76,7 +76,7 @@ export function ContactBlock({ contact }: { readonly contact: Tracking["contact"
   );
 }
 
-function QrCode({ text, label }: { readonly text: string; readonly label: string }) {
+export function QrCode({ text, label }: { readonly text: string; readonly label: string }) {
   const modules = qrModules(text);
   const size = modules.length + 8;
   return (
@@ -92,24 +92,55 @@ function QrCode({ text, label }: { readonly text: string; readonly label: string
   );
 }
 
-function CopyNumber({ ticketNumber }: { readonly ticketNumber: string }) {
-  const t = useText();
+// Copies its text once the page runs script; with none there is nothing to press.
+function CopyButton({
+  text,
+  label,
+  idle,
+  done,
+}: {
+  readonly text: string;
+  readonly label: string;
+  readonly idle: string;
+  readonly done: string;
+}) {
   const hydrated = useHydrated();
   const [copied, setCopied] = useState(false);
   if (!hydrated) return null;
   return (
     <button
       type="button"
-      aria-label={t("card.sent.copyLabel", { ticketNumber })}
+      aria-label={label}
       className={buttonStyles({ variant: "secondary", size: "min" })}
       onClick={async () => {
-        await navigator.clipboard?.writeText(ticketNumber).catch(() => undefined);
+        await navigator.clipboard?.writeText(text).catch(() => undefined);
         setCopied(true);
       }}
     >
       <Icon name={copied ? "check" : "copy"} className="size-5" />
-      {copied ? t("card.sent.copied") : t("card.sent.copy")}
+      {copied ? done : idle}
     </button>
+  );
+}
+
+// The tracking link whole, to select or copy: on another phone it is the only way back to the report.
+export function TrackingLinkText({ url, ticketNumber }: { readonly url: string; readonly ticketNumber: string }) {
+  const t = useText();
+  return (
+    <div className="flex w-full flex-col items-start gap-2">
+      <p
+        data-testid="tracking-link"
+        className="w-full rounded-control border border-line bg-surface px-3 py-2 font-mono text-meta break-all select-all"
+      >
+        {url}
+      </p>
+      <CopyButton
+        text={url}
+        label={t("card.sent.link.copyLabel", { ticketNumber })}
+        idle={t("card.sent.link.copy")}
+        done={t("card.sent.link.copied")}
+      />
+    </div>
   );
 }
 
@@ -198,14 +229,15 @@ function RateButton({ n }: { readonly n: number }) {
   );
 }
 
-// The ticket card (K18, K88): the number to keep, the tracking link and its QR code, the stages,
-// who to call, and a new report. It promises only what is done now: received, tracked, and
+// The ticket card (K18, K88): the number to keep, the tracking link to keep and its QR code, the
+// stages, who to call, and a new report. It promises only what is done now: received, tracked, and
 // contact by staff, who see the report and its number on the desk.
 export function TicketCard({ card }: { readonly card: SentCardData }) {
   const t = useText();
   const { origin } = useDraftView();
   const heading = useMountFocus<HTMLHeadingElement>(card.rating !== null);
   const link = trackingPath(card.trackingToken);
+  const url = `${origin}${link}`;
   return (
     <>
       {card.rating === null ? <ThankYou card={card} /> : null}
@@ -235,9 +267,25 @@ export function TicketCard({ card }: { readonly card: SentCardData }) {
                 <span data-testid="ticket-number" className="text-ticket font-bold whitespace-nowrap tabular-nums">
                   {card.ticketNumber}
                 </span>
-                <CopyNumber ticketNumber={card.ticketNumber} />
+                <CopyButton
+                  text={card.ticketNumber}
+                  label={t("card.sent.copyLabel", { ticketNumber: card.ticketNumber })}
+                  idle={t("card.sent.copy")}
+                  done={t("card.sent.copied")}
+                />
               </p>
             </div>
+            <section
+              aria-labelledby="sent-link"
+              className="flex flex-col items-start gap-2 rounded-control border-2 border-primary bg-selected px-4 py-3"
+            >
+              <h3 id="sent-link" className="flex items-center gap-2 font-bold">
+                <Icon name="link" className="size-5 text-primary" />
+                {t("card.sent.link.title")}
+              </h3>
+              <p className="text-meta">{t("card.sent.link.keep")}</p>
+              <TrackingLinkText url={url} ticketNumber={card.ticketNumber} />
+            </section>
             <section aria-label={t("card.sent.stages")}>
               {card.tracking.rejected === null ? (
                 <StageStrip stages={card.tracking.stages} />
@@ -270,7 +318,7 @@ export function TicketCard({ card }: { readonly card: SentCardData }) {
           </div>
           <div className="flex min-w-0 flex-col gap-4 @split:border-s @split:border-line @split:ps-8">
             <figure className="flex flex-col items-start gap-2">
-              <QrCode text={`${origin}${link}`} label={t("card.sent.qr", { ticketNumber: card.ticketNumber })} />
+              <QrCode text={url} label={t("card.sent.qr", { ticketNumber: card.ticketNumber })} />
               <figcaption className="text-meta text-muted">{t("card.sent.qrHint")}</figcaption>
             </figure>
             <ContactBlock contact={card.tracking.contact} />

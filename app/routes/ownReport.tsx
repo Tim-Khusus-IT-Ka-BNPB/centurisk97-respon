@@ -1,4 +1,4 @@
-import { data, redirect, type ShouldRevalidateFunctionArgs } from "react-router";
+import { data, redirect, type ShouldRevalidateFunctionArgs, useRouteLoaderData } from "react-router";
 import { RefusedScreen } from "../components/organisms/DraftScreen";
 import { OwnReportScreen } from "../components/organisms/OwnReportScreen";
 import { Page } from "../components/templates/Page";
@@ -33,10 +33,11 @@ export const shouldRevalidate = ({ formData, defaultShouldRevalidate }: ShouldRe
   formData?.get("action") === "newsRead" ? false : defaultShouldRevalidate;
 
 export default function OwnReportRoute({ loaderData, actionData }: Route.ComponentProps) {
+  const root = useRouteLoaderData<{ origin: string }>("root");
   return (
     <Page texts={loaderData.texts} publicPage={false} wide={loaderData.kind === "report"}>
       {loaderData.kind === "report" ? (
-        <OwnReportScreen report={loaderData.report} envelope={actionData?.envelope} />
+        <OwnReportScreen report={loaderData.report} origin={root?.origin ?? ""} envelope={actionData?.envelope} />
       ) : (
         <RefusedScreen envelope={loaderData.envelope} />
       )}

@@ -11,7 +11,7 @@ import { Button, buttonStyles } from "../atoms/Button";
 import { Icon } from "../atoms/Icon";
 import { FileFrame, useFileTarget } from "../molecules/FileFrame";
 import { Notice } from "../molecules/Notice";
-import { ContactBlock, trackingPath } from "./cards/TicketCards";
+import { ContactBlock, QrCode, TrackingLinkText, trackingPath } from "./cards/TicketCards";
 import { OwnNews } from "./OwnNews";
 import { ReportEvent, ReportStatus } from "./ReportProgress";
 import { FileButtons, VersionList } from "./VersionList";
@@ -118,13 +118,50 @@ function FollowUp({ report, envelope }: { readonly report: OwnReportDetail; read
   );
 }
 
+// The tracking link, first under the report's name: on another phone it is the only way back.
+function OwnLink({ report, origin }: { readonly report: OwnReportDetail; readonly origin: string }) {
+  const t = useText();
+  const { ticketNumber } = report.tracking;
+  const path = trackingPath(report.trackingToken);
+  const url = `${origin}${path}`;
+  return (
+    <section
+      aria-labelledby="own-link"
+      className="@container flex flex-col rounded-card border-2 border-primary bg-surface p-4 shadow-card md:p-5"
+    >
+      <div className="flex flex-col gap-4 @split:flex-row @split:items-start @split:gap-8">
+        <div className="flex min-w-0 flex-1 flex-col items-start gap-3">
+          <h2 id="own-link" className="flex items-center gap-2 text-card font-bold">
+            <Icon name="link" className="size-5 text-primary" />
+            {t("ownReport.link")}
+          </h2>
+          <p>{t("card.sent.link.keep")}</p>
+          <TrackingLinkText url={url} ticketNumber={ticketNumber} />
+          <p className="text-meta text-muted">{t("ownReport.linkHint")}</p>
+          <a href={path} className={buttonStyles({ variant: "secondary" })}>
+            <Icon name="link" className="size-5" />
+            {t("ownReport.linkOpen")}
+          </a>
+        </div>
+        <figure className="flex flex-col items-start gap-2 @split:w-48 @split:shrink-0">
+          <QrCode text={url} label={t("card.sent.qr", { ticketNumber })} />
+          <figcaption className="text-meta text-muted">{t("card.sent.qrHint")}</figcaption>
+        </figure>
+      </div>
+    </section>
+  );
+}
+
 // A report on the phone that sent it (`/reports/<ticket>`): where it stands, and what only
 // its reporter is given.
 export function OwnReportScreen({
   report,
+  origin,
   envelope = null,
 }: {
   readonly report: OwnReportDetail;
+  // The site's address, so the tracking link is shown whole.
+  readonly origin: string;
   // A refused act on this page.
   readonly envelope?: ErrorEnvelope | null;
 }) {
@@ -158,6 +195,7 @@ export function OwnReportScreen({
         </Notice>
       ) : null}
       {search.get("refused") === "document" ? <Notice kind="error">{t("version.refused")}</Notice> : null}
+      <OwnLink report={report} origin={origin} />
       <div className="grid gap-6 lg:grid-cols-[minmax(0,1.1fr)_minmax(0,1fr)] lg:items-start">
         <div className="flex min-w-0 flex-col gap-6">
           <ReportStatus
@@ -180,16 +218,6 @@ export function OwnReportScreen({
           <Documents report={report} />
           <ReportEvent tracking={tracking} />
           <ContactBlock contact={tracking.contact} />
-          <section aria-labelledby="own-link" className="flex flex-col items-start gap-2 card-surface p-4 md:p-5">
-            <h2 id="own-link" className="text-card font-bold">
-              {t("ownReport.link")}
-            </h2>
-            <p className="text-meta text-muted">{t("ownReport.linkHint")}</p>
-            <a href={trackingPath(report.trackingToken)} className={buttonStyles({ variant: "secondary" })}>
-              <Icon name="link" className="size-5" />
-              {t("ownReport.linkOpen")}
-            </a>
-          </section>
         </div>
       </div>
     </div>

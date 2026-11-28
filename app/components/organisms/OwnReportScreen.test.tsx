@@ -8,8 +8,9 @@ import { OwnReportScreen } from "./OwnReportScreen";
 type Version = (typeof OWN_REPORT.versions)[number];
 
 const PATH = "/reports/LA-231126-01";
+const ORIGIN = "https://lapor.example";
 const draw = (report = OWN_REPORT, entry = PATH) =>
-  renderPage(<OwnReportScreen report={report} />, { path: PATH, entry, action: never });
+  renderPage(<OwnReportScreen report={report} origin={ORIGIN} />, { path: PATH, entry, action: never });
 
 describe("the reporter's own report", () => {
   test("names the report, where it stands and how to reach it", async () => {
@@ -22,6 +23,21 @@ describe("the reporter's own report", () => {
     expect(screen.getByRole("link", { name: "Buka halaman lacak" }).getAttribute("href")).toBe(
       "/track#t=0123456789abcdef0123456789abcdef",
     );
+  });
+
+  test("the tracking link comes first, whole, to copy and to scan, with why to keep it", async () => {
+    draw();
+    const link = await screen.findByRole("region", { name: "Tautan lacak" });
+    // Right under the report's name, before where it stands.
+    expect(screen.getAllByRole("region")[0]).toBe(link);
+    const kept = within(link);
+    expect(kept.getByText(/Di ponsel lain, hanya tautan ini yang bisa membuka laporan Anda/)).toBeTruthy();
+    expect(kept.getByTestId("tracking-link").textContent).toBe(
+      "https://lapor.example/track#t=0123456789abcdef0123456789abcdef",
+    );
+    expect(kept.getByRole("button", { name: "Salin tautan lacak LA-231126-01" })).toBeTruthy();
+    expect(kept.getByRole("img", { name: "Kode QR lacak laporan LA-231126-01" })).toBeTruthy();
+    expect(kept.getByText(/balasan petugas/)).toBeTruthy();
   });
 
   test("every version has its maker, what it changed and its two files, by plain links", async () => {
@@ -89,7 +105,7 @@ describe("the reporter's own report", () => {
 
   test("a refused start says why, and leads to the report that must be finished first", async () => {
     const refused = (code: "followUp.finishFirst" | "followUp.closed", params: Record<string, string>) =>
-      renderPage(<OwnReportScreen report={OWN_REPORT} envelope={envelope(code, { params })} />, {
+      renderPage(<OwnReportScreen report={OWN_REPORT} origin={ORIGIN} envelope={envelope(code, { params })} />, {
         path: PATH,
         entry: `${PATH}?saved=sent`,
       });
@@ -126,7 +142,7 @@ describe("the reporter's own report", () => {
     expect(screen.queryByRole("status")).toBeNull();
     other.unmount();
     const refused = (one: ReturnType<typeof envelope>) =>
-      renderPage(<OwnReportScreen report={OWN_REPORT} envelope={one} />, { path: PATH });
+      renderPage(<OwnReportScreen report={OWN_REPORT} origin={ORIGIN} envelope={one} />, { path: PATH });
     const limited = refused(
       envelope("limit.news.hour", {
         params: { limit: 120 },
