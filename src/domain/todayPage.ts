@@ -3,7 +3,7 @@ import type { Impact } from "./impact";
 import { HOUR_MS } from "./time";
 
 // The public "today" page (upstream lapor-kejadian, row 36, D4 and A3): an event shows while one of
-// its reports meets all five conditions, and for 24 hours after its last Valid check.
+// its reports meets all five conditions, and for 24 hours after its BPBD's Valid check.
 export const TODAY_CONDITIONS = ["valid", "bpbd", "ticket", "version", "pull"] as const;
 export type TodayCondition = (typeof TODAY_CONDITIONS)[number];
 export const TODAY_WINDOW_MS = 24 * HOUR_MS;
@@ -27,40 +27,44 @@ export type TodayReport = {
   readonly pulls: readonly { readonly id: number; readonly pulled: boolean }[];
 };
 
-export const lastCheck = (checks: readonly TodayCheck[]) =>
-  checks.reduce<TodayCheck | null>(
-    (last, one) => (last === null || one.atMs > last.atMs || (one.atMs === last.atMs && one.id > last.id) ? one : last),
-    null,
-  );
-
 // The BPBD of the report's own region: a regional account whose regency or province holds the village.
 const ownBpbd = (check: TodayCheck, villageCode: string) =>
   check.role === "regionalOfficer" &&
   ((check.level === "regency" && check.code === villageCode.slice(0, 5)) ||
     (check.level === "province" && check.code === villageCode.slice(0, 2)));
 
+// The newest check by that BPBD, by time, then by its order when two share a time. A later check by
+// anyone else, BNPB's too, neither replaces nor undoes it.
+export const bpbdCheck = (report: TodayReport) =>
+  report.checks
+    .filter((one) => ownBpbd(one, report.villageCode))
+    .reduce<TodayCheck | null>(
+      (last, one) =>
+        last === null || one.atMs > last.atMs || (one.atMs === last.atMs && one.id > last.id) ? one : last,
+      null,
+    );
+
 // Each condition in turn, for the desk's list as much as for the page.
 export function todayConditions(report: TodayReport): Readonly<Record<TodayCondition, boolean>> {
-  const check = lastCheck(report.checks);
-  const valid = check?.result === "valid";
+  const check = bpbdCheck(report);
   const lastPull = report.pulls.reduce<{ id: number; pulled: boolean } | null>(
     (last, one) => (last === null || one.id > last.id ? one : last),
     null,
   );
   return {
-    valid,
-    bpbd: valid && ownBpbd(check as TodayCheck, report.villageCode),
+    valid: check?.result === "valid",
+    bpbd: check !== null,
     ticket: report.status !== "invalid",
-    // With no check there is no "after": the first condition holds it back.
+    // With no check there is no "after": the first two conditions hold it back.
     version: !report.versionsAtMs.some((atMs) => atMs > (check?.atMs ?? Number.POSITIVE_INFINITY)),
     pull: lastPull?.pulled !== true,
   };
 }
 
-// When the report was verified: its last check, if all five hold; else null.
+// When the report was verified: its BPBD's newest check, if all five hold; else null.
 export function verifiedAtMs(report: TodayReport): number | null {
   const conditions = todayConditions(report);
-  return TODAY_CONDITIONS.every((one) => conditions[one]) ? (lastCheck(report.checks) as TodayCheck).atMs : null;
+  return TODAY_CONDITIONS.every((one) => conditions[one]) ? (bpbdCheck(report) as TodayCheck).atMs : null;
 }
 
 export const shownToday = (verifiedMs: number | null, nowMs: number) =>

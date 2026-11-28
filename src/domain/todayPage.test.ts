@@ -33,7 +33,7 @@ const report = (fields: Partial<TodayReport> = {}): TodayReport => ({
 const failing = (one: TodayReport) => TODAY_CONDITIONS.filter((condition) => !todayConditions(one)[condition]);
 
 describe("the today page's five conditions", () => {
-  test("a last check Valid by the BPBD of the report's regency or province, ticket not invalid, unchanged, not pulled", () => {
+  test("the newest check by the BPBD of the report's regency or province Valid, ticket not invalid, unchanged, not pulled", () => {
     expect(TODAY_CONDITIONS).toEqual(["valid", "bpbd", "ticket", "version", "pull"]);
     expect(failing(report())).toEqual([]);
     expect(verifiedAtMs(report())).toBe(1000);
@@ -43,8 +43,10 @@ describe("the today page's five conditions", () => {
   });
 
   test("each condition fails on its own", () => {
-    expect(failing(report({ checks: [check({ result: "partly" })] }))).toEqual(["valid", "bpbd"]);
+    expect(failing(report({ checks: [check({ result: "partly" })] }))).toEqual(["valid"]);
+    expect(failing(report({ checks: [check({ result: "notValid" })] }))).toEqual(["valid"]);
     expect(failing(report({ checks: [] }))).toEqual(["valid", "bpbd"]);
+    // A check by anyone but the report's own BPBD is not one of its checks at all.
     for (const by of [
       { role: "deskOfficer", level: "national", code: null },
       { level: "regency", code: "11.07" },
@@ -55,7 +57,7 @@ describe("the today page's five conditions", () => {
       { level: "province", code: "11.08" },
       { level: "regency", code: "11" },
     ])
-      expect(failing(report({ checks: [check(by)] })), JSON.stringify(by)).toEqual(["bpbd"]);
+      expect(failing(report({ checks: [check(by)] })), JSON.stringify(by)).toEqual(["valid", "bpbd"]);
     expect(failing(report({ status: "invalid" }))).toEqual(["ticket"]);
     expect(failing(report({ versionsAtMs: [500, 1001] }))).toEqual(["version"]);
     expect(failing(report({ pulls: [{ id: 1, pulled: true }] }))).toEqual(["pull"]);
@@ -93,27 +95,52 @@ describe("the today page's five conditions", () => {
     expect(verifiedAtMs(report({ status: "invalid" }))).toBeNull();
   });
 
-  test("the last check counts: by time, then by its order when two share a time", () => {
+  test("the BPBD's newest check counts: by time, then by its order when two share a time", () => {
     const later = check({ id: 2, atMs: 2000, result: "notValid" });
-    expect(failing(report({ checks: [later, check()] }))).toEqual(["valid", "bpbd"]);
+    expect(failing(report({ checks: [later, check()] }))).toEqual(["valid"]);
     expect(failing(report({ checks: [check({ id: 3 }), check({ id: 2, result: "partly" })] }))).toEqual([]);
     expect(failing(report({ checks: [check({ id: 2, result: "partly" }), check({ id: 3 })] }))).toEqual([]);
-    expect(failing(report({ checks: [check({ id: 3, result: "partly" }), check({ id: 2 })] }))).toEqual([
-      "valid",
-      "bpbd",
-    ]);
+    expect(failing(report({ checks: [check({ id: 3, result: "partly" }), check({ id: 2 })] }))).toEqual(["valid"]);
     // A later time wins over a higher order, either way round.
     expect(failing(report({ checks: [check({ id: 5 }), check({ id: 2, atMs: 2000, result: "notValid" })] }))).toEqual([
       "valid",
-      "bpbd",
     ]);
     expect(failing(report({ checks: [check({ id: 1, atMs: 2000, result: "notValid" }), check({ id: 2 })] }))).toEqual([
       "valid",
-      "bpbd",
     ]);
     expect(failing(report({ checks: [check({ id: 2 }), check({ id: 2, result: "partly" })] }))).toEqual([]);
     // With no check, no version is after it.
     expect(todayConditions(report({ checks: [], versionsAtMs: [9e15] })).version).toBe(true);
+  });
+
+  test("a later check by anyone else, BNPB's too, neither takes it off nor moves its time", () => {
+    const bnpb = { role: "deskOfficer", level: "national", code: null };
+    for (const by of [
+      bnpb,
+      { role: null, level: null, code: null },
+      { level: "regency", code: "11.07" },
+      { role: "deskOfficer", level: "regency", code: "11.08" },
+    ])
+      for (const result of ["valid", "partly", "notValid"]) {
+        const one = report({ checks: [check(), check({ ...by, id: 2, atMs: 2000, result })] });
+        expect(failing(one), JSON.stringify({ by, result })).toEqual([]);
+        expect(verifiedAtMs(one)).toBe(1000);
+      }
+    // Its own BPBD's later check does move it, the province's as much as the regency's.
+    const province = report({ checks: [check(), check({ id: 2, atMs: 2000, level: "province", code: "11" })] });
+    expect(failing(province)).toEqual([]);
+    expect(verifiedAtMs(province)).toBe(2000);
+    expect(
+      failing(
+        report({ checks: [check(), check({ id: 2, atMs: 2000, level: "province", code: "11", result: "partly" })] }),
+      ),
+    ).toEqual(["valid"]);
+    // A BPBD check after BNPB's still counts, and only the BPBD's time is "after".
+    expect(verifiedAtMs(report({ checks: [check({ ...bnpb, id: 2, atMs: 3000 }), check({ atMs: 2000 })] }))).toBe(2000);
+    // BNPB's corrections are a version after the BPBD's check, so they take it off.
+    expect(
+      failing(report({ checks: [check(), check({ ...bnpb, id: 2, atMs: 2000 })], versionsAtMs: [500, 2000] })),
+    ).toEqual(["version"]);
   });
 
   test("shown for 24 hours after it was verified", () => {

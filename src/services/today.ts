@@ -3,8 +3,8 @@ import type { Today } from "../contract/today";
 import type { EventTimeValue, PlaceValue } from "../domain/fieldState";
 import { impactOf } from "../domain/impact";
 import {
+  bpbdCheck,
   impactRanges,
-  lastCheck,
   shownToday,
   TODAY_WINDOW_MS,
   type TodayCheck,
@@ -38,12 +38,12 @@ type Verified = { readonly row: TodayRow; readonly states: States; readonly atMs
 const rounded = (degrees: number) => Math.round(degrees * 1e4) / 1e4;
 
 // One event's card from its verified reports only: the latest names the place and the kind, the
-// earliest the time, the latest verification its checker.
+// earliest the time, the latest verification its checker: the BPBD, whoever checked after it.
 async function cardOf(bindings: ServiceBindings, members: readonly Verified[]): Promise<Today["events"][number]> {
   const bySent = members.toSorted((a, b) => a.row.sentAt.localeCompare(b.row.sentAt));
   const [first, latest] = [bySent[0] as Verified, bySent.at(-1) as Verified];
   const verified = members.toSorted((a, b) => a.atMs - b.atMs).at(-1) as Verified;
-  const check = lastCheck(verified.row.checks) as TodayCheck;
+  const check = bpbdCheck(verified.row) as TodayCheck;
   const place = stateValue<PlaceValue>(latest.states, "place") as PlaceValue;
   const subtype = stateValue<string>(latest.states, "hazardSubtype");
   const reporters = new Set(members.map((one) => one.row.numberKey)).size;

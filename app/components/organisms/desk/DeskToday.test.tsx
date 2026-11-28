@@ -12,10 +12,10 @@ describe("the today page on a report", () => {
     draw({ conditions: ALL, shown: true });
     expect(await screen.findByText("Tampil di halaman Hari ini sekarang.")).toBeTruthy();
     expect(screen.getAllByRole("listitem").map((item) => item.textContent)).toEqual([
-      "Pengecekan terakhir Valid, terpenuhi",
+      "Pengecekan terakhir BPBD wilayah: Valid, terpenuhi",
       "Dicek BPBD wilayah laporan, terpenuhi",
       "Tiket bukan Tidak valid, terpenuhi",
-      "Tidak ada perubahan sesudah pengecekan, terpenuhi",
+      "Tidak ada perubahan sesudah pengecekan BPBD, terpenuhi",
       "Tidak ditarik dari halaman publik, terpenuhi",
     ]);
     const pull = screen.getByRole("button", { name: "Tarik dari halaman publik" });

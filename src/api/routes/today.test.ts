@@ -103,7 +103,7 @@ describe("the today page", () => {
       shown: false,
     });
     await checked(ticket, DESK);
-    expect((await read(ticket)).today).toMatchObject({ conditions: { valid: true, bpbd: false }, shown: false });
+    expect((await read(ticket)).today).toMatchObject({ conditions: { valid: false, bpbd: false }, shown: false });
     expect((await page()).events).toEqual([]);
 
     await checked(ticket, REGENCY);
@@ -117,6 +117,11 @@ describe("the today page", () => {
     });
     expect(JSON.stringify(card)).not.toContain(ticket);
     expect(Number.isInteger((card?.centre?.lat as number) * 1e4)).toBe(true);
+
+    // BNPB checking again afterwards leaves it on, still the BPBD's and at the BPBD's time.
+    await checked(ticket, DESK, "partly");
+    expect((await read(ticket)).today).toMatchObject({ conditions: { valid: true, bpbd: true }, shown: true });
+    expect((await page()).events).toEqual([card]);
 
     expect((await pulled(ticket, true)).status).toBe(200);
     expect((await read(ticket)).today).toMatchObject({ conditions: { pull: false }, shown: false });
