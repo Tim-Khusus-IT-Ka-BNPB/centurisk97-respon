@@ -331,8 +331,8 @@ describe("writing back", () => {
       report: {
         ...REPORT,
         replies: [
-          { text: "Terima kasih", at: SENT, actor: "Petugas Uji", chat: null },
-          { text: "Kami cek", at: SENT, actor: "Petugas Uji", chat: null },
+          { text: "Terima kasih", at: SENT, actor: "Petugas Uji" },
+          { text: "Kami cek", at: SENT, actor: "Petugas Uji" },
         ],
       },
     });
@@ -343,34 +343,6 @@ describe("writing back", () => {
       "Terima kasihPetugas Uji, 24 November 2026, pukul 09.30 WIB",
       "Kami cekPetugas Uji, 24 November 2026, pukul 09.30 WIB",
     ]);
-  });
-
-  test("a chat report says what reaches WhatsApp, and how far each reply is", async () => {
-    const replies = [
-      { text: "Terima kasih", at: SENT, actor: "Petugas Uji", chat: { state: "sent" as const, at: SENT } },
-      { text: "Kami cek", at: SENT, actor: "Petugas Uji", chat: { state: "waiting" as const } },
-    ];
-    const chatNews = { wanted: true, waiting: 1, lastSentAt: SENT };
-    const view = await draw({ report: { ...REPORT, door: "chat", replies, chatNews } });
-    expect(screen.getByText("Balasan dan kabar tiket ini dikirim ke WhatsApp pelapor.")).toBeTruthy();
-    expect(
-      screen.getByText("Terakhir terkirim 24 November 2026, pukul 09.30 WIB. 1 kabar menunggu dikirim."),
-    ).toBeTruthy();
-    expect(screen.getByText("Terkirim ke WhatsApp 24 November 2026, pukul 09.30 WIB")).toBeTruthy();
-    expect(screen.getByText("Menunggu dikirim ke WhatsApp")).toBeTruthy();
-    view?.unmount?.();
-    const quiet = await draw({ report: { ...REPORT, chatNews: { wanted: true, waiting: 0, lastSentAt: null } } });
-    expect(screen.queryByText(/menunggu dikirim|Terakhir terkirim/)).toBeNull();
-    quiet?.unmount?.();
-    const waiting = await draw({ report: { ...REPORT, chatNews: { wanted: true, waiting: 2, lastSentAt: null } } });
-    expect(screen.getByText("2 kabar menunggu dikirim.")).toBeTruthy();
-    waiting?.unmount?.();
-    const last = await draw({ report: { ...REPORT, chatNews: { wanted: true, waiting: 0, lastSentAt: SENT } } });
-    expect(screen.getByText("Terakhir terkirim 24 November 2026, pukul 09.30 WIB.")).toBeTruthy();
-    last?.unmount?.();
-    await draw({ report: { ...REPORT, chatNews: { ...chatNews, wanted: false } } });
-    expect(screen.getByText(/^Pelapor tidak meminta kabar di WhatsApp/)).toBeTruthy();
-    expect(screen.queryByText(/Terakhir terkirim/)).toBeNull();
   });
 
   test("a refused reply keeps its text and focus, its fold open", async () => {

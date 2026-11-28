@@ -373,9 +373,7 @@ async function reportBody(bindings: ServiceBindings, staff: StaffPrincipal, tick
       text: one.text,
       at: at(one.atMs, zone),
       actor: one.staffLabel,
-      chat: null,
     })),
-    chatNews: null,
   };
   return body;
 }

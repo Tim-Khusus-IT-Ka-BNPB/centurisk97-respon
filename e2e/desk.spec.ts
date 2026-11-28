@@ -368,11 +368,7 @@ test("a BPBD account works only its region, and asks for the reporter's identity
   await expect(other.getByText("Uji Satu")).toHaveCount(0);
 });
 
-test("on a report, BNPB opens a local BPBD officer's number, and can call or write to them", async ({
-  page,
-  browser,
-  baseURL,
-}) => {
+test("on a report, BNPB opens a local BPBD officer's number, and can call them", async ({ page, browser, baseURL }) => {
   test.setTimeout(240_000);
   const { ticketNumber } = await sendReport(browser, baseURL as string);
   await signIn(page);
@@ -383,6 +379,5 @@ test("on a report, BNPB opens a local BPBD officer's number, and can call or wri
   await card.getByRole("button", { name: "Tampilkan nomor Uji Andi" }).click();
   // The number is posted for and drawn again; a slow WebKit on CI takes longer than the default.
   await expect(card.locator('a[href="tel:+628001108001"]')).toBeVisible({ timeout: 15_000 });
-  await expect(card.locator('a[href="https://wa.me/628001108001"]')).toBeVisible();
   await noSidewaysScroll(page);
 });

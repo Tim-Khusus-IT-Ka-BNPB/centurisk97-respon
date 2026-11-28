@@ -23,7 +23,7 @@ const draw = (props: Parameters<typeof DeskOfficers>[0]) =>
   renderPage(<DeskOfficers {...props} />, { path: "/desk/LA-261126-01", action: never });
 
 describe("the BPBD officers on a report", () => {
-  test("each with a masked number to open; an opened one is called or messaged", async () => {
+  test("each with a masked number to open; an opened one is called", async () => {
     draw({
       officers: { items: [ANDI, SARI], official: null },
       opened: { profileId: "profile-p", number: "+628001108009" },
@@ -35,9 +35,7 @@ describe("the BPBD officers on a report", () => {
     expect(within(sari).getByText("Pusdalops, BPBD Provinsi Uji, tingkat provinsi")).toBeTruthy();
     expect(within(sari).getByText("+62 800-1108-009")).toBeTruthy();
     expect(within(sari).getByRole("link", { name: "Telepon" }).getAttribute("href")).toBe("tel:+628001108009");
-    expect(within(sari).getByRole("link", { name: "WhatsApp" }).getAttribute("href")).toBe(
-      "https://wa.me/628001108009",
-    );
+    expect(within(sari).queryByRole("link", { name: "WhatsApp" })).toBeNull();
     expect(screen.queryByText(/Belum ada PIC/)).toBeNull();
   });
 

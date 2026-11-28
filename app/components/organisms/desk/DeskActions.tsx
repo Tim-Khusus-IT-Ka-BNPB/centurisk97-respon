@@ -315,29 +315,13 @@ function CheckForm({ report, envelope, typed }: FormProps) {
   );
 }
 
-// Whether what is written here reaches the reporter beside their own page.
+// The reporter stopped the news: what is written here stays on their page but is not marked new.
 function ReplyReach({ report }: { readonly report: DeskReport }) {
   const t = useText();
-  if (report.newsStopped)
-    return (
-      <Notice kind="info">
-        <p>{t("desk.reply.stopped")}</p>
-      </Notice>
-    );
-  const { chatNews } = report;
-  if (chatNews === null) return null;
-  const { wanted, waiting, lastSentAt } = chatNews;
+  if (!report.newsStopped) return null;
   return (
     <Notice kind="info">
-      <p>{t(wanted ? "desk.reply.chatOn" : "desk.reply.chatOff")}</p>
-      {wanted && (waiting > 0 || lastSentAt !== null) ? (
-        <p className="text-meta tabular-nums">
-          {[
-            ...(lastSentAt === null ? [] : [t("desk.reply.chatLast", { at: when(t, "desk.history.at", lastSentAt) })]),
-            ...(waiting === 0 ? [] : [t("desk.reply.chatWaiting", { count: waiting })]),
-          ].join(" ")}
-        </p>
-      ) : null}
+      <p>{t("desk.reply.stopped")}</p>
     </Notice>
   );
 }
@@ -375,14 +359,6 @@ function ReplyForm({ report, envelope, typed }: FormProps) {
                 <span className="text-meta text-muted tabular-nums">
                   {t("desk.reply.by", { actor: one.actor, at: when(t, "desk.history.at", one.at) })}
                 </span>
-                {one.chat === null ? null : (
-                  <span className="inline-flex items-start gap-1 text-meta tabular-nums">
-                    <Icon name={one.chat.state === "sent" ? "circleCheck" : "clock"} className="mt-0.5 size-4" />
-                    {one.chat.state === "sent"
-                      ? t("desk.reply.chatSent", { at: when(t, "desk.history.at", one.chat.at) })
-                      : t("desk.reply.chatPending")}
-                  </span>
-                )}
               </li>
             ))}
           </ol>

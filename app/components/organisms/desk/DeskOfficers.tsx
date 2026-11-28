@@ -51,16 +51,10 @@ function Row({ officer, opened }: { readonly officer: Officers["items"][number];
           </Button>
         </Form>
       ) : (
-        <div className="flex flex-wrap gap-2">
-          <a href={`tel:${opened}`} className={callButton}>
-            <Icon name="phone" className="size-4" />
-            {t("desk.officers.call")}
-          </a>
-          <a href={`https://wa.me/${opened.replace(/\D/g, "")}`} target="_blank" rel="noopener" className={callButton}>
-            <Icon name="messageSquare" className="size-4" />
-            {t("desk.officers.whatsapp")}
-          </a>
-        </div>
+        <a href={`tel:${opened}`} className={callButton}>
+          <Icon name="phone" className="size-4" />
+          {t("desk.officers.call")}
+        </a>
       )}
     </li>
   );

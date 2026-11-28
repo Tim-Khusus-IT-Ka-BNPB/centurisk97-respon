@@ -1235,7 +1235,6 @@ describe("desk routes", () => {
       mayTake: false,
       point: null,
       revisable: [],
-      chatNews: null,
       offeredActions: [],
       actions: [],
       proofs: [],

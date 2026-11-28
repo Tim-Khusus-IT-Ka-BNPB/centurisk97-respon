@@ -18,7 +18,6 @@ import { FilterBar, ViewTabs } from "./DeskFilters";
 import { DeskMapView } from "./DeskMap";
 import { DeskShell } from "./DeskShell";
 import {
-  ChatMark,
   ClusterChip,
   clearedLink,
   deskLink,
@@ -180,7 +179,6 @@ function QueueTable({ items }: { readonly items: readonly Item[] }) {
                     {item.reporter.name === null ? null : <span>{item.reporter.name}</span>}
                     <span className="text-meta text-muted">{roleText(t, item)}</span>
                     {item.numberUnverified ? <UnverifiedMark /> : null}
-                    {item.door === "chat" ? <ChatMark /> : null}
                     {item.taker === null ? null : <Taker taker={item.taker} />}
                   </span>
                 </td>
@@ -232,7 +230,6 @@ function QueueCards({ items }: { readonly items: readonly Item[] }) {
               <span className="flex flex-wrap items-center gap-2">
                 <span>{item.reporter.name ?? roleText(t, item)}</span>
                 {item.numberUnverified ? <UnverifiedMark /> : null}
-                {item.door === "chat" ? <ChatMark /> : null}
               </span>
               <span className="text-muted tabular-nums">{whenShort(t, item.sentAt)}</span>
             </span>
