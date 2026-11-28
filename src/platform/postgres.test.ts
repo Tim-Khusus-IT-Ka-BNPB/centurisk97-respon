@@ -3,7 +3,10 @@ import { describe, expect, test } from "vitest";
 import { onServer, urlOf } from "../../db/testServer.ts";
 import { testDatabase } from "../testing/api";
 import { atomically, rows, run, sql } from "./database";
-import { connect } from "./postgres";
+import { connect, postgresDatabase, postgresPool } from "./postgres";
+
+// Any database will do for a connection of its own; the server always has this one.
+const TEMPLATE_PEER = "postgres";
 
 describe("the Postgres database", () => {
   test("a new database gets every migration when connected, and a second connect changes nothing", async () => {
@@ -19,6 +22,20 @@ describe("the Postgres database", () => {
       }
     } finally {
       await onServer((client) => client.query(`drop database if exists ${name} with (force)`));
+    }
+  });
+
+  test("an idle connection the server closes is let go, and the next query opens another", async () => {
+    const pool = postgresPool(urlOf(TEMPLATE_PEER), 1);
+    const db = postgresDatabase(pool);
+    try {
+      const [{ pid }] = (await db.query("select pg_backend_pid() as pid", [])).rows as [{ pid: number }];
+      await onServer((client) => client.query("select pg_terminate_backend($1)", [pid]));
+      // The pool hears of the closed connection a moment later; the process must outlive it.
+      await new Promise((resolve) => setTimeout(resolve, 100));
+      expect((await db.query("select 1 as one", [])).rows).toEqual([{ one: 1 }]);
+    } finally {
+      await pool.end();
     }
   });
 

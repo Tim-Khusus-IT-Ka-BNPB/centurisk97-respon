@@ -65,7 +65,11 @@ export function postgresDatabase(pool: pg.Pool): Database {
 }
 
 export function postgresPool(url: string, max = 10): pg.Pool {
-  return new pg.Pool({ connectionString: url, max, types, options: "-c TimeZone=UTC" });
+  const pool = new pg.Pool({ connectionString: url, max, types, options: "-c TimeZone=UTC" });
+  // An idle connection the server closed (a restart, a dropped database) is let go; the next query
+  // opens another. Unhandled, the pool's error would end the process.
+  pool.on("error", () => undefined);
+  return pool;
 }
 
 // The database at this address with every migration applied.
