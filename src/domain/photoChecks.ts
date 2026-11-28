@@ -3,7 +3,7 @@
 
 import { distanceKm, GEO, type Point } from "./geo";
 import { type Exif, isJpeg } from "./jpeg";
-import { HOUR_MS, MINUTE_MS } from "./time";
+import { MINUTE_MS } from "./time";
 
 export const PHOTO = {
   maxPerDraft: 10,
@@ -26,8 +26,8 @@ export type DeviceFix = {
 
 type PhotoRefusal = "notCamera" | "notFresh" | "farFromDevice" | "format" | "tooMany";
 
-type PhotoBadge = "deviceGps" | "photoData" | "chatLocation" | "none";
-type TimeSource = "photoData" | "deviceGps" | "upload" | "chatMessage";
+type PhotoBadge = "deviceGps" | "photoData" | "none";
+type TimeSource = "photoData" | "deviceGps" | "upload";
 
 export type KeptPhoto = {
   readonly badge: PhotoBadge;
@@ -102,49 +102,5 @@ export function checkPhoto(input: PhotoInput): PhotoCheck {
     accuracyM: fix ? fix.accuracyM : null,
     ...time,
     far: point !== null && farFrom(point, input.placePoint),
-  };
-}
-
-// A photo sent in a chat carries no data of its own, so what the chat holds stands in for it (D16):
-// the time of its message, and the location shared near it.
-export const CHAT_PHOTO = {
-  maxBytes: 5 * 1024 * 1024,
-  // A message time older than this is not taken for when the photo was sent.
-  recentMs: 48 * HOUR_MS,
-  // A location shared this long before or after a photo is the photo's.
-  locationMs: 30 * MINUTE_MS,
-} as const;
-
-type SharedPoint = Point & { readonly atMs: number };
-
-export type ChatPhotoInput = {
-  readonly bytes: Uint8Array;
-  readonly sentAtMs: number;
-  readonly nowMs: number;
-  readonly shared: SharedPoint | null;
-  readonly placePoint: Point | null;
-  readonly count: number;
-};
-
-// The place a chat photo takes from a location shared within reach of it.
-export const chatPhotoPlace = (shared: Point, placePoint: Point | null) => ({
-  badge: "chatLocation" as const,
-  point: { lat: shared.lat, lon: shared.lon },
-  far: farFrom(shared, placePoint),
-});
-
-export function checkChatPhoto(input: ChatPhotoInput): PhotoCheck {
-  const { bytes, sentAtMs, nowMs, shared } = input;
-  if (!isJpeg(bytes) || bytes.length < PHOTO.minBytes || bytes.length > CHAT_PHOTO.maxBytes)
-    return { kind: "refused", rule: "format" };
-  if (input.count >= PHOTO.maxPerDraft) return { kind: "refused", rule: "tooMany" };
-  const trusted = sentAtMs > nowMs - CHAT_PHOTO.recentMs && sentAtMs <= nowMs + PHOTO.clockAheadMs;
-  const near = shared !== null && nowMs - shared.atMs <= CHAT_PHOTO.locationMs ? shared : null;
-  return {
-    kind: "kept",
-    ...(near === null ? { badge: "none" as const, point: null, far: false } : chatPhotoPlace(near, input.placePoint)),
-    accuracyM: null,
-    takenAtMs: trusted ? sentAtMs : nowMs,
-    timeSource: trusted ? "chatMessage" : "upload",
   };
 }

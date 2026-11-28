@@ -1,5 +1,12 @@
 import { describe, expect, test } from "vitest";
-import { MISSING_KEPT_MS, MISSING_PER_DAY, type MissingInput, mayMoveMissing, readMissing } from "./missingPerson";
+import {
+  MISSING_KEPT_MS,
+  MISSING_PER_DAY,
+  MISSING_PHOTO_BYTES,
+  type MissingInput,
+  mayMoveMissing,
+  readMissing,
+} from "./missingPerson";
 import { DAY_MS } from "./time";
 
 // 17:00 WIB on 26 November 2026.
@@ -169,8 +176,9 @@ describe("what an officer may do with a missing person", () => {
     expect(mayMoveMissing("toSar", "toSar")).toBe(false);
   });
 
-  test("five a day per number, kept two years once closed", () => {
+  test("five a day per number, a photo up to 5 MB, kept two years once closed", () => {
     expect(MISSING_PER_DAY).toBe(5);
+    expect(MISSING_PHOTO_BYTES).toBe(5_242_880);
     expect(MISSING_KEPT_MS).toBe(730 * DAY_MS);
   });
 });

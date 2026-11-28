@@ -60,7 +60,6 @@ async function documentFor(
     reporterRole: found.reporterRole,
     officerRegency: found.officerRegency,
     numberUnverified: found.numberUnverified,
-    door: found.door,
     emergency: found.emergency,
     photos: photos.photos,
     photosLeft: photos.left,

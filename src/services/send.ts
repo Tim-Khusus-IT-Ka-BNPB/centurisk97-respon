@@ -100,7 +100,6 @@ async function sendOnce(
       numberKey: draft.numberKey,
       ownerSlot: draft.ownerSlot,
       numberUnverified: principal.kind === "device",
-      door: "web",
       hazardType: draft.hazardType as string,
       villageCode: draft.villageCode as string,
       sentAt: at,

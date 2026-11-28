@@ -4,7 +4,6 @@ import type { EmergencyKind, VictimAnswer } from "../../domain/emergency";
 import type { Change, CheckResult } from "../../domain/fieldCheck";
 import type { GpsDoubt } from "../../domain/gpsDoubts";
 import type { TakenAction } from "../../domain/handling";
-import type { Door } from "../../domain/ownership";
 import type { KeptPhoto } from "../../domain/photoChecks";
 import type { TicketStatus } from "../../domain/stages";
 import {
@@ -46,7 +45,6 @@ export type QueueRow = {
   readonly reporterName: string;
   readonly reporterRole: "citizen" | "claimedOfficer";
   readonly numberUnverified: boolean;
-  readonly door: Door;
   readonly emergency: { readonly kind: EmergencyKind; readonly victims: VictimAnswer } | null;
   // Kept on the reporter's phone with no signal: when it was saved there (null when the phone's clock
   // could not be believed), and whether it came more than 2 hours late (LR-09).
@@ -70,7 +68,6 @@ type QueueRecord = {
   reporter_name: string;
   reporter_role: "citizen" | "claimedOfficer";
   number_unverified: boolean;
-  door: Door;
   emergency: EmergencyKind | null;
   emergency_victims: VictimAnswer | null;
   offline_kept: boolean | null;
@@ -100,7 +97,7 @@ const STATUS_SINCE = sql`(select max(h.at) from ticket_history h where h.ticket_
     and h.event is null) as status_since`;
 
 const SELECT = sql`select r.ticket_number, t.status, r.hazard_type, r.village_code, r.sent_at, v.fields,
-    v.complete_percent, v.reporter_name, v.reporter_role, r.number_unverified, r.door, r.emergency, r.emergency_victims, ${OFFLINE},
+    v.complete_percent, v.reporter_name, v.reporter_role, r.number_unverified, r.emergency, r.emergency_victims, ${OFFLINE},
     (select k.label from report_taker k where k.ticket_number = r.ticket_number) as taker, ${NEWS} as news,
     (select count(*) from draft_photo p where p.draft_id = r.draft_id) as photo_count, ${STATUS_SINCE}
   from report r
@@ -155,7 +152,6 @@ const queueRow = (found: QueueRecord): QueueRow => ({
   reporterName: found.reporter_name,
   reporterRole: found.reporter_role,
   numberUnverified: found.number_unverified === true,
-  door: found.door,
   taker: found.taker,
   news: found.news === true,
   statusSince: new Date(found.status_since),
@@ -243,7 +239,7 @@ export async function deskReport(
   >(
     db,
     sql`select r.ticket_number, t.status, r.hazard_type, r.village_code, r.sent_at, v.fields,
-        v.complete_percent, v.reporter_name, v.reporter_role, r.number_unverified, r.door, r.emergency, r.emergency_victims, ${OFFLINE},
+        v.complete_percent, v.reporter_name, v.reporter_role, r.number_unverified, r.emergency, r.emergency_victims, ${OFFLINE},
     (select k.label from report_taker k where k.ticket_number = r.ticket_number) as taker, ${NEWS} as news, r.draft_id, r.id as report_id, t.revision,
         v.reporter_number, v.officer_regency, v.officer_position,
         (select count(*) from draft_photo p where p.draft_id = r.draft_id) as photo_count, ${STATUS_SINCE}
@@ -399,7 +395,7 @@ export type MapPoint = {
   readonly status: TicketStatus;
   readonly hazardType: string;
   readonly villageName: string;
-  readonly precision: "gpsPoint" | "estimate" | "villageLevel" | "chatLocation";
+  readonly precision: "gpsPoint" | "estimate" | "villageLevel";
   readonly emergency: boolean;
   readonly lat: number;
   readonly lon: number;

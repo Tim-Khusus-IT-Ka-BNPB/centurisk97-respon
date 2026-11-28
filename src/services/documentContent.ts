@@ -11,7 +11,6 @@ import { applicableFields, chosenHazardType } from "../domain/fields/applicable"
 import { type FieldId, fieldById } from "../domain/fields/catalogue";
 import type { ReporterRole } from "../domain/identityForm";
 import { jpegSize } from "../domain/jpeg";
-import type { Door } from "../domain/ownership";
 import type { KeptPhoto } from "../domain/photoChecks";
 import { tallyOf } from "../domain/tally";
 import { versionChanges } from "../domain/versions";
@@ -46,7 +45,6 @@ export type DocumentSource = {
   readonly reporterRole: ReporterRole;
   readonly officerRegency: string | null;
   readonly numberUnverified: boolean;
-  readonly door: Door;
   readonly emergency: { readonly kind: EmergencyKind; readonly victims: VictimAnswer } | null;
   readonly photos: readonly DocumentPhoto[];
   // Photos that could not be put in: missing from the store, or past what a document may hold.
@@ -85,11 +83,11 @@ const labelOf = (states: FieldStates, fieldId: FieldId) =>
   t(t.variant(`field.${fieldId}.label`, chosenHazardType(states)));
 
 // Where a value came from, with the reporter's own words when it was read from them.
-function originOf(state: FieldState | undefined, { forStaff, door }: DocumentSource): string {
+function originOf(state: FieldState | undefined, { forStaff }: DocumentSource): string {
   if (state === undefined || !("origin" in state)) return "";
   if (state.origin === "quote") return t("document.origin.quote", { quote: state.quote });
   if (state.origin === "officer" && forStaff) return t("document.origin.officer", { quote: state.quote });
-  return t(t.variant(`desk.origin.${state.origin}`, door));
+  return t(`desk.origin.${state.origin}`);
 }
 
 const FIGURES = ["dead", "missing", "injured", "displacedPeople", "housesHeavy"] as const;

@@ -2,7 +2,7 @@ import { beforeAll, describe, expect, test, vi } from "vitest";
 import { SEEDED_SESSIONS } from "../../../db/synthetic/reporters";
 import { anonymiseMissing } from "../../adapters/postgres/missingPersons";
 import { windowStart } from "../../domain/limits";
-import { CHAT_PHOTO } from "../../domain/photoChecks";
+import { MISSING_PHOTO_BYTES } from "../../domain/missingPerson";
 import { hmacKey } from "../../platform/keys";
 import { browser, freshNumber, losesOnce, manualClock, query, testBindings, testDatabase } from "../../testing/api";
 import { cameraJpeg } from "../../testing/photoBase";
@@ -147,7 +147,7 @@ describe("a missing person reported from a phone", () => {
     ]);
     const nowhere = await phone.upload("/missing", form({ villageCode: "99.99.99.9999" }));
     expect(nowhere.error.error.code).toBe("missing.placeUnknown");
-    for (const bytes of [new Uint8Array([1, 2, 3]), new Uint8Array(CHAT_PHOTO.maxBytes + 1)]) {
+    for (const bytes of [new Uint8Array([1, 2, 3]), new Uint8Array(MISSING_PHOTO_BYTES + 1)]) {
       const blurred = await phone.upload("/missing", form({}, bytes));
       expect(blurred.status).toBe(422);
       expect(blurred.error.fields).toEqual([{ fieldId: "photo", copyKey: "fieldError.missing.photo", params: {} }]);

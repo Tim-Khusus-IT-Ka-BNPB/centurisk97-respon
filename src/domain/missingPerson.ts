@@ -100,5 +100,7 @@ export const mayMoveMissing = (from: MissingStatus, to: MissingStatus): boolean 
 
 // How many a number may report in a day (upstream: 5).
 export const MISSING_PER_DAY = 5;
+// Its one photo may be an old one from the gallery, so it may be larger than a fresh camera photo.
+export const MISSING_PHOTO_BYTES = 5 * 1024 * 1024;
 // Closed this long ago, a report keeps no name, number or photo (upstream Q67).
 export const MISSING_KEPT_MS = 2 * 365 * DAY_MS;

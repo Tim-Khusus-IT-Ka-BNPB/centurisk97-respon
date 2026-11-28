@@ -13,13 +13,13 @@ import { knownProfiles } from "../adapters/postgres/reporters";
 import { stripJpeg } from "../domain/jpeg";
 import {
   MISSING_PER_DAY,
+  MISSING_PHOTO_BYTES,
   type MissingError,
   type MissingInput,
   type MissingStatus,
   mayMoveMissing,
   readMissing,
 } from "../domain/missingPerson";
-import { CHAT_PHOTO } from "../domain/photoChecks";
 import type { Principal, StaffPrincipal } from "../ports/identity";
 import type { ServiceBindings } from "./bindings";
 import { admitted, type DeskAnswer } from "./desk";
@@ -51,7 +51,7 @@ export async function reportMissing(
   if (village === null) return { kind: "unknownPlace" };
   const person = readMissing(input, nowMs, draftZone(village.villageCode));
   if (Array.isArray(person)) return { kind: "invalid", errors: person };
-  const clean = photo === null ? null : photo.length > CHAT_PHOTO.maxBytes ? null : stripJpeg(photo);
+  const clean = photo === null ? null : photo.length > MISSING_PHOTO_BYTES ? null : stripJpeg(photo);
   if (photo !== null && clean === null) return { kind: "badPhoto" };
   const id = crypto.randomUUID();
   const photoKey = clean === null ? null : `missing/${id}.jpg`;

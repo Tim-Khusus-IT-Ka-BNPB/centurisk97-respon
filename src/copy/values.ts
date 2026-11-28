@@ -74,10 +74,9 @@ export function valueLines(t: Text, fieldId: string, value: RowValue): readonly 
   }
 }
 
-// How well a point is known. A location shared in a chat tells no accuracy.
-export function precisionText(t: Text, precision: string, accuracyM: number | null): string {
+// How well a point is known.
+export function precisionText(t: Text, precision: string, accuracyM: number): string {
   const named = t(`card.placeConfirm.precision.${precision}`);
-  if (accuracyM === null) return named;
   return `${named}, ${t("card.placeConfirm.accuracy", { metres: Math.round(accuracyM) })}`;
 }
 

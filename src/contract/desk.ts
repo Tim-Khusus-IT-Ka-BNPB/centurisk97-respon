@@ -39,8 +39,6 @@ const queueItemSchema = z.object({
   // The name is null for an account that must ask for identity on the report.
   reporter: z.object({ name: z.string().nullable(), role: reporterRoleSchema }),
   numberUnverified: z.boolean(),
-  // Which door it came through; a chat proves its number.
-  door: z.enum(["web", "chat"]),
   // Raised as an emergency, and what the reporter said of victims. One tap's kind is not known.
   emergency: emergencySchema.nullable(),
   // Kept on the reporter's phone with no signal (LR-09): when the phone saved it, null when its clock
@@ -129,7 +127,7 @@ const mapPointSchema = z.object({
   hazardType: hazardTypeSchema,
   villageName: z.string(),
   // A village picked by search sits at the village's centre, never at a made-up point.
-  precision: z.enum(["gpsPoint", "estimate", "villageLevel", "chatLocation"]),
+  precision: z.enum(["gpsPoint", "estimate", "villageLevel"]),
   emergency: z.boolean(),
   lat: z.number(),
   lon: z.number(),
