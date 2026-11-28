@@ -129,7 +129,7 @@ test("a sent report is downloaded, added to, and answered by staff, each on its 
   await actions.locator("summary", { hasText: "Balas pelapor" }).click();
   await actions.getByLabel("Balasan", { exact: true }).fill("Terima kasih, tim kami berangkat.");
   await actions.getByRole("button", { name: "Kirim balasan" }).click();
-  await expect(desk.getByRole("status")).toContainText("Balasan terkirim.");
+  await expect(desk.getByRole("status")).toContainText("Balasan tersimpan.");
   await expect(desk.getByRole("region", { name: "Kabar baru dari pelapor, versi 2" })).toHaveCount(0);
 
   // The reporter sees that there is news, reads it, and stops it.

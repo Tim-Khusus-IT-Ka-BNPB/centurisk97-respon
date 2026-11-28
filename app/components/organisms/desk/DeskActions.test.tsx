@@ -338,6 +338,7 @@ describe("writing back", () => {
     });
     expect(fold("Balas pelapor (2)").open).toBe(false);
     expect(screen.getByText(/Pelapor membacanya di halaman laporannya/)).toBeTruthy();
+    expect(screen.getByRole("heading", { name: "Balasan untuk pelapor" })).toBeTruthy();
     const rows = within(screen.getByRole("list")).getAllByRole("listitem");
     expect(rows.map((row) => row.textContent)).toEqual([
       "Terima kasihPetugas Uji, 24 November 2026, pukul 09.30 WIB",

@@ -207,7 +207,9 @@ describe("a report on the desk", () => {
     expect(screen.getByRole("status").textContent).toContain("Status tersimpan.");
     kept.unmount();
     const replied = await saved("?saved=replies");
-    expect(screen.getByRole("status").textContent).toBe("Balasan terkirim. Status tiket: Sudah dilihat petugas.");
+    expect(screen.getByRole("status").textContent).toBe(
+      "Balasan tersimpan. Pelapor membacanya di halaman laporannya. Status tiket: Sudah dilihat petugas.",
+    );
     replied.unmount();
     await saved("?saved=nope");
     expect(screen.queryByRole("status")).toBeNull();

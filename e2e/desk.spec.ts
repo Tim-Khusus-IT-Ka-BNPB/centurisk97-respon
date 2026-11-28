@@ -281,7 +281,9 @@ test("an officer answers the reporter, moves the ticket to its end, and the trac
   await actions.locator("summary", { hasText: "Balas pelapor" }).click();
   await actions.getByLabel("Balasan").fill("Terima kasih, kami cek");
   await actions.getByRole("button", { name: "Kirim balasan" }).click();
-  await expect(page.getByRole("status")).toContainText("Balasan terkirim. Status tiket: Sedang ditelaah.");
+  await expect(page.getByRole("status")).toContainText(
+    "Balasan tersimpan. Pelapor membacanya di halaman laporannya. Status tiket: Sedang ditelaah.",
+  );
   await expect(actions.locator("summary", { hasText: "Balas pelapor (1)" })).toBeVisible();
   await expect(header.getByText("Ditelaah", { exact: true })).toBeVisible();
 
