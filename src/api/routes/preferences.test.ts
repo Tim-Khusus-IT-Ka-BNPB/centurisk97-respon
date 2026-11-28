@@ -1,6 +1,7 @@
 import { describe, expect, test } from "vitest";
 import { browser, testBindings, testDatabase } from "../../testing/api";
 import { api } from "../app";
+import { sharedDomainOf } from "./preferences";
 
 const { bindings } = testBindings();
 const fetchApi = (request: Request) => api.app.fetch(request, { ...bindings, db: testDatabase() });
@@ -44,5 +45,34 @@ describe("theme preference", () => {
       "theme=light; Max-Age=31536000; Path=/; HttpOnly; SameSite=Lax",
     );
     expect((await set("https://localhost")).headers.get("set-cookie")).toContain("; Secure;");
+  });
+
+  test("under a parent domain the choice is kept for it, so auth reads it too", async () => {
+    const origin = "https://respon.ksbnpb.io";
+    const response = await api.app.fetch(
+      new Request(`${origin}/api/preferences/theme`, {
+        method: "POST",
+        headers: {
+          "x-client-address": "198.51.100.41",
+          origin,
+          "x-respon-client": "1",
+          "content-type": "application/json",
+        },
+        body: JSON.stringify({ theme: "dark" }),
+      }),
+      { ...bindings, settings: { ...bindings.settings, appOrigin: origin }, db: testDatabase() },
+    );
+    expect(response.status).toBe(204);
+    expect(response.headers.getSetCookie()).toEqual([
+      "theme=; Max-Age=0; Path=/; Secure",
+      "theme=dark; Max-Age=31536000; Domain=ksbnpb.io; Path=/; HttpOnly; Secure; SameSite=Lax",
+    ]);
+  });
+
+  test("only a named host has a parent to share", () => {
+    expect(sharedDomainOf("https://respon.ksbnpb.io")).toBe("ksbnpb.io");
+    expect(sharedDomainOf("http://localhost:5173")).toBeUndefined();
+    expect(sharedDomainOf("https://ksbnpb.io")).toBeUndefined();
+    expect(sharedDomainOf("http://203.0.113.5")).toBeUndefined();
   });
 });

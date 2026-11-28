@@ -1,10 +1,17 @@
 import { createRoute, z } from "@hono/zod-openapi";
-import { setCookie } from "hono/cookie";
+import { deleteCookie, setCookie } from "hono/cookie";
 import { LANGUAGE_COOKIE, OFFERED } from "../../copy/languages";
 import { type Api, addRoute, jsonBody } from "../route";
 
 const THEME_COOKIE = "theme";
 const YEAR_SECONDS = 365 * 24 * 60 * 60;
+
+// One theme for every module under the same parent: respon.ksbnpb.io keeps it for ksbnpb.io, so auth
+// reads the same choice. A host with no parent to share, such as localhost or an address, keeps it to itself.
+export function sharedDomainOf(origin: string): string | undefined {
+  const labels = new URL(origin).hostname.split(".");
+  return labels.length > 2 && !/^\d+$/.test(labels.at(-1) as string) ? labels.slice(1).join(".") : undefined;
+}
 
 export function addPreferenceRoutes(api: Api): void {
   // The colour theme for this browser. It names no person, so it needs no consent.
@@ -20,7 +27,17 @@ export function addPreferenceRoutes(api: Api): void {
     (c) => {
       const { theme } = c.req.valid("json");
       const secure = new URL(c.req.url).protocol === "https:";
-      setCookie(c, THEME_COOKIE, theme, { path: "/", secure, httpOnly: true, sameSite: "Lax", maxAge: YEAR_SECONDS });
+      const domain = sharedDomainOf(c.env.settings.appOrigin);
+      // A choice kept before it was shared would be read before the shared one, so it goes.
+      if (domain) deleteCookie(c, THEME_COOKIE, { path: "/", secure });
+      setCookie(c, THEME_COOKIE, theme, {
+        path: "/",
+        domain,
+        secure,
+        httpOnly: true,
+        sameSite: "Lax",
+        maxAge: YEAR_SECONDS,
+      });
       return c.body(null, 204);
     },
   );
