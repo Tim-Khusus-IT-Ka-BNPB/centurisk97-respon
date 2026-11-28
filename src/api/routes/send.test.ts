@@ -69,7 +69,7 @@ describe("send", () => {
       reporter_name: "Uji Satu",
       privacy_version: 2,
       complete_percent: 100,
-      number_unverified: 1,
+      number_unverified: true,
     });
     const [left] = await query<{
       state: string;

@@ -5,16 +5,16 @@ import { type Bucket, r2PhotoStore } from "../adapters/r2/photoStore";
 import type { ApiBindings } from "../api/context";
 import type { DraftBody } from "../contract/draft";
 import type { ErrorEnvelope } from "../contract/errors";
-import { type Database, row, rows, sql } from "../platform/database";
+import { type Database, LostRace, row, rows, run, sql } from "../platform/database";
 import { createLogger, type LogLine } from "../platform/log";
 import { parseSettings } from "../platform/settings";
 import type { ModelPort } from "../ports/model";
 
 export const TEST_ORIGIN = "http://localhost:5173";
 
-// The migrated and seeded in-memory D1 database of this test file, made by db/testDatabase.ts.
+// This test file's own Postgres database, copied from the seeded template by db/testDatabase.ts.
 export function testDatabase(): Database {
-  const db = (globalThis as { testD1?: Database }).testD1;
+  const db = (globalThis as { testDb?: Database }).testDb;
   if (db === undefined) throw new Error("No test database: db/testDatabase.ts did not run for this file");
   return db;
 }
@@ -40,55 +40,52 @@ export async function query<T = Record<string, unknown>>(strings: TemplateString
   ) as T[];
 }
 
-// A database whose every statement fails with this message, as a driver error would.
-export function failingDatabase(message: string): Database {
-  const fail = async () => {
-    throw new Error(message);
+// A database whose every statement fails with this error, as a driver error would.
+export function failingDatabase(message: string, code?: string): Database {
+  const fail = async (): Promise<never> => {
+    throw Object.assign(new Error(message), code === undefined ? {} : { code });
   };
-  const statement = { bind: () => statement, all: fail, first: fail, run: fail };
-  return { prepare: () => statement, batch: fail, exec: fail } as unknown as Database;
+  return { query: fail, batch: fail };
 }
-
-type Statement = ReturnType<Database["prepare"]>;
-type Seen = Statement & { readonly text: string; readonly inner: Statement };
 
 // The test database, with a hook that sees each batch's statements before it runs and may make
 // it lose a race, as when another request wrote first. `write` runs the batch for real.
-// `beforeRead` runs before each single read, as another request writing between two reads.
+// `beforeRead` runs before each single statement, as another request writing between two reads.
 export function racing(
   hook: (texts: readonly string[], write: () => Promise<unknown>) => Promise<"lose" | "pass">,
   beforeRead: (text: string) => Promise<void> = async () => {},
   db: Database = testDatabase(),
 ): Database {
-  const seen = (text: string, inner: Statement): Seen => ({
-    text,
-    inner,
-    bind: (...values: unknown[]) => seen(text, inner.bind(...values)),
-    all: async () => {
-      await beforeRead(text);
-      return inner.all();
-    },
-    first: async () => {
-      await beforeRead(text);
-      return inner.first();
-    },
-    run: () => inner.run(),
-  });
   return {
-    prepare: (text) => seen(text, db.prepare(text)),
-    exec: (text) => db.exec(text),
-    batch: async (statements) => {
-      const batch = statements as Seen[];
-      const write = () => db.batch(batch.map((statement) => statement.inner));
+    query: async (text, values) => {
+      await beforeRead(text);
+      return db.query(text, values);
+    },
+    batch: async (queries) => {
+      const write = () => db.batch(queries);
       if (
         (await hook(
-          batch.map((statement) => statement.text),
+          queries.map((query) => query.text),
           write,
         )) === "lose"
       )
-        throw new Error("D1_ERROR: CHECK constraint failed: batch_guard_held: SQLITE_CONSTRAINT");
+        throw new LostRace();
       return write();
     },
+  };
+}
+
+// Until undone, an insert into this table that meets the condition fails as a race lost to another
+// request that took the row first. The condition is trusted SQL of the test's own.
+export async function loseInserts(name: string, table: string, condition: string): Promise<() => Promise<void>> {
+  const db = testDatabase();
+  const raw = (text: string) => run(db, { text, values: [] });
+  await raw(`create function ${name}() returns trigger language plpgsql as $$ begin
+      if ${condition} then raise exception 'lost' using errcode = 'unique_violation'; end if; return new; end $$`);
+  await raw(`create trigger ${name} before insert on ${table} for each row execute function ${name}()`);
+  return async () => {
+    await raw(`drop trigger ${name} on ${table}`);
+    await raw(`drop function ${name}()`);
   };
 }
 

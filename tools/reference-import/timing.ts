@@ -12,7 +12,7 @@ type Places = {
   searchArea(db: Database, snapshotId: number, area: Area, words: readonly string[], limit: number): Promise<Hits>;
 };
 // Loaded by address: the repository is compiled with the Worker's settings, not the scripts'.
-const places = (await import(new URL("../../src/adapters/d1/places.ts", import.meta.url).href)) as Places;
+const places = (await import(new URL("../../src/adapters/postgres/places.ts", import.meta.url).href)) as Places;
 
 const RUNS = 21;
 const COUNTRY = ["sukamaju", "suka", "jaya", "aceh", "sari", "kota bandung", "mekar jaya garut", "zzqx", "su ka ma"];

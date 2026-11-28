@@ -51,7 +51,7 @@ beforeAll(async () => {
   const first = async (regency: string) =>
     (
       await query<{ code: string }>`
-        select v.code from place_village v join place_snapshot s on s.id = v.snapshot_id and s.active = 1
+        select v.code from place_village v join place_snapshot s on s.id = v.snapshot_id and s.active
         where v.regency_code like ${regency} order by v.code limit 1`
     )[0]?.code as string;
   [village, sumut] = await Promise.all([first("11.08"), first("12.%")]);

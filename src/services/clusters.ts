@@ -1,10 +1,9 @@
-import { type ClusterRow, recentLinks, recentReports } from "../adapters/d1/publicFeed";
+import { type ClusterRow, recentLinks, recentReports } from "../adapters/postgres/publicFeed";
 import { type Cluster, type ClusterInput, clusterOfTicket, clustersOf } from "../domain/clusters";
 import type { StaffScope } from "../domain/deskRights";
 import { eventInstantMs } from "../domain/eventTime";
 import type { EventTimeValue, PlaceValue } from "../domain/fieldState";
 import { DAY_MS } from "../domain/time";
-import { parsed } from "../platform/database";
 import type { ServiceBindings } from "./bindings";
 
 // Clusters are found among the reports of the last 30 days.
@@ -13,7 +12,7 @@ const CLUSTER_DAYS = 30;
 type States = Record<string, { readonly state: string; readonly value?: unknown }>;
 
 export function clusterInput(row: ClusterRow): ClusterInput {
-  const states = parsed<States>(row.fields) as States;
+  const states = row.fields as States | null as States;
   // A row written by hand may hold no place; it is still placed by its village.
   const place = states.place?.state === "value" ? (states.place.value as PlaceValue) : null;
   const eventTime = states.eventTime?.state === "value" ? (states.eventTime.value as EventTimeValue) : null;
@@ -25,7 +24,7 @@ export function clusterInput(row: ClusterRow): ClusterInput {
     regencyCode: row.regency_code,
     atMs: (eventTime && eventInstantMs(eventTime)) ?? Date.parse(row.sent_at),
     numberKey: row.number_key,
-    placedPhoto: row.placed_photo === 1,
+    placedPhoto: row.placed_photo === true,
     status: row.status,
   };
 }

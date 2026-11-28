@@ -171,7 +171,7 @@ describe("a video of the scene", () => {
     const key = await hmacKey(bindings.settings.keyHmacSecret, "subject", "staff:staff-desk-1");
     const window = new Date(windowStart("clockHour", clock.now())).toISOString();
     await query`insert into rate_counter (limit_id, subject_key, window_start, count) values ('desk.read', ${key}, ${window}, 1200)
-      on conflict do update set count = excluded.count`;
+      on conflict (limit_id, subject_key, window_start) do update set count = excluded.count`;
     expect((await play()).status).toBe(429);
     await query`delete from rate_counter where subject_key = ${key}`;
     const other = await fetchApi(
@@ -206,7 +206,7 @@ describe("a video of the scene", () => {
       (
         await query<{
           made_at: string | null;
-        }>`select made_at from draft_video where draft_id = ${draft.draftId} order by rowid`
+        }>`select made_at from draft_video where draft_id = ${draft.draftId} order by received_at, ctid`
       ).map((one) => one.made_at !== null),
     ).toEqual([false, false, true]);
     expect((await start({ bytes: 5000, seconds: null })).error.fields[0]?.copyKey).toBe("fieldError.video.tooMany");

@@ -1,6 +1,6 @@
-import { type DraftRecord, loadDraft, photosChanged, storedReply, storeReply } from "../adapters/d1/drafts";
-import { deletePhoto, draftPhotos, insertPhoto, photoOf, placeChatPhotos } from "../adapters/d1/photos";
-import { villageCentre } from "../adapters/d1/places";
+import { type DraftRecord, loadDraft, photosChanged, storedReply, storeReply } from "../adapters/postgres/drafts";
+import { deletePhoto, draftPhotos, insertPhoto, photoOf, placeChatPhotos } from "../adapters/postgres/photos";
+import { villageCentre } from "../adapters/postgres/places";
 import { zoneOffsetMs } from "../domain/eventTime";
 import type { PlaceValue } from "../domain/fieldState";
 import type { Point } from "../domain/geo";

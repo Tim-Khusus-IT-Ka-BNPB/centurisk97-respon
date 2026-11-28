@@ -122,14 +122,14 @@ describe("when place data cannot be read", () => {
   });
 
   test("no active snapshot answers place.unavailable", async () => {
-    const [active] = await query<{ id: number }>`select id from place_snapshot where active = 1`;
-    await query`update place_snapshot set active = 0 where active = 1`;
+    const [active] = await query<{ id: number }>`select id from place_snapshot where active`;
+    await query`update place_snapshot set active = false where active`;
     try {
       const answer = await search("/places/search?q=sukamaju");
       expect(answer.status).toBe(503);
       expect(answer.error.error.code).toBe("place.unavailable");
     } finally {
-      await query`update place_snapshot set active = 1 where id = ${active?.id}`;
+      await query`update place_snapshot set active = true where id = ${active?.id}`;
     }
   });
 
@@ -144,11 +144,11 @@ describe("when place data cannot be read", () => {
   });
 
   test("a driver error is logged by its SQLite code only", async () => {
-    const failing = failingDatabase("D1_ERROR: no such table: place_snapshot near sukamaju: SQLITE_ERROR");
+    const failing = failingDatabase("no such table: place_snapshot near sukamaju", "42P01");
     lines.length = 0;
     const answer = await search("/places/search?q=sukamaju", { ...bindings, db: failing });
     expect(answer.status).toBe(503);
-    expect(lines).toContainEqual({ event: "place.failed", errorCode: "place.unavailable", sqlState: "SQLITE_ERROR" });
+    expect(lines).toContainEqual({ event: "place.failed", errorCode: "place.unavailable", sqlState: "42P01" });
   });
 });
 

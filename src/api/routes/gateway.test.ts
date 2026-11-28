@@ -99,7 +99,7 @@ describe("a gateway's signed calls (AC-05)", () => {
   });
 
   test("no message id can be taken while the database is down", async () => {
-    const down = { ...bindings, db: failingDatabase("D1_ERROR: SQLITE_BUSY") };
+    const down = { ...bindings, db: failingDatabase("database busy", "57P03") };
     const failed = await gateway((request) => api.app.fetch(request, down)).call("POST", "/gateway/messages", body());
     expect(failed.status).toBe(503);
   });

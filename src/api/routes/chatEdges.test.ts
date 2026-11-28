@@ -40,7 +40,7 @@ function world(model?: ModelPort) {
 const latestDraft = async (number: string) =>
   (
     await query<{ id: string }>`select d.id from report_draft d join reporter r on r.id = d.reporter_id
-      where r.number = ${number} order by d.rowid desc limit 1`
+      where r.number = ${number} order by d.created_at desc, d.ctid desc limit 1`
   )[0]?.id as string;
 
 describe("two messages at once", () => {
@@ -120,7 +120,7 @@ describe("two messages at once", () => {
           if (!text.includes("from report_draft d")) return;
           reads += 1;
           if (reads === 2)
-            await query`update report_draft set state = 'expired', fields = null, back_stack = null, ended_at = 'x'
+            await query`update report_draft set state = 'expired', fields = null, back_stack = null, ended_at = now()
               where id = ${await latestDraft(one.number)}`;
         },
       ),

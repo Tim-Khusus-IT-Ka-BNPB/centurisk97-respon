@@ -5,10 +5,13 @@ import { createBridge } from "../../api/bridge";
 import { runSweep } from "../../services/sweep";
 import { sendWarnings } from "../../services/warningSend";
 import { createClock } from "../clock";
-import { sqlState } from "../database";
+import { type Database, sqlState } from "../database";
 import { createLogger, type Logger, type LogSink } from "../log";
 import { createServices } from "../services";
 import { parseSettings, type Settings, SettingsError } from "../settings";
+
+// The Worker's database binding, until respon runs on Node beside its Postgres.
+const dbOf = (env: Env) => env.DB as unknown as Database;
 
 type PageHandler = (request: Request, context: AppLoadContext) => Promise<Response>;
 
@@ -55,7 +58,7 @@ export function createWorker(pages: PageHandler, runtime: string, sink?: LogSink
       const state = startOnce(env);
       if (!state.ok) return new Response(null, { status: 503, headers: { "referrer-policy": "no-referrer" } });
       const { settings, log, clock } = state.instance;
-      const bindings = createServices(settings, log, env.DB, env.PHOTOS, clock);
+      const bindings = createServices(settings, log, dbOf(env), env.PHOTOS, clock);
       const fetchApi = async (apiRequest: Request) => api.app.fetch(apiRequest, bindings, ctx);
       if (new URL(request.url).pathname.startsWith("/api/")) return fetchApi(request);
       const context = {
@@ -72,12 +75,12 @@ export function createWorker(pages: PageHandler, runtime: string, sink?: LogSink
       const { settings, log, clock } = state.instance;
       let step = "sweep";
       try {
-        await runSweep(env.DB, r2PhotoStore(env.PHOTOS), clock, log);
+        await runSweep(dbOf(env), r2PhotoStore(env.PHOTOS), clock, log);
         step = "warnings";
         const started = Date.now();
         // The old site's impact model was the second trigger; nothing reads the old site now, so the
         // outlook is the one trigger.
-        await sendWarnings({ db: env.DB, settings, clock }, fetch.bind(globalThis));
+        await sendWarnings({ db: dbOf(env), settings, clock }, fetch.bind(globalThis));
         log.info({ event: "warnings.done", durationMs: Date.now() - started });
       } catch (error) {
         // The driver's message may quote values, so only its SQLite code leaves this run.

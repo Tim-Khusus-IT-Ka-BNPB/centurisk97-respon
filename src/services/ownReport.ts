@@ -1,4 +1,4 @@
-import { markNewsRead, newsSources, newsState, setNewsStopped } from "../adapters/d1/news";
+import { markNewsRead, newsSources, newsState, setNewsStopped } from "../adapters/postgres/news";
 import type { NewsItem, OwnReportDetail, ReportVersion } from "../contract/ownReport";
 import { followUpClosesAt, followUpRefusal } from "../domain/followUp";
 import { isUnread, reporterNews } from "../domain/reporterNews";

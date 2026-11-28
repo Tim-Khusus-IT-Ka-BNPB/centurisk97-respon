@@ -178,7 +178,7 @@ describe("the model only extracts, code keeps what the words hold", () => {
     expect(after.status).toBe(200);
     expect(model.inputs).toHaveLength(0);
     const stored = await storedStates(draft.draftId);
-    expect(stored).toMatchObject({ off_topic_count: 3, templates_only: 1, model_calls: 0 });
+    expect(stored).toMatchObject({ off_topic_count: 3, templates_only: true, model_calls: 0 });
     expect(JSON.stringify(after.draft.transcript)).not.toContain("puisi");
   });
 

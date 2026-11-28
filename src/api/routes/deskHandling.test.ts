@@ -30,7 +30,7 @@ const province = () => signedIn(4);
 let village = "";
 beforeAll(async () => {
   const [found] = await query<{ code: string }>`
-    select v.code from place_village v join place_snapshot s on s.id = v.snapshot_id and s.active = 1
+    select v.code from place_village v join place_snapshot s on s.id = v.snapshot_id and s.active
     where v.regency_code = '11.08' order by v.code limit 1`;
   village = found?.code as string;
 });
@@ -122,7 +122,7 @@ describe("a check on site", () => {
       detail: { result: "partly", changes: [{ fieldId: "dead", from: 3, to: 2 }] },
     });
     const versions = await query<{ version: number; dead: number }>`
-      select v.version, json_extract(v.fields, '$.dead.value') as dead from report_version v
+      select v.version, v.fields #> '{dead,value}' as dead from report_version v
       join report r on r.id = v.report_id where r.ticket_number = ${ticket} order by v.version`;
     expect(versions).toEqual([
       { version: 1, dead: 3 },

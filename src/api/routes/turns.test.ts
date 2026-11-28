@@ -398,7 +398,7 @@ describe("the history of a step stored before it was marked", () => {
     const { phone, draft } = await start();
     const { draft: current } = await walkTo(phone, draft, village, { tick, stopAt: isCard("choice", "hazardType") });
     await query`update report_draft set back_stack = (
-      select json_group_array(json_remove(entry.value, '$.transcriptSeq')) from json_each(back_stack) as entry)
+      select coalesce(jsonb_agg(entry.value - 'transcriptSeq' order by entry.n), '[]') from jsonb_array_elements(back_stack) with ordinality as entry (value, n))
       where id = ${draft.draftId}`;
     tick();
     const back = await post(phone, current, { kind: "back" });

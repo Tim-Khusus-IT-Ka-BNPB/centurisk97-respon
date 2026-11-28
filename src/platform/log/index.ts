@@ -9,7 +9,7 @@ const SHAPES = {
   method: /^(?:GET|HEAD|POST|PUT|PATCH|DELETE|OPTIONS)$/,
   errorCode: /^[a-z][a-zA-Z0-9.]{0,60}$/,
   limitId: /^[a-z][a-zA-Z0-9.]{0,60}$/,
-  sqlState: /^SQLITE_[A-Z_]{1,40}$/,
+  sqlState: /^[0-9A-Z]{5}$/,
   draftState: /^[a-z_]{1,30}$/,
   setting: /^[A-Z][A-Z0-9_]{1,40}$/,
 } as const satisfies Record<string, RegExp>;

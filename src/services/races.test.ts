@@ -29,7 +29,7 @@ const tick = () => clock.advance(4000);
 let village = "";
 beforeAll(async () => {
   const [first] = await query<{ code: string }>`
-    select v.code from place_village v join place_snapshot s on s.id = v.snapshot_id and s.active = 1 order by v.code limit 1`;
+    select v.code from place_village v join place_snapshot s on s.id = v.snapshot_id and s.active order by v.code limit 1`;
   village = (first as { code: string }).code;
 });
 

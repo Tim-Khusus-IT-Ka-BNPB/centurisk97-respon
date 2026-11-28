@@ -1,10 +1,16 @@
-import { type ChatSession, chatSession, forgetChat, saveChatSession } from "../adapters/d1/chat";
-import { addNewsChoice, newsChoice } from "../adapters/d1/chatNews";
-import { DRAFT_LIFE_MS, type DraftRecord, loadDraft, openDraftOf, touchDraft } from "../adapters/d1/drafts";
-import { followUpState } from "../adapters/d1/followUp";
-import { draftPhotos } from "../adapters/d1/photos";
-import { isAllowed } from "../adapters/d1/pilot";
-import { makeEmergency, type ProfileRow, profileBySlot, reporterIdOf, updateProfile } from "../adapters/d1/reporters";
+import { type ChatSession, chatSession, forgetChat, saveChatSession } from "../adapters/postgres/chat";
+import { addNewsChoice, newsChoice } from "../adapters/postgres/chatNews";
+import { DRAFT_LIFE_MS, type DraftRecord, loadDraft, openDraftOf, touchDraft } from "../adapters/postgres/drafts";
+import { followUpState } from "../adapters/postgres/followUp";
+import { draftPhotos } from "../adapters/postgres/photos";
+import { isAllowed } from "../adapters/postgres/pilot";
+import {
+  makeEmergency,
+  type ProfileRow,
+  profileBySlot,
+  reporterIdOf,
+  updateProfile,
+} from "../adapters/postgres/reporters";
 import type { Card } from "../contract/card";
 import type { DraftBody } from "../contract/draft";
 import { hazardKey } from "../copy/hazardKey";

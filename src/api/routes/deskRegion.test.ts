@@ -40,7 +40,7 @@ let provinceRegencies: string[] = [];
 
 async function reportIn(regencyCode: string): Promise<string> {
   const [found] = await query<{ code: string }>`
-    select v.code from place_village v join place_snapshot s on s.id = v.snapshot_id and s.active = 1
+    select v.code from place_village v join place_snapshot s on s.id = v.snapshot_id and s.active
     where v.regency_code = ${regencyCode} order by v.code limit 1`;
   const phone = browser(fetchApi);
   return sendDraft(phone, await startDraft(phone, freshNumber().typed), found?.code as string, { tick });
@@ -49,7 +49,7 @@ async function reportIn(regencyCode: string): Promise<string> {
 beforeAll(async () => {
   provinceRegencies = (
     await query<{ regency_code: string }>`
-      select distinct v.regency_code from place_village v join place_snapshot s on s.id = v.snapshot_id and s.active = 1
+      select distinct v.regency_code from place_village v join place_snapshot s on s.id = v.snapshot_id and s.active
       where v.regency_code like '12.%' order by v.regency_code limit 2`
   ).map((one) => one.regency_code);
   expect(provinceRegencies).toHaveLength(2);
@@ -123,7 +123,7 @@ describe("a regional account's desk", () => {
     const [draft] = await query<{ draft_id: string }>`select draft_id from report where ticket_number = ${outside}`;
     const photo = crypto.randomUUID();
     await query`insert into draft_photo (id, draft_id, store_key, bytes, badge, far, taken_at, time_source, received_at)
-      values (${photo}, ${draft?.draft_id}, ${`photos/${photo}`}, 3, 'none', 0, ${"2026-11-24T03:00:00.000Z"}, 'upload', ${"2026-11-24T03:00:00.000Z"})`;
+      values (${photo}, ${draft?.draft_id}, ${`photos/${photo}`}, 3, 'none', false, ${"2026-11-24T03:00:00.000Z"}, 'upload', ${"2026-11-24T03:00:00.000Z"})`;
     await bindings.photos.put(`photos/${photo}`, new Uint8Array([1, 2, 3]));
     expect((await desk().file(`/desk/photos/${photo}`)).status).toBe(200);
     expect((await regency().call("GET", `/desk/photos/${photo}`)).status).toBe(404);

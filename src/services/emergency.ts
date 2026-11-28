@@ -1,8 +1,8 @@
-import { lastOneTap, offlineTicket, oneTapsOfDay, openEmergencies, sendOneTap } from "../adapters/d1/emergency";
-import { draftPhotos, insertPhoto } from "../adapters/d1/photos";
-import { knownProfiles, latestConsent, type ProfileRow } from "../adapters/d1/reporters";
-import { ownReports, reportByTicket } from "../adapters/d1/reports";
-import { ticketNumberOf } from "../adapters/d1/send";
+import { lastOneTap, offlineTicket, oneTapsOfDay, openEmergencies, sendOneTap } from "../adapters/postgres/emergency";
+import { draftPhotos, insertPhoto } from "../adapters/postgres/photos";
+import { knownProfiles, latestConsent, type ProfileRow } from "../adapters/postgres/reporters";
+import { ownReports, reportByTicket } from "../adapters/postgres/reports";
+import { ticketNumberOf } from "../adapters/postgres/send";
 import type { DeskEmergency } from "../contract/desk";
 import type { OneTapSent, OneTapStart } from "../contract/emergency";
 import { emergencyStates, oneTapDayOpensAt, oneTapOpensAt, type VictimAnswer } from "../domain/emergency";

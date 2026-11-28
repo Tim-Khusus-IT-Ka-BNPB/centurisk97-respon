@@ -1,5 +1,5 @@
-import type { DraftRecord } from "../adapters/d1/drafts";
-import { claimModelCall } from "../adapters/d1/limits";
+import type { DraftRecord } from "../adapters/postgres/drafts";
+import { claimModelCall } from "../adapters/postgres/limits";
 import type { Card } from "../contract/card";
 import { copy } from "../copy";
 import { localClockText, localDateText } from "../copy/time";

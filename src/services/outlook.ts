@@ -1,4 +1,4 @@
-import { referenceFile } from "../adapters/d1/reports";
+import { referenceFile } from "../adapters/postgres/reports";
 import type { Tracking } from "../contract/tracking";
 import { checkForecastFile, type Outlook, outlookOf } from "../domain/forecast";
 import type { ServiceBindings } from "./bindings";

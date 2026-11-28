@@ -1,5 +1,5 @@
 import { describe, expect, test } from "vitest";
-import type { ClusterRow, ShownRow } from "../adapters/d1/publicFeed";
+import type { ClusterRow, ShownRow } from "../adapters/postgres/publicFeed";
 import { clusterInput } from "./clusters";
 import { entryOf } from "./publicFeed";
 
@@ -25,8 +25,8 @@ const clusterRow = (fields: object): ClusterRow => ({
   number_key: "k",
   status: "in_handling",
   sent_at: SENT,
-  fields: JSON.stringify(fields),
-  placed_photo: 1,
+  fields: fields,
+  placed_photo: true,
 });
 const shownRow = (fields: object, centre: [number | null, number | null] = [5.123456, 97.987654]): ShownRow => ({
   report_id: "r",
@@ -35,7 +35,7 @@ const shownRow = (fields: object, centre: [number | null, number | null] = [5.12
   village_code: "11.08.01.2001",
   status: "closed",
   sent_at: SENT,
-  fields: JSON.stringify(fields),
+  fields: fields,
   centre_lat: centre[0],
   centre_lon: centre[1],
 });
@@ -54,11 +54,13 @@ describe("a report read for the clusters", () => {
       placedPhoto: true,
     });
     const dateOnly = { state: "value", value: { kind: "dateOnly", localDate: "2026-11-24", zone: "WIB" } };
-    expect(clusterInput({ ...clusterRow({ place: place(), eventTime: dateOnly }), placed_photo: 0 })).toMatchObject({
-      point: null,
-      atMs: Date.parse(SENT),
-      placedPhoto: false,
-    });
+    expect(clusterInput({ ...clusterRow({ place: place(), eventTime: dateOnly }), placed_photo: false })).toMatchObject(
+      {
+        point: null,
+        atMs: Date.parse(SENT),
+        placedPhoto: false,
+      },
+    );
     expect(clusterInput(clusterRow({ place: place(), eventTime: { state: "notYetKnown" } })).atMs).toBe(
       Date.parse(SENT),
     );

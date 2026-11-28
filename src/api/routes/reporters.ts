@@ -1,7 +1,7 @@
 import { createRoute, z } from "@hono/zod-openapi";
 import { setCookie } from "hono/cookie";
-import { type DraftRecord, loadDraft } from "../../adapters/d1/drafts";
 import { DEVICE_COOKIE } from "../../adapters/identity/seeded";
+import { type DraftRecord, loadDraft } from "../../adapters/postgres/drafts";
 import { draftBodySchema, meResponseSchema } from "../../contract/draft";
 import { checkIdentity } from "../../domain/identityForm";
 import { PRIVACY } from "../../domain/privacy";

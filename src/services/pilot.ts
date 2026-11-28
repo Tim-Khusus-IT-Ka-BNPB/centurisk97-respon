@@ -1,4 +1,4 @@
-import { allowedNumbers, allowNumber, isAllowed, pilotNumbers, removeNumber } from "../adapters/d1/pilot";
+import { allowedNumbers, allowNumber, isAllowed, pilotNumbers, removeNumber } from "../adapters/postgres/pilot";
 import type { DeskPilot } from "../contract/desk";
 import type { FieldError } from "../domain/identityForm";
 import { checkPilotNumber, PILOT_MAX } from "../domain/pilot";

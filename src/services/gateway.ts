@@ -1,4 +1,4 @@
-import { claimMessage, releaseMessage } from "../adapters/d1/gateway";
+import { claimMessage, releaseMessage } from "../adapters/postgres/gateway";
 import { isFresh, readGatewayHeaders, signedText } from "../domain/gateway";
 import { isSignatureOf, sha256Hex } from "../platform/keys";
 import type { ServiceBindings } from "./bindings";

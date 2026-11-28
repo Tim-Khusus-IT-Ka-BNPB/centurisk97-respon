@@ -46,7 +46,7 @@ beforeAll(async () => {
   const village = async (regency: string) =>
     (
       await query<{ code: string }>`
-        select v.code from place_village v join place_snapshot s on s.id = v.snapshot_id and s.active = 1
+        select v.code from place_village v join place_snapshot s on s.id = v.snapshot_id and s.active
         where v.regency_code like ${regency} order by v.code limit 1`
     )[0]?.code as string;
   [aceh, sumut] = await Promise.all([village("11.08"), village("12.%")]);
@@ -157,9 +157,9 @@ describe("the today page", () => {
     const ticket = await sent("banjir");
     await checked(ticket, REGENCY);
     // Versions are append-only; this file's own database lets one be written as an older report's was.
-    await query`drop trigger report_version_no_update`;
-    await query`update report_version set fields = json_set(fields,
-        '$.hazardSubtype', json('{"state":"value","value":"unknown"}'), '$.eventTime', json('{"state":"unknown"}'))
+    await query`drop trigger report_version_append_only on report_version`;
+    await query`update report_version set fields = fields || jsonb_build_object(
+        'hazardSubtype', '{"state":"value","value":"unknown"}'::jsonb, 'eventTime', '{"state":"unknown"}'::jsonb)
       where report_id = (select id from report where ticket_number = ${ticket})`;
     await query`delete from place_village_shape where code = ${aceh}`;
     expect((await page()).events).toEqual([

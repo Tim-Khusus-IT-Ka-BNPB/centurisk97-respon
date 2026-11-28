@@ -1,4 +1,4 @@
-import { type CandidateRow, districtReports } from "../adapters/d1/sameEvent";
+import { type CandidateRow, districtReports } from "../adapters/postgres/sameEvent";
 import { eventInstantMs } from "../domain/eventTime";
 import type { EventTimeValue, FieldStates, PlaceValue } from "../domain/fieldState";
 import type { HazardTypeId } from "../domain/hazards";
@@ -6,7 +6,6 @@ import { pickOffers } from "../domain/sameEvent";
 import { DAY_MS } from "../domain/time";
 import type { DraftContent, SameEvent } from "../domain/turn/content";
 import type { TurnDraft } from "../domain/turn/engine";
-import { parsed } from "../platform/database";
 import type { ServiceBindings } from "./bindings";
 import { clusterMap } from "./clusters";
 
@@ -19,7 +18,7 @@ const fieldValue = <T>(states: States, field: string): T | null =>
   states[field]?.state === "value" ? (states[field].value as T) : null;
 
 export function candidateOf(row: CandidateRow, reporters: number) {
-  const states = parsed<States>(row.fields) as States;
+  const states = row.fields as States | null as States;
   const eventTime = fieldValue<EventTimeValue>(states, "eventTime");
   const subtype = fieldValue<string>(states, "hazardSubtype");
   return {

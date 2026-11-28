@@ -9,7 +9,7 @@ const row = (fields: object) => ({
   hazard_type: "flood",
   status: "new" as const,
   sent_at: "2026-11-24T03:00:00.000Z",
-  fields: JSON.stringify(fields),
+  fields: fields,
 });
 
 describe("a report offered as the same event", () => {

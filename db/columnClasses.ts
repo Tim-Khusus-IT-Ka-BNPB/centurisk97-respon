@@ -10,10 +10,6 @@ const PUB = "public";
 const S = "specific";
 
 export const COLUMN_CLASSES: Readonly<Record<string, TableClasses>> = {
-  batch_guard: {
-    retention: "always empty: every guarded batch deletes its own rows before it ends",
-    columns: { ok: I },
-  },
   reporter: {
     retention: "deleted when no profile and no seeded session uses it",
     columns: { id: I, number: P, number_key: I, created_at: I },

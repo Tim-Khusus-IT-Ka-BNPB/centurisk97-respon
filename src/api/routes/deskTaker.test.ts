@@ -33,7 +33,7 @@ let provinceVillage = "";
 const villageIn = async (prefix: string) =>
   (
     await query<{ code: string }>`
-      select v.code from place_village v join place_snapshot s on s.id = v.snapshot_id and s.active = 1
+      select v.code from place_village v join place_snapshot s on s.id = v.snapshot_id and s.active
       where v.code like ${`${prefix}%`} order by v.code limit 1`
   )[0]?.code as string;
 beforeAll(async () => {

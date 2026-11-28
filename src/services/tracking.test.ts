@@ -1,5 +1,5 @@
 import { describe, expect, test } from "vitest";
-import type { ReportRecord } from "../adapters/d1/reports";
+import type { ReportRecord } from "../adapters/postgres/reports";
 import { racing, testBindings } from "../testing/api";
 import { trackingOf } from "./tracking";
 
@@ -44,16 +44,17 @@ describe("tracking view", () => {
     });
   });
 
-  test("a contact file that cannot be read gives 117 and logs only the SQLite code", async () => {
+  test("a contact file that cannot be read gives 117 and logs only the SQL state", async () => {
     for (const [message, sqlState] of [
-      ["D1_ERROR: no such table: SQLITE_ERROR", { sqlState: "SQLITE_ERROR" }],
+      ["no such table", { sqlState: "42P01" }],
       ["network gone", {}],
     ] as const) {
       const { bindings, lines } = testBindings();
       const db = racing(
         async () => "pass",
         async (text) => {
-          if (text.includes("reference_file")) throw new Error(message);
+          if (text.includes("reference_file"))
+            throw Object.assign(new Error(message), "sqlState" in sqlState ? { code: sqlState.sqlState } : {});
         },
       );
       expect((await trackingOf({ ...bindings, db }, report)).contact).toEqual({ level: "national" });

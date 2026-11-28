@@ -197,7 +197,7 @@ describe("photos", () => {
     expect(
       await query`select gps_doubts from draft_photo where draft_id = (select id from report_draft where id = ${draft.draftId})
         order by received_at, id`,
-    ).toEqual([{ gps_doubts: '["zone"]' }, { gps_doubts: '["abroad","jump"]' }, { gps_doubts: null }]);
+    ).toEqual([{ gps_doubts: ["zone"] }, { gps_doubts: ["abroad", "jump"] }, { gps_doubts: null }]);
   });
 
   test("the 10th photo is kept, an 11th is refused, and the two step endings need photos or none", async () => {
@@ -390,7 +390,7 @@ describe("photos", () => {
     await query`insert into rate_counter (limit_id, subject_key, window_start, count)
       select limit_id, subject_key, window_start, 10000 from rate_counter
       where limit_id = 'address.messages' and window_start = (select max(window_start) from rate_counter where limit_id = 'address.messages')
-      on conflict do update set count = 10000`;
+      on conflict (limit_id, subject_key, window_start) do update set count = 10000`;
     const limited = await crowded.upload(`/drafts/${other.draftId}/photos`, photoForm(other, cameraJpeg(camera)));
     expect(limited.status).toBe(429);
   });
@@ -408,7 +408,7 @@ describe("photos", () => {
 
   test("a village picked by search with no outline gives photos no far badge", async () => {
     const [plain] = await query<{ code: string }>`
-      select v.code from place_village v join place_snapshot s on s.id = v.snapshot_id and s.active = 1
+      select v.code from place_village v join place_snapshot s on s.id = v.snapshot_id and s.active
       where v.code <> ${VILLAGE} and v.regency_code = '11.08' order by v.code desc limit 1`;
     const code = (plain as { code: string }).code;
     await query`delete from place_village_shape where code = ${code}`;

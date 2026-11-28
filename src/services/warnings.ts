@@ -1,4 +1,4 @@
-import { activeSnapshot, areaOf } from "../adapters/d1/places";
+import { activeSnapshot, areaOf } from "../adapters/postgres/places";
 import {
   keepChoice,
   latestPause,
@@ -7,7 +7,7 @@ import {
   subscriberCount,
   subscriptionsOf,
   type WarningChoice,
-} from "../adapters/d1/warnings";
+} from "../adapters/postgres/warnings";
 import type { WarningControl } from "../contract/warnings";
 import { MAX_SUBSCRIBERS } from "../domain/warnings";
 import type { StaffPrincipal } from "../ports/identity";
@@ -90,7 +90,7 @@ export async function warningControl(
     kind: "ok",
     body: {
       open: bindings.settings.push !== null,
-      paused: latest?.paused === 1,
+      paused: latest?.paused === true,
       by: latest?.staff_label ?? null,
       at: latest?.at ?? null,
       phones: await subscriberCount(bindings.db),

@@ -37,7 +37,7 @@ beforeAll(async () => {
   const pick = async (where: string) =>
     (
       await query<{ code: string }>`
-        select v.code from place_village v join place_snapshot s on s.id = v.snapshot_id and s.active = 1
+        select v.code from place_village v join place_snapshot s on s.id = v.snapshot_id and s.active
         where v.regency_code = ${where} order by v.code limit 1`
     )[0]?.code as string;
   // A regency with its own number, one whose only number is old, one with none in a province
@@ -297,7 +297,7 @@ describe("preparedness topics", () => {
       sql`insert into reference_file (name, data_date, source, body, checksum, imported_at)
         values ('education', ${kept?.data_date}, ${kept?.source}, ${kept?.body}, ${kept?.checksum}, ${kept?.imported_at})`,
     );
-    db = failingDatabase("D1_ERROR: no such table: SQLITE_ERROR");
+    db = failingDatabase("no such table", "42P01");
     try {
       expect((await browser(fetchApi).call("GET", "/education")).status).toBe(503);
     } finally {

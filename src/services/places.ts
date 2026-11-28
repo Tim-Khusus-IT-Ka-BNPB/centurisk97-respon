@@ -9,7 +9,7 @@ import {
   searchArea,
   searchCountry,
   villagesOf,
-} from "../adapters/d1/places";
+} from "../adapters/postgres/places";
 import type { PlacePoint, PlaceValue } from "../domain/fieldState";
 import { GEO, inIndonesia, nearestCentres, precisionOf, resolveVillage } from "../domain/geo";
 import { type AreaLevel, PLACE_RESULTS } from "../domain/placeSearch";

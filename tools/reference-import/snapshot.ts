@@ -1,12 +1,12 @@
 import type { PlaceRecords } from "../../src/domain/placeFile.ts";
 import { placeSearchText } from "../../src/domain/placeText.ts";
 import type { ShapeRecord } from "../../src/domain/shapeFile.ts";
-import { atomically, type Database, type Query, row, sql } from "../../src/platform/database.ts";
+import { atomically, type Database, joined, type Query, row, sql } from "../../src/platform/database.ts";
 
 const KEEP_SNAPSHOTS = 2;
-// D1 binds at most 100 values to one statement, and takes a bounded batch.
-const MAX_VALUES = 100;
-const BATCH_STATEMENTS = 200;
+// Postgres binds at most 65,535 values to one statement; batches stay small enough to retry.
+const MAX_VALUES = 10_000;
+const BATCH_STATEMENTS = 50;
 
 export type SnapshotMeta = { readonly source: string; readonly dataDate: string; readonly checksum: string };
 export type SnapshotWrite = { readonly kind: "written"; readonly snapshotId: number } | { readonly kind: "unchanged" };
@@ -58,11 +58,8 @@ function inserts(table: Table, rows: Rows): Query[] {
   const statements: Query[] = [];
   for (let start = 0; start < rows.length; start += perStatement) {
     const chunk = rows.slice(start, start + perStatement);
-    const tuples = chunk.map(() => `(${columns.map(() => "?").join(", ")})`).join(", ");
-    statements.push({
-      text: `insert into ${table} (${columns.join(", ")}) values ${tuples}`,
-      values: chunk.flatMap((one) => columns.map((column) => one[column])),
-    });
+    const tuples = joined(chunk.map((one) => sql`(${joined(columns.map((column) => sql`${one[column]}`))})`));
+    statements.push(sql`${{ text: `insert into ${table} (${columns.join(", ")}) values `, values: [] }}${tuples}`);
   }
   return statements;
 }
@@ -133,7 +130,7 @@ export async function writeSnapshot(
   shapes: readonly ShapeRecord[],
   meta: SnapshotMeta,
 ): Promise<SnapshotWrite> {
-  const current = await row(db, sql`select id from place_snapshot where active = 1 and checksum = ${meta.checksum}`);
+  const current = await row(db, sql`select id from place_snapshot where active and checksum = ${meta.checksum}`);
   if (current) return { kind: "unchanged" };
   const created = (await row<{ id: number }>(
     db,
@@ -149,8 +146,8 @@ export async function writeSnapshot(
   for (let start = 0; start < statements.length; start += BATCH_STATEMENTS)
     await atomically(db, statements.slice(start, start + BATCH_STATEMENTS));
   await atomically(db, [
-    sql`update place_snapshot set active = 0 where active = 1 and id <> ${created.id}`,
-    sql`update place_snapshot set active = 1 where id = ${created.id}`,
+    sql`update place_snapshot set active = false where active and id <> ${created.id}`,
+    sql`update place_snapshot set active = true where id = ${created.id}`,
     // The two newest are kept, so the one before can be made active again by hand.
     sql`delete from place_snapshot where id not in (
       select id from place_snapshot order by imported_at desc, id desc limit ${KEEP_SNAPSHOTS})`,

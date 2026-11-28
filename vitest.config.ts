@@ -14,8 +14,9 @@ export default defineConfig({
           name: "server",
           environment: "node",
           include: ["src/**/*.test.ts", "db/**/*.test.ts"],
-          // Each file gets its own in-memory D1 database, migrated and seeded. Every file runs its
-          // own local D1 engine, so under a full parallel run a test gets more time than the default.
+          // Each file gets its own Postgres database, copied from a template migrated and seeded once
+          // per run. Under a full parallel run a test gets more time than the default.
+          globalSetup: ["db/testTemplate.ts"],
           setupFiles: ["db/testDatabase.ts"],
           testTimeout: 20_000,
         },

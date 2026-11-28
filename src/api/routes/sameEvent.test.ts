@@ -25,7 +25,7 @@ const desk = () => {
 const villages: string[] = [];
 beforeAll(async () => {
   const found = await query<{ code: string }>`
-    select min(v.code) as code from place_village v join place_snapshot s on s.id = v.snapshot_id and s.active = 1
+    select min(v.code) as code from place_village v join place_snapshot s on s.id = v.snapshot_id and s.active
     group by v.district_name, v.regency_code order by 1 limit 4`;
   villages.push(...found.map((one) => one.code));
 });

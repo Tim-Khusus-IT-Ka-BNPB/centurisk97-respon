@@ -1,6 +1,6 @@
-import { provinceNames } from "../adapters/d1/places";
-import { markProof, publicProofKey, publicProofs, type ShownRow, shownReports } from "../adapters/d1/publicFeed";
-import { referenceFile } from "../adapters/d1/reports";
+import { provinceNames } from "../adapters/postgres/places";
+import { markProof, publicProofKey, publicProofs, type ShownRow, shownReports } from "../adapters/postgres/publicFeed";
+import { referenceFile } from "../adapters/postgres/reports";
 import type { Feed, FeedEntry, Official, Watch } from "../contract/publicFeed";
 import type { Cluster } from "../domain/clusters";
 import { type FeedPeriod, feedSince } from "../domain/feedPeriod";
@@ -9,7 +9,6 @@ import { checkForecastFile, warningsOf } from "../domain/forecast";
 import { impactOf } from "../domain/impact";
 import { checkOfficialEventFile, officialEvents } from "../domain/officialEvents";
 import { checkVolcanoFile, volcanoSummary } from "../domain/volcano";
-import { parsed } from "../platform/database";
 import { hmacKey } from "../platform/keys";
 import type { StaffPrincipal } from "../ports/identity";
 import type { ServiceBindings } from "./bindings";
@@ -40,7 +39,7 @@ const fieldValue = <T>(states: States, field: string): T | null => {
 const rounded = (degrees: number) => Math.round(degrees * 1e4) / 1e4;
 
 export function entryOf(row: ShownRow, id: string, reporters: number | null, proofs: readonly string[]): FeedEntry {
-  const states = parsed<States>(row.fields) as States;
+  const states = row.fields as States | null as States;
   const place = fieldValue<PlaceValue>(states, "place") as PlaceValue;
   const subtype = fieldValue<string>(states, "hazardSubtype");
   return {

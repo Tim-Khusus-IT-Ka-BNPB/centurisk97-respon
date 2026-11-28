@@ -5,7 +5,7 @@ import { afterAll, beforeAll, describe, expect, test } from "vitest";
 import { type Database, rows, sql } from "../src/platform/database.ts";
 import { importReferenceFile, ReferenceFileRefused } from "../tools/reference-import/file.ts";
 
-const db = (globalThis as { testD1?: Database }).testD1 as Database;
+const db = (globalThis as { testDb?: Database }).testDb as Database;
 let folder = "";
 beforeAll(async () => {
   folder = await mkdtemp(join(tmpdir(), "reference-import-"));
@@ -34,6 +34,11 @@ describe("reference file importer", () => {
     expect(await importReferenceFile(db, "education", "db/reference/education.json", "upstream")).toEqual({
       written: false,
       dataDate: "2026-11-19",
+    });
+    // A file that names no date is known by its version.
+    expect(await importReferenceFile(db, "responseActions", "db/reference/response-actions.json", "seed")).toEqual({
+      written: false,
+      dataDate: "versi 1",
     });
   });
 

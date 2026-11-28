@@ -1,4 +1,4 @@
-import { addActions, addFieldCheck, addProof, proofKey } from "../adapters/d1/handling";
+import { addActions, addFieldCheck, addProof, proofKey } from "../adapters/postgres/handling";
 import { type CheckResult, checkFieldCheck, revised } from "../domain/fieldCheck";
 import type { FieldStates } from "../domain/fieldState";
 import { checkActions, checkProof } from "../domain/handling";

@@ -1,10 +1,9 @@
-import { type AggregateRowData, aggregateReports, logAggregateDownload } from "../adapters/d1/aggregates";
+import { type AggregateRowData, aggregateReports, logAggregateDownload } from "../adapters/postgres/aggregates";
 import { copy } from "../copy";
 import { hazardKey } from "../copy/hazardKey";
 import { type AggregateInput, type AggregateRow, aggregateRows, toCsv } from "../domain/aggregates";
 import { eventInstantMs, localDate } from "../domain/eventTime";
 import type { EventTimeValue, PlaceValue } from "../domain/fieldState";
-import { parsed } from "../platform/database";
 import type { StaffPrincipal } from "../ports/identity";
 import type { ServiceBindings } from "./bindings";
 import { admitted, type DeskAnswer } from "./desk";
@@ -26,7 +25,7 @@ const COLUMNS = [
 ] as const satisfies readonly (keyof AggregateRow)[];
 
 export function inputOf(row: AggregateRowData): AggregateInput {
-  const states = parsed<States>(row.fields) as States;
+  const states = row.fields as States | null as States;
   const place = states.place?.value as PlaceValue;
   const eventTime = states.eventTime?.state === "value" ? (states.eventTime.value as EventTimeValue) : null;
   return {
@@ -38,7 +37,7 @@ export function inputOf(row: AggregateRowData): AggregateInput {
     eventMs: eventTime === null ? null : eventInstantMs(eventTime),
     sentMs: Date.parse(row.sent_at),
     numberKey: row.number_key,
-    placedPhoto: row.placed_photo === 1,
+    placedPhoto: row.placed_photo === true,
     status: row.status,
   };
 }

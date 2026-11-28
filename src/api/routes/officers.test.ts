@@ -29,7 +29,7 @@ beforeAll(async () => {
     ["elsewhere", "v.regency_code like '12.%'"],
   ] as const) {
     const [found] = await query<{ code: string }>([
-      `select v.code from place_village v join place_snapshot s on s.id = v.snapshot_id and s.active = 1 where ${where} order by v.code limit 1`,
+      `select v.code from place_village v join place_snapshot s on s.id = v.snapshot_id and s.active where ${where} order by v.code limit 1`,
     ] as unknown as TemplateStringsArray);
     villages[name] = found?.code as string;
   }

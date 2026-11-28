@@ -1,4 +1,4 @@
-import { type TodayRow, todayCandidates } from "../adapters/d1/today";
+import { type TodayRow, todayCandidates } from "../adapters/postgres/today";
 import type { Today } from "../contract/today";
 import type { EventTimeValue, PlaceValue } from "../domain/fieldState";
 import { impactOf } from "../domain/impact";
@@ -12,7 +12,6 @@ import {
   toTheHour,
   verifiedAtMs,
 } from "../domain/todayPage";
-import { parsed } from "../platform/database";
 import { hmacKey } from "../platform/keys";
 import type { ServiceBindings } from "./bindings";
 import { clusterMap } from "./clusters";
@@ -92,7 +91,7 @@ export async function todayView(bindings: ServiceBindings, address: string, filt
         const members = group.flatMap((row) => {
           const atMs = verifiedAtMs(row);
           return shownToday(atMs, nowMs)
-            ? [{ row, states: parsed<States>(row.fields) as States, atMs: atMs as number }]
+            ? [{ row, states: row.fields as States | null as States, atMs: atMs as number }]
             : [];
         });
         return members.length === 0 ? [] : [members];

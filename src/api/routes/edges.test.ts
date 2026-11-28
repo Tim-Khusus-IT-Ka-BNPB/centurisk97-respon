@@ -1,7 +1,7 @@
 import { beforeAll, describe, expect, test } from "vitest";
 import { SEEDED_SESSIONS } from "../../../db/synthetic/reporters";
-import { type DraftRecord, expireDraft, loadDraft } from "../../adapters/d1/drafts";
-import { claimModelCall } from "../../adapters/d1/limits";
+import { type DraftRecord, expireDraft, loadDraft } from "../../adapters/postgres/drafts";
+import { claimModelCall } from "../../adapters/postgres/limits";
 import type { Card } from "../../contract/card";
 import type { MeResponse } from "../../contract/draft";
 import type { Database } from "../../platform/database";
@@ -254,18 +254,17 @@ describe("dependencies down", () => {
     expect(await (await api.app.fetch(request(), bindings)).text()).toBe("ok");
   });
 
-  test("a database error in a send answers 503, logs its SQLite code only, and writes nothing", async () => {
+  test("a database error in a send answers 503, logs its SQL state only, and writes nothing", async () => {
     const own = manualClock("2026-11-25T03:00:00.000Z");
     const { bindings: dayBindings, lines: dayLines } = testBindings({}, { clock: own });
     // The send's ticket counter fails as a driver error would; every other statement runs.
     const sendFails: Database = {
-      prepare: (text: string) => {
-        if (text.includes("insert into ticket_day_counter"))
-          throw new Error("D1_ERROR: disk I/O error near sukamaju: SQLITE_IOERR");
-        return db.prepare(text);
+      query: (text, values) => db.query(text, values),
+      batch: async (queries) => {
+        if (queries.some((query) => query.text.includes("insert into ticket_day_counter")))
+          throw Object.assign(new Error("could not write block near sukamaju"), { code: "58030" });
+        return db.batch(queries);
       },
-      batch: (statements) => db.batch(statements),
-      exec: (text: string) => db.exec(text),
     };
     const phone = browser((request: Request) => api.app.fetch(request, { ...dayBindings, db: sendFails }));
     const { draft } = await start(phone);
@@ -279,7 +278,7 @@ describe("dependencies down", () => {
     expect(dayLines.filter((line) => line.event === "request.failed").at(-1)).toEqual({
       event: "request.failed",
       errorCode: "unexpected",
-      sqlState: "SQLITE_IOERR",
+      sqlState: "58030",
     });
     expect(JSON.stringify(dayLines)).not.toContain("sukamaju");
     expect(await query`select 1 from report where draft_id = ${draft.draftId}`).toHaveLength(0);

@@ -1,4 +1,4 @@
-import { reportVersions } from "../adapters/d1/versions";
+import { reportVersions } from "../adapters/postgres/versions";
 import type { ReportVersion } from "../contract/ownReport";
 import type { ServiceBindings } from "./bindings";
 import { at, draftZone } from "./draftView";

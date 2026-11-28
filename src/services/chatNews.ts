@@ -4,8 +4,8 @@ import {
   reportDelivery,
   type WaitingNotice,
   waitingNotices,
-} from "../adapters/d1/chatNews";
-import { newsSources } from "../adapters/d1/news";
+} from "../adapters/postgres/chatNews";
+import { newsSources } from "../adapters/postgres/news";
 import type { WaitingNews } from "../contract/gateway";
 import type { ReportVersion } from "../contract/ownReport";
 import { NEWS_WAITS_MS, type NewsMessage, newsMessages } from "../domain/chat/news";

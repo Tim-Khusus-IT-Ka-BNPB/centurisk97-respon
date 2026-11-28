@@ -41,7 +41,7 @@ let village = "";
 let otherVillage = "";
 beforeAll(async () => {
   const found = await query<{ code: string }>`
-    select v.code from place_village v join place_snapshot s on s.id = v.snapshot_id and s.active = 1
+    select v.code from place_village v join place_snapshot s on s.id = v.snapshot_id and s.active
     where v.regency_code = '11.08' order by v.code limit 2`;
   village = found[0]?.code as string;
   otherVillage = found[1]?.code as string;
@@ -209,8 +209,8 @@ describe("the public feed", () => {
       await query`select p.public, p.staff_label from proof_publication p join handling_proof h on h.id = p.proof_id
         where h.ticket_number = ${ticket} order by p.id`,
     ).toEqual([
-      { public: 1, staff_label: "Pusdalops BNPB, Petugas Uji" },
-      { public: 0, staff_label: "Pusdalops BNPB, Petugas Uji" },
+      { public: true, staff_label: "Pusdalops BNPB, Petugas Uji" },
+      { public: false, staff_label: "Pusdalops BNPB, Petugas Uji" },
     ]);
     expect((await photo(`/feed/proofs/${crypto.randomUUID()}`)).status).toBe(404);
   });
@@ -239,7 +239,7 @@ describe("the public feed at the edge", () => {
     const first = await read();
     const flood = await read("?hazard=flood&period=7");
     const [far] = await query<{ code: string }>`
-      select v.code from place_village v join place_snapshot s on s.id = v.snapshot_id and s.active = 1
+      select v.code from place_village v join place_snapshot s on s.id = v.snapshot_id and s.active
       where v.regency_code = '11.08' order by v.code limit 1 offset 9`;
     const { ticket } = await sentReport(far?.code);
     await handled(ticket);
@@ -265,7 +265,7 @@ describe("what is on watch", () => {
     const key = await hmacKey(bindings.settings.keyHmacSecret, "address", addressBucket(phone.address) as string);
     const window = new Date(windowStart("clockHour", clock.now())).toISOString();
     await query`insert into rate_counter (limit_id, subject_key, window_start, count) values ('address.feed', ${key}, ${window}, 600)
-      on conflict do update set count = 600`;
+      on conflict (limit_id, subject_key, window_start) do update set count = 600`;
     expect((await phone.call("GET", "/feed/watch")).status).toBe(429);
   });
 
@@ -289,7 +289,7 @@ describe("BNPB's daily report on the Alun-alun", () => {
     const key = await hmacKey(bindings.settings.keyHmacSecret, "address", addressBucket(phone.address) as string);
     const window = new Date(windowStart("clockHour", clock.now())).toISOString();
     await query`insert into rate_counter (limit_id, subject_key, window_start, count) values ('address.feed', ${key}, ${window}, 600)
-      on conflict do update set count = 600`;
+      on conflict (limit_id, subject_key, window_start) do update set count = 600`;
     expect((await phone.call("GET", "/feed/official")).status).toBe(429);
     await query`delete from reference_file where name = 'officialEvents'`;
     expect((await browser(fetchApi).call("GET", "/feed/official")).json).toEqual({ day: null, events: [] });

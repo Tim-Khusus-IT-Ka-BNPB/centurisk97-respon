@@ -15,10 +15,10 @@ import {
   queuePage,
   reportPhotos,
   sentPhoto,
-} from "../adapters/d1/desk";
-import { eventOf } from "../adapters/d1/events";
-import { referenceFile } from "../adapters/d1/reports";
-import { reportVideos } from "../adapters/d1/videos";
+} from "../adapters/postgres/desk";
+import { eventOf } from "../adapters/postgres/events";
+import { referenceFile } from "../adapters/postgres/reports";
+import { reportVideos } from "../adapters/postgres/videos";
 import type {
   DeskEmergencies,
   DeskGallery,

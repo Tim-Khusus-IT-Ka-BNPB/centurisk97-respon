@@ -1,5 +1,5 @@
-import { DRAFT_LIFE_MS, type DraftRecord, type TranscriptRow } from "../adapters/d1/drafts";
-import type { PhotoRecord } from "../adapters/d1/photos";
+import { DRAFT_LIFE_MS, type DraftRecord, type TranscriptRow } from "../adapters/postgres/drafts";
+import type { PhotoRecord } from "../adapters/postgres/photos";
 import type { Card } from "../contract/card";
 import type { DraftBody } from "../contract/draft";
 import type { Tracking } from "../contract/tracking";

@@ -1,5 +1,5 @@
 import { createRoute, z } from "@hono/zod-openapi";
-import { referenceFile } from "../../adapters/d1/reports";
+import { referenceFile } from "../../adapters/postgres/reports";
 import { trackingSchema } from "../../contract/tracking";
 import { checkEducationFile, TOPIC_LISTS } from "../../domain/education";
 import { rateOwnReport, trackedProof, trackReport } from "../../services/tracking";

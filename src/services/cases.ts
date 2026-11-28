@@ -27,8 +27,8 @@ import {
   reopenCase,
   type VersionRow,
   versionsOf,
-} from "../adapters/d1/cases";
-import { deskReport } from "../adapters/d1/desk";
+} from "../adapters/postgres/cases";
+import { deskReport } from "../adapters/postgres/desk";
 import type { CaseView } from "../contract/cases";
 import {
   type CaseRecord,
@@ -56,6 +56,7 @@ import { localDate } from "../domain/eventTime";
 import type { Point } from "../domain/geo";
 import { PROOF } from "../domain/handling";
 import { isJpeg, readExif, stripJpeg } from "../domain/jpeg";
+import { mergePatch } from "../domain/mergePatch";
 import { normaliseNumber } from "../domain/phoneNumber";
 import { type DeviceFix, PHOTO, takenAt, usableFix } from "../domain/photoChecks";
 import { DAY_MS } from "../domain/time";
@@ -533,7 +534,7 @@ export async function setCaseFields(
     {
       fileId,
       revision: input.revision,
-      fields: checked.patch,
+      fields: mergePatch(file.fields, checked.patch),
       nil: null,
       action: "fields",
       trail: checked.patch,

@@ -1,7 +1,7 @@
-import { type DraftRecord, endDraft, isLive, loadDraft, openDraftOf, storedReply } from "../adapters/d1/drafts";
-import { createFollowUp, followUpState, sendFollowUpDraft, sentBody } from "../adapters/d1/followUp";
-import { draftPhotos } from "../adapters/d1/photos";
-import { profileBySlot } from "../adapters/d1/reporters";
+import { type DraftRecord, endDraft, isLive, loadDraft, openDraftOf, storedReply } from "../adapters/postgres/drafts";
+import { createFollowUp, followUpState, sendFollowUpDraft, sentBody } from "../adapters/postgres/followUp";
+import { draftPhotos } from "../adapters/postgres/photos";
+import { profileBySlot } from "../adapters/postgres/reporters";
 import { chosenHazardType, completePercent } from "../domain/fields/applicable";
 import { type FollowUpRefusal, followUpPhotos, followUpRefusal, newsOf, withNews } from "../domain/followUp";
 import { type DraftContent, type FollowUpOf, followUpContent } from "../domain/turn/content";

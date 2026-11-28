@@ -75,7 +75,7 @@ describe("the desk map", () => {
     expect(answer.status).toBe(200);
     const map = deskMapSchema.parse(answer.json);
     const [shape] = await query<{ centre_lat: number; centre_lon: number }>`
-      select s.centre_lat, s.centre_lon from place_village_shape s join place_snapshot p on p.id = s.snapshot_id and p.active = 1
+      select s.centre_lat, s.centre_lon from place_village_shape s join place_snapshot p on p.id = s.snapshot_id and p.active
       where s.code = ${VILLAGE}`;
     expect(map.points.find((point) => point.ticketNumber === gps)).toMatchObject({
       precision: "gpsPoint",
@@ -122,7 +122,7 @@ describe("the desk map", () => {
     const key = await hmacKey(bindings.settings.keyHmacSecret, "subject", "staff:staff-desk-1");
     const window = new Date(windowStart("clockHour", clock.now())).toISOString();
     await query`insert into rate_counter (limit_id, subject_key, window_start, count) values ('desk.read', ${key}, ${window}, 1200)
-      on conflict do update set count = excluded.count`;
+      on conflict (limit_id, subject_key, window_start) do update set count = excluded.count`;
     const id = crypto.randomUUID();
     for (const path of ["/desk/map", "/desk/photos", `/desk/photos/${id}`, `/desk/proofs/${id}`])
       expect((await deskOfficer().call("GET", path)).status).toBe(429);

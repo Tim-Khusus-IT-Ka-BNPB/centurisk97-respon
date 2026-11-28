@@ -194,7 +194,7 @@ describe("news for a sent report", () => {
     const add = async (n: number) => {
       for (let i = 0; i < n; i += 1)
         await query`insert into draft_photo (id, draft_id, store_key, bytes, badge, far, taken_at, time_source, received_at)
-          values (${crypto.randomUUID()}, ${report?.draft_id}, ${crypto.randomUUID()}, 1000, 'none', 0,
+          values (${crypto.randomUUID()}, ${report?.draft_id}, ${crypto.randomUUID()}, 1000, 'none', false,
             ${new Date(clock.now())}, 'upload', ${new Date(clock.now())})`;
     };
     await add(19);

@@ -9,7 +9,7 @@ import {
   recordVideos,
   removeCaseVideo,
   staleCaseUploads,
-} from "../adapters/d1/cases";
+} from "../adapters/postgres/cases";
 import { HOUR_MS } from "../domain/time";
 import { checkVideo, partBytes, partsOf, VIDEO, type VideoRefusal } from "../domain/video";
 import type { ServiceBindings } from "./bindings";
@@ -43,7 +43,7 @@ const progressOf = (upload: CaseUploadRow): CaseProgress => ({
   id: upload.id,
   parts: partsOf(upload.bytes),
   partBytes: VIDEO.partBytes,
-  received: Object.keys(JSON.parse(upload.parts) as Record<string, string>)
+  received: Object.keys(upload.parts)
     .map(Number)
     .sort((a, b) => a - b),
 });
@@ -88,7 +88,7 @@ export async function startCaseVideo(
   const uploadId = await bindings.photos.startUpload(storeKey, "application/octet-stream");
   const upload = { id, store_key: storeKey, upload_id: uploadId, bytes: video.bytes, browser_seconds: video.seconds };
   await openCaseUpload(bindings.db, { ...upload, fileId, recordId }, new Date(bindings.clock.now()));
-  return { kind: "ok", body: progressOf({ ...upload, parts: "{}" }) };
+  return { kind: "ok", body: progressOf({ ...upload, parts: {} }) };
 }
 
 async function ownUpload(bindings: ServiceBindings, actor: CaseActor, fileId: string, recordId: string, id: string) {
@@ -142,7 +142,7 @@ export async function completeCaseVideo(
   const { upload } = found;
   const progress = progressOf(upload);
   if (progress.received.length !== progress.parts) return { kind: "refused", rule: "video.partsMissing" };
-  const parts = Object.entries(JSON.parse(upload.parts) as Record<string, string>).map(([n, etag]) => ({
+  const parts = Object.entries(upload.parts).map(([n, etag]) => ({
     partNumber: Number(n) + 1,
     etag,
   }));

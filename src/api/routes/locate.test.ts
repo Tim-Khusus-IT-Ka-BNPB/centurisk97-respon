@@ -203,7 +203,7 @@ describe("place from GPS", () => {
 describe("place from GPS when place data cannot be read", () => {
   test("no active snapshot, or a database that fails, says so and logs only the SQLite code", async () => {
     const { phone, draft } = await start();
-    await query`update place_snapshot set active = 0 where active = 1`;
+    await query`update place_snapshot set active = false where active`;
     try {
       const none = await phone.call(
         "POST",
@@ -212,11 +212,14 @@ describe("place from GPS when place data cannot be read", () => {
       );
       expect(none.draft.notices.map((notice) => notice.copyKey)).toContain("refusal.place.unavailable");
     } finally {
-      await query`update place_snapshot set active = 1 where id = (select max(id) from place_snapshot)`;
+      await query`update place_snapshot set active = true where id = (select max(id) from place_snapshot)`;
     }
-    for (const message of ["D1_ERROR: no such table: SQLITE_ERROR", "network gone"]) {
+    for (const [message, code] of [
+      ["no such table", "42P01"],
+      ["network gone", undefined],
+    ] as const) {
       const { bindings: broken, lines } = testBindings({}, { clock });
-      const failing = { ...broken, db: failingDatabase(message) };
+      const failing = { ...broken, db: failingDatabase(message, code) };
       const result = await locatePlace(failing, { lat: 5.14705, lon: 97.0482, accuracyM: 12 });
       expect(result).toEqual({ kind: "unavailable" });
       expect(lines.at(-1)).toEqual(expect.objectContaining({ event: "place.failed", errorCode: "place.unavailable" }));

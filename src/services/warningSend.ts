@@ -1,4 +1,4 @@
-import { referenceFile } from "../adapters/d1/reports";
+import { referenceFile } from "../adapters/postgres/reports";
 import {
   keepSent,
   latestPause,
@@ -7,7 +7,7 @@ import {
   stopWarnings,
   toldDaily,
   toldToday,
-} from "../adapters/d1/warnings";
+} from "../adapters/postgres/warnings";
 import { copy } from "../copy";
 import { localDate } from "../domain/eventTime";
 import { checkForecastFile } from "../domain/forecast";
@@ -63,7 +63,7 @@ export async function sendWarnings(
   const { db, settings, clock } = bindings;
   const counts: Counts = { sent: 0, gone: 0, failed: 0 };
   const keys = settings.push;
-  if (keys === null || (await latestPause(db))?.paused === 1) return counts;
+  if (keys === null || (await latestPause(db))?.paused === true) return counts;
   const file = checkForecastFile(await referenceFile(db, "forecast"));
   if (file === null) return counts;
   const nowMs = clock.now();

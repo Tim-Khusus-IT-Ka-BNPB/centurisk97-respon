@@ -219,10 +219,10 @@ describe("the model over HTTP", () => {
 });
 
 describe("platform helpers", () => {
-  test("a driver error is reduced to its SQLite code, anything else to nothing", () => {
-    expect(sqlState(new Error("D1_ERROR: UNIQUE constraint failed: reporter.number (+62...): SQLITE_CONSTRAINT"))).toBe(
-      "SQLITE_CONSTRAINT",
-    );
+  test("a driver error is reduced to its SQL state, anything else to nothing", () => {
+    const unique = Object.assign(new Error("duplicate key value (number)=(+62...)"), { code: "23505" });
+    expect(sqlState(unique)).toBe("23505");
+    expect(sqlState(Object.assign(new Error("write EPIPE"), { code: "EPIPE" }))).toBeNull();
     expect(sqlState(new Error("connect ECONNREFUSED"))).toBeNull();
     expect(sqlState({ code: 5 })).toBeNull();
     expect(sqlState(null)).toBeNull();

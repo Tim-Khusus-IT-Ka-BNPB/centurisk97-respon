@@ -1,4 +1,4 @@
-import { eventOf, releaseFromEvent } from "../adapters/d1/events";
+import { eventOf, releaseFromEvent } from "../adapters/postgres/events";
 import { atomically } from "../platform/database";
 import type { StaffPrincipal } from "../ports/identity";
 import type { ServiceBindings } from "./bindings";

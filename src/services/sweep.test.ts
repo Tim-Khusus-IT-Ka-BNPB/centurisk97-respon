@@ -40,7 +40,7 @@ async function draftWithTurn() {
 }
 
 const draftRow = async (id: string) => {
-  const [row] = await query<{ state: string; has_fields: number; messages: number; replies: number }>`
+  const [row] = await query<{ state: string; has_fields: boolean; messages: number; replies: number }>`
     select d.state, d.fields is not null as has_fields,
       (select count(*) from draft_message m where m.draft_id = d.id) as messages,
       (select count(*) from turn_reply r where r.draft_id = d.id) as replies
@@ -95,8 +95,8 @@ describe("the scheduled sweep", () => {
 
     await runSweep(db, bindings.photos, clock, bindings.log);
 
-    expect(await draftRow(due.id)).toEqual({ state: "expired", has_fields: 0, messages: 0, replies: 0 });
-    expect(await draftRow(tapped.id)).toMatchObject({ state: "neighbourhood", has_fields: 1 });
+    expect(await draftRow(due.id)).toEqual({ state: "expired", has_fields: false, messages: 0, replies: 0 });
+    expect(await draftRow(tapped.id)).toMatchObject({ state: "neighbourhood", has_fields: true });
     expect((await draftRow(tapped.id))?.messages).toBeGreaterThan(0);
     // Its stored turn reply is older than a day, so it goes while the draft stays.
     expect((await draftRow(tapped.id))?.replies).toBe(0);
@@ -120,7 +120,7 @@ describe("the scheduled sweep", () => {
     expect(lines.at(-1)).toMatchObject({ event: "sweep.done" });
 
     // Run again at once, it finds nothing left to do.
-    expect(await draftRow(tapped.id)).toMatchObject({ state: "neighbourhood", has_fields: 1 });
+    expect(await draftRow(tapped.id)).toMatchObject({ state: "neighbourhood", has_fields: true });
     expect(await runSweep(db, bindings.photos, clock, bindings.log)).toEqual({
       expired: 0,
       pruned: 0,
@@ -140,7 +140,7 @@ describe("the scheduled sweep", () => {
     const old = new Date(T0 - RETENTION.rateCounterMs - DAY);
     await query`with recursive n (i) as (select 1 union all select i + 1 from n where i < ${RETENTION.batch + 1})
       insert into rate_counter (limit_id, subject_key, window_start, count)
-      select 'message.minute', ${subject}, strftime('%Y-%m-%dT%H:%M:%fZ', ${old}, '-' || i || ' minutes'), 1 from n`;
+      select 'message.minute', ${subject}, ${old}::timestamptz - make_interval(mins => i), 1 from n`;
     const counts = await runSweep(db, bindings.photos, clock, bindings.log);
     expect(counts.pruned).toBeGreaterThanOrEqual(RETENTION.batch + 1);
     expect(await query`select 1 from rate_counter where subject_key = ${subject}`).toHaveLength(0);

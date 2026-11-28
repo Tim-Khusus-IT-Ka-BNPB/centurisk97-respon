@@ -1,21 +1,43 @@
-// The D1 database, as far as this app uses it. D1's own binding fits this shape, and so does the
-// local one the tests and scripts get from wrangler, so nothing here names a Cloudflare type.
-type Statement = {
-  bind(...values: unknown[]): Statement;
-  all<T = Record<string, unknown>>(): Promise<{ results: T[] }>;
-  first<T = Record<string, unknown>>(): Promise<T | null>;
-  run(): Promise<{ meta: { changes: number } }>;
-};
+// Respon's Postgres, as far as this app uses it: a statement with its values, and a batch that
+// runs every statement or none. node-postgres's pool fits the first; postgresDatabase (postgres.ts)
+// builds the second on it. Nothing else here names a driver type.
+export type Result = { readonly rows: Record<string, unknown>[]; readonly rowCount: number };
 
 export type Database = {
-  prepare(query: string): Statement;
-  batch(statements: Statement[]): Promise<{ results: unknown[] }[]>;
-  exec(query: string): Promise<unknown>;
+  query(text: string, values: readonly unknown[]): Promise<Result>;
+  // In one serializable transaction, in order. A guard that fails throws LostRace and rolls it back.
+  batch(queries: readonly Query[]): Promise<Result[]>;
 };
 
 // A statement and its values, built with the sql tag. A value that is itself a Query is inlined,
-// so fragments compose; every other value is bound, never pasted into the text.
-export type Query = { readonly text: string; readonly values: readonly unknown[] };
+// so fragments compose; every other value is bound, never pasted into the text. Each bound value
+// is marked with a character Postgres text never holds, numbered $1, $2, ... when it runs.
+export type Query = {
+  readonly text: string;
+  readonly values: readonly unknown[];
+  // A step of a batch that checks instead of writing: its condition holds, or the statement
+  // before it changed exactly one row.
+  readonly guard?: "holds" | "changedOne";
+};
+
+const BOUND = "\u0000";
+// Where a statement of a batch asks whether the one before it changed exactly one row.
+const PREVIOUS = "\u0001";
+
+// Postgres types a bare parameter from where it stands, and in a select list (insert ... select)
+// it can only guess text. Every value but text and null says its own type.
+const INT4_MAX = 2_147_483_647;
+
+function castOf(value: unknown): string {
+  if (value instanceof Date) return "::timestamptz";
+  if (typeof value === "boolean") return "::boolean";
+  if (typeof value === "number") {
+    if (!Number.isInteger(value)) return "::double precision";
+    return Math.abs(value) <= INT4_MAX ? "::integer" : "::bigint";
+  }
+  if (typeof value === "object" && value !== null) return "::jsonb";
+  return "";
+}
 
 const isQuery = (value: unknown): value is Query =>
   typeof value === "object" && value !== null && "text" in value && "values" in value && Array.isArray(value.values);
@@ -28,7 +50,7 @@ export function sql(strings: TemplateStringsArray, ...values: unknown[]): Query 
       text += value.text;
       bound.push(...value.values);
     } else {
-      text += "?";
+      text += BOUND + castOf(value);
       bound.push(value);
     }
     text += strings[index + 1] as string;
@@ -38,53 +60,96 @@ export function sql(strings: TemplateStringsArray, ...values: unknown[]): Query 
 
 export const empty: Query = { text: "", values: [] };
 
-// Instants are stored as ISO 8601 text in UTC, which sorts and compares as time does. Objects
-// and arrays are stored as JSON text, booleans as 1 and 0.
+// Fragments one after another, a separator between each.
+export function joined(parts: readonly Query[], separator = ", "): Query {
+  return parts.reduce<Query>(
+    (all, part, index) => ({
+      text: all.text + (index === 0 ? "" : separator) + part.text,
+      values: [...all.values, ...part.values],
+    }),
+    empty,
+  );
+}
+
+// Inside a batch: true when the statement before this one changed exactly one row.
+export const previousChangedOne: Query = { text: PREVIOUS, values: [] };
+
+// Instants go in as ISO 8601 text, objects and arrays as JSON for jsonb columns.
 function encode(value: unknown): unknown {
   if (value === undefined) return null;
   if (value instanceof Date) return value.toISOString();
-  if (typeof value === "boolean") return value ? 1 : 0;
   if (typeof value === "object" && value !== null) return JSON.stringify(value);
   return value;
 }
 
-const statement = (db: Database, query: Query): Statement => db.prepare(query.text).bind(...query.values.map(encode));
+function numbered(text: string): string {
+  let n = 0;
+  return text.replaceAll(BOUND, () => {
+    n += 1;
+    return `$${n}`;
+  });
+}
+
+const execute = (db: Database, query: Query) => db.query(numbered(query.text), query.values.map(encode));
 
 export async function rows<T>(db: Database, query: Query): Promise<T[]> {
-  return (await statement(db, query).all<T>()).results;
+  return (await execute(db, query)).rows as T[];
 }
 
 export async function row<T>(db: Database, query: Query): Promise<T | null> {
-  return statement(db, query).first<T>();
+  return ((await execute(db, query)).rows[0] as T | undefined) ?? null;
 }
 
 // Runs one statement and answers how many rows it changed.
 export async function run(db: Database, query: Query): Promise<number> {
-  return (await statement(db, query).run()).meta.changes;
+  return (await execute(db, query)).rowCount;
 }
 
-// A condition inside a batch. When it is false the insert breaks the guard table's check, and
-// D1 rolls back the whole batch: what a row lock decided in a transaction, decided at write time.
-export const holds = (condition: Query): Query =>
-  sql`insert into batch_guard (ok) select case when ${condition} then 1 else 0 end`;
+// A condition inside a batch. When it is false the batch rolls back: what a row lock decided in a
+// transaction, decided at write time.
+export const holds = (condition: Query): Query => ({ ...sql`select (${condition}) as ok`, guard: "holds" });
 
 // The statement before this one changed exactly one row.
-export const changedOne: Query = holds(sql`changes() = 1`);
+export const changedOne: Query = { text: "", values: [], guard: "changedOne" };
 
-// A broken condition, or a unique key another request took first: the batch lost a race.
-const LOST_RACE = ["batch_guard_held", "UNIQUE constraint failed"];
+export class LostRace extends Error {
+  constructor() {
+    super("database.lostRace");
+  }
+}
+
+// What a batch does with its statements, on one transaction's connection.
+export async function runBatch(
+  query: (text: string, values: readonly unknown[]) => Promise<Result>,
+  queries: readonly Query[],
+): Promise<Result[]> {
+  const results: Result[] = [];
+  for (const one of queries) {
+    const previous = results.at(-1)?.rowCount === 1;
+    if (one.guard === "changedOne") {
+      if (!previous) throw new LostRace();
+      results.push({ rows: [], rowCount: 0 });
+      continue;
+    }
+    const text = numbered(one.text).replaceAll(PREVIOUS, previous ? "true" : "false");
+    const result = await query(text, one.values.map(encode));
+    if (one.guard === "holds" && result.rows[0]?.ok !== true) throw new LostRace();
+    results.push(result);
+  }
+  return results;
+}
+
+// A broken condition, a unique key another request took first, or a transaction another one
+// overtook: the batch lost a race.
+const LOST_RACE_CODES = new Set(["23505", "40001", "40P01"]);
 
 // Every statement or none. Answers each statement's rows, or null when a condition did not hold
 // or another request wrote first.
 export async function atomically(db: Database, queries: readonly Query[]): Promise<unknown[][] | null> {
-  const guarded = queries.some((query) => query.text.startsWith("insert into batch_guard"));
-  const all = guarded ? [...queries, sql`delete from batch_guard`] : queries;
   try {
-    const results = await db.batch(all.map((query) => statement(db, query)));
-    return results.slice(0, queries.length).map((result) => result.results);
+    return (await db.batch(queries)).map((result) => result.rows);
   } catch (error) {
-    const message = String((error as Error | null)?.message);
-    if (LOST_RACE.some((sign) => message.includes(sign))) return null;
+    if (error instanceof LostRace || LOST_RACE_CODES.has(sqlState(error) ?? "")) return null;
     throw error;
   }
 }
@@ -99,13 +164,9 @@ export async function decide<T>(attempt: () => Promise<T | null>): Promise<T> {
   throw new Error("database.contended");
 }
 
-// A JSON column read back; null stays null.
-export function parsed<T>(text: string | null): T | null {
-  return text === null ? null : (JSON.parse(text) as T);
-}
-
-// A driver error is reduced to its SQLite result code; its message may hold values and is never kept.
+// A driver error is reduced to its SQLSTATE; its message may hold values and is never kept.
 export function sqlState(error: unknown): string | null {
-  const code = /SQLITE_[A-Z_]+/.exec(String((error as Error | null)?.message))?.[0];
-  return code ?? null;
+  const code = (error as { code?: unknown } | null)?.code;
+  // Node's own codes (EPIPE) have no digit; every SQLSTATE has one.
+  return typeof code === "string" && /^[0-9A-Z]{5}$/.test(code) && /\d/.test(code) ? code : null;
 }

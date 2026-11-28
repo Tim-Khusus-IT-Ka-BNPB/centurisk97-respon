@@ -1,7 +1,7 @@
 import { readdir } from "node:fs/promises";
 import { join, resolve } from "node:path";
 import { pathToFileURL } from "node:url";
-import type { Database } from "../../src/platform/database.ts";
+import { type Database, sqlState } from "../../src/platform/database.ts";
 import { appEnv, seedAllowed } from "./env.ts";
 import { localDatabase } from "./local.ts";
 
@@ -25,9 +25,8 @@ try {
     console.log(`seed ${name}: done`);
   }
 } catch (error: unknown) {
-  // Only the SQLite code leaves: a driver message may quote a value.
-  const code = /SQLITE_[A-Z_]+/.exec(String((error as Error | null)?.message))?.[0] ?? "unknown";
-  console.error(`db:seed failed, ${code}`);
+  // Only the SQL state leaves: a driver message may quote a value.
+  console.error(`db:seed failed, ${sqlState(error) ?? "unknown"}`);
   process.exitCode = 1;
 } finally {
   await close();

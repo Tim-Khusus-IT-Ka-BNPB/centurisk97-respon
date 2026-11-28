@@ -5,6 +5,7 @@
     "app/**/*",
     "src/**/*",
     "db/synthetic/reporters.ts",
+    "db/testServer.ts",
     "worker-configuration.d.ts"
   ],
   "compilerOptions": {
@@ -16,6 +17,7 @@
     "module": "ESNext",
     "moduleResolution": "Bundler",
     "jsx": "react-jsx",
+    "allowImportingTsExtensions": true,
     "resolveJsonModule": true,
     "rootDirs": [".", "./.react-router/types"]
   }

@@ -256,7 +256,7 @@ describe("Ganti on a known number with no script", () => {
 
   test("a changed name is stored when no draft is open", async () => {
     const { phone, profileId } = await consented();
-    await query`update report_draft set state = 'cancelled', end_reason = 'cancelled', ended_at = strftime('%Y-%m-%dT%H:%M:%fZ', 'now'),
+    await query`update report_draft set state = 'cancelled', end_reason = 'cancelled', ended_at = now(),
       fields = null, back_stack = null where profile_id = ${profileId}`;
     const result = await phone.post({
       action: "useProfile",

@@ -1,4 +1,4 @@
-import { pullToday, todayOf } from "../adapters/d1/today";
+import { pullToday, todayOf } from "../adapters/postgres/today";
 import { shownToday, todayConditions, verifiedAtMs } from "../domain/todayPage";
 import type { StaffPrincipal } from "../ports/identity";
 import type { ServiceBindings } from "./bindings";

@@ -1,4 +1,4 @@
-import { deskReport } from "../adapters/d1/desk";
+import { deskReport } from "../adapters/postgres/desk";
 import {
   draftVideos,
   dropUpload,
@@ -12,7 +12,7 @@ import {
   staleUploads,
   type UploadRow,
   uploadOf,
-} from "../adapters/d1/videos";
+} from "../adapters/postgres/videos";
 import { HOUR_MS } from "../domain/time";
 import { checkVideo, partBytes, partsOf, VIDEO, type VideoRefusal } from "../domain/video";
 
@@ -50,7 +50,7 @@ const progressOf = (upload: UploadRow): Progress => ({
   id: upload.id,
   parts: partsOf(upload.bytes),
   partBytes: VIDEO.partBytes,
-  received: Object.keys(JSON.parse(upload.parts) as Record<string, string>)
+  received: Object.keys(upload.parts)
     .map(Number)
     .sort((a, b) => a - b),
 });
@@ -90,7 +90,7 @@ export async function startVideo(
     browser_seconds: video.seconds,
   };
   await openUpload(bindings.db, { ...upload, at: new Date(bindings.clock.now()) });
-  return { kind: "ok", body: progressOf({ ...upload, parts: "{}" }) };
+  return { kind: "ok", body: progressOf({ ...upload, parts: {} }) };
 }
 
 // The upload of this draft, for its owner.
@@ -144,7 +144,7 @@ export async function completeVideo(
   const { upload } = found;
   const progress = progressOf(upload);
   if (progress.received.length !== progress.parts) return { kind: "refused", rule: "video.partsMissing" };
-  const parts = Object.entries(JSON.parse(upload.parts) as Record<string, string>).map(([n, etag]) => ({
+  const parts = Object.entries(upload.parts).map(([n, etag]) => ({
     partNumber: Number(n) + 1,
     etag,
   }));

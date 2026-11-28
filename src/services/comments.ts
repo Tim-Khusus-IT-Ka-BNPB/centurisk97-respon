@@ -8,9 +8,9 @@ import {
   reportComment,
   setCommentShown,
   shownComments,
-} from "../adapters/d1/comments";
-import { deskReport } from "../adapters/d1/desk";
-import { knownProfiles } from "../adapters/d1/reporters";
+} from "../adapters/postgres/comments";
+import { deskReport } from "../adapters/postgres/desk";
+import { knownProfiles } from "../adapters/postgres/reporters";
 import type { Comments, DeskComments } from "../contract/comments";
 import {
   COMMENT_SCHEMA,

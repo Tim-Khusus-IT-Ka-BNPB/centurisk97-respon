@@ -29,7 +29,7 @@ const keys = { p256dh: "B".repeat(87), auth: "a".repeat(22) };
 let districts: { code: string; name: string }[] = [];
 beforeAll(async () => {
   districts = await query<{ code: string; name: string }>`
-    select d.code, d.name from place_district d join place_snapshot s on s.id = d.snapshot_id and s.active = 1
+    select d.code, d.name from place_district d join place_snapshot s on s.id = d.snapshot_id and s.active
     where d.regency_code = '11.08' order by d.code limit 4`;
 });
 

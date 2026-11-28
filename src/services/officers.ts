@@ -1,5 +1,5 @@
-import { deskReport } from "../adapters/d1/desk";
-import { logOfficerNumber } from "../adapters/d1/officers";
+import { deskReport } from "../adapters/postgres/desk";
+import { logOfficerNumber } from "../adapters/postgres/officers";
 import type { DeskReport } from "../contract/desk";
 import { mayUse } from "../domain/deskRights";
 import type { PlaceValue } from "../domain/fieldState";

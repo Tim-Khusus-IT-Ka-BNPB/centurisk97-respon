@@ -1,5 +1,5 @@
-import { DRAFT_LIFE_MS, endDraft, loadDraft, storedReply } from "../adapters/d1/drafts";
-import { latestConsent, profileById } from "../adapters/d1/reporters";
+import { DRAFT_LIFE_MS, endDraft, loadDraft, storedReply } from "../adapters/postgres/drafts";
+import { latestConsent, profileById } from "../adapters/postgres/reporters";
 import {
   insertReport,
   linkReport,
@@ -9,14 +9,14 @@ import {
   sentTicket,
   storeTicketReply,
   ticketNumberOf,
-} from "../adapters/d1/send";
+} from "../adapters/postgres/send";
 import { emergencyStates, type VictimAnswer } from "../domain/emergency";
 import { applicableFields, completePercent } from "../domain/fields/applicable";
 import type { FieldId } from "../domain/fields/catalogue";
 import { LIMITS, rollingRetryAt } from "../domain/limits";
 import { formatTicketNumber, ticketDay } from "../domain/ticketNumber";
 import type { DraftContent } from "../domain/turn/content";
-import { atomically, decide, holds, row, sql } from "../platform/database";
+import { atomically, changedOne, decide, holds, row, sql } from "../platform/database";
 import { sha256Hex } from "../platform/keys";
 import type { Principal } from "../ports/identity";
 import type { ServiceBindings } from "./bindings";
@@ -88,7 +88,7 @@ async function sendOnce(
     // The draft is still the summary that was read, its binding is still there, and the limit still holds.
     sql`update report_draft set revision = revision where id = ${draft.id} and revision = ${revision}
       and state = 'summary' and profile_id = ${profile.id}`,
-    holds(sql`changes() = 1`),
+    changedOne,
     holds(sendsBelow(draft.numberKey, draft.ownerSlot, since, max)),
     nextSequence(day),
     ...insertReport({

@@ -5,7 +5,16 @@ import { deskReportSchema } from "../../contract/desk";
 import { windowStart } from "../../domain/limits";
 import { hmacKey } from "../../platform/keys";
 import { ERASE_AFTER_MS, erasePersonalData } from "../../services/cases";
-import { browser, freshNumber, manualClock, query, testBindings, testBucket, testDatabase } from "../../testing/api";
+import {
+  browser,
+  freshNumber,
+  loseInserts,
+  manualClock,
+  query,
+  testBindings,
+  testBucket,
+  testDatabase,
+} from "../../testing/api";
 import { exifDateTime } from "../../testing/jpegs";
 import { cameraJpeg } from "../../testing/photoBase";
 import { sendDraft, startDraft, turn } from "../../testing/walk";
@@ -36,7 +45,7 @@ beforeAll(async () => {
   const first = async (regency: string) =>
     (
       await query<{ code: string }>`
-        select v.code from place_village v join place_snapshot s on s.id = v.snapshot_id and s.active = 1
+        select v.code from place_village v join place_snapshot s on s.id = v.snapshot_id and s.active
         where v.regency_code like ${regency} order by v.code limit 1`
     )[0]?.code as string;
   [aceh, sumut] = await Promise.all([first("11.08"), first("12.%")]);
@@ -275,8 +284,7 @@ describe("a follow-up file", () => {
   test("a record lost to a closing in the same moment is told the file is closed", async () => {
     const { fileId } = await opened();
     // The closing wins between the check and the write: the batch's own guard refuses it.
-    await query`create trigger closed_meanwhile before insert on case_record when new.by_label = 'Uji Ras'
-      begin select raise(abort, 'batch_guard_held'); end`;
+    const undo = await loseInserts("closed_meanwhile", "case_record", "new.by_label = 'Uji Ras'");
     const added = await staff(REGENCY).call("POST", `/cases/${fileId}/members`, {
       name: "Uji Ras",
       number: "0800 1111 0009",
@@ -285,7 +293,7 @@ describe("a follow-up file", () => {
     await member.call("POST", `/case-links/${(added.json as { link: string }).link.slice(-32)}`);
     const lost = await save(fileId, HOUSE, member);
     expect([lost.status, lost.error.error.code]).toEqual([409, "cases.closed"]);
-    await query`drop trigger closed_meanwhile`;
+    await undo();
   });
 
   test("marks a metric none apart from not recorded, and a record of it drops the mark", async () => {
@@ -618,12 +626,13 @@ describe("closing", () => {
     expect((await view(fileId)).versions[0]?.final.status).toBe("done");
     // Another desk accepts in the same moment: this one's batch loses and is told so.
     // A trigger takes no bound value: the file's id, 16 hex digits, goes in as text.
-    await testDatabase()
-      .prepare(`create trigger accepted_meanwhile before insert on case_trail
-        when new.file_id = '${fileId}' and new.action = 'accept' begin select raise(abort, 'batch_guard_held'); end`)
-      .run();
+    const undo = await loseInserts(
+      "accepted_meanwhile",
+      "case_trail",
+      `new.file_id = '${fileId}' and new.action = 'accept'`,
+    );
     expect((await staff(DESK).call("POST", `/cases/${fileId}/accept`)).status).toBe(409);
-    await query`drop trigger accepted_meanwhile`;
+    await undo();
     expect((await staff(DESK).call("POST", `/cases/${fileId}/accept`)).status).toBe(200);
     expect((await view(fileId)).file.status).toBe("done");
   });
@@ -643,7 +652,7 @@ describe("closing", () => {
     expect((await view(fileId)).versions.map((one) => one.version)).toEqual([1, 2]);
     const trail = await query<{ action: string; detail: string }>`
       select action, detail from case_trail where file_id = ${fileId} and action = 'reopen'`;
-    expect(trail.map((one) => JSON.parse(one.detail))).toEqual([{ reason: "korban hilang ditemukan" }]);
+    expect(trail.map((one) => one.detail)).toEqual([{ reason: "korban hilang ditemukan" }]);
   });
 
   test("five years after its closing was accepted, a file's personal values, faces and photos of the missing go", async () => {
@@ -671,11 +680,11 @@ describe("closing", () => {
     expect(await erasePersonalData(bindings)).toBeGreaterThanOrEqual(1);
     const records = await query<{
       id: string;
-      personal: string;
-      data: string;
+      personal: unknown;
+      data: unknown;
     }>`select id, personal, data from case_record where file_id = ${fileId}`;
-    expect(records.map((one) => one.personal)).toEqual(records.map(() => "{}"));
-    expect(JSON.parse(records.find((one) => one.id === house)?.data as string)).toMatchObject({ damage: "heavy" });
+    expect(records.map((one) => one.personal)).toEqual(records.map(() => ({})));
+    expect(records.find((one) => one.id === house)?.data).toMatchObject({ damage: "heavy" });
     const left = await Promise.all(
       keys.map(async (one) => [one.record_id, (await testBucket().get(one.object_key)) !== null]),
     );
@@ -685,7 +694,7 @@ describe("closing", () => {
     const [trail] = await query<{
       detail: string;
     }>`select detail from case_trail where file_id = ${fileId} and action = 'erase'`;
-    expect(JSON.parse(trail?.detail as string)).toEqual({ media: 2 });
+    expect(trail?.detail).toEqual({ media: 2 });
     expect(await erasePersonalData(bindings)).toBe(0);
   });
 });
@@ -697,7 +706,7 @@ describe("limits", () => {
     const window = new Date(windowStart("clockHour", clock.now()));
     await query`insert into rate_counter (limit_id, subject_key, window_start, count)
       values ('desk.write', ${key}, ${window}, 120), ('desk.read', ${key}, ${window}, 1200)
-      on conflict do update set count = excluded.count`;
+      on conflict (limit_id, subject_key, window_start) do update set count = excluded.count`;
     expect((await staff(DESK).call("GET", "/desk/cases")).status).toBe(429);
     expect((await staff(DESK).call("POST", `/cases/${fileId}/members/0123456789abcdef/remove`)).status).toBe(429);
   });

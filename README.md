@@ -25,7 +25,7 @@ Status: on staging for the pilot. Reporters: the guided report on the web and Wh
 
 ## Run it from a fresh clone
 
-Needs Node 26.3 (see `.nvmrc`) and pnpm 10.34.5 (the `packageManager` field; `npm install -g pnpm@10.34.5`). The database is Cloudflare D1, this product's own, separate from upstream's; locally wrangler runs it on disk under `.wrangler/`. Photos go to an R2 bucket of its own (`PHOTOS`), which wrangler also keeps on disk locally. No database server and no containers.
+Needs Node 26.3 (see `.nvmrc`) and pnpm 10.34.5 (the `packageManager` field; `npm install -g pnpm@10.34.5`). The database is PostgreSQL 18 through Drizzle ([0014 in centurisk97-platform](https://github.com/Tim-Khusus-IT-Ka-BNPB/centurisk97-platform/blob/main/docs/decisions/0014-postgres-with-drizzle.md)); locally any Postgres 18 on this machine, such as Homebrew's `postgresql@18`. Photos go to an R2 bucket of its own (`PHOTOS`), which wrangler keeps on disk locally.
 
 1. Install. This also wires the git hooks in `.githooks/`.
 
@@ -41,14 +41,15 @@ Needs Node 26.3 (see `.nvmrc`) and pnpm 10.34.5 (the `packageManager` field; `np
    cp .dev.vars.example .dev.vars
    ```
 
-3. Database. The local D1 database lives under `.wrangler/state`; the browser tests get their own under `.wrangler/e2e`, made fresh on every run.
+3. Database. `DATABASE_URL` in `.env` names the local database; the browser tests get their own (`E2E_DATABASE_URL`), made fresh on every run, and the unit tests copy a template into a database per test file on `TEST_DATABASE_URL`'s server.
 
    ```bash
-   pnpm db:migrate          # applies db/migrations with wrangler's own D1 migration command
+   createdb respon
+   pnpm db:migrate          # applies db/migrations, as the server does when it starts
    pnpm db:seed             # synthetic data; refused unless APP_ENV is local, test or staging
    ```
 
-   D1 migrations only go forward: a fix is a new migration. To start the local database over, delete `.wrangler/state` and run both again.
+   The schema is `db/schema.ts`. A change to it is a new migration from `pnpm db:generate`, committed beside it; migrations only go forward. `0000_initial.sql` ends with the triggers Drizzle does not model, written by hand. To start the local database over, drop it and run both again.
 
 4. Run. `pnpm dev` serves the Worker with hot reload at http://localhost:5173/lapor. `pnpm preview` builds and serves the production bundle through `wrangler dev` at http://localhost:8787/lapor.
 
@@ -93,7 +94,7 @@ SWEEP_ORIGIN=http://localhost:8787 pnpm sweep:local   # the scheduled sweep on t
 
 Stop the server with Ctrl+C before the next start. One sent to the background is stopped by its own process ids (workerd included): killing only the process on the port leaves workerd answering.
 
-5. Tests and gates. Each runs on its own; CI runs all of them on every push. Every server test file gets its own in-memory D1 database, migrated and seeded, so test files never share rows.
+5. Tests and gates. Each runs on its own; CI runs all of them on every push. Every server test file gets its own Postgres database, copied from a template migrated and seeded once per run, so test files never share rows.
 
    ```bash
    pnpm check               # types, lint and format, unused code

@@ -1,6 +1,6 @@
 import { beforeAll, describe, expect, test, vi } from "vitest";
 import { SEEDED_SESSIONS } from "../../../db/synthetic/reporters";
-import { anonymiseMissing } from "../../adapters/d1/missingPersons";
+import { anonymiseMissing } from "../../adapters/postgres/missingPersons";
 import { windowStart } from "../../domain/limits";
 import { CHAT_PHOTO } from "../../domain/photoChecks";
 import { hmacKey } from "../../platform/keys";
@@ -31,7 +31,7 @@ const province = () => signedIn(4);
 let village = "";
 beforeAll(async () => {
   const [found] = await query<{ code: string }>`
-    select v.code from place_village v join place_snapshot s on s.id = v.snapshot_id and s.active = 1
+    select v.code from place_village v join place_snapshot s on s.id = v.snapshot_id and s.active
     where v.regency_code = '11.08' order by v.code limit 1`;
   village = found?.code as string;
 });
@@ -226,7 +226,7 @@ describe("the desk's work on a missing person", () => {
       ["desk.write", 120],
     ] as const)
       await query`insert into rate_counter (limit_id, subject_key, window_start, count) values (${limitId}, ${key}, ${window}, ${count})
-        on conflict do update set count = excluded.count`;
+        on conflict (limit_id, subject_key, window_start) do update set count = excluded.count`;
     for (const path of ["/desk/missing", `/desk/missing/${id}`])
       expect((await province().call("GET", path)).error.error.code, path).toBe("limit.desk.read");
     expect((await province().file(`/desk/missing/${id}/photo`)).status).toBe(429);

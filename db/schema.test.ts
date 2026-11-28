@@ -1,11 +1,11 @@
 import { describe, expect, test } from "vitest";
-import { type Database, row, rows, run, sql } from "../src/platform/database.ts";
+import { type Database, row, rows, run, sql, sqlState } from "../src/platform/database.ts";
 import { sha256Hex } from "../src/platform/keys.ts";
 import { COLUMN_CLASSES } from "./columnClasses.ts";
 import { SEEDED_SESSIONS } from "./synthetic/reporters.ts";
 
-// Runs against this file's migrated and seeded in-memory D1 database (db/testDatabase.ts).
-const db = (globalThis as { testD1?: Database }).testD1 as Database;
+// Runs against this file's migrated and seeded Postgres database (db/testDatabase.ts).
+const db = (globalThis as { testDb?: Database }).testDb as Database;
 const NOW = "2026-11-23T03:00:00.000Z";
 
 // What the database said to a write: ok, or the kind of rule that refused it.
@@ -14,9 +14,9 @@ async function refusal(text: ReturnType<typeof sql>): Promise<string> {
     await run(db, text);
     return "ok";
   } catch (error) {
-    const message = String((error as Error).message);
-    for (const rule of ["UNIQUE", "CHECK", "FOREIGN KEY", "append-only"]) if (message.includes(rule)) return rule;
-    return message;
+    const code = sqlState(error);
+    const rule = { "23505": "UNIQUE", "23514": "CHECK", "23503": "FOREIGN KEY", "23001": "append-only" }[code ?? ""];
+    return rule ?? String((error as Error).message);
   }
 }
 
@@ -33,9 +33,7 @@ describe("schema", () => {
   test("every column has a class and every table a retention rule", async () => {
     const found = await rows<{ table_name: string; column_name: string }>(
       db,
-      sql`select m.name as table_name, p.name as column_name
-        from sqlite_master m join pragma_table_info(m.name) p
-        where m.type = 'table' and m.name not like 'sqlite_%' and m.name not like '_cf_%' and m.name not like 'd1_%'`,
+      sql`select table_name, column_name from information_schema.columns where table_schema = 'public'`,
     );
     const tables: Record<string, string[]> = {};
     for (const one of found) tables[one.table_name] = [...(tables[one.table_name] ?? []), one.column_name];
@@ -60,7 +58,7 @@ describe("schema", () => {
       db,
       sql`insert into report (id, ticket_number, draft_id, reporter_id, number_key, owner_slot, number_unverified,
           hazard_type, village_code, district_code, regency_code, province_code, sent_at)
-        values (${reportId}, ${ticket}, ${draftId}, ${reporterId}, 'k-append', 'session', 0, 'flood',
+        values (${reportId}, ${ticket}, ${draftId}, ${reporterId}, 'k-append', 'session', false, 'flood',
           '11.08.01.2001', '11.08.01', '11.08', '11', ${NOW})`,
     );
     await run(
@@ -134,23 +132,22 @@ describe("schema", () => {
     expect(await refusal(sql`insert into ticket_day_counter (wib_date, last_n) values ('2026-11-23', 0)`)).toBe(
       "CHECK",
     );
-    expect(await refusal(sql`insert into batch_guard (ok) values (0)`)).toBe("CHECK");
     expect(
       await refusal(sql`insert into report_draft (id, reporter_id, owner_slot, state, fields, created_at, last_acted_at)
       values (${crypto.randomUUID()}, ${crypto.randomUUID()}, 'x', 'place', 'not json', ${NOW}, ${NOW})`),
-    ).toBe("CHECK");
+    ).toMatch(/invalid input syntax for type json/);
   });
 
   test("place codes keep their shape", async () => {
     const regency = (code: string) =>
       sql`insert into place_regency (snapshot_id, code, name, province_code, province_name, village_count, search_text)
-        values ((select id from place_snapshot where active = 1), ${code}, 'Uji', '11', 'Aceh', 0, 'uji')`;
+        values ((select id from place_snapshot where active), ${code}, 'Uji', '11', 'Aceh', 0, 'uji')`;
     expect(await refusal(regency("1.081"))).toBe("CHECK");
     expect(await refusal(regency("99.99"))).toBe("ok");
     const village = (code: string) =>
       sql`insert into place_village (snapshot_id, code, name, district_name, regency_code, regency_name, province_code,
           province_name, search_text)
-        values ((select id from place_snapshot where active = 1), ${code}, 'Uji', 'Uji', '99.99', 'Uji', '11', 'Aceh', 'uji')`;
+        values ((select id from place_snapshot where active), ${code}, 'Uji', 'Uji', '99.99', 'Uji', '11', 'Aceh', 'uji')`;
     expect(await refusal(village("99.99.01.2001"))).toBe("ok");
     expect(await refusal(village("99.99.012.001"))).toBe("CHECK");
     expect(await refusal(village("99.99.01.200a"))).toBe("CHECK");
@@ -162,17 +159,17 @@ describe("seed", () => {
     const counts = await row(
       db,
       sql`select
-        (select count(*) from place_snapshot where active = 1) as active,
-        (select count(*) from place_village v join place_snapshot s on s.id = v.snapshot_id and s.active = 1
+        (select count(*) from place_snapshot where active) as active,
+        (select count(*) from place_village v join place_snapshot s on s.id = v.snapshot_id and s.active
           where v.search_text like '%sukamaju%') as sukamaju,
-        (select count(*) from place_village v join place_snapshot s on s.id = v.snapshot_id and s.active = 1
+        (select count(*) from place_village v join place_snapshot s on s.id = v.snapshot_id and s.active
           where v.province_code in ('81', '82', '91', '92', '93', '94', '95', '96')) as wit,
-        (select data_date from place_snapshot where active = 1) as data_date`,
+        (select data_date from place_snapshot where active) as data_date`,
     );
     expect(counts).toEqual({ active: 1, sukamaju: 71, wit: 31, data_date: "2026-10-25" });
     const largest = await row(
       db,
-      sql`select r.code, r.village_count from place_regency r join place_snapshot s on s.id = r.snapshot_id and s.active = 1
+      sql`select r.code, r.village_count from place_regency r join place_snapshot s on s.id = r.snapshot_id and s.active
         order by r.village_count desc limit 1`,
     );
     expect(largest).toEqual({ code: "11.08", village_count: 844 });

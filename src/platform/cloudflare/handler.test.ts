@@ -1,5 +1,5 @@
 import { describe, expect, test } from "vitest";
-import { testDatabase } from "../../testing/api";
+import { failingDatabase, testDatabase } from "../../testing/api";
 import { vapidKeys } from "../../testing/push";
 import type { Database } from "../database";
 import type { LogLine } from "../log";
@@ -116,15 +116,14 @@ describe("worker handler", () => {
     const { handler, lines } = worker();
     const real = testDatabase();
     // The sweep reads and writes as usual; the warnings' first read breaks.
-    const db = new Proxy(real, {
-      get(target, name) {
-        if (name !== "prepare") return Reflect.get(target, name);
-        return (text: string) => {
-          if (text.includes("warning_pause")) throw new Error("D1_ERROR: no such table: warning_pause: SQLITE_ERROR");
-          return target.prepare(text);
-        };
+    const db: Database = {
+      query: async (text, values) => {
+        if (text.includes("warning_pause"))
+          throw Object.assign(new Error('relation "warning_pause" does not exist'), { code: "42P01" });
+        return real.query(text, values);
       },
-    });
+      batch: (queries) => real.batch(queries),
+    };
     const push = await vapidKeys();
     const env = {
       ...sweepEnv(),
@@ -135,7 +134,7 @@ describe("worker handler", () => {
     } as unknown as Env;
     await expect(handler.scheduled(controller, env)).rejects.toThrow("Scheduled warnings failed");
     expect(lines.map((line) => line.event)).toEqual(["sweep.done", "warnings.failed"]);
-    expect(lines.at(-1)).toEqual({ event: "warnings.failed", errorCode: "warnings.failed", sqlState: "SQLITE_ERROR" });
+    expect(lines.at(-1)).toEqual({ event: "warnings.failed", errorCode: "warnings.failed", sqlState: "42P01" });
   });
 
   test("a bad setting refuses the scheduled run as it refuses requests", async () => {
@@ -144,14 +143,8 @@ describe("worker handler", () => {
     expect(lines).toEqual([{ event: "settings.refused", settings: ["APP_ENV"] }]);
   });
 
-  // A database whose every batch fails with the given message.
-  const failing = (message: string) =>
-    ({
-      prepare: () => ({ bind: () => ({}) }),
-      batch: async () => {
-        throw new Error(message);
-      },
-    }) as unknown as Database;
+  // A database whose every statement fails with the given message, and SQL state when given.
+  const failing = (message: string, code?: string) => failingDatabase(message, code);
 
   test("a failed sweep is logged without the driver's message and fails the run", async () => {
     const { handler, lines } = worker();
@@ -160,13 +153,13 @@ describe("worker handler", () => {
     expect(lines).toEqual([{ event: "sweep.failed", errorCode: "sweep.failed" }]);
   });
 
-  test("a driver error in the sweep is logged by its SQLite code", async () => {
+  test("a driver error in the sweep is logged by its SQL state", async () => {
     const { handler, lines } = worker();
     const env = {
       ...sweepEnv(),
-      DB: failing("D1_ERROR: no such table: report_draft near sukamaju: SQLITE_ERROR"),
+      DB: failing('relation "report_draft" does not exist near sukamaju', "42P01"),
     } as unknown as Env;
     await expect(handler.scheduled(controller, env)).rejects.toThrow("Scheduled sweep failed");
-    expect(lines).toEqual([{ event: "sweep.failed", errorCode: "sweep.failed", sqlState: "SQLITE_ERROR" }]);
+    expect(lines).toEqual([{ event: "sweep.failed", errorCode: "sweep.failed", sqlState: "42P01" }]);
   });
 });

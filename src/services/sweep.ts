@@ -1,6 +1,6 @@
-import { anonymiseMissing } from "../adapters/d1/missingPersons";
-import { clearRemovals, queuedRemovals } from "../adapters/d1/photos";
-import { expireBatch, pruneBatch, removeDeviceBatch, removeEmptiedBatch } from "../adapters/d1/sweep";
+import { anonymiseMissing } from "../adapters/postgres/missingPersons";
+import { clearRemovals, queuedRemovals } from "../adapters/postgres/photos";
+import { expireBatch, pruneBatch, removeDeviceBatch, removeEmptiedBatch } from "../adapters/postgres/sweep";
 import { MISSING_KEPT_MS } from "../domain/missingPerson";
 import { RETENTION, sweepCutoffs } from "../domain/retention";
 import type { Database } from "../platform/database";

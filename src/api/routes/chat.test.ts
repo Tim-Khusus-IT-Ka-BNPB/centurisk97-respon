@@ -1,5 +1,5 @@
 import { describe, expect, test, vi } from "vitest";
-import { placeChatPhotos } from "../../adapters/d1/photos";
+import { placeChatPhotos } from "../../adapters/postgres/photos";
 import { manualClock, query, testBindings } from "../../testing/api";
 import { chat, type chat as chatOf, GATEWAY_SECRETS, known, reach, sent, VILLAGE } from "../../testing/gateway";
 import { cameraJpeg } from "../../testing/photoBase";
@@ -43,7 +43,7 @@ const draftOf = async (number: string) =>
   (
     await query<Draft>`
       select d.id, d.state, d.fields, d.revision from report_draft d join reporter r on r.id = d.reporter_id
-      where r.number = ${number} order by d.created_at desc, d.rowid desc limit 1`
+      where r.number = ${number} order by d.created_at desc, d.ctid desc limit 1`
   )[0] as Draft;
 const states = async (one: One) => (await draftOf(one.number)).fields.states;
 const version = async (ticket: string, number = 1) =>
@@ -64,7 +64,7 @@ describe("who is reporting (AC-01)", () => {
     expect(text).toContain("http://localhost:5173/privacy");
     expect(await reporters(one.number)).toEqual([]);
     const [session] = await query<{ step: string }>`select step from chat_session order by updated_at desc limit 1`;
-    expect(JSON.parse(session?.step as string)).toEqual({ kind: "consent", emergency: false });
+    expect(session?.step).toEqual({ kind: "consent", emergency: false });
     const declined = await one.send("2");
     expect(declined.text).toContain("Tidak ada data Anda yang disimpan");
     expect(await reporters(one.number)).toEqual([]);
@@ -150,7 +150,7 @@ describe("a whole report (AC-02)", () => {
     expect(text).toMatch(/http:\/\/localhost:5173\/track#t=[0-9a-f]{32}/);
     const [report] = await query`
       select door, number_unverified, owner_slot from report where ticket_number = ${ticket}`;
-    expect(report).toEqual({ door: "chat", number_unverified: 0, owner_slot: "session" });
+    expect(report).toEqual({ door: "chat", number_unverified: false, owner_slot: "session" });
     const fields = await version(ticket);
     expect(fields.dead).toEqual({ state: "value", value: 2, origin: "boxEntry" });
     expect(fields.missing).toEqual({ state: "none", origin: "boxEntry" });
@@ -396,10 +396,10 @@ describe("photos (AC-06)", () => {
       /^\*Foto 1 dari 10 diterima\*\nTanpa lokasi\.[\s\S]*Bagikan juga lokasi Anda[\s\S]*1\. Lanjut$/,
     );
     expect(await photos(one)).toEqual([
-      { badge: "none", lat: null, far: 0, time_source: "chatMessage", taken_at: new Date(takenAt).toISOString() },
+      { badge: "none", lat: null, far: false, time_source: "chatMessage", taken_at: new Date(takenAt).toISOString() },
     ]);
     expect((await one.share(VILLAGE.lat, VILLAGE.lon)).text).toMatch(/^Lokasi dicatat untuk 1 foto\./);
-    expect(await photos(one)).toMatchObject([{ badge: "chatLocation", lat: VILLAGE.lat, far: 0 }]);
+    expect(await photos(one)).toMatchObject([{ badge: "chatLocation", lat: VILLAGE.lat, far: false }]);
     expect((await one.share(VILLAGE.lat + 1, VILLAGE.lon)).text).toMatch(/^Lokasi dicatat untuk foto berikutnya/);
     expect((await one.photo(cameraJpeg(), clock.now())).text).toContain(
       "Lokasi dibagikan lewat WhatsApp, jauh dari lokasi kejadian.",
@@ -410,8 +410,8 @@ describe("photos (AC-06)", () => {
     // The location is asked for once.
     expect(unplaced).not.toContain("Bagikan juga lokasi");
     expect(await photos(one)).toMatchObject([
-      { badge: "chatLocation", far: 0 },
-      { badge: "chatLocation", far: 1 },
+      { badge: "chatLocation", far: false },
+      { badge: "chatLocation", far: true },
       { badge: "none", time_source: "chatMessage" },
     ]);
     // A photo over 30 minutes before the location is not placed by it.
@@ -511,7 +511,7 @@ describe("the summary", () => {
       await query`insert into report (id, ticket_number, draft_id, reporter_id, number_key, owner_slot,
           number_unverified, hazard_type, village_code, district_code, regency_code, province_code, sent_at)
         select ${crypto.randomUUID()}, ${`LA-010140-${n}${Math.floor(Math.random() * 1e6)}`}, ${id}, r.id, r.number_key,
-          'session', 0, 'flood', '11.08.01.2001', '11.08.01', '11.08', '11', ${at}
+          'session', false, 'flood', '11.08.01.2001', '11.08.01', '11.08', '11', ${at}
         from reporter r where r.number = ${one.number}`;
     }
     expect((await one.send("1")).text).toMatch(
@@ -548,11 +548,11 @@ describe("reports already sent", () => {
         select ${draft}, reporter_id, owner_slot, 'sent', ${at}, ${at}, ${at} from report where ticket_number = ${ticket}`;
       await query`insert into report (id, ticket_number, draft_id, reporter_id, number_key, owner_slot,
           number_unverified, hazard_type, village_code, district_code, regency_code, province_code, sent_at)
-        select ${id}, ${number}, ${draft}, reporter_id, number_key, owner_slot, 0, 'other', village_code,
+        select ${id}, ${number}, ${draft}, reporter_id, number_key, owner_slot, false, 'other', village_code,
           district_code, regency_code, province_code, ${at} from report where ticket_number = ${ticket}`;
       await query`insert into report_version (report_id, version, fields, reporter_name, reporter_number, reporter_role,
           privacy_version, consent_agreed_at, complete_percent, created_at)
-        select ${id}, 1, '{}', 'Uji Satu', ${one.number}, 'citizen', 1, ${at}, 10, ${at}`;
+        select ${id}, 1, '{}'::jsonb, 'Uji Satu', ${one.number}, 'citizen', 1, ${at}, 10, ${at}`;
       await query`insert into ticket (ticket_number, report_id, status, updated_at) values (${number}, ${id}, 'closed', ${at})`;
     }
     const { text } = await one.send("status");

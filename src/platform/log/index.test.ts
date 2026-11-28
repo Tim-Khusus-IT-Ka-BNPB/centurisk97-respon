@@ -21,7 +21,7 @@ describe("the redacting logger", () => {
       durationMs: 12,
       errorCode: "draft.changed",
       limitId: "message.minute",
-      sqlState: "SQLITE_CONSTRAINT",
+      sqlState: "23505",
       draftState: "place_confirm",
       settings: ["APP_ORIGIN"],
     });
@@ -37,7 +37,7 @@ describe("the redacting logger", () => {
           durationMs: 12,
           errorCode: "draft.changed",
           limitId: "message.minute",
-          sqlState: "SQLITE_CONSTRAINT",
+          sqlState: "23505",
           draftState: "place_confirm",
           settings: ["APP_ORIGIN"],
         },

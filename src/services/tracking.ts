@@ -1,4 +1,4 @@
-import { closedProofKey, handlingOf } from "../adapters/d1/handling";
+import { closedProofKey, handlingOf } from "../adapters/postgres/handling";
 import {
   ownReports,
   type ReportRecord,
@@ -6,7 +6,7 @@ import {
   referenceFile,
   reportByTicket,
   reportByTrackingHash,
-} from "../adapters/d1/reports";
+} from "../adapters/postgres/reports";
 import type { Tracking } from "../contract/tracking";
 import { checkContactFile, pickContact } from "../domain/contacts";
 import type { EventTimeValue, PlaceValue } from "../domain/fieldState";

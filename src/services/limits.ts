@@ -1,4 +1,4 @@
-import { hitCounter } from "../adapters/d1/limits";
+import { hitCounter } from "../adapters/postgres/limits";
 import { isOverLimit, LIMITS, type LimitId, retryAt, windowStart } from "../domain/limits";
 import { hmacKey } from "../platform/keys";
 import type { ServiceBindings } from "./bindings";

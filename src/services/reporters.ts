@@ -1,5 +1,5 @@
-import { addMessages, DRAFT_LIFE_MS, endDraft, isLive, type OpenDraft, openDraftOf } from "../adapters/d1/drafts";
-import { activeVillage } from "../adapters/d1/places";
+import { addMessages, DRAFT_LIFE_MS, endDraft, isLive, type OpenDraft, openDraftOf } from "../adapters/postgres/drafts";
+import { activeVillage } from "../adapters/postgres/places";
 import {
   addConsent,
   createDevice,
@@ -16,7 +16,7 @@ import {
   saveProfile,
   updateProfile,
   upsertReporter,
-} from "../adapters/d1/reporters";
+} from "../adapters/postgres/reporters";
 import type { MeResponse } from "../contract/draft";
 import type { PlaceValue } from "../domain/fieldState";
 import type { Identity } from "../domain/identityForm";
@@ -26,7 +26,7 @@ import { maskNumber } from "../domain/phoneNumber";
 import { PRIVACY } from "../domain/privacy";
 import { type DraftContent, EMERGENCY_CONTENT, EMPTY_CONTENT } from "../domain/turn/content";
 import { nextQuestion, stateFor } from "../domain/turn/next";
-import { atomically, decide, holds, type Query, row, sql } from "../platform/database";
+import { atomically, changedOne, decide, holds, type Query, row, sql } from "../platform/database";
 import { hmacKey, sha256Hex } from "../platform/keys";
 import type { Principal } from "../ports/identity";
 import type { ServiceBindings } from "./bindings";
@@ -242,7 +242,7 @@ export async function startDraft(
     const done = await atomically(bindings.db, [
       ...replaced,
       updateProfile(profile.id, edit, at),
-      holds(sql`changes() = 1`),
+      changedOne,
       ...created.writes,
     ]);
     return done === null ? null : { kind: "draft", draftId: created.draftId };
@@ -265,7 +265,7 @@ export async function removeProfile(
     const done = await atomically(bindings.db, [
       ...(open === null ? [] : endDraft(open.id, "removedNumber", at)),
       deleteProfile(profile.id),
-      holds(sql`changes() = 1`),
+      changedOne,
       deleteUnusedReporters(sql`(${profile.reporter_id})`),
     ]);
     return done === null ? null : true;

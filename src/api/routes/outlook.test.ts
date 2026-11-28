@@ -51,8 +51,9 @@ describe("a regency's outlook", () => {
     const put = (body: string) =>
       run(
         testDatabase(),
-        sql`insert or replace into reference_file (name, data_date, source, body, checksum, imported_at)
-          values ('forecast', ${kept?.data_date}, ${kept?.source}, ${body}, ${kept?.checksum}, ${kept?.imported_at})`,
+        sql`insert into reference_file (name, data_date, source, body, checksum, imported_at)
+          values ('forecast', ${kept?.data_date}, ${kept?.source}, ${body}, ${kept?.checksum}, ${kept?.imported_at})
+          on conflict (name) do update set body = excluded.body`,
       );
     try {
       await put(JSON.stringify({ dibuat: "kemarin" }));
@@ -62,7 +63,7 @@ describe("a regency's outlook", () => {
     } finally {
       await put(kept?.body as string);
     }
-    db = failingDatabase("D1_ERROR: no such table: SQLITE_ERROR");
+    db = failingDatabase("no such table", "42P01");
     try {
       expect((await open("?regency=11.08")).status).toBe(503);
     } finally {

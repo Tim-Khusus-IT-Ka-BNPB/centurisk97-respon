@@ -14,10 +14,10 @@ import {
   transcriptRows,
   truncateTranscript,
   updateDraft,
-} from "../adapters/d1/drafts";
-import { draftPhotos, type PhotoRecord } from "../adapters/d1/photos";
-import { activeVillage, villageCentre } from "../adapters/d1/places";
-import { type ReportRecord, referenceFile, reportByDraft } from "../adapters/d1/reports";
+} from "../adapters/postgres/drafts";
+import { draftPhotos, type PhotoRecord } from "../adapters/postgres/photos";
+import { activeVillage, villageCentre } from "../adapters/postgres/places";
+import { type ReportRecord, referenceFile, reportByDraft } from "../adapters/postgres/reports";
 import type { DraftBody } from "../contract/draft";
 import { isFinal } from "../domain/draftStates";
 import { checkFacilityFile } from "../domain/facilities";

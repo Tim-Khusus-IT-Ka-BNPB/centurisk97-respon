@@ -53,7 +53,7 @@ function movie(bytes: number, madeMs: number | null = clock.now() - 600_000, pla
 let village = "";
 beforeAll(async () => {
   const [found] = await query<{ code: string }>`
-    select v.code from place_village v join place_snapshot s on s.id = v.snapshot_id and s.active = 1
+    select v.code from place_village v join place_snapshot s on s.id = v.snapshot_id and s.active
     where v.regency_code = '11.08' order by v.code limit 1`;
   village = found?.code as string;
 });

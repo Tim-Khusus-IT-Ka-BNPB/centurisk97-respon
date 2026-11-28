@@ -5,12 +5,12 @@ import { afterAll, beforeAll, describe, expect, test, vi } from "vitest";
 import { type Database, rows, sql } from "../src/platform/database.ts";
 import { PlaceFileRefused, readPlaceFile } from "../tools/reference-import/read.ts";
 
-// The importer writes to this file's own in-memory D1 database, as pnpm reference:import writes
+// The importer writes to this file's own Postgres database, as pnpm reference:import writes
 // to the local one.
 // Each test writes whole snapshots or sends several reports; under a full parallel run they need more time.
 vi.setConfig({ testTimeout: 90_000 });
 
-const db = (globalThis as { testD1?: Database }).testD1 as Database;
+const db = (globalThis as { testDb?: Database }).testDb as Database;
 const query = <T>(strings: TemplateStringsArray, ...values: unknown[]) => rows<T>(db, sql(strings, ...values));
 const SEED = "db/reference/villages.json";
 const SHAPES = "db/reference/village-shapes.json";
@@ -108,15 +108,15 @@ describe("place importer", () => {
       select search_text from place_district where snapshot_id = ${id} and name = 'Sukamaju'`;
     expect(searchText?.search_text).toBe("sukamaju luwu utara");
     expect((await snapshots()).filter((row) => row.active)).toEqual([
-      { id, source: "upstream", active: 1, data_date: "2026-10-25" },
+      { id, source: "upstream", active: true, data_date: "2026-10-25" },
     ]);
 
     const restored = await readPlaceFile(db, SEED, { source: "seed", withFloor: false, shapesPath: SHAPES });
     expect(restored.written.kind).toBe("written");
     const kept = await snapshots();
     expect(kept.map((row) => [row.source, row.active])).toEqual([
-      ["upstream", 0],
-      ["seed", 1],
+      ["upstream", false],
+      ["seed", true],
     ]);
   });
 });

@@ -18,11 +18,3 @@ export function appEnv(): AppEnv {
 export function seedAllowed(env: string): boolean {
   return SEED_ENVIRONMENTS.has(env);
 }
-
-// Where the local D1 database of an environment lives. The dev server keeps its own under
-// .wrangler/state; the browser tests get theirs, so a test run never touches dev data.
-export function localState(env: AppEnv): string {
-  if (env === "local") return ".wrangler/state";
-  if (env === "test") return ".wrangler/e2e";
-  throw new Error(`Refusing to touch a local database for APP_ENV ${env}: only local and test have one.`);
-}

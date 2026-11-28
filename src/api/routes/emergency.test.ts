@@ -262,7 +262,7 @@ describe("one tap", () => {
     const report = deskReportSchema.parse((await desk().call("GET", `/desk/reports/${ticket}`)).json);
     expect(report.photos.map((one) => one.badge).sort()).toEqual(["deviceGps", "none", "none"]);
     // A photo the report got some other way still counts toward the 3.
-    await query`update draft_photo set id = lower(hex(randomblob(16)))
+    await query`update draft_photo set id = md5(random()::text)
       where draft_id = (select draft_id from report where ticket_number = ${ticket})`;
     expect((await photo(0, jpeg(savedAt))).error.fields[0]?.copyKey).toBe("fieldError.photo.tooMany");
     // Another phone, a phone nobody agreed on, or an id never sent: no such report.
@@ -277,7 +277,7 @@ describe("one tap", () => {
     const key = await hmacKey(bindings.settings.keyHmacSecret, "address", addressBucket(phone.address) as string);
     const window = new Date(windowStart("clockHour", clock.now())).toISOString();
     await query`insert into rate_counter (limit_id, subject_key, window_start, count) values ('address.messages', ${key}, ${window}, 2000)
-      on conflict do update set count = 2000`;
+      on conflict (limit_id, subject_key, window_start) do update set count = 2000`;
     expect((await photo(0, jpeg(savedAt))).error.error.code).toBe("limit.address.messages");
   });
 
@@ -402,7 +402,7 @@ describe("the desk's alarm", () => {
     const key = await hmacKey(bindings.settings.keyHmacSecret, "subject", "staff:staff-desk-1");
     const window = new Date(windowStart("clockHour", clock.now())).toISOString();
     await query`insert into rate_counter (limit_id, subject_key, window_start, count) values ('desk.alarm', ${key}, ${window}, 400)
-      on conflict do update set count = excluded.count`;
+      on conflict (limit_id, subject_key, window_start) do update set count = excluded.count`;
     expect((await desk().call("GET", "/desk/emergencies")).error.error.code).toBe("limit.desk.alarm");
     await query`delete from rate_counter where subject_key = ${key}`;
   });

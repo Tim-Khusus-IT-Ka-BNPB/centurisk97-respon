@@ -1,4 +1,4 @@
-import { responseRows, takeReport } from "../adapters/d1/taker";
+import { responseRows, takeReport } from "../adapters/postgres/taker";
 import type { DeskResponse } from "../contract/desk";
 import { monthSpan, responseByAgency } from "../domain/response";
 import type { OfficerProfile, StaffPrincipal } from "../ports/identity";

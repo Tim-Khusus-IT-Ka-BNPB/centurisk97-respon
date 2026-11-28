@@ -154,13 +154,17 @@ describe("the document (AC-02, AC-06)", () => {
     await known(one);
     expect((await one.send("dokumen")).text).toMatch(/^Belum ada laporan terkirim dari chat ini/);
     const { one: full } = await listening();
-    const [counter] = await query<{ subject_key: string; window_start: string }>`
-      select subject_key, window_start from rate_counter where limit_id = 'document.hour' order by rowid desc limit 1`;
+    // This number's counter is the one the send raised.
+    const counts = () =>
+      query<{
+        subject_key: string;
+        count: number;
+      }>`select subject_key, count from rate_counter where limit_id = 'document.hour'`;
+    const before = new Map((await counts()).map((one) => [one.subject_key, one.count]));
     await full.send("dokumen");
-    const [mine] = await query<{ subject_key: string }>`
-      select subject_key from rate_counter where limit_id = 'document.hour' order by rowid desc limit 1`;
+    const mine = (await counts()).find((one) => one.count > (before.get(one.subject_key) ?? 0));
+    expect(mine?.subject_key).toBeDefined();
     await query`update rate_counter set count = 120 where limit_id = 'document.hour' and subject_key = ${mine?.subject_key}`;
-    expect(counter?.subject_key).toBeDefined();
     expect((await full.send("dokumen")).text).toMatch(/^Batas dokumen untuk nomor ini tercapai\. Minta lagi pukul/);
   });
 
@@ -287,7 +291,7 @@ describe("stopped and started (AC-04)", () => {
     await onDesk(ticket, "view");
     const [report] = await query<{ id: string }>`select id from report where ticket_number = ${ticket}`;
     await query`insert into report_news (report_id, read_at, stopped, changed_at)
-      values (${report?.id}, ${new Date(clock.now())}, 1, ${new Date(clock.now())})`;
+      values (${report?.id}, ${new Date(clock.now())}, true, ${new Date(clock.now())})`;
     expect(await waiting(one)).toEqual([]);
     await onDesk(ticket, "replies", { text: "Tidak dikabarkan" });
     expect((await read(ticket)).replies.map((reply) => reply.chat)).toEqual([null]);
@@ -297,7 +301,7 @@ describe("stopped and started (AC-04)", () => {
 describe("what never goes to a chat", () => {
   test("news of a report some phone typed the number for (AC-07)", async () => {
     const { one, ticket } = await listening();
-    await query`update report set owner_slot = 'a-phone', number_unverified = 1 where ticket_number = ${ticket}`;
+    await query`update report set owner_slot = 'a-phone', number_unverified = true where ticket_number = ${ticket}`;
     await onDesk(ticket, "view");
     expect(await waiting(one)).toEqual([]);
     await query`update report set owner_slot = 'session' where ticket_number = ${ticket}`;

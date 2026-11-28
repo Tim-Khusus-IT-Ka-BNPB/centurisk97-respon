@@ -1,5 +1,5 @@
 import { describe, expect, test } from "vitest";
-import type { AggregateRowData } from "../adapters/d1/aggregates";
+import type { AggregateRowData } from "../adapters/postgres/aggregates";
 import { inputOf } from "./aggregates";
 
 const row = (eventTime: object | undefined): AggregateRowData => ({
@@ -9,11 +9,11 @@ const row = (eventTime: object | undefined): AggregateRowData => ({
   number_key: "k",
   status: "new",
   sent_at: "2026-11-24T03:00:00.000Z",
-  fields: JSON.stringify({
+  fields: {
     place: { state: "value", value: { provinceName: "Aceh", regencyName: "Aceh Utara" } },
     eventTime,
-  }),
-  placed_photo: 0,
+  },
+  placed_photo: false,
 });
 
 describe("a report read for the weekly counts", () => {

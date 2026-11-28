@@ -7,9 +7,9 @@ import {
   missingPhotoKey,
   moveMissing,
   ownMissing,
-} from "../adapters/d1/missingPersons";
-import { activeVillage } from "../adapters/d1/places";
-import { knownProfiles } from "../adapters/d1/reporters";
+} from "../adapters/postgres/missingPersons";
+import { activeVillage } from "../adapters/postgres/places";
+import { knownProfiles } from "../adapters/postgres/reporters";
 import { stripJpeg } from "../domain/jpeg";
 import {
   MISSING_PER_DAY,
@@ -89,7 +89,7 @@ const viewOf = (one: MissingRow) => {
   return {
     id: one.id,
     status: one.status,
-    place: JSON.parse(one.place) as {
+    place: one.place as {
       villageName: string;
       districtName: string;
       regencyName: string;
@@ -220,7 +220,7 @@ export async function myMissing(bindings: ServiceBindings, principal: Reporter) 
       id: one.id,
       name: one.name,
       status: one.status,
-      villageName: (JSON.parse(one.place) as { villageName: string }).villageName,
+      villageName: (one.place as { villageName: string }).villageName,
       createdAt: one.created_at,
     }));
 }

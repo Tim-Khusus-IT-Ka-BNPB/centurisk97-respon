@@ -1,8 +1,8 @@
-import { deskReport, logDocument } from "../adapters/d1/desk";
-import { draftPhotos } from "../adapters/d1/photos";
-import { versionDetail } from "../adapters/d1/versions";
 import { renderDocx } from "../adapters/document/docx";
 import { renderPdf } from "../adapters/document/pdf";
+import { deskReport, logDocument } from "../adapters/postgres/desk";
+import { draftPhotos } from "../adapters/postgres/photos";
+import { versionDetail } from "../adapters/postgres/versions";
 import type { DocumentFormat, ReportDocument } from "../domain/document";
 import type { Zone } from "../domain/eventTime";
 import type { Principal, StaffPrincipal } from "../ports/identity";

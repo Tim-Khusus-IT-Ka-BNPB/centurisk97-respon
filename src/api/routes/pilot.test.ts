@@ -245,7 +245,7 @@ describe("a claimed officer (AC-05)", () => {
   test("is confirmed where the list says so, for a proved number alone, and a citizen never is", async () => {
     const ticket = await officerReport("Kabupaten Uji");
     expect(await confirmed(ticket)).toBe(true);
-    await query`update report set number_unverified = 1 where ticket_number = ${ticket}`;
+    await query`update report set number_unverified = true where ticket_number = ${ticket}`;
     expect(await confirmed(ticket)).toBe(false);
     expect(await confirmed(await officerReport(null))).toBe(false);
     const { stored } = freshNumber();
