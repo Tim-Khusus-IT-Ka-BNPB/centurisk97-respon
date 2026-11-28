@@ -19,8 +19,8 @@ test("help, about and privacy open from the home with their content", async ({ p
   const links = (await bar.isVisible()) ? bar : page.getByRole("navigation", { name: "Menu" });
   await links.getByRole("link", { name: "Bantuan" }).click();
   await expect(page.getByRole("heading", { level: 1 })).toHaveText("Bantuan");
-  for (const group of ["Melapor", "Istilah", "Status", "Privasi"])
-    await expect(page.getByRole("heading", { level: 2, name: group })).toBeVisible();
+  for (const group of ["Melapor", "Sesudah melapor", "Istilah", "Status", "Privasi"])
+    await expect(page.getByRole("heading", { level: 2, name: group, exact: true })).toBeVisible();
   await noSidewaysScroll(page);
   await page.goto("/about");
   await expect(page.getByRole("heading", { level: 1 })).toHaveText("Tentang Pantau Bencana BNPB");
