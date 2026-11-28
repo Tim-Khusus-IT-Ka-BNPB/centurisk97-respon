@@ -33,5 +33,13 @@
   "about.avoid.false": "Membuat laporan palsu. Laporan palsu bisa dikenai sanksi hukum.",
   "about.limits.title": "Batas pemakaian",
   "about.limits": "20 pesan per menit, 150 pesan per jam, dan 300 pesan per hari per nomor. 5 laporan terkirim dalam 24 jam per nomor. Laporan yang sedang diisi tetap tersimpan saat batas tercapai, dan Anda diberi tahu jam berapa bisa melanjutkan.",
-  "about.limits.why": "Batas ini menjaga layanan dari penyalahgunaan."
+  "about.limits.why": "Batas ini menjaga layanan dari penyalahgunaan.",
+  "about.photos.title": "Kredit foto",
+  "about.photos.lead": "Foto di halaman awal berasal dari Wikimedia Commons, dipotong dan diperkecil untuk halaman ini. Foto olahan memakai lisensi yang sama dengan aslinya.",
+  "about.photos.cyclone": "Siklon Tropis Seroja dari satelit Aqua, Nusa Tenggara Timur, 5 April 2021",
+  "about.photos.flood": "Rumah warga masih terendam air setelah banjir bandang, Gorontalo, 14 Juli 2024",
+  "about.photos.firefighter": "Petugas menyemprot bara di lahan gambut, Taman Nasional Sebangau, Kalimantan Tengah, 2019",
+  "about.photos.by": "Foto: {author}",
+  "about.photos.publicDomain": "Domain publik",
+  "about.photos.source": "Sumber di Wikimedia Commons"
 }

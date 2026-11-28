@@ -2,6 +2,7 @@ import { Fragment, type ReactNode } from "react";
 import { Link } from "react-router";
 import { localDateText } from "../../../src/copy/time";
 import { ABOUT_POINTS, ABOUT_STEPS, HELP_GROUPS, PRIVACY_SECTIONS } from "../../lib/docs";
+import { licencePage, PHOTOS } from "../../lib/photos";
 import { useText } from "../../lib/text";
 import { buttonStyles } from "../atoms/Button";
 import { Icon } from "../atoms/Icon";
@@ -155,7 +156,7 @@ export function HelpScreen({ education }: { readonly education: Education | null
   );
 }
 
-const ABOUT_SECTIONS = ["what", "steps", "words", "tips", "emergency", "limits"] as const;
+const ABOUT_SECTIONS = ["what", "steps", "words", "tips", "emergency", "limits", "photos"] as const;
 
 export function AboutScreen() {
   const t = useText();
@@ -232,6 +233,35 @@ export function AboutScreen() {
         <>
           <p className="tabular-nums">{t("about.limits")}</p>
           <p className="text-meta text-muted">{t("about.limits.why")}</p>
+        </>,
+      )}
+      {section(
+        "photos",
+        <>
+          <p>{t("about.photos.lead")}</p>
+          <ul className="flex flex-col gap-4">
+            {PHOTOS.map((photo) => {
+              const licence = licencePage(photo);
+              return (
+                <li key={photo.id} className="flex flex-col gap-1 border-s-2 border-line ps-4">
+                  <strong>{t(`about.photos.${photo.id}`)}</strong>
+                  <span className="flex flex-wrap gap-x-3 gap-y-1 text-meta text-muted">
+                    <span>{t("about.photos.by", { author: photo.author })}</span>
+                    {licence === null ? (
+                      <span>{t("about.photos.publicDomain")}</span>
+                    ) : (
+                      <a href={licence} rel="license noopener noreferrer" target="_blank">
+                        {photo.licence}
+                      </a>
+                    )}
+                    <a href={photo.source} rel="noopener noreferrer" target="_blank">
+                      {t("about.photos.source")}
+                    </a>
+                  </span>
+                </li>
+              );
+            })}
+          </ul>
         </>,
       )}
     </DocLayout>

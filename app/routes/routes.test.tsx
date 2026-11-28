@@ -1,4 +1,4 @@
-import { cleanup, screen } from "@testing-library/react";
+import { cleanup, screen, within } from "@testing-library/react";
 import { createElement, type FC } from "react";
 import { describe, expect, test, vi } from "vitest";
 import type { ApiCall } from "../../src/api/bridge";
@@ -826,6 +826,33 @@ describe("route modules", () => {
     });
     expect(await screen.findByRole("link", { name: /112 Darurat terpadu/ })).toHaveProperty("href", "tel:112");
     expect(screen.getAllByRole("listitem").length).toBeGreaterThan(6);
+    // Each photo of the home is credited with its author, its licence's page and its source.
+    const credits = screen.getByRole("heading", { level: 2, name: "Kredit foto" }).closest("section") as HTMLElement;
+    expect(within(credits).getByText("Foto: DenY Krisbiyantoro")).toBeTruthy();
+    expect(within(credits).getByText("Domain publik")).toBeTruthy();
+    expect(
+      within(credits)
+        .getAllByRole("link")
+        .map((link) => [link.textContent, link.getAttribute("href"), link.getAttribute("rel")]),
+    ).toEqual([
+      [
+        "Sumber di Wikimedia Commons",
+        "https://commons.wikimedia.org/wiki/File:Seroja_2021-04-05_0545Z.jpg",
+        "noopener noreferrer",
+      ],
+      ["CC BY 4.0", "https://creativecommons.org/licenses/by/4.0/", "license noopener noreferrer"],
+      [
+        "Sumber di Wikimedia Commons",
+        "https://commons.wikimedia.org/wiki/File:Rumah-rumah_warga_masih_terendam_air_paska_banjir_bandang_Gorontalo_2024.jpg",
+        "noopener noreferrer",
+      ],
+      ["CC BY-SA 4.0", "https://creativecommons.org/licenses/by-sa/4.0/", "license noopener noreferrer"],
+      [
+        "Sumber di Wikimedia Commons",
+        "https://commons.wikimedia.org/wiki/File:Marking_the_Fire.jpg",
+        "noopener noreferrer",
+      ],
+    ]);
     renderPage(routeElement(PrivacyRoute, { loaderData: privacy.loader({ request: visit() } as Args) }), {
       path: "/privacy",
     });

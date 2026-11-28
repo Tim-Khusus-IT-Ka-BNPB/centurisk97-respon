@@ -328,6 +328,20 @@ describe("the home", () => {
     );
     expect(screen.getByRole("link", { name: "021 2982 7793" }).getAttribute("href")).toBe("tel:02129827793");
     expect(screen.getByText(/Graha BNPB/).closest("a")).toBeNull();
+    // The other services sit on credited photos, each a small file for a phone and a larger one wider.
+    const more = within(screen.getByRole("navigation", { name: "Layanan lain" }));
+    expect(
+      more
+        .getAllByRole("link")
+        .map((link) => [link.getAttribute("href"), link.querySelector("img")?.getAttribute("srcset")]),
+    ).toEqual([
+      ["/info", "/photos/cyclone-seroja-480.webp 480w, /photos/cyclone-seroja-960.webp 960w"],
+      ["/help#help-education", "/photos/flooded-houses-480.webp 480w, /photos/flooded-houses-960.webp 960w"],
+      ["/numbers", "/photos/peat-firefighter-480.webp 480w, /photos/peat-firefighter-960.webp 960w"],
+    ]);
+    expect(more.getByRole("link", { name: "Info daerah" }).querySelector("img")?.getAttribute("loading")).toBe("lazy");
+    expect(more.getByText("Foto: NASA, LANCE / MODIS on Aqua, domain publik")).toBeTruthy();
+    expect(more.getByText("Foto: DenY Krisbiyantoro, CC BY-SA 4.0")).toBeTruthy();
   });
 
   test("news not sent yet is offered as news, and a new report over it says only the news goes", async () => {

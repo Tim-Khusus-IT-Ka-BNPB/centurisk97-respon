@@ -46,6 +46,8 @@
   "home.door.education.note": "Sebelum, saat, dan sesudah bencana",
   "home.door.numbers": "Nomor penting",
   "home.door.numbers.note": "112, 117, Basarnas, ambulans, polisi, pemadam",
+  "home.photo.credit": "Foto: {author}, {licence}",
+  "home.photo.publicDomain": "domain publik",
   "home.reports.tiles.sent": "Terkirim",
   "home.reports.tiles.active": "Diproses",
   "home.reports.tiles.closed": "Selesai",
