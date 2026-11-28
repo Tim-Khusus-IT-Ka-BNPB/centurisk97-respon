@@ -1,7 +1,15 @@
 import { describe, expect, test } from "vitest";
 import type { StaffAccount } from "../../domain/staffClaims";
 import { manualClock, query, testDatabase } from "../../testing/api";
-import { authIdentity, STAFF_SESSION_MS, signInStaff, signOutStaff, staffCookieName } from "./auth";
+import {
+  authIdentity,
+  forgetStaff,
+  OFFICER_LISTED_MS,
+  STAFF_SESSION_MS,
+  signInStaff,
+  signOutStaff,
+  staffCookieName,
+} from "./auth";
 
 const clock = manualClock("2026-11-28T03:00:00.000Z");
 const db = testDatabase();
@@ -106,6 +114,7 @@ describe("officers to call about a report", () => {
         agency: "BNPB",
         number: "+6281200000001",
         level: "regency",
+        signedInAtMs: clock.now(),
       },
       {
         id: province.id,
@@ -114,7 +123,28 @@ describe("officers to call about a report", () => {
         agency: "BNPB",
         number: "+6281200000002",
         level: "province",
+        signedInAtMs: clock.now(),
       },
     ]);
+  });
+
+  test("an officer is listed for 30 days after signing in, and not once forgotten", async () => {
+    const region = "93.06";
+    const officer = account({
+      phone: "+6281200000005",
+      role: "regionalOfficer",
+      scope: { level: "regency", code: region },
+    });
+    const token = await signInStaff(db, clock, officer);
+    const listed = async () => (await identity.officers(`${region}.01.2001`)).map((one) => one.id);
+    const signedIn = clock.now();
+    clock.set(signedIn + OFFICER_LISTED_MS - 1);
+    expect(await listed()).toEqual([officer.id]);
+    clock.set(signedIn + OFFICER_LISTED_MS);
+    expect(await listed()).toEqual([]);
+    clock.set(signedIn);
+    await forgetStaff(db, officer.id);
+    expect(await listed()).toEqual([]);
+    expect(await identity.resolve(asCookie(token))).toEqual({ kind: "anonymous" });
   });
 });

@@ -1,7 +1,7 @@
 import { describe, expect, test } from "vitest";
 import { authIdentity } from "../../adapters/identity/auth";
 import type { SignInPort } from "../../ports/signIn";
-import { fromBrowser, manualClock, testBindings } from "../../testing/api";
+import { fromBrowser, manualClock, query, testBindings } from "../../testing/api";
 import { api } from "../app";
 import type { ApiBindings } from "../context";
 
@@ -142,6 +142,35 @@ describe("signing staff in through auth", () => {
     await browser.get("/auth/sign-in");
     expect((await browser.get("/auth/callback?code=c&state=s")).headers.get("location")).toBe("/desk?signIn=noAccess");
     expect(browser.cookies.has("respon_staff")).toBe(false);
+  });
+
+  test("an officer who lost the desk in auth is forgotten at their next sign-in, sessions and all", async () => {
+    const officer = {
+      ...claims([
+        {
+          organization: { id: "o2", kind: "bpbd", name: "BPBD Uji", level: "regency", region: "11.08" },
+          role: "officer",
+          position: "Pusdalops",
+        },
+      ]),
+      sub: "officer-who-left",
+      phone_number: "+6281200000099",
+    };
+    let answer: unknown = officer;
+    const { browser, bindings } = withAuth(() => ({ ok: true, claims: answer }));
+    await browser.get("/auth/sign-in");
+    await browser.get("/auth/callback?code=c&state=s");
+    expect((await bindings.identity.officers("11.08.01.2001")).map((one) => one.id)).toContain("officer-who-left");
+    answer = { ...officer, memberships: [] };
+    await browser.get("/auth/sign-in");
+    expect((await browser.get("/auth/callback?code=c&state=s")).headers.get("location")).toBe("/desk?signIn=noAccess");
+    expect(await query`select 1 from staff_member where id = 'officer-who-left'`).toEqual([]);
+    expect(await query`select 1 from staff_session where staff_id = 'officer-who-left'`).toEqual([]);
+    expect((await bindings.identity.officers("11.08.01.2001")).map((one) => one.id)).not.toContain("officer-who-left");
+    // Claims naming no one forget no one.
+    answer = { name: "Tanpa sub" };
+    await browser.get("/auth/sign-in");
+    expect((await browser.get("/auth/callback?code=c&state=s")).headers.get("location")).toBe("/desk?signIn=noAccess");
   });
 
   test("a staff route tells the page where to sign in, only where auth does it", async () => {

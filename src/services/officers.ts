@@ -7,6 +7,7 @@ import { maskNumber } from "../domain/phoneNumber";
 import type { StaffPrincipal } from "../ports/identity";
 import type { ServiceBindings } from "./bindings";
 import { admitted, type DeskAnswer } from "./desk";
+import { at, draftZone } from "./draftView";
 import { contactOf } from "./tracking";
 
 // The BPBD officers of a report's region for a BNPB officer (upstream PF-09), numbers masked; with
@@ -19,8 +20,14 @@ export async function officersOf(
 ): Promise<DeskReport["officers"]> {
   if (!mayUse(staff.role, "callOfficers")) return null;
   const officers = await bindings.identity.officers(villageCode);
+  const zone = draftZone(villageCode);
   return {
-    items: officers.map(({ number, id, ...officer }) => ({ ...officer, profileId: id, masked: maskNumber(number) })),
+    items: officers.map(({ number, id, signedInAtMs, ...officer }) => ({
+      ...officer,
+      profileId: id,
+      masked: maskNumber(number),
+      signedInAt: signedInAtMs === null ? null : at(signedInAtMs, zone),
+    })),
     official: officers.some((officer) => officer.level === "regency") ? null : await contactOf(bindings, place),
   };
 }

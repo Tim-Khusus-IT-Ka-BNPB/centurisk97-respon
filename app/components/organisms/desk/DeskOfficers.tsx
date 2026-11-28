@@ -4,7 +4,7 @@ import type { OfficerNumber } from "../../../lib/deskTypes";
 import { useText } from "../../../lib/text";
 import { Button, buttonStyles } from "../../atoms/Button";
 import { Icon } from "../../atoms/Icon";
-import { spacedNumber } from "./parts";
+import { spacedNumber, when } from "./parts";
 
 type Officers = NonNullable<DeskReport["officers"]>;
 
@@ -36,6 +36,11 @@ function Row({ officer, opened }: { readonly officer: Officers["items"][number];
           })}
         </p>
         <p className="text-meta tabular-nums">{opened === null ? officer.masked : spacedNumber(opened)}</p>
+        {officer.signedInAt === null ? null : (
+          <p className="text-meta text-muted tabular-nums">
+            {t("desk.officers.lastSeen", { at: when(t, "desk.history.at", officer.signedInAt) })}
+          </p>
+        )}
       </div>
       {opened === null ? (
         <Form method="post" replace preventScrollReset>

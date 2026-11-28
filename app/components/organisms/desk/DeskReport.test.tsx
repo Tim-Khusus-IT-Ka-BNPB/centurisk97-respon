@@ -448,6 +448,7 @@ describe("a report on the desk", () => {
           agency: "BPBD Kabupaten Uji Satu",
           level: "regency" as const,
           masked: "0800****8001",
+          signedInAt: null,
         },
       ],
       official: null,

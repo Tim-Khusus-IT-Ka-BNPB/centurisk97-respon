@@ -10,6 +10,7 @@ const ANDI = {
   agency: "BPBD Kabupaten Uji Satu",
   level: "regency" as const,
   masked: "0800****8001",
+  signedInAt: { utc: "2026-11-27T02:30:00.000Z", zone: "WIB" as const },
 };
 const SARI = {
   ...ANDI,
@@ -17,6 +18,7 @@ const SARI = {
   name: "Uji Sari",
   agency: "BPBD Provinsi Uji",
   level: "province" as const,
+  signedInAt: null,
 };
 
 const draw = (props: Parameters<typeof DeskOfficers>[0]) =>
@@ -32,6 +34,8 @@ describe("the BPBD officers on a report", () => {
     expect(within(andi).getByText("Pusdalops, BPBD Kabupaten Uji Satu")).toBeTruthy();
     expect(within(andi).getByText("0800****8001")).toBeTruthy();
     expect(within(andi).getByText("UA")).toBeTruthy();
+    expect(within(andi).getByText("Terakhir masuk 27 November 2026, pukul 09.30 WIB")).toBeTruthy();
+    expect(within(sari).queryByText(/^Terakhir masuk/)).toBeNull();
     expect(within(sari).getByText("Pusdalops, BPBD Provinsi Uji, tingkat provinsi")).toBeTruthy();
     expect(within(sari).getByText("+62 800-1108-009")).toBeTruthy();
     expect(within(sari).getByRole("link", { name: "Telepon" }).getAttribute("href")).toBe("tel:+628001108009");

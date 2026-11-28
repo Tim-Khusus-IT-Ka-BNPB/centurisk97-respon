@@ -26,14 +26,16 @@ export type OfficerProfile = {
   readonly agency: string;
 };
 
-// A BPBD officer a BNPB officer may call about a report in their region, with their phone number.
+// A BPBD officer a BNPB officer may call about a report in their region, with their phone number
+// and when they last signed in; null where sign-in is seeded.
 export type Officer = OfficerProfile & {
   readonly level: "regency" | "province";
   readonly number: string;
+  readonly signedInAtMs: number | null;
 };
 
 export type IdentityPort = {
   resolve(headers: Headers): Promise<Principal>;
-  // The officers of the BPBD of this village's regency, then of its province.
+  // The officers of the BPBD of this village's regency, then of its province, who still sign in.
   officers(villageCode: string): Promise<readonly Officer[]>;
 };

@@ -14,8 +14,9 @@ const membership = z.object({
   position: z.string().nullable(),
 });
 
-const claims = z.object({
-  sub: z.string().min(1).max(64),
+const subject = z.object({ sub: z.string().min(1).max(64) });
+
+const claims = subject.extend({
   name: z.string().min(1),
   phone_number: z.string().optional(),
   memberships: z.array(membership).default([]),
@@ -34,6 +35,12 @@ export type StaffAccount = {
 
 const DESK_ROLES = new Set(["pusdalops", "koordalops"]);
 const REGION = { province: /^\d{2}$/, regency: /^\d{2}\.\d{2}$/ } as const;
+
+// Who the claims are about, whether or not they open the desk.
+export function subjectOf(raw: unknown): string | null {
+  const parsed = subject.safeParse(raw);
+  return parsed.success ? parsed.data.sub : null;
+}
 
 // The desk account a person's claims make, or null when no membership opens the desk. BNPB's
 // pusdalops and koordalops work the whole country; a BPBD officer works their province or regency.

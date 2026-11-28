@@ -9,6 +9,10 @@ import { DEVICE_COOKIE, deviceOf } from "./seeded";
 // A desk sign-in through auth lasts as long as auth's own session.
 export const STAFF_SESSION_MS = 8 * 60 * 60 * 1000;
 
+// An officer who has not signed in for this long is no longer listed to call: auth does not tell
+// respon when someone leaves, so a sign-in is the only sign they still work there.
+export const OFFICER_LISTED_MS = 30 * 24 * 60 * 60 * 1000;
+
 // Over HTTPS the cookie carries the __Host- prefix, so no other subdomain can set or read it.
 export const staffCookieName = (secure: boolean) => (secure ? "__Host-respon_staff" : "respon_staff");
 
@@ -45,6 +49,12 @@ export async function signOutStaff(db: Database, token: string): Promise<void> {
   await run(db, sql`delete from staff_session where token_hash = ${await sha256Hex(token)}`);
 }
 
+// A person whose claims no longer open the desk is forgotten, with their sessions, so they leave
+// the officers BNPB may call.
+export async function forgetStaff(db: Database, id: string): Promise<void> {
+  await run(db, sql`delete from staff_member where id = ${id}`);
+}
+
 type MemberRow = {
   id: string;
   name: string;
@@ -71,14 +81,16 @@ const principalOf = (member: MemberRow): StaffPrincipal => ({
 export function authIdentity(db: Database, clock: Clock, secure: boolean): IdentityPort {
   return {
     async officers(villageCode) {
-      return rows<Officer>(
+      const found = await rows<Omit<Officer, "signedInAtMs"> & { signed_in_at: string }>(
         db,
-        sql`select id, name, position, agency, phone as number, scope_level as level from staff_member
+        sql`select id, name, position, agency, phone as number, scope_level as level, signed_in_at from staff_member
           where role = 'regionalOfficer' and phone is not null
+            and signed_in_at > ${new Date(clock.now() - OFFICER_LISTED_MS)}
             and ((scope_level = 'regency' and scope_code = ${villageCode.slice(0, 5)})
               or (scope_level = 'province' and scope_code = ${villageCode.slice(0, 2)}))
           order by scope_level = 'province', name`,
       );
+      return found.map(({ signed_in_at, ...officer }) => ({ ...officer, signedInAtMs: Date.parse(signed_in_at) }));
     },
     async resolve(headers) {
       const cookies = parse(headers.get("cookie") ?? "");

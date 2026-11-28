@@ -1,5 +1,6 @@
 import { beforeAll, describe, expect, test, vi } from "vitest";
 import { SEEDED_SESSIONS } from "../../../db/synthetic/reporters";
+import { authIdentity, signInStaff, staffCookieName } from "../../adapters/identity/auth";
 import { type DeskReport, deskReportSchema } from "../../contract/desk";
 import { browser, freshNumber, manualClock, query, testBindings, testDatabase } from "../../testing/api";
 import { sendDraft, startDraft } from "../../testing/walk";
@@ -57,6 +58,7 @@ describe("the BPBD officers on a report (PF-09)", () => {
           agency: "BPBD Kabupaten Uji Satu",
           level: "regency",
           masked: "0800****8001",
+          signedInAt: null,
         },
         {
           profileId: "profile-1108-b",
@@ -65,6 +67,7 @@ describe("the BPBD officers on a report (PF-09)", () => {
           agency: "BPBD Kabupaten Uji Satu",
           level: "regency",
           masked: "0800****8002",
+          signedInAt: null,
         },
       ],
       official: null,
@@ -87,6 +90,45 @@ describe("the BPBD officers on a report (PF-09)", () => {
     ])
       expect((await bnpb().call("POST", path)).status, path).toBe(404);
     expect(await query`select 1 from officer_number_view where ticket_number = ${ticket}`).toHaveLength(1);
+  });
+
+  test("signed in through auth, each officer says when they last signed in", async () => {
+    const ticket = await reportIn(villages.aceh as string);
+    const db = testDatabase();
+    const viaAuth = (request: Request) =>
+      api.app.fetch(request, { ...bindings, db, identity: authIdentity(db, clock, false) } satisfies ApiBindings);
+    const signedInAt = new Date(clock.now()).toISOString();
+    await signInStaff(db, clock, {
+      id: "auth-bpbd-1108",
+      name: "Uji Auth",
+      position: "Pusdalops",
+      agency: "BPBD Kabupaten Uji Satu",
+      phone: "+6281200001108",
+      role: "regionalOfficer",
+      scope: { level: "regency", code: "11.08" },
+    });
+    const token = await signInStaff(db, clock, {
+      id: "auth-bnpb",
+      name: "Pusdalops Auth",
+      position: "Analis",
+      agency: "BNPB",
+      phone: null,
+      role: "deskOfficer",
+      scope: { level: "national" },
+    });
+    const phone = browser(viaAuth);
+    phone.cookies.set(staffCookieName(false), token);
+    expect((await officersOn(phone, ticket))?.items).toEqual([
+      {
+        profileId: "auth-bpbd-1108",
+        name: "Uji Auth",
+        position: "Pusdalops",
+        agency: "BPBD Kabupaten Uji Satu",
+        level: "regency",
+        masked: "0812****1108",
+        signedInAt: { utc: signedInAt, zone: "WIB" },
+      },
+    ]);
   });
 
   test("with no officer of the regency, the BPBD's own number from the contact file", async () => {

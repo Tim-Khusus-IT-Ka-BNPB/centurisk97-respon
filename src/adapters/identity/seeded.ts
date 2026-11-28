@@ -75,7 +75,7 @@ export function seededIdentity(db: Database, clock: Clock): IdentityPort {
               or (scope_level = 'province' and scope_code = ${villageCode.slice(0, 2)}))
           order by scope_level = 'province', profile_name`,
       );
-      return found;
+      return found.map((one) => ({ ...one, signedInAtMs: null }));
     },
     async resolve(headers) {
       const cookies = parse(headers.get("cookie") ?? "");

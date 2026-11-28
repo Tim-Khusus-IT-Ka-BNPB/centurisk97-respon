@@ -1,7 +1,7 @@
 import { createRoute, z } from "@hono/zod-openapi";
 import { deleteCookie, getCookie, setCookie } from "hono/cookie";
-import { STAFF_SESSION_MS, signInStaff, staffCookieName } from "../../adapters/identity/auth";
-import { staffAccountOf } from "../../domain/staffClaims";
+import { forgetStaff, STAFF_SESSION_MS, signInStaff, staffCookieName } from "../../adapters/identity/auth";
+import { staffAccountOf, subjectOf } from "../../domain/staffClaims";
 import { isSignatureOf, signText } from "../../platform/keys";
 import type { ApiContext } from "../context";
 import { refuse } from "../envelope";
@@ -93,7 +93,12 @@ export function addAuthRoutes(api: Api): void {
         return c.redirect("/desk?signIn=failed", 302);
       }
       const account = staffAccountOf(finished.claims);
-      if (account === null) return c.redirect("/desk?signIn=noAccess", 302);
+      if (account === null) {
+        // Someone who lost the desk in auth is no longer an officer to call.
+        const subject = subjectOf(finished.claims);
+        if (subject !== null) await forgetStaff(c.env.db, subject);
+        return c.redirect("/desk?signIn=noAccess", 302);
+      }
       const token = await signInStaff(c.env.db, c.env.clock, account);
       setCookie(c, staffCookieName(secure), token, {
         httpOnly: true,

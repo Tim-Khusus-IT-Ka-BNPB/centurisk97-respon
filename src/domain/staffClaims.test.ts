@@ -1,5 +1,5 @@
 import { describe, expect, test } from "vitest";
-import { staffAccountOf } from "./staffClaims";
+import { staffAccountOf, subjectOf } from "./staffClaims";
 
 const organization = (kind: string, level: string, region: string | null, name = "Organisasi Uji") => ({
   id: "0b6f1c6e-0000-4000-8000-000000000001",
@@ -98,5 +98,16 @@ describe("the desk account claims make", () => {
     expect(staffAccountOf({ ...claimsWith(pusdalops), claims_version: 2 })).toBeNull();
     expect(staffAccountOf({ ...claimsWith(pusdalops), sub: "" })).toBeNull();
     expect(staffAccountOf(null)).toBeNull();
+  });
+});
+
+describe("who claims are about", () => {
+  test("anyone the claims name, with or without a desk", () => {
+    expect(subjectOf(claimsWith())).toBe("5f0c2b1e-7d4a-4c1e-9a53-0d6f1e2a3b4c");
+    expect(subjectOf({ sub: "a".repeat(64) })).toBe("a".repeat(64));
+  });
+
+  test("no one, when the claims name no one or not as auth does", () => {
+    for (const raw of [{ sub: "" }, { sub: "a".repeat(65) }, { sub: 7 }, {}, null]) expect(subjectOf(raw)).toBeNull();
   });
 });

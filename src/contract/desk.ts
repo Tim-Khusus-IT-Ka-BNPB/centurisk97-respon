@@ -167,7 +167,8 @@ export const deskTrackingLinkSchema = z.object({ link: z.string() });
 
 export type DeskTrackingLink = z.infer<typeof deskTrackingLinkSchema>;
 
-// The region's BPBD officers as BNPB sees them on a report: numbers masked until opened.
+// The region's BPBD officers as BNPB sees them on a report: numbers masked until opened, and when
+// each last signed in (null where sign-in is seeded).
 const deskOfficerSchema = z.object({
   profileId: z.string(),
   name: z.string(),
@@ -175,6 +176,7 @@ const deskOfficerSchema = z.object({
   agency: z.string(),
   level: z.enum(["regency", "province"]),
   masked: z.string(),
+  signedInAt: timeSchema.nullable(),
 });
 
 export const deskReportSchema = queueItemSchema.extend({
