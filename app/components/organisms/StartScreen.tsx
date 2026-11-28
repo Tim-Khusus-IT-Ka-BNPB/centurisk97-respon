@@ -16,7 +16,8 @@ import { Panel } from "../molecules/Panel";
 import { HiddenValues, IdentityForm } from "./IdentityForm";
 
 type Profile = MeResponse["knownReporters"][number];
-const EMPTY: IdentityValues = { role: "", name: "", number: "", officerRegency: "", officerPosition: "" };
+// Most who report are residents, so a new reporter starts as one; an officer changes it.
+const EMPTY: IdentityValues = { role: "citizen", name: "", number: "", officerRegency: "", officerPosition: "" };
 
 const roleKey = (role: Profile["role"]) =>
   role === "claimedOfficer" ? "identity.role.officer" : "identity.role.citizen";
@@ -252,10 +253,25 @@ export function StartAside() {
   );
 }
 
-// The page's name for a screen reader; its panel says the step.
+// The page's name for a screen reader; its panel says the step. A phone has no room for the steps
+// beside the page, so it shows which of them this is above it.
 export function StartHeading() {
   const t = useText();
-  return <h1 className="sr-only">{t("home.report")}</h1>;
+  return (
+    <>
+      <h1 className="sr-only">{t("home.report")}</h1>
+      <div className="flex flex-col gap-2 lg:hidden">
+        <p className="text-meta font-semibold text-muted">
+          {t("start.step", { n: 1, total: ABOUT_STEPS.length, title: "about.step1.title" })}
+        </p>
+        <ol aria-hidden="true" className="grid grid-flow-col gap-1">
+          {ABOUT_STEPS.map((step) => (
+            <li key={step} className={cn("h-1.5 rounded-full", step === 1 ? "bg-primary" : "bg-sunken")} />
+          ))}
+        </ol>
+      </div>
+    </>
+  );
 }
 
 // The start step: who reports, then consent. Every view is a page of its own with no script.

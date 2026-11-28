@@ -8,6 +8,27 @@ export function Input({ className, ...props }: InputHTMLAttributes<HTMLInputElem
   return <input type="text" {...props} className={cn(box, "min-h-target", className)} />;
 }
 
+// An input led by a fixed part of the value, as +62 before a WhatsApp number. The part is named to a
+// screen reader through its id, which the caller adds to the input's description.
+export function PrefixedInput({
+  prefix,
+  prefixId,
+  className,
+  ...props
+}: InputHTMLAttributes<HTMLInputElement> & { readonly prefix: string; readonly prefixId: string }) {
+  return (
+    <div className="flex min-w-0">
+      <span
+        id={prefixId}
+        className="flex shrink-0 items-center rounded-s-control border border-e-0 border-control bg-sunken px-3 font-semibold text-ink tabular-nums"
+      >
+        {prefix}
+      </span>
+      <Input {...props} className={cn("rounded-s-none", className)} />
+    </div>
+  );
+}
+
 export function Select({ className, ...props }: SelectHTMLAttributes<HTMLSelectElement>) {
   return <select {...props} className={cn(box, "min-h-target", className)} />;
 }

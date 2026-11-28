@@ -2,10 +2,12 @@ import { describe, expect, test } from "vitest";
 import { maskNumber, normaliseNumber, readBackNumber } from "./phoneNumber";
 
 describe("typed WhatsApp number", () => {
-  test("08, 62 and +62 forms store the same number", () => {
+  test("08, 62, +62 and the 8 alone after the form's +62 store the same number", () => {
     expect(normaliseNumber("080000000001")).toBe("+6280000000001");
     expect(normaliseNumber("6280000000001")).toBe("+6280000000001");
     expect(normaliseNumber("+6280000000001")).toBe("+6280000000001");
+    expect(normaliseNumber("800 0000 0001")).toBe("+6280000000001");
+    expect(normaliseNumber("80000000")).toBeNull();
   });
 
   test("spaces, dots, hyphens and brackets are ignored", () => {
@@ -29,9 +31,9 @@ describe("typed WhatsApp number", () => {
     expect(normaliseNumber("+62180000000001")).toBeNull();
   });
 
-  test("no prefix, a wrong prefix or letters are refused", () => {
-    expect(normaliseNumber("80000000001")).toBeNull();
+  test("a wrong prefix or letters are refused", () => {
     expect(normaliseNumber("1280000000001")).toBeNull();
+    expect(normaliseNumber("+80000000001")).toBeNull();
     expect(normaliseNumber(" +080000000001")).toBeNull();
     expect(normaliseNumber("+080000000001")).toBeNull();
     expect(normaliseNumber("+6380000000001")).toBeNull();

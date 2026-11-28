@@ -37,6 +37,23 @@ test("the number is read back as stored, and Ganti returns to the form with ever
   await expect(page.getByLabel("Warga")).toBeChecked();
 });
 
+test("a new reporter starts as Warga, opens at the top, and types the number after the +62 shown", async ({ page }) => {
+  await page.goto("/");
+  await page.getByRole("link", { name: "Lapor kejadian" }).click();
+  await expect(page.getByRole("heading", { name: "Data pelapor" })).toBeVisible();
+  // The page opens at its top with its heading focused; a phone that scrolled the home to reach the
+  // button is taken back up (smoothly, so it is waited for).
+  await expect.poll(() => page.evaluate(() => window.scrollY)).toBe(0);
+  await expect(page.getByRole("heading", { name: "Data pelapor" })).toBeFocused();
+  await expect(page.locator("header")).toBeInViewport();
+  await expect(page.getByLabel("Warga")).toBeChecked();
+  await page.getByLabel("Nama").fill("Uji Satu");
+  await page.getByLabel("WhatsApp").fill("800 0000 0001");
+  await page.getByRole("button", { name: "Setuju", exact: true }).click();
+  await expect(page.getByText("+62 800 0000 0001", { exact: true })).toBeVisible();
+  await noSidewaysScroll(page);
+});
+
 test("a decline asks first, its way back keeps the values, and the decline itself shows 112", async ({ page }) => {
   await page.goto("/report");
   await page.getByLabel("Warga").check();

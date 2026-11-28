@@ -6,7 +6,7 @@ import type { StartActionData, StartPageData } from "../../lib/startTypes";
 import { ALL_TEXTS, never, renderPage } from "../../testing/render";
 import { HomeHero } from "./HomeHero";
 import { HomeScreen } from "./HomeScreen";
-import { StartScreen } from "./StartScreen";
+import { StartHeading, StartScreen } from "./StartScreen";
 
 const profile = SAMPLE_ME.knownReporters[0] as (typeof SAMPLE_ME.knownReporters)[number];
 const withDraft = {
@@ -138,6 +138,15 @@ describe("identity and consent", () => {
     for (const name of ["role", "name", "number", "officerRegency", "officerPosition"])
       expect(document.querySelector(`[name="${name}"]`)).toBeTruthy();
     expect(screen.getByLabelText("WhatsApp").getAttribute("autocomplete")).toBe("tel-national");
+    // A new reporter is greeted by Sigap, starts as a resident, and types the number after the +62 shown.
+    expect(screen.getByText("Halo, saya Sigap")).toBeTruthy();
+    expect((screen.getByLabelText("Warga") as HTMLInputElement).checked).toBe(true);
+    expect((screen.getByLabelText("Petugas BPBD") as HTMLInputElement).checked).toBe(false);
+    const number = screen.getByLabelText("WhatsApp");
+    expect([number.getAttribute("placeholder"), number.getAttribute("inputmode")]).toEqual(["8xx xxxx xxxx", "tel"]);
+    expect(number.getAttribute("aria-describedby")).toBe("number-prefix");
+    expect(document.getElementById("number-prefix")?.textContent).toBe("+62");
+    expect(screen.getByLabelText("Nama").getAttribute("placeholder")).toBe("Nama lengkap");
     expect(screen.getByRole("button", { name: "Setuju" }).getAttribute("value")).toBe("readBack");
     expect(screen.getByRole("button", { name: "Tidak setuju" }).getAttribute("value")).toBe("decline");
     fireEvent.click(screen.getByText("Baca kebijakan privasi lengkap"));
@@ -174,6 +183,18 @@ describe("identity and consent", () => {
     expect(screen.getByText("Jabatan belum diisi. Isi Jabatan untuk melanjutkan.")).toBeTruthy();
     expect((screen.getByLabelText("BPBD") as HTMLInputElement).value).toBe("Kabupaten Contoh");
     expect((screen.getByLabelText("Petugas BPBD") as HTMLInputElement).checked).toBe(true);
+  });
+
+  test("a refused number keeps the +62 in what describes it, with its error after", async () => {
+    const refused: ErrorEnvelope = {
+      ...SAMPLE_FIELD_ERROR,
+      fields: [{ fieldId: "number", copyKey: "fieldError.required", params: { label: "identity.number.label" } }],
+    };
+    draw(page({ me: null, view: "form" }), acted({ envelope: refused, values: { ...EMPTY, role: "citizen" } }));
+    const number = await screen.findByLabelText("WhatsApp");
+    expect(number.getAttribute("aria-describedby")).toBe("number-prefix number-error");
+    // The officer's fields keep their example as a hint.
+    expect(screen.getByLabelText("BPBD").getAttribute("aria-describedby")).toBe("officerRegency-hint");
   });
 
   test("a missing role ties its error to the radios; a service fault and a device limit are named", async () => {
@@ -228,6 +249,7 @@ describe("identity and consent", () => {
   test("changing a known profile keeps its name and role and posts the change", async () => {
     draw(page({ view: "form", profileId: profile.profileId, editing: true }));
     expect(((await screen.findByLabelText("Nama")) as HTMLInputElement).value).toBe("Uji Satu");
+    expect(screen.queryByText("Halo, saya Sigap")).toBeNull();
     expect(screen.queryByRole("button", { name: "Tidak setuju" })).toBeNull();
     expect(screen.getByRole("button", { name: "Setuju" }).getAttribute("value")).toBe("useProfile");
     expect((document.querySelector('input[name="editProfile"]') as HTMLInputElement).value).toBe("1");
@@ -267,6 +289,16 @@ describe("identity and consent", () => {
     draw(page({ view: "form" }), acted({ view: "declined" }));
     expect(await screen.findByRole("heading", { name: "Laporan tidak dibuat" })).toBeTruthy();
     expect(screen.getByRole("link", { name: "Telepon 112" })).toBeTruthy();
+  });
+});
+
+describe("the start's heading", () => {
+  test("names the page for a screen reader and, on a phone, shows the first of six steps", async () => {
+    const view = renderPage(<StartHeading />, { path: "/report" });
+    expect(await screen.findByRole("heading", { level: 1, name: "Lapor kejadian" })).toBeTruthy();
+    expect(screen.getByText("Langkah 1 dari 6: Kenalkan diri").closest("div")?.className).toContain("lg:hidden");
+    const bars = [...view.container.querySelectorAll("ol li")];
+    expect(bars.map((bar) => bar.className.includes("bg-primary"))).toEqual([true, false, false, false, false, false]);
   });
 });
 

@@ -3,5 +3,6 @@
   "start.staff.title": "Anda masuk sebagai petugas meja",
   "start.staff.body": "Akun meja dipakai untuk menangani laporan, bukan untuk melapor. Keluar dari meja dulu, lalu buat laporan dengan nomor WhatsApp Anda.",
   "start.staff.signOut": "Keluar dari meja dan lapor",
-  "start.staff.desk": "Kembali ke meja"
+  "start.staff.desk": "Kembali ke meja",
+  "start.step": "Langkah {n} dari {total}: {title}"
 }
