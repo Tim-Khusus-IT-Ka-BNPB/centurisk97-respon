@@ -1,13 +1,11 @@
-import { provinceNames } from "../adapters/postgres/places";
 import { markProof, publicProofKey, publicProofs, type ShownRow, shownReports } from "../adapters/postgres/publicFeed";
 import { referenceFile } from "../adapters/postgres/reports";
-import type { Feed, FeedEntry, Official, Watch } from "../contract/publicFeed";
+import type { Feed, FeedEntry, Watch } from "../contract/publicFeed";
 import type { Cluster } from "../domain/clusters";
 import { type FeedPeriod, feedSince } from "../domain/feedPeriod";
 import type { EventTimeValue, PlaceValue } from "../domain/fieldState";
 import { checkForecastFile, warningsOf } from "../domain/forecast";
 import { impactOf } from "../domain/impact";
-import { checkOfficialEventFile, officialEvents } from "../domain/officialEvents";
 import { checkVolcanoFile, volcanoSummary } from "../domain/volcano";
 import { hmacKey } from "../platform/keys";
 import type { StaffPrincipal } from "../ports/identity";
@@ -189,38 +187,5 @@ export async function watchView(bindings: ServiceBindings, address: string): Pro
       volcanoes:
         volcanoes === null ? null : { ...volcanoSummary(volcanoes), raised: [...volcanoSummary(volcanoes).raised] },
     },
-  };
-}
-
-const DAY_MS = 86_400_000;
-
-export type OfficialAnswer =
-  | { readonly kind: "ok"; readonly official: Official }
-  | { readonly kind: "limit"; readonly refusal: LimitRefusal };
-
-// BNPB's daily report on the Alun-alun, as upstream gathered it with its news (row 26).
-export async function officialView(bindings: ServiceBindings, address: string): Promise<OfficialAnswer> {
-  const refusal = await checkLimits(bindings, [["address.feed", { kind: "address", bucket: address }]]);
-  if (refusal) return { kind: "limit", refusal };
-  const [file, provinces] = await Promise.all([
-    referenceFile(bindings.db, "officialEvents").then(checkOfficialEventFile),
-    provinceNames(bindings.db),
-  ]);
-  return {
-    kind: "ok",
-    official:
-      file === null
-        ? { day: null, builtAt: null, stale: false, events: [] }
-        : {
-            day: file.hari,
-            builtAt: new Date(Date.parse(file.dibuat)).toISOString(),
-            stale: bindings.clock.now() - Date.parse(file.dibuat) > DAY_MS,
-            events: officialEvents(file).map((one) => ({
-              ...one,
-              provinceName: provinces.get(one.provinceCode) ?? null,
-              hazardType: one.hazardType as Official["events"][number]["hazardType"],
-              news: [...one.news],
-            })),
-          },
   };
 }

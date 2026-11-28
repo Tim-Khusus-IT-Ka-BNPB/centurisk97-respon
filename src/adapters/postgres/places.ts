@@ -251,13 +251,3 @@ export async function searchArea(
   );
   return hits(found);
 }
-
-// Each province's name by its code, in the active snapshot.
-export async function provinceNames(db: Database): Promise<Map<string, string>> {
-  const found = await rows<{ code: string; name: string }>(
-    db,
-    sql`select distinct r.province_code as code, r.province_name as name from place_regency r
-      join place_snapshot s on s.id = r.snapshot_id and s.active`,
-  );
-  return new Map(found.map((one) => [one.code, one.name]));
-}
