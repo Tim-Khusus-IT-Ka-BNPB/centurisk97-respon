@@ -1,7 +1,10 @@
 import { fireEvent, screen, waitFor, within } from "@testing-library/react";
+import { renderToString } from "react-dom/server";
+import { createRoutesStub } from "react-router";
 import { afterEach, describe, expect, test, vi } from "vitest";
+import { TextContext } from "../../lib/text";
 import { OUTLOOK } from "../../testing/outlook";
-import { never, renderPage } from "../../testing/render";
+import { never, renderPage, text } from "../../testing/render";
 import { analysisOf, type InfoLoad, InfoScreen } from "./InfoScreen";
 
 const draw = (load: InfoLoad) => renderPage(<InfoScreen load={load} />, { path: "/info" });
@@ -107,6 +110,13 @@ describe("the regional outlook", () => {
   });
 });
 
+// The server's render of the page: what a phone with no script receives.
+const Served = () => (
+  <TextContext.Provider value={text}>
+    <InfoScreen load={{ kind: "start", query: "" }} />
+  </TextContext.Provider>
+);
+
 describe("the phone's place opens its regency", () => {
   afterEach(() => vi.unstubAllGlobals());
   const geolocation = (outcome: { readonly lat: number } | { readonly code: number }) =>
@@ -157,6 +167,14 @@ describe("the phone's place opens its regency", () => {
         .map((one) => one.textContent)
         .join(" "),
     ).toMatch(/\S/);
+  });
+
+  test("with no script the page offers the search alone", () => {
+    const Stub = createRoutesStub([{ path: "/info", Component: Served }]);
+    const page = document.createElement("div");
+    page.innerHTML = renderToString(<Stub initialEntries={["/info"]} />);
+    expect(page.textContent).not.toContain("Pakai lokasi saat ini");
+    expect(page.querySelector('input[name="q"]')).not.toBeNull();
   });
 
   test("a regency's own page offers no reading", async () => {
