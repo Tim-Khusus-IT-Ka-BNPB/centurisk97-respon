@@ -30,7 +30,7 @@ try {
   );
 } catch (error: unknown) {
   if (error instanceof ReferenceFileRefused) console.error(error.message);
-  else console.error(`reference:import-file failed, ${sqlState(error) ?? "unknown"}`);
+  else console.error(`reference:import-file failed, ${sqlState(error) ?? (error instanceof Error ? error.name : "unknown")}`);
   process.exitCode = 1;
 } finally {
   await close();

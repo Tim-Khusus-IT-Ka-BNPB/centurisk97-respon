@@ -26,7 +26,7 @@ try {
 } catch (error: unknown) {
   if (error instanceof PlaceFileRefused) console.error(error.message);
   else {
-    console.error(`reference:import failed, ${sqlState(error) ?? "unknown"}`);
+    console.error(`reference:import failed, ${sqlState(error) ?? (error instanceof Error ? error.name : "unknown")}`);
   }
   process.exitCode = 1;
 } finally {

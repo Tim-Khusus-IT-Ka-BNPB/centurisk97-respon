@@ -236,6 +236,8 @@ describe("platform helpers", () => {
   test("a driver error is reduced to its SQL state, anything else to nothing", () => {
     const unique = Object.assign(new Error("duplicate key value (number)=(+62...)"), { code: "23505" });
     expect(sqlState(unique)).toBe("23505");
+    expect(sqlState(new Error("Failed query", { cause: unique }))).toBe("23505");
+    expect(sqlState(new Error("Failed query", { cause: new Error("plain") }))).toBeNull();
     expect(sqlState(Object.assign(new Error("write EPIPE"), { code: "EPIPE" }))).toBeNull();
     expect(sqlState(new Error("connect ECONNREFUSED"))).toBeNull();
     expect(sqlState({ code: 5 })).toBeNull();

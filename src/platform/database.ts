@@ -166,6 +166,12 @@ export async function decide<T>(attempt: () => Promise<T | null>): Promise<T> {
 
 // A driver error is reduced to its SQLSTATE; its message may hold values and is never kept.
 export function sqlState(error: unknown): string | null {
+  // Drizzle's own queries (the migrations) wrap the driver's error as their cause.
+  const cause = (error as { cause?: unknown } | null)?.cause;
+  if (cause !== undefined && cause !== error) {
+    const inner = sqlState(cause);
+    if (inner !== null) return inner;
+  }
   const code = (error as { code?: unknown } | null)?.code;
   // Node's own codes (EPIPE) have no digit; every SQLSTATE has one.
   return typeof code === "string" && /^[0-9A-Z]{5}$/.test(code) && /\d/.test(code) ? code : null;
