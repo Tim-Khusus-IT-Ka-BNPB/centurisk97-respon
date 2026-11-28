@@ -2,12 +2,30 @@
 export const HELP_GROUPS = [
   {
     group: "reporting",
-    items: ["prepare", "emergency", "placeRequired", "media", "missing", "language", "official", "words", "unsent"],
+    items: [
+      "prepare",
+      "emergency",
+      "sigap",
+      "storyLanguage",
+      "correct",
+      "placeRequired",
+      "noVillageName",
+      "forOthers",
+      "media",
+      "missing",
+      "language",
+      "official",
+      "free",
+      "whyNumber",
+      "words",
+      "unsent",
+    ],
   },
-  { group: "terms", items: ["displaced", "familyCard", "houseDamage", "shakingScale"] },
+  { group: "after", items: ["who", "track", "addNews", "contact", "notActioned"] },
+  { group: "terms", items: ["displaced", "familyCard", "houseDamage", "shakingScale", "levels", "agencies"] },
   { group: "status", items: ["meaning", "missing", "numbers"] },
   { group: "info", items: ["outlook", "warnings"] },
-  { group: "privacy", items: ["who", "remove"] },
+  { group: "privacy", items: ["who", "location", "remove"] },
 ] as const;
 
 // In the order UU 27/2022 asks a notice to tell it (upstream, 25 Nov).
