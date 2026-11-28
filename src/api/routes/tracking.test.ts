@@ -3,6 +3,7 @@ import type { Card } from "../../contract/card";
 import type { DraftBody } from "../../contract/draft";
 import { trackingSchema } from "../../contract/tracking";
 import { windowStart } from "../../domain/limits";
+import { PRIVACY } from "../../domain/privacy";
 import { addressBucket } from "../../platform/address";
 import { type Database, run, sql } from "../../platform/database";
 import { hmacKey } from "../../platform/keys";
@@ -53,7 +54,7 @@ async function consent(phone: Phone, number: string, name = "Uji Satu"): Promise
     role: "citizen",
     name,
     number,
-    privacyVersion: 2,
+    privacyVersion: PRIVACY.version,
     agree: true,
   });
   if (answer.status === 201) return answer.draft;

@@ -2,6 +2,7 @@ import { beforeAll, describe, expect, test } from "vitest";
 import type { DraftBody } from "../../contract/draft";
 import { messageOf } from "../../domain/modelMessage";
 import type { ModelRequest } from "../../domain/modelRequest";
+import { PRIVACY } from "../../domain/privacy";
 import { hmacKey } from "../../platform/keys";
 import type { ModelPort } from "../../ports/model";
 import { browser, freshNumber, manualClock, query, testBindings } from "../../testing/api";
@@ -54,7 +55,7 @@ async function start(w: ReturnType<typeof world>, number = freshNumber().typed, 
     role: "citizen",
     name: "Uji Satu",
     number,
-    privacyVersion: 2,
+    privacyVersion: PRIVACY.version,
     agree: true,
   });
   return { phone, draft: answer.draft };

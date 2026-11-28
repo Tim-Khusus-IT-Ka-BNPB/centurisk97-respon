@@ -1,4 +1,5 @@
 import { describe, expect, test } from "vitest";
+import { PRIVACY } from "../domain/privacy";
 import { browser, freshNumber, manualClock, query, TEST_ORIGIN, testBindings } from "../testing/api";
 import { turn } from "../testing/walk";
 import { api } from "./app";
@@ -15,7 +16,7 @@ async function reporter() {
     role: "citizen",
     name: "Uji Satu",
     number: freshNumber().typed,
-    privacyVersion: 2,
+    privacyVersion: PRIVACY.version,
     agree: true,
   });
   const cookie = [...phone.cookies].map(([name, value]) => `${name}=${value}`).join("; ");

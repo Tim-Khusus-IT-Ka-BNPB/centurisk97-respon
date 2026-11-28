@@ -1,6 +1,7 @@
 import { describe, expect, test, vi } from "vitest";
 import { SEEDED_SESSIONS } from "../../../db/synthetic/reporters";
 import { windowStart } from "../../domain/limits";
+import { PRIVACY } from "../../domain/privacy";
 import { VIDEO } from "../../domain/video";
 import { hmacKey } from "../../platform/keys";
 import { sweepVideoUploads } from "../../services/videos";
@@ -29,7 +30,7 @@ async function atPhotos() {
     role: "citizen",
     name: "Uji Video",
     number: freshNumber().typed,
-    privacyVersion: 2,
+    privacyVersion: PRIVACY.version,
     agree: true,
   });
   const { draft } = await walkTo(phone, started.draft, VILLAGE, { tick, stopAt: (one) => one.card.kind === "photos" });

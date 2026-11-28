@@ -1,5 +1,6 @@
 import { beforeAll, describe, expect, test } from "vitest";
 import { api } from "../api/app";
+import { PRIVACY } from "../domain/privacy";
 import { RETENTION } from "../domain/retention";
 import { browser, freshNumber, manualClock, query, testBindings, testDatabase } from "../testing/api";
 import { turn } from "../testing/walk";
@@ -27,7 +28,7 @@ async function draftWithTurn() {
     role: "citizen",
     name: "Uji Satu",
     number: freshNumber().typed,
-    privacyVersion: 2,
+    privacyVersion: PRIVACY.version,
     agree: true,
   });
   const answered = await phone.call(

@@ -1,5 +1,6 @@
 import { readFileSync } from "node:fs";
 import { type APIRequestContext, type Browser, expect, type Page, test } from "@playwright/test";
+import { PRIVACY } from "../src/domain/privacy.ts";
 import { exifDateTime, withExif } from "../src/testing/jpegs.ts";
 import { closeOthers, noSidewaysScroll, ownAddress, syntheticNumber } from "./support.ts";
 
@@ -44,7 +45,7 @@ async function sendReport(
     role: "citizen",
     name: "Uji Satu",
     number: syntheticNumber(),
-    privacyVersion: 2,
+    privacyVersion: PRIVACY.version,
     agree: true,
   });
   const answer = (card: Card): Record<string, unknown> => {

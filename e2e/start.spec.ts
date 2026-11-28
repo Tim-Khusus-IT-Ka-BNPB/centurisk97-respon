@@ -7,7 +7,7 @@ test("a missing position for an officer is named under the field, tied to it, wi
   await page.goto("/report");
   await page.getByLabel("Petugas BPBD").check();
   await page.getByLabel("Nama").fill("Uji Satu");
-  await page.getByLabel("WhatsApp").fill(syntheticNumber());
+  await page.getByLabel("Nomor HP").fill(syntheticNumber());
   await page.getByLabel("BPBD", { exact: true }).fill("Kabupaten Contoh");
   await page.getByText("Baca kebijakan privasi lengkap").click();
   await page.getByRole("button", { name: "Setuju", exact: true }).click();
@@ -27,13 +27,13 @@ test("the number is read back as stored, and Ganti returns to the form with ever
   await page.goto("/report");
   await page.getByLabel("Warga").check();
   await page.getByLabel("Nama").fill("Uji Satu");
-  await page.getByLabel("WhatsApp").fill("6280000000001");
+  await page.getByLabel("Nomor HP").fill("6280000000001");
   await page.getByRole("button", { name: "Setuju", exact: true }).click();
   await expect(page.getByText("Nomor ini yang akan dicatat. Benar?")).toBeVisible();
   await expect(page.getByText("+62 800 0000 0001", { exact: true })).toBeVisible();
   await page.getByRole("button", { name: "Ganti", exact: true }).click();
-  await expect(page.getByLabel("WhatsApp")).toHaveValue("6280000000001");
-  await expect(page.getByLabel("WhatsApp")).toBeFocused();
+  await expect(page.getByLabel("Nomor HP")).toHaveValue("6280000000001");
+  await expect(page.getByLabel("Nomor HP")).toBeFocused();
   await expect(page.getByLabel("Warga")).toBeChecked();
 });
 
@@ -48,7 +48,7 @@ test("a new reporter starts as Warga, opens at the top, and types the number aft
   await expect(page.locator("header")).toBeInViewport();
   await expect(page.getByLabel("Warga")).toBeChecked();
   await page.getByLabel("Nama").fill("Uji Satu");
-  await page.getByLabel("WhatsApp").fill("800 0000 0001");
+  await page.getByLabel("Nomor HP").fill("800 0000 0001");
   await page.getByRole("button", { name: "Setuju", exact: true }).click();
   await expect(page.getByText("+62 800 0000 0001", { exact: true })).toBeVisible();
   await noSidewaysScroll(page);

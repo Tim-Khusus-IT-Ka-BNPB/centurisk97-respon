@@ -1,6 +1,7 @@
 import { describe, expect, test } from "vitest";
 import type { DraftBody } from "../../contract/draft";
 import { readExif } from "../../domain/jpeg";
+import { PRIVACY } from "../../domain/privacy";
 import type { Database } from "../../platform/database";
 import { runSweep } from "../../services/sweep";
 import {
@@ -44,7 +45,7 @@ async function atPhotos(number = freshNumber().typed, phone = browser(fetchApi),
     role: "citizen",
     name: "Uji Satu",
     number,
-    privacyVersion: 2,
+    privacyVersion: PRIVACY.version,
     agree: true,
   });
   const { draft } = await walkTo(phone, started.draft, village, {
@@ -237,7 +238,13 @@ describe("photos", () => {
     expect(readExif(own.bytes)).toBeNull();
     expect((await browser(fetchApi).file(path)).status).toBe(404);
     const other = browser(fetchApi);
-    await other.call("POST", "/consent", { role: "citizen", name: "Uji Satu", number, privacyVersion: 2, agree: true });
+    await other.call("POST", "/consent", {
+      role: "citizen",
+      name: "Uji Satu",
+      number,
+      privacyVersion: PRIVACY.version,
+      agree: true,
+    });
     expect((await other.file(path)).status).toBe(404);
     expect((await phone.file(`/drafts/${draft.draftId}/photos/${crypto.randomUUID()}`)).status).toBe(404);
     expect((await phone.file(`/drafts/${draft.draftId}/photos/not-an-id`)).status).toBe(400);
@@ -277,7 +284,7 @@ describe("photos", () => {
       role: "citizen",
       name: "Uji Dua",
       number: freshNumber().typed,
-      privacyVersion: 2,
+      privacyVersion: PRIVACY.version,
       agree: true,
     });
     expect((await takeBack(stranger, kept, wrong)).status).toBe(404);
@@ -365,7 +372,7 @@ describe("photos", () => {
       role: "citizen",
       name: "Uji Dua",
       number: freshNumber().typed,
-      privacyVersion: 2,
+      privacyVersion: PRIVACY.version,
       agree: true,
     });
     expect(

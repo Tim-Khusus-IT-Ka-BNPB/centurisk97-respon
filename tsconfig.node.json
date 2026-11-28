@@ -25,6 +25,7 @@
     "src/copy/translated.ts",
     "src/testing/jpegs.ts",
     "src/domain/modelMessage.ts",
+    "src/domain/privacy.ts",
     "vite.config.ts",
     "vite.server.config.ts",
     "vitest.config.ts",

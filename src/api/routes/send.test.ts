@@ -1,5 +1,6 @@
 import { beforeAll, describe, expect, test } from "vitest";
 import type { DraftBody } from "../../contract/draft";
+import { PRIVACY } from "../../domain/privacy";
 import { browser, freshNumber, manualClock, query, testBindings, unusedDay } from "../../testing/api";
 import { walkTo } from "../../testing/walk";
 import { api } from "../app";
@@ -25,7 +26,7 @@ async function atSummary(w: ReturnType<typeof world>, phone = browser(w.fetchApi
     role: "citizen",
     name: "Uji Satu",
     number,
-    privacyVersion: 2,
+    privacyVersion: PRIVACY.version,
     agree: true,
   });
   const { draft } = await walkTo(phone, start.draft, village, { tick: () => w.clock.advance(4000) });
@@ -67,7 +68,7 @@ describe("send", () => {
       where r.draft_id = ${draft.draftId}`;
     expect(version).toEqual({
       reporter_name: "Uji Satu",
-      privacy_version: 2,
+      privacy_version: PRIVACY.version,
       complete_percent: 100,
       number_unverified: true,
     });
@@ -139,7 +140,7 @@ describe("send", () => {
       role: "citizen",
       name: "Uji Satu",
       number: freshNumber().typed,
-      privacyVersion: 2,
+      privacyVersion: PRIVACY.version,
       agree: true,
     });
     expect(
@@ -233,7 +234,7 @@ describe("the numbers near a sent report", () => {
         role: "citizen",
         name: "Uji Satu",
         number: freshNumber().typed,
-        privacyVersion: 2,
+        privacyVersion: PRIVACY.version,
         agree: true,
       });
       const { draft } = await walkTo(phone, start.draft, code, { tick: () => w.clock.advance(4000) });

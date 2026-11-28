@@ -4,6 +4,7 @@ import { deskReportSchema } from "../../contract/desk";
 import type { DraftBody } from "../../contract/draft";
 import { ownReportDetailSchema } from "../../contract/ownReport";
 import { LIMITS } from "../../domain/limits";
+import { PRIVACY } from "../../domain/privacy";
 import { browser, freshNumber, manualClock, query, testBindings, testBucket, testDatabase } from "../../testing/api";
 import { docxText, pdfText, unzipped } from "../../testing/documents";
 import { exifDateTime } from "../../testing/jpegs";
@@ -186,7 +187,7 @@ describe("a report as a file", () => {
       number: freshNumber().typed,
       officerRegency: "Aceh Utara",
       officerPosition: "Kepala Seksi Rahasia",
-      privacyVersion: 2,
+      privacyVersion: PRIVACY.version,
       agree: true,
       emergency: true,
     });

@@ -41,7 +41,7 @@ async function startEmergency(page: Page): Promise<void> {
   await expect(page.getByRole("heading", { level: 1, name: "Lapor darurat" })).toBeVisible();
   await page.getByLabel("Warga").check();
   await page.getByLabel("Nama").fill("Uji Satu");
-  await page.getByLabel("WhatsApp").fill(syntheticNumber());
+  await page.getByLabel("Nomor HP").fill(syntheticNumber());
   await page.getByRole("button", { name: "Setuju", exact: true }).click();
   await page.getByRole("button", { name: "Ya", exact: true }).click();
   await expect(liveCard(page)).toHaveAttribute("data-card-kind", "placeSearch");

@@ -25,7 +25,7 @@
   "help.status.meaning.q": "Apa arti status laporan?",
   "help.status.meaning.a": "Laporan yang terkirim berstatus Diterima dan mendapat nomor tiket, misalnya LA-231126-01. Simpan nomor itu.",
   "help.privacy.who.q": "Siapa yang bisa membaca laporan saya?",
-  "help.privacy.who.a": "Hanya petugas BNPB dan BPBD yang menangani laporan. Nomor WhatsApp dan foto tidak tampil ke publik. Rincian ada di kebijakan privasi.",
+  "help.privacy.who.a": "Hanya petugas BNPB dan BPBD yang menangani laporan. Nomor HP dan foto tidak tampil ke publik. Rincian ada di kebijakan privasi.",
   "help.privacy.remove.q": "Bagaimana menghapus nomor saya dari perangkat ini?",
   "help.privacy.remove.a": "Saat memilih pelapor, ketuk Hapus dari perangkat ini di samping nomor Anda. Laporan yang belum selesai ikut dibatalkan. Laporan yang sudah terkirim tidak berubah.",
   "help.privacy.fullLink": "Baca kebijakan privasi lengkap",

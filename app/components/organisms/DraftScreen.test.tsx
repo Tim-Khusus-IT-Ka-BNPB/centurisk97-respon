@@ -187,9 +187,7 @@ describe("a draft that cannot be opened", () => {
 
   test("no reporter yet: sign in first, with the way forward", async () => {
     draw(refused("auth.signInFirst", "error.auth.signInFirst"));
-    expect(
-      await screen.findByRole("heading", { level: 1, name: "Masuk dulu dengan nomor WhatsApp Anda." }),
-    ).toBeTruthy();
+    expect(await screen.findByRole("heading", { level: 1, name: "Masuk dulu dengan nomor HP Anda." })).toBeTruthy();
     expect(screen.getByText(/Buka laporan dari perangkat/)).toBeTruthy();
   });
 

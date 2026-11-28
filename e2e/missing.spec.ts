@@ -24,7 +24,7 @@ test("a missing person is reported from the home's door, the desk of the region 
   await expect(page.getByRole("heading", { name: "Data pelapor" })).toBeVisible();
   await page.getByLabel("Warga").check();
   await page.getByLabel("Nama").fill("Uji Pelapor");
-  await page.getByLabel("WhatsApp").fill(number);
+  await page.getByLabel("Nomor HP").fill(number);
   await page.getByRole("button", { name: "Setuju", exact: true }).click();
   await expect(page.getByRole("heading", { name: "Periksa nomor Anda" })).toBeVisible();
   await page.getByRole("button", { name: "Ya", exact: true }).click();

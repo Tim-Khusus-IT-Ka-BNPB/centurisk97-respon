@@ -1,6 +1,7 @@
 import { describe, expect, test } from "vitest";
 import { SEEDED_SESSIONS } from "../../../db/synthetic/reporters";
 import { api } from "../../api/app";
+import { PRIVACY } from "../../domain/privacy";
 import { browser, freshNumber, manualClock, query, testBindings } from "../../testing/api";
 import { seededIdentity } from "./seeded";
 
@@ -15,7 +16,7 @@ describe("device last seen", () => {
       role: "citizen",
       name: "Uji Satu",
       number: freshNumber().typed,
-      privacyVersion: 2,
+      privacyVersion: PRIVACY.version,
       agree: true,
     });
     const seen = async () => {

@@ -1,5 +1,6 @@
 import { describe, expect, test } from "vitest";
 import { SEEDED_SESSIONS } from "../../../db/synthetic/reporters";
+import { PRIVACY } from "../../domain/privacy";
 import { browser, freshAddress, freshNumber, manualClock, query, testBindings } from "../../testing/api";
 import { turn } from "../../testing/walk";
 import { api } from "../app";
@@ -20,7 +21,7 @@ async function start(phone = browser(fetchApi), number = freshNumber().typed) {
     role: "citizen",
     name: "Uji Satu",
     number,
-    privacyVersion: 2,
+    privacyVersion: PRIVACY.version,
     agree: true,
   });
   return { phone, draft: answer.draft };
@@ -33,7 +34,7 @@ describe("who may read a draft", () => {
       role: "citizen",
       name: "Uji Dua",
       number: freshNumber().typed,
-      privacyVersion: 2,
+      privacyVersion: PRIVACY.version,
       agree: true,
     });
     const otherDevice = browser(fetchApi);
@@ -184,7 +185,7 @@ describe("limits", () => {
       role: "citizen",
       name: "Uji Satu",
       number: freshNumber().typed,
-      privacyVersion: 2,
+      privacyVersion: PRIVACY.version,
       agree: true,
     });
     const refused = await fetchApi(new Request("http://localhost/api/consent", { method: "POST", headers, body }));

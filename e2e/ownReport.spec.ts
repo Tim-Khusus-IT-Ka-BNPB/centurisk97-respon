@@ -1,5 +1,6 @@
 import { readFileSync } from "node:fs";
 import { type Browser, type Download, expect, type Page, test } from "@playwright/test";
+import { PRIVACY } from "../src/domain/privacy.ts";
 import { closeOthers, liveCard, noSidewaysScroll, ownAddress, paced, syntheticNumber } from "./support.ts";
 
 const DESK_CODE = "seeded-session-desk-officer-local-only";
@@ -27,7 +28,7 @@ async function sendEmergency(page: Page, baseURL: string): Promise<string> {
     role: "citizen",
     name: "Uji Satu",
     number: syntheticNumber(),
-    privacyVersion: 2,
+    privacyVersion: PRIVACY.version,
     agree: true,
     emergency: true,
   });

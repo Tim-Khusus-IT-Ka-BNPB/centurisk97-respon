@@ -217,7 +217,7 @@ describe("the start step after review", () => {
       <StartScreen page={startPage({ me: null, view: "form" })} acted={acted({ values, focusNumber: true })} />,
       { path: "/report" },
     );
-    const number = await screen.findByLabelText("WhatsApp");
+    const number = await screen.findByLabelText("Nomor HP");
     await waitFor(() => expect(document.activeElement).toBe(number));
   });
 

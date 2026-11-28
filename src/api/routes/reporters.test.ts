@@ -1,5 +1,6 @@
 import { describe, expect, test } from "vitest";
 import { SEEDED_SESSIONS } from "../../../db/synthetic/reporters";
+import { PRIVACY } from "../../domain/privacy";
 import { hmacKey } from "../../platform/keys";
 import { browser, freshAddress, freshNumber, query, testBindings } from "../../testing/api";
 import { api } from "../app";
@@ -11,7 +12,7 @@ const citizen = (number: string, name = "Uji Satu") => ({
   role: "citizen",
   name,
   number,
-  privacyVersion: 2,
+  privacyVersion: PRIVACY.version,
   agree: true,
 });
 
@@ -44,7 +45,7 @@ describe("consent", () => {
     const [consent] = await query<{ privacy_version: number; agreed_at: string }>`
       select c.privacy_version, c.agreed_at from reporter_consent c join reporter_profile p on p.id = c.profile_id
       join report_draft d on d.profile_id = p.id where d.id = ${answer.draft.draftId}`;
-    expect(consent?.privacy_version).toBe(2);
+    expect(consent?.privacy_version).toBe(PRIVACY.version);
     expect(Date.parse(consent?.agreed_at as string)).toBeGreaterThanOrEqual(before - 1000);
   });
 
@@ -99,7 +100,7 @@ describe("consent", () => {
       name: "Uji 123",
       number: number.typed,
       officerRegency: "Ka",
-      privacyVersion: 2,
+      privacyVersion: PRIVACY.version,
       agree: true,
     });
     expect(answer.status).toBe(422);
@@ -196,7 +197,7 @@ describe("consent", () => {
     const answer = await first.call("POST", "/consent", {
       role: "citizen",
       name: "Uji Dua",
-      privacyVersion: 2,
+      privacyVersion: PRIVACY.version,
       agree: true,
     });
     expect(answer.status).toBe(201);
@@ -205,7 +206,7 @@ describe("consent", () => {
     second.cookies.set("seeded_session", token);
     expect((await second.call("GET", `/drafts/${answer.draft.draftId}`)).status).toBe(200);
     const me = await second.call("GET", "/me");
-    expect(me.json).toMatchObject({ session: { kind: "reporter" }, privacyVersion: 2 });
+    expect(me.json).toMatchObject({ session: { kind: "reporter" }, privacyVersion: PRIVACY.version });
   });
 
   test("a staff session cannot consent", async () => {

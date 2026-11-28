@@ -137,12 +137,12 @@ describe("identity and consent", () => {
     expect(await screen.findByText(/Daftar nomor di perangkat ini tidak bisa dimuat/)).toBeTruthy();
     for (const name of ["role", "name", "number", "officerRegency", "officerPosition"])
       expect(document.querySelector(`[name="${name}"]`)).toBeTruthy();
-    expect(screen.getByLabelText("WhatsApp").getAttribute("autocomplete")).toBe("tel-national");
+    expect(screen.getByLabelText("Nomor HP").getAttribute("autocomplete")).toBe("tel-national");
     // A new reporter is greeted by Sigap, starts as a resident, and types the number after the +62 shown.
     expect(screen.getByText("Halo, saya Sigap")).toBeTruthy();
     expect((screen.getByLabelText("Warga") as HTMLInputElement).checked).toBe(true);
     expect((screen.getByLabelText("Petugas BPBD") as HTMLInputElement).checked).toBe(false);
-    const number = screen.getByLabelText("WhatsApp");
+    const number = screen.getByLabelText("Nomor HP");
     expect([number.getAttribute("placeholder"), number.getAttribute("inputmode")]).toEqual(["8xx xxxx xxxx", "tel"]);
     expect(number.getAttribute("aria-describedby")).toBe("number-prefix");
     expect(document.getElementById("number-prefix")?.textContent).toBe("+62");
@@ -191,7 +191,7 @@ describe("identity and consent", () => {
       fields: [{ fieldId: "number", copyKey: "fieldError.required", params: { label: "identity.number.label" } }],
     };
     draw(page({ me: null, view: "form" }), acted({ envelope: refused, values: { ...EMPTY, role: "citizen" } }));
-    const number = await screen.findByLabelText("WhatsApp");
+    const number = await screen.findByLabelText("Nomor HP");
     expect(number.getAttribute("aria-describedby")).toBe("number-prefix number-error");
     // The officer's fields keep their example as a hint.
     expect(screen.getByLabelText("BPBD").getAttribute("aria-describedby")).toBe("officerRegency-hint");
@@ -232,7 +232,7 @@ describe("identity and consent", () => {
   test("a session asks no number and consents directly", async () => {
     draw(page({ me: { ...SAMPLE_ME, session: { kind: "reporter" } }, view: "form" }));
     expect(await screen.findByText("Anda sudah masuk. Nomor tidak perlu diisi lagi.")).toBeTruthy();
-    expect(screen.queryByLabelText("WhatsApp")).toBeNull();
+    expect(screen.queryByLabelText("Nomor HP")).toBeNull();
     expect(screen.getByRole("button", { name: "Setuju" }).getAttribute("value")).toBe("consent");
   });
 

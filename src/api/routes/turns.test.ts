@@ -1,6 +1,7 @@
 import { beforeAll, describe, expect, test } from "vitest";
 import type { Card } from "../../contract/card";
 import type { DraftBody } from "../../contract/draft";
+import { PRIVACY } from "../../domain/privacy";
 import { browser, freshNumber, manualClock, query, testBindings } from "../../testing/api";
 import { turn, walkTo } from "../../testing/walk";
 import { api } from "../app";
@@ -24,7 +25,7 @@ async function start() {
     role: "citizen",
     name: "Uji Satu",
     number: freshNumber().typed,
-    privacyVersion: 2,
+    privacyVersion: PRIVACY.version,
     agree: true,
   });
   return { phone, draft: answer.draft };

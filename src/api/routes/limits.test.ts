@@ -1,5 +1,6 @@
 import { describe, expect, test } from "vitest";
 import { LIMITS, type LimitId, windowStart } from "../../domain/limits";
+import { PRIVACY } from "../../domain/privacy";
 import { addressBucket } from "../../platform/address";
 import { hmacKey } from "../../platform/keys";
 import { browser, freshNumber, manualClock, query, testBindings } from "../../testing/api";
@@ -25,7 +26,7 @@ async function started() {
     role: "citizen",
     name: "Uji Satu",
     number: number.typed,
-    privacyVersion: 2,
+    privacyVersion: PRIVACY.version,
     agree: true,
   });
   const [device] = await query<{

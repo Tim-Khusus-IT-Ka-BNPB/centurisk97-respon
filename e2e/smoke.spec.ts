@@ -33,7 +33,7 @@ test("help, about and privacy open from the home with their content", async ({ p
 test("a draft address nobody owns asks to sign in first and shows no message box", async ({ page }) => {
   const response = await page.goto("/report/0b4c5d6e-7f80-4912-a3b4-c5d6e7f80912");
   expect(response?.status()).toBe(401);
-  await expect(page.getByRole("heading", { level: 1 })).toHaveText("Masuk dulu dengan nomor WhatsApp Anda.");
+  await expect(page.getByRole("heading", { level: 1 })).toHaveText("Masuk dulu dengan nomor HP Anda.");
   await expect(page.getByLabel("Pesan")).toHaveCount(0);
 });
 

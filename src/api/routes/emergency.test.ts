@@ -11,6 +11,7 @@ import type { DraftBody } from "../../contract/draft";
 import { trackingSchema } from "../../contract/tracking";
 import { localClock } from "../../domain/eventTime";
 import { windowStart } from "../../domain/limits";
+import { PRIVACY } from "../../domain/privacy";
 import { addressBucket } from "../../platform/address";
 import { hmacKey } from "../../platform/keys";
 import { browser, freshNumber, manualClock, query, testBindings, testDatabase } from "../../testing/api";
@@ -35,7 +36,7 @@ const consentBody = (number?: string) => ({
   role: "citizen",
   name: "Uji Satu",
   ...(number === undefined ? {} : { number }),
-  privacyVersion: 2,
+  privacyVersion: PRIVACY.version,
   agree: true,
 });
 const sendBody = (draft: DraftBody) => ({ revision: draft.revision, turnKey: crypto.randomUUID() });

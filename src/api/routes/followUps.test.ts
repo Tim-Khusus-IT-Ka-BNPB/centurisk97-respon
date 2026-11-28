@@ -3,6 +3,7 @@ import { SEEDED_SESSIONS } from "../../../db/synthetic/reporters";
 import { type DeskReport, deskQueueSchema, deskReportSchema, deskSummarySchema } from "../../contract/desk";
 import type { DraftBody } from "../../contract/draft";
 import { ownReportDetailSchema } from "../../contract/ownReport";
+import { PRIVACY } from "../../domain/privacy";
 import type { Database } from "../../platform/database";
 import { browser, freshNumber, losesOnce, manualClock, query, testBindings, testDatabase } from "../../testing/api";
 import { pdfText } from "../../testing/documents";
@@ -379,7 +380,7 @@ describe("when news is taken", () => {
       role: "citizen",
       name: "Uji Satu",
       number,
-      privacyVersion: 2,
+      privacyVersion: PRIVACY.version,
       agree: true,
       emergency: true,
     });

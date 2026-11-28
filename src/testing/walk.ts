@@ -1,6 +1,7 @@
 import { expect } from "vitest";
 import type { Card } from "../contract/card";
 import type { DraftBody } from "../contract/draft";
+import { PRIVACY } from "../domain/privacy";
 import type { browser } from "./api";
 
 type Phone = ReturnType<typeof browser>;
@@ -88,7 +89,7 @@ export async function startDraft(phone: Phone, number: string, name = "Uji Satu"
     role: "citizen",
     name,
     number,
-    privacyVersion: 2,
+    privacyVersion: PRIVACY.version,
     agree: true,
   });
   if (answer.status === 201) return answer.draft;

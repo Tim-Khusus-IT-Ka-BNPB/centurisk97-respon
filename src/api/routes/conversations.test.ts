@@ -6,6 +6,7 @@ import type { DraftBody } from "../../contract/draft";
 import { copy } from "../../copy";
 import { type FieldId, fieldById } from "../../domain/fields/catalogue";
 import { messageOf } from "../../domain/modelMessage";
+import { PRIVACY } from "../../domain/privacy";
 import { sha256Hex } from "../../platform/keys";
 import { browser, manualClock, query, testBindings } from "../../testing/api";
 import { defaultAnswer, turn, walkTo } from "../../testing/walk";
@@ -137,7 +138,7 @@ describe("the recorded conversations replayed through the stub", () => {
         number: reporter.typed,
         officerRegency: conversation.officer?.regency ?? "",
         officerPosition: conversation.officer?.position ?? "",
-        privacyVersion: 2,
+        privacyVersion: PRIVACY.version,
         agree: true,
       });
       expect(consent.status).toBe(201);

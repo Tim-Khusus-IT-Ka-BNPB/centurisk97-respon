@@ -2,6 +2,7 @@ import { act, fireEvent, screen, within } from "@testing-library/react";
 import { renderToString } from "react-dom/server";
 import { createRoutesStub } from "react-router";
 import { afterEach, beforeEach, expect, test, vi } from "vitest";
+import { PRIVACY } from "../../../src/domain/privacy";
 import { TextContext } from "../../lib/text";
 import { renderPage, text } from "../../testing/render";
 import { HomeScreen } from "./HomeScreen";
@@ -41,7 +42,7 @@ const home = () =>
           Bahasa
         </a>
       </header>
-      <HomeScreen me={{ knownReporters: [], reports: [], privacyVersion: 2, session: null }} />
+      <HomeScreen me={{ knownReporters: [], reports: [], privacyVersion: PRIVACY.version, session: null }} />
     </>,
     { path: "/" },
   );
@@ -82,7 +83,7 @@ test("the home's tour lights each part it can show, back and on, and ends or is 
 
 const Served = () => (
   <TextContext.Provider value={text}>
-    <HomeScreen me={{ knownReporters: [], reports: [], privacyVersion: 2, session: null }} />
+    <HomeScreen me={{ knownReporters: [], reports: [], privacyVersion: PRIVACY.version, session: null }} />
   </TextContext.Provider>
 );
 

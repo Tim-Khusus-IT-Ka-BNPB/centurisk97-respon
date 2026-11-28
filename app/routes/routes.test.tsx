@@ -856,7 +856,7 @@ describe("route modules", () => {
       path: "/privacy",
     });
     expect(await screen.findByRole("heading", { level: 2, name: "Hak Anda" })).toBeTruthy();
-    expect(screen.getByText("26 November 2026")).toBeTruthy();
+    expect(screen.getByText("28 November 2026")).toBeTruthy();
     expect(screen.getAllByRole("link", { name: "Tentang" })[0]?.getAttribute("href")).toBe("/about");
     expect(screen.getByRole("link", { name: "Hak Anda" }).getAttribute("href")).toBe("#privacy-rights-2");
     expect(screen.queryByText(/Yang berlaku secara hukum/)).toBeNull();

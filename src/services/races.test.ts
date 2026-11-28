@@ -2,6 +2,7 @@ import { beforeAll, describe, expect, test } from "vitest";
 import { api } from "../api/app";
 import type { ApiBindings } from "../api/context";
 import type { DraftBody, MeResponse } from "../contract/draft";
+import { PRIVACY } from "../domain/privacy";
 import { type Database, decide } from "../platform/database";
 import {
   browser,
@@ -40,7 +41,7 @@ async function reporter(number = freshNumber().typed) {
     role: "citizen",
     name: "Uji Satu",
     number,
-    privacyVersion: 2,
+    privacyVersion: PRIVACY.version,
     agree: true,
   });
   return { phone, number, draft: started.draft };
@@ -61,7 +62,7 @@ describe("a write that loses its race is decided again", () => {
       role: "citizen",
       name: "Uji Satu",
       number,
-      privacyVersion: 2,
+      privacyVersion: PRIVACY.version,
       agree: true,
     });
     expect(again.draft.draftId).toBe(draft.draftId);

@@ -19,7 +19,7 @@ export const PRIVACY_SECTIONS = [
   { section: "use", parts: ["item1", "item2", "item3", "item4", "item5", "item6", "p2"] },
   { section: "assistant", parts: ["p1"] },
   { section: "access", parts: ["item1", "item2", "item3"] },
-  { section: "others", parts: ["item1", "item2", "item3", "item4", "p2"] },
+  { section: "others", parts: ["item1", "item3", "item4", "p2"] },
   { section: "storage", parts: ["p1"] },
   { section: "retention", parts: ["item1", "item2", "item3", "item4"] },
   { section: "rights", parts: ["p1", "item1", "item2", "item3", "item4", "item5", "item6"] },

@@ -1,5 +1,6 @@
 import { describe, expect, test } from "vitest";
 import type { DraftBody } from "../../contract/draft";
+import { PRIVACY } from "../../domain/privacy";
 import { browser, freshNumber, query, testBindings, testDatabase } from "../../testing/api";
 import { startDraft } from "../../testing/walk";
 import { api } from "../app";
@@ -13,7 +14,7 @@ const consent = (extra: object = {}) => ({
   role: "citizen",
   name: "Uji Poster",
   number: freshNumber().typed,
-  privacyVersion: 2,
+  privacyVersion: PRIVACY.version,
   agree: true,
   ...extra,
 });

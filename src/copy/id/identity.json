@@ -8,7 +8,7 @@
   "identity.name.placeholder": "Nama lengkap",
   "identity.number.prefix": "+62",
   "identity.number.placeholder": "8xx xxxx xxxx",
-  "identity.number.label": "WhatsApp",
+  "identity.number.label": "Nomor HP",
   "identity.number.session": "Anda sudah masuk. Nomor tidak perlu diisi lagi.",
   "identity.officerRegency.label": "BPBD",
   "identity.officerRegency.hint": "Kabupaten atau kota tempat BPBD Anda, misalnya Kabupaten Contoh.",

@@ -1,5 +1,6 @@
 import { describe, expect, test } from "vitest";
 import { draftBodySchema } from "../../contract/draft";
+import { PRIVACY } from "../../domain/privacy";
 import { locatePlace } from "../../services/places";
 import { browser, failingDatabase, freshNumber, manualClock, query, testBindings } from "../../testing/api";
 import { turn } from "../../testing/walk";
@@ -19,7 +20,7 @@ async function start(fetcher = fetchApi) {
     role: "citizen",
     name: "Uji Satu",
     number: freshNumber().typed,
-    privacyVersion: 2,
+    privacyVersion: PRIVACY.version,
     agree: true,
   });
   return { phone, draft: answer.draft };

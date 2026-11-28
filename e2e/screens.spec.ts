@@ -58,7 +58,7 @@ test("the start step and its views", async ({ page }) => {
   await shoot(page, "start-form");
   await page.getByLabel("Petugas BPBD").check();
   await page.getByLabel("Nama").fill("Uji Satu");
-  await page.getByLabel("WhatsApp").fill(syntheticNumber());
+  await page.getByLabel("Nomor HP").fill(syntheticNumber());
   await page.getByLabel("BPBD", { exact: true }).fill("Kabupaten Contoh");
   await page.getByText("Baca kebijakan privasi lengkap").click();
   await page.getByRole("button", { name: "Setuju", exact: true }).click();

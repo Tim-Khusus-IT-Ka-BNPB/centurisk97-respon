@@ -2,6 +2,7 @@ import type { Card, CardKind } from "../contract/card";
 import type { DraftBody, MeResponse } from "../contract/draft";
 import type { ErrorEnvelope } from "../contract/errors";
 import type { Tracking } from "../contract/tracking";
+import { PRIVACY } from "../domain/privacy";
 import { EMPTY_CONTENT, type PlaceReading } from "../domain/turn/content";
 import { type CardContext, cardFor } from "../services/cards";
 
@@ -410,6 +411,6 @@ export const SAMPLE_ME: MeResponse = {
       openDraft: { draftId: DRAFT_ID, hazardType: null, lastActedAt: at("2026-11-23T01:01:00.000Z"), followUpOf: null },
     },
   ],
-  privacyVersion: 2,
+  privacyVersion: PRIVACY.version,
   session: null,
 };
