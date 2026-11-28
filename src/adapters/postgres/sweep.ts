@@ -43,6 +43,15 @@ export async function pruneBatch(db: Database, cutoffs: SweepCutoffs, batch: num
   ]);
 }
 
+// Removes desk sessions through auth that have expired, and the ID token each kept.
+export async function endStaffSessionBatch(db: Database, now: Date, batch: number): Promise<number> {
+  return counted(db, [
+    sql`delete from staff_session where token_hash in (
+        select token_hash from staff_session where expires_at <= ${now} limit ${batch})
+      returning token_hash`,
+  ]);
+}
+
 // Removes devices unseen for a year, their profiles and consents with them, then the numbers
 // nothing uses any more: no profile, no seeded session, no draft tied to a sent report, no missing person.
 export async function removeDeviceBatch(db: Database, cutoffs: SweepCutoffs, batch: number): Promise<number> {

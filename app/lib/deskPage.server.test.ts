@@ -415,6 +415,16 @@ describe("signing in and out", () => {
     expect(await actOnDesk(form({ action: "signOut", next: "https://elsewhere.test" }), out.api)).toMatchObject({
       location: "/desk",
     });
+    // Where auth signs staff in, on to auth's end-session page as the server names it, cookie and all.
+    const viaAuth = fakeApi(() =>
+      Response.json(
+        { next: "https://auth.test/session/end?id_token_hint=t" },
+        { headers: { "set-cookie": "respon_staff=; Max-Age=0; Path=/" } },
+      ),
+    );
+    const ended = await actOnDesk(form({ action: "signOut", next: "/report" }), viaAuth.api);
+    expect(ended).toMatchObject({ kind: "redirect", location: "https://auth.test/session/end?id_token_hint=t" });
+    expect(ended.kind === "redirect" && ended.headers.get("set-cookie")).toBe("respon_staff=; Max-Age=0; Path=/");
     const refused = await actOnDesk(
       new FormData(),
       fakeApi(() => Response.json(envelope("request.invalidFields"), { status: 422 })).api,

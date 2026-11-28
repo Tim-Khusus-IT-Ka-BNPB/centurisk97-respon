@@ -98,24 +98,34 @@ describe("the BPBD officers on a report (PF-09)", () => {
     const viaAuth = (request: Request) =>
       api.app.fetch(request, { ...bindings, db, identity: authIdentity(db, clock, false) } satisfies ApiBindings);
     const signedInAt = new Date(clock.now()).toISOString();
-    await signInStaff(db, clock, {
-      id: "auth-bpbd-1108",
-      name: "Uji Auth",
-      position: "Pusdalops",
-      agency: "BPBD Kabupaten Uji Satu",
-      phone: "+6281200001108",
-      role: "regionalOfficer",
-      scope: { level: "regency", code: "11.08" },
-    });
-    const token = await signInStaff(db, clock, {
-      id: "auth-bnpb",
-      name: "Pusdalops Auth",
-      position: "Analis",
-      agency: "BNPB",
-      phone: null,
-      role: "deskOfficer",
-      scope: { level: "national" },
-    });
+    await signInStaff(
+      db,
+      clock,
+      {
+        id: "auth-bpbd-1108",
+        name: "Uji Auth",
+        position: "Pusdalops",
+        agency: "BPBD Kabupaten Uji Satu",
+        phone: "+6281200001108",
+        role: "regionalOfficer",
+        scope: { level: "regency", code: "11.08" },
+      },
+      "an-id-token",
+    );
+    const token = await signInStaff(
+      db,
+      clock,
+      {
+        id: "auth-bnpb",
+        name: "Pusdalops Auth",
+        position: "Analis",
+        agency: "BNPB",
+        phone: null,
+        role: "deskOfficer",
+        scope: { level: "national" },
+      },
+      "an-id-token",
+    );
     const phone = browser(viaAuth);
     phone.cookies.set(staffCookieName(false), token);
     expect((await officersOn(phone, ticket))?.items).toEqual([

@@ -1,4 +1,5 @@
 import { beforeAll, describe, expect, test } from "vitest";
+import { STAFF_SESSION_MS, signInStaff } from "../adapters/identity/auth";
 import { api } from "../api/app";
 import { PRIVACY } from "../domain/privacy";
 import { RETENTION } from "../domain/retention";
@@ -120,7 +121,29 @@ describe("the scheduled sweep", () => {
       videoUploadsDropped: 0,
       caseFilesErased: 0,
       caseVideoUploadsDropped: 0,
+      staffSessionsEnded: 0,
     });
+  });
+
+  test("an expired desk session goes with the ID token it kept; a live one stays", async () => {
+    clock.set(T0);
+    const account = {
+      id: `sweep-staff-${crypto.randomUUID()}`,
+      name: "Petugas Sapu",
+      position: "Analis",
+      agency: "BNPB",
+      phone: null,
+      role: "deskOfficer" as const,
+      scope: { level: "national" as const },
+    };
+    await signInStaff(db, clock, account, "an-old-id-token");
+    clock.set(T0 + STAFF_SESSION_MS - MINUTE);
+    await signInStaff(db, clock, account, "a-live-id-token");
+    clock.set(T0 + STAFF_SESSION_MS);
+    expect((await runSweep(db, bindings.photos, clock, bindings.log)).staffSessionsEnded).toBe(1);
+    expect(await query`select id_token from staff_session where staff_id = ${account.id}`).toEqual([
+      { id_token: "a-live-id-token" },
+    ]);
   });
 
   test("a step runs batch after batch until one comes back short", async () => {

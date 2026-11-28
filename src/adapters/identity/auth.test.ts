@@ -34,7 +34,7 @@ const account = (overrides: Partial<StaffAccount> = {}): StaffAccount => {
 describe("staff signed in through auth", () => {
   test("a session names the person as their claims did, with their own profile", async () => {
     const pusdalops = account();
-    const token = await signInStaff(db, clock, pusdalops);
+    const token = await signInStaff(db, clock, pusdalops, "an-id-token");
     expect(await identity.resolve(asCookie(token))).toEqual({
       kind: "staff",
       staffId: pusdalops.id,
@@ -51,9 +51,9 @@ describe("staff signed in through auth", () => {
 
   test("signing in again keeps the claims as they are now", async () => {
     const officer = account({ role: "regionalOfficer", scope: { level: "regency", code: "11.08" } });
-    await signInStaff(db, clock, officer);
+    await signInStaff(db, clock, officer, "an-id-token");
     const moved = { ...officer, name: "Nama Baru", scope: { level: "province", code: "11" } } as const;
-    const token = await signInStaff(db, clock, moved);
+    const token = await signInStaff(db, clock, moved, "an-id-token");
     expect(await identity.resolve(asCookie(token))).toMatchObject({
       label: "Nama Baru",
       role: "regionalOfficer",
@@ -63,13 +63,16 @@ describe("staff signed in through auth", () => {
 
   test("a session ends when it expires or on signing out, and ended ones are cleared at the next sign-in", async () => {
     const pusdalops = account();
-    const first = await signInStaff(db, clock, pusdalops);
+    const first = await signInStaff(db, clock, pusdalops, "an-id-token");
     clock.advance(STAFF_SESSION_MS);
     expect(await identity.resolve(asCookie(first))).toEqual({ kind: "anonymous" });
-    const second = await signInStaff(db, clock, pusdalops);
-    expect(await query`select 1 from staff_session where staff_id = ${pusdalops.id}`).toHaveLength(1);
-    await signOutStaff(db, second);
+    const second = await signInStaff(db, clock, pusdalops, "a-second-id-token");
+    expect(await query`select id_token from staff_session where staff_id = ${pusdalops.id}`).toEqual([
+      { id_token: "a-second-id-token" },
+    ]);
+    expect(await signOutStaff(db, second)).toBe("a-second-id-token");
     expect(await identity.resolve(asCookie(second))).toEqual({ kind: "anonymous" });
+    expect(await signOutStaff(db, second)).toBeNull();
   });
 
   test("an unknown token, or none, leaves the browser to its device key", async () => {
@@ -105,7 +108,7 @@ describe("officers to call about a report", () => {
       scope: { level: "regency", code: "92.05" },
     });
     const desk = account({ phone: "+6281200000004" });
-    for (const one of [regency, province, noPhone, elsewhere, desk]) await signInStaff(db, clock, one);
+    for (const one of [regency, province, noPhone, elsewhere, desk]) await signInStaff(db, clock, one, "an-id-token");
     expect(await identity.officers(`${region}.01.2001`)).toEqual([
       {
         id: regency.id,
@@ -135,7 +138,7 @@ describe("officers to call about a report", () => {
       role: "regionalOfficer",
       scope: { level: "regency", code: region },
     });
-    const token = await signInStaff(db, clock, officer);
+    const token = await signInStaff(db, clock, officer, "an-id-token");
     const listed = async () => (await identity.officers(`${region}.01.2001`)).map((one) => one.id);
     const signedIn = clock.now();
     clock.set(signedIn + OFFICER_LISTED_MS - 1);

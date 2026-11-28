@@ -1,6 +1,12 @@
 import { anonymiseMissing } from "../adapters/postgres/missingPersons";
 import { clearRemovals, queuedRemovals } from "../adapters/postgres/photos";
-import { expireBatch, pruneBatch, removeDeviceBatch, removeEmptiedBatch } from "../adapters/postgres/sweep";
+import {
+  endStaffSessionBatch,
+  expireBatch,
+  pruneBatch,
+  removeDeviceBatch,
+  removeEmptiedBatch,
+} from "../adapters/postgres/sweep";
 import { MISSING_KEPT_MS } from "../domain/missingPerson";
 import { RETENTION, sweepCutoffs } from "../domain/retention";
 import type { Database } from "../platform/database";
@@ -22,6 +28,8 @@ export type SweepCounts = {
   // BPBD follow-up files whose personal data ended five years after their closing was accepted.
   readonly caseFilesErased: number;
   readonly caseVideoUploadsDropped: number;
+  // Desk sessions through auth that expired, with the ID token each kept.
+  readonly staffSessionsEnded: number;
 };
 
 // Deletes the files of photos whose rows are gone, then their queue rows. A run that stops in
@@ -46,7 +54,7 @@ async function drain(step: () => Promise<number>): Promise<number> {
 // The scheduled run, every 15 minutes: expire drafts 24 hours after the reporter last acted,
 // prune stored replies, counters and model usage, remove old devices and emptied drafts, then
 // anonymise missing persons closed two years ago, then delete the files of photos that left with
-// their drafts or reports.
+// their drafts or reports, and end expired desk sessions.
 // Safe to run again at any time: each step only touches rows that are still due.
 export async function runSweep(db: Database, photos: PhotoStore, clock: Clock, log: Logger): Promise<SweepCounts> {
   const started = Date.now();
@@ -64,6 +72,7 @@ export async function runSweep(db: Database, photos: PhotoStore, clock: Clock, l
     videoUploadsDropped: await sweepVideoUploads({ db, photos, clock }),
     caseFilesErased: await erasePersonalData({ db, photos, clock }),
     caseVideoUploadsDropped: await sweepCaseVideoUploads({ db, photos, clock }),
+    staffSessionsEnded: await drain(() => endStaffSessionBatch(db, new Date(nowMs), RETENTION.batch)),
   };
   log.info({ event: "sweep.done", durationMs: Date.now() - started });
   return counts;

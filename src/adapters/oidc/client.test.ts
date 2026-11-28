@@ -18,7 +18,7 @@ const sha256 = async (text: string) =>
 
 // Auth as far as respon talks to it: discovery, the keys, and a token endpoint that checks the
 // client, the code and the PKCE verifier before it signs an ID token for the nonce it was given.
-async function fakeAuth(options: { readonly nonce?: string } = {}) {
+async function fakeAuth(options: { readonly nonce?: string; readonly endSession?: boolean } = {}) {
   const keys = await crypto.subtle.generateKey({ name: "ECDSA", namedCurve: "P-256" }, true, ["sign", "verify"]);
   const jwk = { ...(await crypto.subtle.exportKey("jwk", keys.publicKey)), kid: "k1", alg: "ES256", use: "sig" };
   const calls: string[] = [];
@@ -45,6 +45,7 @@ async function fakeAuth(options: { readonly nonce?: string } = {}) {
         token_endpoint: `${ISSUER}/token`,
         jwks_uri: `${ISSUER}/jwks`,
         id_token_signing_alg_values_supported: ["ES256"],
+        ...(options.endSession === false ? {} : { end_session_endpoint: `${ISSUER}/session/end` }),
       });
     if (url.pathname === "/jwks") return Response.json({ keys: [jwk] });
     const form = new URLSearchParams(await request.text());
@@ -115,6 +116,7 @@ describe("signing in through auth", () => {
       ok: true,
       claims: { sub: "5f0c2b1e-7d4a-4c1e-9a53-0d6f1e2a3b4c", name: "Petugas Uji" },
     });
+    expect((finished as { idToken: string }).idToken.split(".")).toHaveLength(3);
   });
 
   test("a callback for another state, a token for another nonce or a wrong verifier is refused", async () => {
@@ -158,5 +160,30 @@ describe("signing in through auth", () => {
       ...started,
     });
     expect(finished).toEqual({ ok: false, reason: "connection refused" });
+  });
+});
+
+describe("signing out through auth", () => {
+  const BACK = "http://localhost:5173/";
+
+  test("goes to auth's end-session page with the ID token as the hint, and back to the start", async () => {
+    const signIn = oidcSignIn(CLIENT, (await fakeAuth()).fetcher);
+    const end = new URL((await signIn.endUrl("an-id-token", BACK)) as string);
+    expect(`${end.origin}${end.pathname}`).toBe(`${ISSUER}/session/end`);
+    expect(Object.fromEntries(end.searchParams)).toEqual({
+      client_id: "respon",
+      id_token_hint: "an-id-token",
+      post_logout_redirect_uri: BACK,
+    });
+    const bare = new URL((await signIn.endUrl(null, BACK)) as string);
+    expect(Object.fromEntries(bare.searchParams)).toEqual({ client_id: "respon", post_logout_redirect_uri: BACK });
+  });
+
+  test("with no end-session page named, or auth out of reach, there is none", async () => {
+    expect(await oidcSignIn(CLIENT, (await fakeAuth({ endSession: false })).fetcher).endUrl("t", BACK)).toBeNull();
+    const down = (() => {
+      throw "connection refused";
+    }) as unknown as typeof fetch;
+    expect(await oidcSignIn(CLIENT, down).endUrl("t", BACK)).toBeNull();
   });
 });

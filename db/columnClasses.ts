@@ -52,8 +52,8 @@ export const COLUMN_CLASSES: Readonly<Record<string, TableClasses>> = {
     },
   },
   staff_session: {
-    retention: "8 hours, removed by the first sign-in after it expires, or on signing out",
-    columns: { token_hash: I, staff_id: I, expires_at: I },
+    retention: "8 hours, removed by the sweep or the first sign-in after it expires, or on signing out",
+    columns: { token_hash: I, staff_id: I, expires_at: I, id_token: P },
   },
   seeded_session: {
     retention: "seed data, local, test and staging only",

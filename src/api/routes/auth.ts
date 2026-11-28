@@ -99,7 +99,7 @@ export function addAuthRoutes(api: Api): void {
         if (subject !== null) await forgetStaff(c.env.db, subject);
         return c.redirect("/desk?signIn=noAccess", 302);
       }
-      const token = await signInStaff(c.env.db, c.env.clock, account);
+      const token = await signInStaff(c.env.db, c.env.clock, account, finished.idToken);
       setCookie(c, staffCookieName(secure), token, {
         httpOnly: true,
         secure,

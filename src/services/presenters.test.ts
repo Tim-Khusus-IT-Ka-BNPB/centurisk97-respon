@@ -181,7 +181,7 @@ describe("ports chosen by the settings", () => {
     };
     const withAuth = createServices(auth, bindings.log, bindings.db, testBucket(), bindings.clock);
     expect(Object.keys(withAuth.identity).sort()).toEqual(["officers", "resolve"]);
-    expect(Object.keys(withAuth.signIn ?? {}).sort()).toEqual(["finish", "start"]);
+    expect(Object.keys(withAuth.signIn ?? {}).sort()).toEqual(["endUrl", "finish", "start"]);
     expect(
       createServices(bindings.settings, bindings.log, bindings.db, testBucket(), bindings.clock).signIn,
     ).toBeNull();

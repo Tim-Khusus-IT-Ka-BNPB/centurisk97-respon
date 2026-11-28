@@ -1393,6 +1393,8 @@ export const staffSession = pgTable(
       .notNull()
       .references(() => staffMember.id, { onDelete: "cascade" }),
     expires_at: at("expires_at").notNull(),
+    // Auth's ID token for this sign-in, sent back as the hint when the person signs out there too.
+    id_token: text(),
   },
   (t) => [index("staff_session_expiry").on(t.expires_at), index("staff_session_staff").on(t.staff_id)],
 );

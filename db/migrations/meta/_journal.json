@@ -43,6 +43,13 @@
       "when": 1795881652934,
       "tag": "0005_handling_proof_forwarded",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1795882347817,
+      "tag": "0006_staff_session_id_token",
+      "breakpoints": true
     }
   ]
 }

@@ -8,6 +8,9 @@ import type { ApiBindings } from "../context";
 const clock = manualClock("2026-11-28T03:00:00.000Z");
 const { bindings: seeded, lines } = testBindings({}, { clock });
 
+const ID_TOKEN = "an-id-token-from-auth";
+const END_SESSION = "http://127.0.0.1:3100/session/end";
+
 const claims = (memberships: unknown[]) => ({
   sub: "5f0c2b1e-7d4a-4c1e-9a53-0d6f1e2a3b4c",
   name: "Petugas Uji",
@@ -23,8 +26,8 @@ const PUSDALOPS = claims([
 ]);
 
 // Auth as respon's sign-in port sees it: start always sends to the same place, finish answers what
-// the test set, and remembers what it was asked.
-function fakeSignIn(answer: () => Awaited<ReturnType<SignInPort["finish"]>>) {
+// the test set, and remembers what it was asked; its end-session page names the hint it was given.
+function fakeSignIn(answer: () => Awaited<ReturnType<SignInPort["finish"]>>, ends = true) {
   const asked: Parameters<SignInPort["finish"]>[0][] = [];
   const port: SignInPort = {
     start: async () => ({ url: "http://127.0.0.1:3100/auth?client_id=respon", verifier: "v", state: "s", nonce: "n" }),
@@ -32,6 +35,8 @@ function fakeSignIn(answer: () => Awaited<ReturnType<SignInPort["finish"]>>) {
       asked.push(input);
       return answer();
     },
+    endUrl: async (idToken, back) =>
+      ends ? `${END_SESSION}?${new URLSearchParams({ hint: String(idToken), back })}` : null,
   };
   return { port, asked };
 }
@@ -59,15 +64,15 @@ function browserOn(bindings: ApiBindings) {
   };
 }
 
-const withAuth = (answer: () => Awaited<ReturnType<SignInPort["finish"]>>) => {
-  const signIn = fakeSignIn(answer);
+const withAuth = (answer: () => Awaited<ReturnType<SignInPort["finish"]>>, ends = true) => {
+  const signIn = fakeSignIn(answer, ends);
   const bindings: ApiBindings = { ...seeded, identity: authIdentity(seeded.db, clock, false), signIn: signIn.port };
   return { bindings, asked: signIn.asked, browser: browserOn(bindings) };
 };
 
 describe("signing staff in through auth", () => {
   test("sign-in sends the browser to auth, and the callback lets it into the desk page it asked for", async () => {
-    const { browser, asked } = withAuth(() => ({ ok: true, claims: PUSDALOPS }));
+    const { browser, asked } = withAuth(() => ({ ok: true, idToken: ID_TOKEN, claims: PUSDALOPS }));
     const leaving = await browser.get("/auth/sign-in?back=%2Fdesk%2Fresponse");
     expect(leaving.status).toBe(302);
     expect(leaving.headers.get("location")).toBe("http://127.0.0.1:3100/auth?client_id=respon");
@@ -86,15 +91,35 @@ describe("signing staff in through auth", () => {
     ]);
     expect(browser.cookies.has("respon_sign_in")).toBe(false);
     expect((await browser.get("/desk/summary")).status).toBe(200);
+    expect(await query`select id_token from staff_session where staff_id = ${PUSDALOPS.sub}`).toEqual([
+      { id_token: ID_TOKEN },
+    ]);
 
-    expect((await browser.get("/desk/session", "DELETE")).status).toBe(204);
+    const out = await browser.get("/desk/session", "DELETE");
+    expect(out.status).toBe(200);
+    expect(await out.json()).toEqual({
+      next: `${END_SESSION}?${new URLSearchParams({ hint: ID_TOKEN, back: "http://localhost:5173/" })}`,
+    });
     expect(browser.cookies.has("respon_staff")).toBe(false);
     expect((await browser.get("/desk/summary")).status).toBe(401);
   });
 
+  test("signing out with no session left still ends auth's; with auth naming no end page, here alone", async () => {
+    const { browser } = withAuth(() => ({ ok: true, idToken: ID_TOKEN, claims: PUSDALOPS }));
+    const out = await browser.get("/desk/session", "DELETE");
+    expect(await out.json()).toEqual({
+      next: `${END_SESSION}?${new URLSearchParams({ hint: "null", back: "http://localhost:5173/" })}`,
+    });
+    const local = withAuth(() => ({ ok: true, idToken: ID_TOKEN, claims: PUSDALOPS }), false).browser;
+    await local.get("/auth/sign-in");
+    await local.get("/auth/callback?code=c&state=s");
+    expect((await local.get("/desk/session", "DELETE")).status).toBe(204);
+    expect((await local.get("/desk/summary")).status).toBe(401);
+  });
+
   test("over HTTPS both cookies carry the __Host- prefix and are secure", async () => {
     const { bindings: https } = testBindings({ APP_ORIGIN: "https://localhost:5173" }, { clock });
-    const signIn = fakeSignIn(() => ({ ok: true, claims: PUSDALOPS }));
+    const signIn = fakeSignIn(() => ({ ok: true, idToken: ID_TOKEN, claims: PUSDALOPS }));
     const browser = browserOn({ ...https, identity: authIdentity(https.db, clock, true), signIn: signIn.port });
     await browser.get("/auth/sign-in");
     expect(browser.cookies.has("__Host-respon_sign_in")).toBe(true);
@@ -111,14 +136,14 @@ describe("signing staff in through auth", () => {
       "?back=https%3A%2F%2Fevil.example",
       "?back=%2F%5Cevil.example",
     ]) {
-      const { browser } = withAuth(() => ({ ok: true, claims: PUSDALOPS }));
+      const { browser } = withAuth(() => ({ ok: true, idToken: ID_TOKEN, claims: PUSDALOPS }));
       await browser.get(`/auth/sign-in${back}`);
       expect((await browser.get("/auth/callback?code=c&state=s")).headers.get("location")).toBe("/desk");
     }
   });
 
   test("a callback without the browser's own pending sign-in, or with a forged one, fails", async () => {
-    const { browser, asked } = withAuth(() => ({ ok: true, claims: PUSDALOPS }));
+    const { browser, asked } = withAuth(() => ({ ok: true, idToken: ID_TOKEN, claims: PUSDALOPS }));
     expect((await browser.get("/auth/callback?code=c&state=s")).headers.get("location")).toBe("/desk?signIn=failed");
     await browser.get("/auth/sign-in");
     const [text] = (browser.cookies.get("respon_sign_in") as string).split(".");
@@ -138,7 +163,7 @@ describe("signing staff in through auth", () => {
   });
 
   test("a person whose memberships open no desk is told so", async () => {
-    const { browser } = withAuth(() => ({ ok: true, claims: claims([]) }));
+    const { browser } = withAuth(() => ({ ok: true, idToken: ID_TOKEN, claims: claims([]) }));
     await browser.get("/auth/sign-in");
     expect((await browser.get("/auth/callback?code=c&state=s")).headers.get("location")).toBe("/desk?signIn=noAccess");
     expect(browser.cookies.has("respon_staff")).toBe(false);
@@ -157,7 +182,7 @@ describe("signing staff in through auth", () => {
       phone_number: "+6281200000099",
     };
     let answer: unknown = officer;
-    const { browser, bindings } = withAuth(() => ({ ok: true, claims: answer }));
+    const { browser, bindings } = withAuth(() => ({ ok: true, idToken: ID_TOKEN, claims: answer }));
     await browser.get("/auth/sign-in");
     await browser.get("/auth/callback?code=c&state=s");
     expect((await bindings.identity.officers("11.08.01.2001")).map((one) => one.id)).toContain("officer-who-left");
@@ -174,7 +199,7 @@ describe("signing staff in through auth", () => {
   });
 
   test("a staff route tells the page where to sign in, only where auth does it", async () => {
-    const { browser } = withAuth(() => ({ ok: true, claims: PUSDALOPS }));
+    const { browser } = withAuth(() => ({ ok: true, idToken: ID_TOKEN, claims: PUSDALOPS }));
     expect((await browser.get("/desk/summary")).headers.get("x-sign-in")).toBe("/api/auth/sign-in");
     const local = browserOn(seeded);
     const refused = await local.get("/desk/summary");

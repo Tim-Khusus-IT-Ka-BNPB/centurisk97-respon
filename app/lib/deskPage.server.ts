@@ -6,6 +6,7 @@ import type {
   DeskQueue,
   DeskReport,
   DeskResponse,
+  DeskSignedOut,
   DeskSummary,
   DeskTrackingLink,
 } from "../../src/contract/desk";
@@ -197,13 +198,15 @@ const redirectTo = (location: string, response: Response): Extract<DeskActed, { 
 };
 
 // POST /desk: sign in with a code, or sign out. Signing out from the report start goes
-// back there; no other place is taken, so the field cannot send anyone off the site.
+// back there; no other place is taken, so the field cannot send anyone off the site. Where auth
+// signs staff in, signing out goes on to auth's end-session page, named by the server alone.
 export async function actOnDesk(form: FormData, api: ApiCall): Promise<DeskActed> {
   const response =
     formText(form, "action") === "signOut"
       ? await api("DELETE", "/desk/session")
       : await api("POST", "/desk/session", { code: formText(form, "code") });
   const next = formText(form, "next") === "/report" ? "/report" : "/desk";
+  if (response.status === 200) return redirectTo(((await response.json()) as DeskSignedOut).next, response);
   if (response.ok) return redirectTo(next, response);
   return { kind: "render", status: response.status, envelope: (await response.json()) as ErrorEnvelope };
 }

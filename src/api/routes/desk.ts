@@ -10,6 +10,7 @@ import {
   deskMapSchema,
   deskQueueSchema,
   deskReportSchema,
+  deskSignedOutSchema,
   deskSummarySchema,
   deskTrackingLinkSchema,
 } from "../../contract/desk";
@@ -360,15 +361,20 @@ export function addDeskRoutes(api: Api): void {
     createRoute({
       method: "delete",
       path: "/desk/session",
-      responses: { 204: { description: "Signed out" } },
+      responses: {
+        200: jsonResponse("Signed out here; on to auth's end-session page, where auth signs out", deskSignedOutSchema),
+        204: { description: "Signed out" },
+      },
     }),
     async (c) => {
       const secure = new URL(c.req.url).protocol === "https:";
       const token = getCookie(c, staffCookieName(secure));
-      if (token) await signOutStaff(c.env.db, token);
+      const idToken = token ? await signOutStaff(c.env.db, token) : null;
       deleteCookie(c, staffCookieName(secure), { path: "/", secure });
       deleteCookie(c, SESSION_COOKIE, { path: "/", secure });
-      return c.body(null, 204);
+      // Where auth signs staff in, it signs them out too, and sends them back to the site's start.
+      const next = c.env.signIn === null ? null : await c.env.signIn.endUrl(idToken, `${c.env.settings.appOrigin}/`);
+      return next === null ? c.body(null, 204) : c.json({ next }, 200);
     },
   );
 }

@@ -22,8 +22,9 @@ const randomToken = () =>
     .replaceAll("/", "_")
     .replaceAll("=", "");
 
-// Keeps who signed in, as their claims describe them now, and opens a session for them.
-export async function signInStaff(db: Database, clock: Clock, account: StaffAccount): Promise<string> {
+// Keeps who signed in, as their claims describe them now, and opens a session for them with the ID
+// token auth gave, to sign out of auth with.
+export async function signInStaff(db: Database, clock: Clock, account: StaffAccount, idToken: string): Promise<string> {
   const token = randomToken();
   const now = clock.now();
   const code = account.scope.level === "national" ? null : account.scope.code;
@@ -39,14 +40,19 @@ export async function signInStaff(db: Database, clock: Clock, account: StaffAcco
   await run(db, sql`delete from staff_session where expires_at <= ${new Date(now)}`);
   await run(
     db,
-    sql`insert into staff_session (token_hash, staff_id, expires_at)
-      values (${await sha256Hex(token)}, ${account.id}, ${new Date(now + STAFF_SESSION_MS)})`,
+    sql`insert into staff_session (token_hash, staff_id, expires_at, id_token)
+      values (${await sha256Hex(token)}, ${account.id}, ${new Date(now + STAFF_SESSION_MS)}, ${idToken})`,
   );
   return token;
 }
 
-export async function signOutStaff(db: Database, token: string): Promise<void> {
-  await run(db, sql`delete from staff_session where token_hash = ${await sha256Hex(token)}`);
+// Ends the session, and gives back the ID token it kept; null when there was no such session.
+export async function signOutStaff(db: Database, token: string): Promise<string | null> {
+  const ended = await row<{ id_token: string | null }>(
+    db,
+    sql`delete from staff_session where token_hash = ${await sha256Hex(token)} returning id_token`,
+  );
+  return ended?.id_token ?? null;
 }
 
 // A person whose claims no longer open the desk is forgotten, with their sessions, so they leave

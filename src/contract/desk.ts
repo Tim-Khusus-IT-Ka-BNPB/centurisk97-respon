@@ -162,6 +162,11 @@ export const deskIdentitySchema = z.object({
 
 export type DeskIdentity = z.infer<typeof deskIdentitySchema>;
 
+// Signed out of respon, and on to auth's end-session page so auth's own session ends too.
+export const deskSignedOutSchema = z.object({ next: z.string() });
+
+export type DeskSignedOut = z.infer<typeof deskSignedOutSchema>;
+
 // A report's tracking link, shown to staff each time asked and logged, for a reporter who lost it.
 export const deskTrackingLinkSchema = z.object({ link: z.string() });
 

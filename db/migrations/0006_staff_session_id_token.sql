@@ -1,0 +1,1 @@
+ALTER TABLE "staff_session" ADD COLUMN "id_token" text;

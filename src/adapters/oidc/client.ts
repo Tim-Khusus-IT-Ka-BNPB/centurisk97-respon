@@ -57,10 +57,21 @@ export function oidcSignIn(settings: AuthSettings, fetcher: typeof fetch = fetch
           expectedNonce: nonce,
           requireIdToken: true,
         });
-        return { ok: true, claims: oauth.getValidatedIdTokenClaims(result) };
+        return { ok: true, claims: oauth.getValidatedIdTokenClaims(result), idToken: result.id_token as string };
       } catch (error) {
         return { ok: false, reason: error instanceof Error ? error.message : String(error) };
       }
+    },
+    async endUrl(idToken, postLogoutRedirectUri) {
+      const endpoint = (await server().catch(() => null))?.end_session_endpoint;
+      if (endpoint === undefined) return null;
+      const url = new URL(endpoint);
+      url.search = new URLSearchParams({
+        client_id: settings.clientId,
+        ...(idToken === null ? {} : { id_token_hint: idToken }),
+        post_logout_redirect_uri: postLogoutRedirectUri,
+      }).toString();
+      return url.href;
     },
   };
 }
