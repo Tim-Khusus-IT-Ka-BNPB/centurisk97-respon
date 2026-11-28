@@ -161,13 +161,6 @@ export function HomeHero({ sent }: { readonly sent: boolean }) {
     <section aria-labelledby="home-heading" className="contours text-on-hero">
       <div className="mx-auto grid max-w-[72rem] grid-cols-[minmax(0,1fr)] gap-10 px-4 py-10 md:px-6 md:py-14 lg:grid-cols-[minmax(0,1fr)_25rem] lg:items-center lg:gap-16 lg:py-20">
         <div className="flex flex-col gap-6">
-          <p className="inline-flex items-center gap-2.5 self-start rounded-full border border-white/15 bg-white/5 px-3.5 py-1.5 text-meta font-semibold">
-            <span aria-hidden="true" className="relative flex size-2.5">
-              <span className="absolute inset-0 rounded-full bg-accent opacity-60 motion-safe:animate-ping" />
-              <span className="relative size-2.5 rounded-full bg-accent" />
-            </span>
-            {t("home.hero.eyebrow")}
-          </p>
           <h1 id="home-heading" className="max-w-[15ch] text-display font-extrabold tracking-[-0.025em] text-balance">
             {t("home.hero.ask")}
           </h1>

@@ -48,7 +48,6 @@
   "home.reports.tiles.active": "Diproses",
   "home.reports.tiles.closed": "Selesai",
   "home.reports.missing": "Orang hilang yang Anda laporkan",
-  "home.hero.eyebrow": "Langsung ke BPBD setempat",
   "home.hero.ask": "Ada bencana di sekitar Anda?",
   "home.hero.tell": "Ceritakan ke Sigap dengan kata-kata Anda sendiri, bahasa daerah pun boleh. Sigap mencatat yang penting, BPBD setempat langsung menerimanya, dan Anda bisa melacak kabarnya.",
   "home.demo.label": "Contoh",
@@ -62,5 +61,6 @@
   "home.flow.complete.title": "Sigap melengkapi",
   "home.flow.complete.body": "Sigap mencatat yang Anda sebut, lalu menanyakan yang belum ada: lokasi, waktu, korban, dan kebutuhan. Sebagian besar cukup diketuk.",
   "home.flow.track.title": "BPBD menerima",
-  "home.flow.track.body": "Laporan langsung masuk ke antrean BPBD setempat. Anda mendapat nomor tiket untuk melacak kabarnya."
+  "home.flow.track.body": "Laporan langsung masuk ke antrean BPBD setempat. Anda mendapat nomor tiket untuk melacak kabarnya.",
+  "home.flow.tell.sample": "Air sudah sepinggang di RT 03, ada lansia yang belum dievakuasi."
 }

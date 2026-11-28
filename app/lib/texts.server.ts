@@ -34,6 +34,9 @@ export const PAGE_TEXTS = {
     "reply.notedCount.housesFlooded",
     "field.waterDepth.label",
     "option.waterDepth.knee.label",
+    "field.trapped.label",
+    "option.trapped.",
+    "card.sent.number",
   ],
   emergency: [
     ...SHELL,
