@@ -5,6 +5,7 @@ import { factText, parseFacts } from "../../lib/noted";
 import { breakAfterSlash } from "../../lib/slash";
 import { useText } from "../../lib/text";
 import { Icon } from "../atoms/Icon";
+import { SigapAvatar } from "../molecules/SigapAvatar";
 
 type Entry = DraftBody["transcript"][number];
 
@@ -29,11 +30,17 @@ function questionText(t: Text, entry: Extract<Entry, { speaker: "assistant" }>) 
 function Noted({ facts }: { readonly facts: unknown }) {
   const t = useText();
   return (
-    <div className="flex flex-col gap-1.5">
+    <div className="flex flex-col gap-2">
       <p>{t("reply.noted")}</p>
-      <ul className="flex list-disc flex-col gap-0.5 ps-5">
+      <ul className="flex flex-wrap gap-1.5">
         {parseFacts(facts).map((fact) => (
-          <li key={fact.field}>{factText(t, fact)}</li>
+          <li
+            key={fact.field}
+            className="inline-flex items-start gap-1 rounded-[0.875rem] bg-selected px-2.5 py-1 text-meta font-semibold text-primary"
+          >
+            <Icon name="check" className="mt-0.5 size-4 shrink-0" />
+            <span>{factText(t, fact)}</span>
+          </li>
         ))}
       </ul>
       <p className="text-meta text-muted">{t("reply.notedHint")}</p>
@@ -47,23 +54,30 @@ function Lines({ entries, keys }: { readonly entries: readonly Entry[]; readonly
     <ol className="flex flex-col gap-2">
       {entries.map((entry, index) => {
         const own = entry.speaker === "reporter";
+        // Sigap's face closes each run of its lines, as in a messenger; the lines before keep its place.
+        const closesRun = !own && entries[index + 1]?.speaker !== "assistant";
         return (
           <li
             key={keys[index]}
-            className={cn(
-              "max-w-[min(85%,40rem)] rounded-[1.125rem] px-4 py-2.5 text-body",
-              own
-                ? "self-end rounded-ee-chip bg-primary text-on-primary [overflow-wrap:anywhere]"
-                : "self-start rounded-es-chip border border-line bg-surface break-words",
-            )}
+            className={cn("flex max-w-[min(88%,42rem)] items-end gap-2", own ? "self-end" : "self-start")}
           >
-            {own ? (
-              entry.textMasked
-            ) : entry.copyKey === "reply.noted" ? (
-              <Noted facts={entry.params.facts} />
-            ) : (
-              breakAfterSlash(questionText(t, entry))
-            )}
+            {own ? null : closesRun ? <SigapAvatar /> : <span aria-hidden="true" className="w-9 shrink-0" />}
+            <div
+              className={cn(
+                "min-w-0 rounded-[1.125rem] px-4 py-2.5 text-body",
+                own
+                  ? "rounded-ee-chip bg-primary text-on-primary [overflow-wrap:anywhere]"
+                  : "rounded-es-chip border border-line bg-surface break-words",
+              )}
+            >
+              {own ? (
+                entry.textMasked
+              ) : entry.copyKey === "reply.noted" ? (
+                <Noted facts={entry.params.facts} />
+              ) : (
+                breakAfterSlash(questionText(t, entry))
+              )}
+            </div>
           </li>
         );
       })}

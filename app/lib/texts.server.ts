@@ -27,9 +27,13 @@ export const PAGE_TEXTS = {
     "resume.",
     "hazard.",
     "stage.",
-    "about.steps.title",
-    ...[1, 2, 3, 4, 5, 6].map((n) => `about.step${n}.`),
     "about.emergency.",
+    // The example conversation's lines, as the report's own words.
+    "reply.noted",
+    "reply.notedChoice",
+    "reply.notedCount.housesFlooded",
+    "field.waterDepth.label",
+    "option.waterDepth.knee.label",
   ],
   emergency: [
     ...SHELL,

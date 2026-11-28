@@ -5,6 +5,7 @@ import type { Tracking } from "../../../../src/contract/tracking";
 import { qrModules, qrPath } from "../../../../src/domain/qr";
 import { problemOf } from "../../../lib/envelope";
 import { useBusy, useHydrated, useMountFocus } from "../../../lib/hooks";
+import { sigapSrc } from "../../../lib/sigap";
 import { useText } from "../../../lib/text";
 import { buttonStyles } from "../../atoms/Button";
 import { Icon } from "../../atoms/Icon";
@@ -192,8 +193,18 @@ function ThankYou({ card }: { readonly card: SentCardData }) {
           preventScrollReset
           className="flex min-h-full w-full max-w-md flex-col items-center justify-center gap-4 text-center no-underline"
         >
-          <span className="flex size-20 items-center justify-center rounded-full bg-accent text-on-accent">
-            <Icon name="check" className="size-10" />
+          <span className="relative flex size-36 items-end justify-center">
+            <span aria-hidden="true" className="absolute inset-x-4 bottom-1 h-6 rounded-full bg-black/25 blur-md" />
+            <img
+              src={sigapSrc("jempol")}
+              alt=""
+              width={640}
+              height={640}
+              className="relative size-36 motion-safe:animate-rise"
+            />
+            <span className="absolute end-1 top-3 flex size-10 items-center justify-center rounded-full bg-accent text-on-accent shadow-float">
+              <Icon name="check" className="size-6" />
+            </span>
           </span>
           <span className="pt-2 text-on-hero-muted">{t("card.sent.thanks.label")}</span>
           <h2 id="thanks-title" ref={heading} tabIndex={-1} className="text-display font-bold text-balance">

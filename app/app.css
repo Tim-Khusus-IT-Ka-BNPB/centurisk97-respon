@@ -38,6 +38,8 @@
   /* BNPB's orange from the emblem, for the one main action on navy. */
   --accent: oklch(74% 0.17 60);
   --on-accent: oklch(22% 0.07 256);
+  /* The orange dark enough to be read as text on the page. */
+  --accent-ink: oklch(54% 0.15 50);
   --hero: oklch(27% 0.09 257);
   --on-hero: oklch(98% 0.005 255);
   --on-hero-muted: oklch(84% 0.03 255);
@@ -76,6 +78,7 @@
   --card-shadow: oklch(0% 0 0 / 0.2);
   --accent: oklch(76% 0.16 62);
   --on-accent: oklch(20% 0.05 256);
+  --accent-ink: oklch(80% 0.13 65);
   --hero: oklch(22% 0.06 257);
   --on-hero: oklch(96% 0.01 255);
   --on-hero-muted: oklch(80% 0.03 255);
@@ -109,6 +112,7 @@
   --color-on-siaga: var(--on-siaga);
   --color-accent: var(--accent);
   --color-on-accent: var(--on-accent);
+  --color-accent-ink: var(--accent-ink);
   --color-hero: var(--hero);
   --color-on-hero: var(--on-hero);
   --color-on-hero-muted: var(--on-hero-muted);
@@ -202,6 +206,22 @@
 
 @utility animate-settle {
   animation: settle 200ms var(--ease-settle);
+}
+
+/* The home's example conversation: each line rises in after the one before. */
+@keyframes rise {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@utility animate-rise {
+  animation: rise 500ms var(--ease-settle) both;
 }
 
 /* Fixed to the bottom, the tab bar would ride up on the keyboard over the field being typed in. It

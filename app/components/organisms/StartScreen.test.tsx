@@ -315,13 +315,19 @@ describe("the home", () => {
         path: "/",
       },
     );
-    expect(
-      await screen.findByRole("heading", { level: 1, name: "Laporkan kejadian bencana di sekitar Anda" }),
-    ).toBeTruthy();
+    expect(await screen.findByRole("heading", { level: 1, name: "Ada bencana di sekitar Anda?" })).toBeTruthy();
     expect(screen.getByRole("link", { name: "Lapor kejadian" }).getAttribute("href")).toBe("/report");
     expect(screen.getByRole("link", { name: "112 Darurat terpadu" }).getAttribute("href")).toBe("tel:112");
-    expect(screen.getByRole("link", { name: "Lihat cara melapor" }).getAttribute("href")).toBe("#steps");
-    expect(screen.getByRole("heading", { level: 2, name: "Cara melapor" })).toBeTruthy();
+    expect(screen.getByRole("link", { name: "Lapor darurat" }).getAttribute("href")).toBe("/report?emergency=1");
+    expect(screen.getByRole("link", { name: "Lapor orang hilang" }).getAttribute("href")).toBe("/missing");
+    expect(screen.getByRole("link", { name: "117 Call center BNPB" }).getAttribute("href")).toBe("tel:117");
+    expect(screen.getByRole("link", { name: "Lihat cara kerjanya" }).getAttribute("href")).toBe("#steps");
+    expect(screen.getByRole("heading", { level: 2, name: "Cara kerjanya" })).toBeTruthy();
+    // The example conversation is named as one, and shows what Sigap notes of words in Javanese.
+    const demo = within(screen.getByRole("figure", { name: "Contoh" }));
+    expect(demo.getByText("Banyu wis tekan dengkul, 20 omah kebanjiran.").getAttribute("lang")).toBe("jv");
+    expect(demo.getByText("20 rumah terendam")).toBeTruthy();
+    expect(demo.getByText("Tinggi air: Selutut")).toBeTruthy();
     expect(screen.getAllByRole("heading", { name: "Ada laporan yang belum selesai" })).toHaveLength(1);
     expect(screen.getByRole("link", { name: "Buat laporan baru" }).getAttribute("href")).toBe(
       `/report?discard=${withDraft.profileId}`,
@@ -417,9 +423,26 @@ describe("the home", () => {
     expect(sought.getAllByRole("link")[0]?.getAttribute("href")).toBe("/missing");
   });
 
-  test("with nothing sent, Laporan saya says so and there is no Cek status laporan", async () => {
+  test("a missing person reported is enough for Laporan saya, with no report tiles", async () => {
+    const missing = [
+      {
+        id: "m1",
+        name: "Uji Hilang",
+        status: "open" as const,
+        villageName: "Uji",
+        createdAt: "2026-11-26T03:00:00.000Z",
+      },
+    ];
+    renderPage(<HomeScreen me={{ ...SAMPLE_ME, reports: [] }} missing={missing} />, { path: "/" });
+    const list = await screen.findByRole("region", { name: "Laporan saya" });
+    expect(list.querySelector("dl")).toBeNull();
+    expect(within(list).getByText("Uji Hilang, terakhir terlihat di Uji")).toBeTruthy();
+  });
+
+  test("with nothing sent, there is no Laporan saya and no Cek status laporan", async () => {
     renderPage(<HomeScreen me={{ ...SAMPLE_ME, reports: [] }} />, { path: "/" });
-    expect(await screen.findByText("Belum ada laporan terkirim dari perangkat ini.")).toBeTruthy();
+    expect(await screen.findByRole("heading", { name: "Cara kerjanya" })).toBeTruthy();
+    expect(screen.queryByRole("region", { name: "Laporan saya" })).toBeNull();
     expect(screen.queryByRole("link", { name: "Cek status laporan" })).toBeNull();
   });
 

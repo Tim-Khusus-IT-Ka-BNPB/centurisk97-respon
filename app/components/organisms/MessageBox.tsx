@@ -48,7 +48,12 @@ export function MessageBox() {
                 rows={1}
                 defaultValue={text}
                 onInput={count.onInput}
-                placeholder={t("chat.box.placeholder")}
+                // Before the reporter has said anything, the box asks for the story itself.
+                placeholder={t(
+                  draft.transcript.some((line) => line.speaker === "reporter")
+                    ? "chat.box.placeholder"
+                    : "chat.box.story",
+                )}
                 className="grow-box min-w-[min(100%,12rem)] flex-1 resize-none"
               />
               <Button

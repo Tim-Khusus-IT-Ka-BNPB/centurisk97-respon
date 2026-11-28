@@ -5,6 +5,7 @@ import { afterEach, beforeEach, expect, test, vi } from "vitest";
 import { PRIVACY } from "../../../src/domain/privacy";
 import { TextContext } from "../../lib/text";
 import { renderPage, text } from "../../testing/render";
+import { HomeHero } from "./HomeHero";
 import { HomeScreen } from "./HomeScreen";
 
 const scrolled: string[] = [];
@@ -42,6 +43,7 @@ const home = () =>
           Bahasa
         </a>
       </header>
+      <HomeHero sent={false} />
       <HomeScreen me={{ knownReporters: [], reports: [], privacyVersion: PRIVACY.version, session: null }} />
     </>,
     { path: "/" },
@@ -53,13 +55,12 @@ test("the home's tour lights each part it can show, back and on, and ends or is 
   const tour = () => within(document.querySelector("dialog") as HTMLElement);
   expect(HTMLDialogElement.prototype.showModal).toHaveBeenCalledOnce();
   expect(tour().getByRole("heading").textContent).toBe("Selamat datang di Pantau Bencana");
-  // Three doors of the band are not on this page, nor the hidden language: the rest are, with
-  // Laporan saya.
-  expect(tour().getByText("1 dari 5")).toBeTruthy();
+  // The hidden language is not shown, nor Laporan saya with nothing sent: the doors all are.
+  expect(tour().getByText("1 dari 7")).toBeTruthy();
   expect(tour().queryByRole("button", { name: "Kembali" })).toBeNull();
   fireEvent.click(tour().getByRole("button", { name: "Lanjut" }));
-  expect(tour().getByRole("heading").textContent).toBe("Info daerah");
-  expect(scrolled).toEqual(["door-info"]);
+  expect(tour().getByRole("heading").textContent).toBe("Lapor darurat");
+  expect(scrolled).toEqual(["door-emergency"]);
   const light = document.querySelector("dialog .ring-4") as HTMLElement;
   expect([light.style.top, light.style.left, light.style.width, light.style.height]).toEqual([
     "94px",
@@ -70,8 +71,9 @@ test("the home's tour lights each part it can show, back and on, and ends or is 
   await act(async () => dispatchEvent(new Event("resize")));
   fireEvent.click(tour().getByRole("button", { name: "Kembali" }));
   expect(tour().getByRole("heading").textContent).toBe("Selamat datang di Pantau Bencana");
-  for (let n = 0; n < 4; n += 1) fireEvent.click(tour().getByRole("button", { name: "Lanjut" }));
-  expect(tour().getByRole("heading").textContent).toBe("Laporan saya");
+  for (let n = 0; n < 6; n += 1) fireEvent.click(tour().getByRole("button", { name: "Lanjut" }));
+  expect(tour().getByRole("heading").textContent).toBe("Nomor penting");
+  expect(scrolled.at(-1)).toBe("door-numbers");
   expect(tour().queryByRole("button", { name: "Lewati tur" })).toBeNull();
   fireEvent.click(tour().getByRole("button", { name: "Selesai" }));
   expect(document.querySelector("dialog")).toBeNull();
@@ -83,14 +85,14 @@ test("the home's tour lights each part it can show, back and on, and ends or is 
 
 const Served = () => (
   <TextContext.Provider value={text}>
-    <HomeScreen me={{ knownReporters: [], reports: [], privacyVersion: PRIVACY.version, session: null }} />
+    <HomeHero sent={false} />
   </TextContext.Provider>
 );
 
-test("with no script Sigap greets, and no tour is offered", () => {
+test("with no script Sigap's example shows, and no tour is offered", () => {
   const Stub = createRoutesStub([{ path: "/", Component: Served }]);
   const page = document.createElement("div");
   page.innerHTML = renderToString(<Stub />);
-  expect(page.textContent).toContain("Halo, saya Sigap");
+  expect(page.textContent).toContain("Asisten laporan BNPB");
   expect(page.textContent).not.toContain("Lihat tur singkat");
 });

@@ -1,5 +1,5 @@
 {
-  "chat.greeting": "Halo, saya Sigap, asisten AI untuk pelaporan kejadian bencana.",
+  "chat.greeting": "Halo, saya Sigap, asisten AI pelaporan bencana. Ceritakan apa yang terjadi di kotak pesan, dengan kata-kata Anda sendiri, atau mulai dari pertanyaan di bawah.",
   "chat.log.label": "Percakapan laporan",
   "chat.log.earlier": "Lihat {count} pesan sebelumnya",
   "chat.box.label": "Pesan",
@@ -10,5 +10,6 @@
   "chat.aside.progress": "Kelengkapan laporan",
   "chat.aside.percent": "{percent}% lengkap",
   "chat.aside.help": "Lihat bantuan melapor",
-  "chat.posterPlace": "Lokasi dari poster: Desa/Kel. {village}, Kec. {district}. Bila kejadiannya di tempat lain, ubah di ringkasan sebelum mengirim."
+  "chat.posterPlace": "Lokasi dari poster: Desa/Kel. {village}, Kec. {district}. Bila kejadiannya di tempat lain, ubah di ringkasan sebelum mengirim.",
+  "chat.box.story": "Ceritakan apa yang terjadi"
 }

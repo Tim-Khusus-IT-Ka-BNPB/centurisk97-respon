@@ -38,6 +38,7 @@ describe("the draft page", () => {
     expect(screen.getAllByRole("status")).toHaveLength(1);
     expect(screen.getByRole("heading", { level: 1 }).textContent).toBe("Lapor kejadian");
     expect(screen.getByRole("textbox", { name: "Pesan" }).getAttribute("name")).toBe("text");
+
     expect(screen.queryByText("Laporan dilanjutkan dari jawaban terakhir Anda.")).toBeNull();
   });
 
@@ -202,4 +203,19 @@ describe("a draft that cannot be opened", () => {
     );
     expect(await screen.findByRole("heading", { level: 1, name: /pembukaan laporan/ })).toBeTruthy();
   });
+});
+
+test("before the reporter says anything the box asks for the story; after, for an answer", async () => {
+  const { transcript } = SAMPLE_DRAFTS.placeSearch;
+  const quiet = { ...SAMPLE_DRAFTS.placeSearch, transcript: transcript.filter((line) => line.speaker !== "reporter") };
+  const view = renderPage(<DraftScreen page={page(quiet)} acted={null} />);
+  expect((await screen.findByRole("textbox", { name: "Pesan" })).getAttribute("placeholder")).toBe(
+    "Ceritakan apa yang terjadi",
+  );
+  view.unmount();
+  const told = { ...quiet, transcript: [...quiet.transcript, reporterLine] };
+  renderPage(<DraftScreen page={page(told)} acted={null} />);
+  expect((await screen.findByRole("textbox", { name: "Pesan" })).getAttribute("placeholder")).toBe(
+    "Tulis jawaban Anda",
+  );
 });

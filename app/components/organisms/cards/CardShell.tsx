@@ -9,6 +9,7 @@ import { breakAfterSlash } from "../../../lib/slash";
 import { useText } from "../../../lib/text";
 import { type Posted, postedValue } from "../../../lib/turnForm";
 import { LifeLine, Notice } from "../../molecules/Notice";
+import { SigapAvatar } from "../../molecules/SigapAvatar";
 
 // What every card of the draft page reads: the draft, this render's turn key, and the last refusal.
 export type DraftView = {
@@ -110,6 +111,10 @@ export function CardShell({ card, title, prompt, progress, focusId, ownProblem =
       {problem ? <Notice kind={refusal ? "refusal" : "error"}>{t(problem.copyKey, problem.params)}</Notice> : null}
       {networkLost ? <Notice kind="error">{t("error.network.lost")}</Notice> : null}
       <div className="flex flex-col gap-2">
+        <p aria-hidden="true" className="flex items-center gap-2 text-meta font-semibold text-muted">
+          <SigapAvatar className="size-7 ring-0" />
+          Sigap
+        </p>
         <h2
           id={headingIdOf(card)}
           tabIndex={-1}
