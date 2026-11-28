@@ -8,6 +8,10 @@ APP_ORIGIN=http://localhost:5173
 KEY_HMAC_SECRET=local-sample-hmac-key-at-least-32-bytes-long
 
 IDENTITY_ADAPTER=seeded
+# With IDENTITY_ADAPTER=auth, staff sign in through a local auth (centurisk97-auth) instead:
+# AUTH_ISSUER=http://127.0.0.1:3100
+# AUTH_CLIENT_ID=respon
+# AUTH_CLIENT_SECRET=the respon client secret in auth's CLIENTS, at least 32 bytes
 
 # The public today page at /today: on, or empty to keep it shut.
 TODAY_PAGE=on

@@ -41,6 +41,24 @@ export const COLUMN_CLASSES: Readonly<Record<string, TableClasses>> = {
     retention: "with its profile; a sent version keeps its own copy",
     columns: { id: I, profile_id: I, privacy_version: I, agreed_at: I },
   },
+  staff_member: {
+    retention: "as the person's last sign-in through auth described them; no delete in this release",
+    columns: {
+      id: I,
+      name: P,
+      position: P,
+      agency: I,
+      phone: P,
+      role: I,
+      scope_level: I,
+      scope_code: I,
+      signed_in_at: I,
+    },
+  },
+  staff_session: {
+    retention: "8 hours, removed by the first sign-in after it expires, or on signing out",
+    columns: { token_hash: I, staff_id: I, expires_at: I },
+  },
   seeded_session: {
     retention: "seed data, local, test and staging only",
     columns: {

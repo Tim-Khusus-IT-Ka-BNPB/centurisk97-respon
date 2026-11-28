@@ -74,7 +74,17 @@ describe("the desk queue page", () => {
       new URL("http://x/desk"),
       fakeApi(() => Response.json(envelope("auth.staffSignInFirst"), { status: 401 })).api,
     );
-    expect(signIn).toMatchObject({ kind: "signIn", envelope: null });
+    expect(signIn).toMatchObject({ kind: "signIn", envelope: null, signInUrl: null });
+    const throughAuth = await loadDeskQueue(
+      new URL("http://x/desk"),
+      fakeApi(() =>
+        Response.json(envelope("auth.staffSignInFirst"), {
+          status: 401,
+          headers: { "x-sign-in": "/api/auth/sign-in" },
+        }),
+      ).api,
+    );
+    expect(throughAuth).toMatchObject({ kind: "signIn", signInUrl: "/api/auth/sign-in" });
     const refused = await loadDeskQueue(
       new URL("http://x/desk"),
       fakeApi(() => Response.json(envelope("desk.notAllowed"), { status: 403 })).api,

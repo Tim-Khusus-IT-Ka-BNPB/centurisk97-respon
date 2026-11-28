@@ -27,7 +27,13 @@ import { PAGE_TEXTS, pickTexts } from "./texts.server";
 
 // What a desk page shows when its read is refused: sign in, not this account, or a notice.
 type DeskRefusal =
-  | { readonly kind: "signIn"; readonly texts: Texts; readonly envelope: ErrorEnvelope | null }
+  // signInUrl: where auth signs staff in, when it does; null where staff type a seeded code.
+  | {
+      readonly kind: "signIn";
+      readonly texts: Texts;
+      readonly envelope: ErrorEnvelope | null;
+      readonly signInUrl: string | null;
+    }
   | { readonly kind: "refused"; readonly status: number; readonly texts: Texts; readonly envelope: ErrorEnvelope };
 
 export type DeskQueueLoad =
@@ -86,7 +92,8 @@ export function queueQuery(filters: DeskFilters): string {
 
 async function refusalOf(response: Response): Promise<DeskRefusal> {
   const envelope = (await response.json()) as ErrorEnvelope;
-  if (response.status === 401) return { kind: "signIn", texts: texts(), envelope: null };
+  if (response.status === 401)
+    return { kind: "signIn", texts: texts(), envelope: null, signInUrl: response.headers.get("x-sign-in") };
   return { kind: "refused", status: response.status, texts: texts(), envelope };
 }
 

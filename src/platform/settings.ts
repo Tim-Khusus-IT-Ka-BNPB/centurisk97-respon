@@ -12,7 +12,9 @@ export type Settings = {
   readonly appEnv: AppEnv;
   readonly appOrigin: string;
   readonly keyHmacSecret: string;
-  readonly identityAdapter: "seeded" | "upstream";
+  readonly identityAdapter: "seeded" | "auth";
+  // Where staff sign in, for the auth adapter (centurisk97-auth); null for the seeded one.
+  readonly auth: { readonly issuer: string; readonly clientId: string; readonly clientSecret: string } | null;
   readonly model: ModelSettings;
   readonly clockFixedMs: number | null;
   readonly faultSend: boolean;
@@ -73,7 +75,10 @@ const raw = z.object({
   APP_ENV: z.enum(APP_ENVS),
   APP_ORIGIN: z.url(),
   KEY_HMAC_SECRET: z.string().refine((value) => new TextEncoder().encode(value).length >= MIN_SECRET_BYTES),
-  IDENTITY_ADAPTER: z.enum(["seeded", "upstream"]),
+  IDENTITY_ADAPTER: z.enum(["seeded", "auth"]),
+  AUTH_ISSUER: z.union([z.literal(""), z.url()]).default(""),
+  AUTH_CLIENT_ID: z.string().default(""),
+  AUTH_CLIENT_SECRET: z.string().default(""),
   MODEL_MODE: z.enum(["off", "recorded", "live"]),
   MODEL_BASE_URL: z.string().default(""),
   MODEL_API_KEY: z.string().default(""),
@@ -105,7 +110,19 @@ function environmentProblems(values: Raw, hasDatabase: boolean): SettingProblem[
   const originHost = hostOf(values.APP_ORIGIN) as string;
   if (development !== LOOPBACK_HOSTS.has(originHost)) refuse("APP_ORIGIN");
   if (!development && !values.APP_ORIGIN.startsWith("https://")) refuse("APP_ORIGIN");
-  if ((env === "production") !== (values.IDENTITY_ADAPTER === "upstream")) refuse("IDENTITY_ADAPTER");
+  // Production signs staff in through auth; the seeded codes are for local, test and staging only.
+  if (env === "production" && values.IDENTITY_ADAPTER !== "auth") refuse("IDENTITY_ADAPTER");
+  if (values.IDENTITY_ADAPTER === "auth") {
+    if (values.AUTH_ISSUER === "") refuse("AUTH_ISSUER", "missing");
+    else if (
+      !values.AUTH_ISSUER.startsWith("https://") &&
+      !(development && LOOPBACK_HOSTS.has(hostOf(values.AUTH_ISSUER) as string))
+    )
+      refuse("AUTH_ISSUER");
+    if (values.AUTH_CLIENT_ID === "") refuse("AUTH_CLIENT_ID", "missing");
+    if (new TextEncoder().encode(values.AUTH_CLIENT_SECRET).length < MIN_SECRET_BYTES)
+      refuse("AUTH_CLIENT_SECRET", "missing");
+  }
   // Tests never call the provider; a person's own machine may (owner, 2026-11-25), staging and
   // production never use the recorded stub.
   if (env === "test" ? values.MODEL_MODE === "live" : !development && values.MODEL_MODE === "recorded")
@@ -163,6 +180,10 @@ export function parseSettings(source: Readonly<Record<string, unknown>>, hasData
     appOrigin: new URL(values.APP_ORIGIN).origin,
     keyHmacSecret: values.KEY_HMAC_SECRET,
     identityAdapter: values.IDENTITY_ADAPTER,
+    auth:
+      values.IDENTITY_ADAPTER === "auth"
+        ? { issuer: values.AUTH_ISSUER, clientId: values.AUTH_CLIENT_ID, clientSecret: values.AUTH_CLIENT_SECRET }
+        : null,
     model: modelSettings(values),
     clockFixedMs: values.CLOCK_FIXED === "" ? null : Date.parse(values.CLOCK_FIXED),
     faultSend: values.FAULT_SEND === "on",

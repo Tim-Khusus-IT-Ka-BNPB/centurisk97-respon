@@ -23,6 +23,8 @@ describe("route list", () => {
       { key: "DELETE /api/drafts/:draftId/photos/:photoId", policy: "reporter" },
       { key: "DELETE /api/drafts/:draftId/videos/:videoId", policy: "reporter" },
       { key: "DELETE /api/me/profiles/:profileId", policy: "reporter" },
+      { key: "GET /api/auth/callback", policy: "public" },
+      { key: "GET /api/auth/sign-in", policy: "public" },
       { key: "GET /api/cases/:fileId", policy: "caseTeam" },
       { key: "GET /api/cases/:fileId/media/:mediaId", policy: "caseTeam" },
       { key: "GET /api/cases/:fileId/records/:recordId/videos", policy: "caseTeam" },
@@ -336,7 +338,7 @@ describe("the health route", () => {
 });
 
 describe("response schemas and the OpenAPI document", () => {
-  test("every response of every route declares its body, only 204 has none", () => {
+  test("every response of every route declares its body, only 204 and 302 have none", () => {
     expect(responsesWithoutSchema(api)).toEqual([]);
   });
 
@@ -375,6 +377,8 @@ describe("response schemas and the OpenAPI document", () => {
     expect(document.openapi).toBe("3.1.0");
     const paths = Object.keys(document.paths ?? {}).sort();
     expect(paths).toEqual([
+      "/api/auth/callback",
+      "/api/auth/sign-in",
       "/api/case-links/{token}",
       "/api/cases/{fileId}",
       "/api/cases/{fileId}/accept",

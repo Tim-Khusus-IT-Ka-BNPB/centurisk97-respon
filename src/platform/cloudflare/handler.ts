@@ -5,7 +5,7 @@ import { createBridge } from "../../api/bridge";
 import { runSweep } from "../../services/sweep";
 import { sendWarnings } from "../../services/warningSend";
 import { createClock } from "../clock";
-import { type Database, sqlState } from "../database";
+import { sqlState } from "../database";
 import { createLogger, type Logger, type LogSink } from "../log";
 import { createServices } from "../services";
 import { parseSettings, type Settings, SettingsError } from "../settings";
@@ -14,17 +14,6 @@ type PageHandler = (request: Request, context: AppLoadContext) => Promise<Respon
 
 type Instance = { readonly settings: Settings; readonly log: Logger; readonly clock: ReturnType<typeof createClock> };
 type Started = { readonly ok: true; readonly instance: Instance } | { readonly ok: false };
-
-// The main site's database where an environment binds it (production); others have none.
-const mainDbOf = (env: Env) => (env as { MAIN_DB?: Database }).MAIN_DB;
-
-// Upstream's own bucket, where its impact model keeps its hourly status file (DP-13): bound in
-// production only. With none, the outlook is the one trigger.
-type Media = { get(key: string): Promise<{ text(): Promise<string> } | null> };
-export const statusOf = (env: Env) => async () => {
-  const found = await (env as { UPSTREAM_MEDIA?: Media }).UPSTREAM_MEDIA?.get("dampak_peringatan/status.json");
-  return found ? (JSON.parse(await found.text()) as unknown) : null;
-};
 
 // Settings are read once per Worker instance. A bad setting refuses every request and is logged by name.
 function start(env: Env, sink: LogSink | undefined): Started {
@@ -66,7 +55,7 @@ export function createWorker(pages: PageHandler, runtime: string, sink?: LogSink
       const state = startOnce(env);
       if (!state.ok) return new Response(null, { status: 503, headers: { "referrer-policy": "no-referrer" } });
       const { settings, log, clock } = state.instance;
-      const bindings = createServices(settings, log, env.DB, env.PHOTOS, clock, mainDbOf(env));
+      const bindings = createServices(settings, log, env.DB, env.PHOTOS, clock);
       const fetchApi = async (apiRequest: Request) => api.app.fetch(apiRequest, bindings, ctx);
       if (new URL(request.url).pathname.startsWith("/api/")) return fetchApi(request);
       const context = {
@@ -86,7 +75,9 @@ export function createWorker(pages: PageHandler, runtime: string, sink?: LogSink
         await runSweep(env.DB, r2PhotoStore(env.PHOTOS), clock, log);
         step = "warnings";
         const started = Date.now();
-        await sendWarnings({ db: env.DB, settings, clock }, fetch.bind(globalThis), statusOf(env));
+        // The old site's impact model was the second trigger; nothing reads the old site now, so the
+        // outlook is the one trigger.
+        await sendWarnings({ db: env.DB, settings, clock }, fetch.bind(globalThis));
         log.info({ event: "warnings.done", durationMs: Date.now() - started });
       } catch (error) {
         // The driver's message may quote values, so only its SQLite code leaves this run.

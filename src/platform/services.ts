@@ -1,8 +1,9 @@
 import { edgeCache } from "../adapters/cache/edgeCache";
-import { mainSiteIdentity } from "../adapters/identity/mainSite";
+import { authIdentity } from "../adapters/identity/auth";
 import { seededIdentity } from "../adapters/identity/seeded";
 import { httpModel } from "../adapters/model/http";
 import { modelOff } from "../adapters/model/off";
+import { oidcSignIn } from "../adapters/oidc/client";
 import { type Bucket, r2PhotoStore } from "../adapters/r2/photoStore";
 import type { Clock } from "../ports/clock";
 import type { ModelPort } from "../ports/model";
@@ -24,21 +25,18 @@ export function createServices(
   db: Database,
   photos: Bucket,
   clock: Clock,
-  // The main site's own database, where its sign-in lives; bound in production only.
-  mainDb?: Database,
+  // How auth is reached; tests hand in their own.
+  fetcher: typeof fetch = fetch,
 ): ServiceBindings {
-  if (settings.identityAdapter === "upstream" && mainDb === undefined)
-    throw new Error("The upstream identity needs the main site's database (MAIN_DB)");
-  const identity =
-    settings.identityAdapter === "seeded"
-      ? seededIdentity(db, clock)
-      : mainSiteIdentity(db, mainDb as Database, clock, settings.keyHmacSecret);
+  const secure = settings.appOrigin.startsWith("https://");
+  const identity = settings.auth === null ? seededIdentity(db, clock) : authIdentity(db, clock, secure);
   return {
     settings,
     log,
     db,
     clock,
     identity,
+    signIn: settings.auth === null ? null : oidcSignIn(settings.auth, fetcher),
     model: modelFor(settings),
     photos: r2PhotoStore(photos),
     edge: edgeCache(settings.appOrigin),

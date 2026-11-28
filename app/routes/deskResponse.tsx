@@ -35,7 +35,11 @@ export default function DeskResponseRoute({ loaderData }: Route.ComponentProps) 
     );
   return (
     <Page texts={load.texts} publicPage={false} wide>
-      {load.kind === "refused" ? <DeskRefused envelope={load.envelope} /> : <DeskSignIn envelope={null} />}
+      {load.kind === "refused" ? (
+        <DeskRefused envelope={load.envelope} />
+      ) : (
+        <DeskSignIn envelope={null} signInUrl={load.signInUrl} />
+      )}
     </Page>
   );
 }

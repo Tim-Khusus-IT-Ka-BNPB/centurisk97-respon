@@ -38,7 +38,11 @@ export default function DeskMissingRoute({ loaderData, actionData }: Route.Compo
     );
   return (
     <Page texts={load.texts} publicPage={false} wide>
-      {load.kind === "refused" ? <DeskRefused envelope={load.envelope} /> : <DeskSignIn envelope={null} />}
+      {load.kind === "refused" ? (
+        <DeskRefused envelope={load.envelope} />
+      ) : (
+        <DeskSignIn envelope={null} signInUrl={load.signInUrl} />
+      )}
     </Page>
   );
 }

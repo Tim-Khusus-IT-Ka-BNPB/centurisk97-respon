@@ -101,7 +101,11 @@ function policyGuard(policy: Policy) {
       if (principal === undefined || principal.kind === "anonymous") return refuse(c, 401, "auth.signInFirst");
       if (principal.kind === "staff") return refuse(c, 404, "draft.notFound");
     }
-    if (policy === "staff" && c.var.principal?.kind !== "staff") return refuse(c, 401, "auth.staffSignInFirst");
+    if (policy === "staff" && c.var.principal?.kind !== "staff") {
+      // Where staff sign in, when it is auth: the page sends them there instead of showing a code form.
+      if (c.env.signIn !== null) c.header("x-sign-in", "/api/auth/sign-in");
+      return refuse(c, 401, "auth.staffSignInFirst");
+    }
     if (policy === "caseTeam" && c.var.principal?.kind !== "staff") {
       const member = await caseMemberOf(c.env, getCookie(c, CASE_COOKIE));
       if (member === null) return refuse(c, 401, "auth.signInFirst");
@@ -191,7 +195,8 @@ export function responsesWithoutSchema(api: Api): string[] {
   );
   for (const route of routes) {
     for (const [status, response] of Object.entries(route.responses)) {
-      if (status !== "204" && !("content" in response && response.content))
+      // No content and redirects carry no body.
+      if (status !== "204" && status !== "302" && !("content" in response && response.content))
         missing.push(`${route.method.toUpperCase()} ${route.path} ${status}`);
     }
   }

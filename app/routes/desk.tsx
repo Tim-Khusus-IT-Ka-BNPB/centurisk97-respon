@@ -35,7 +35,7 @@ export default function DeskRoute({ loaderData, actionData }: Route.ComponentPro
       {load.kind === "refused" ? (
         <DeskRefused envelope={load.envelope} />
       ) : (
-        <DeskSignIn envelope={actionData ?? null} />
+        <DeskSignIn envelope={actionData ?? null} signInUrl={load.signInUrl} />
       )}
     </Page>
   );

@@ -160,13 +160,17 @@ describe("ports chosen by the settings", () => {
     );
     expect(live.model).not.toBe(modelOff);
     expect(Object.keys(seededIdentity(bindings.db, bindings.clock)).sort()).toEqual(["officers", "resolve"]);
-    const upstream = { ...bindings.settings, identityAdapter: "upstream" as const };
-    expect(() => createServices(upstream, bindings.log, bindings.db, testBucket(), bindings.clock)).toThrow("MAIN_DB");
+    const auth = {
+      ...bindings.settings,
+      identityAdapter: "auth" as const,
+      auth: { issuer: "https://auth.example.test", clientId: "respon", clientSecret: "x".repeat(32) },
+    };
+    const withAuth = createServices(auth, bindings.log, bindings.db, testBucket(), bindings.clock);
+    expect(Object.keys(withAuth.identity).sort()).toEqual(["officers", "resolve"]);
+    expect(Object.keys(withAuth.signIn ?? {}).sort()).toEqual(["finish", "start"]);
     expect(
-      Object.keys(
-        createServices(upstream, bindings.log, bindings.db, testBucket(), bindings.clock, bindings.db).identity,
-      ).sort(),
-    ).toEqual(["officers", "resolve"]);
+      createServices(bindings.settings, bindings.log, bindings.db, testBucket(), bindings.clock).signIn,
+    ).toBeNull();
   });
 });
 

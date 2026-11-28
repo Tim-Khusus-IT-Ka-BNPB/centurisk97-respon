@@ -42,6 +42,7 @@ describe("settings read at start", () => {
       appOrigin: "http://localhost:5173",
       keyHmacSecret: SECRET,
       identityAdapter: "seeded",
+      auth: null,
       model: { mode: "off" },
       clockFixedMs: null,
       faultSend: false,
@@ -254,14 +255,39 @@ describe("settings read at start", () => {
     ]);
   });
 
-  test("production needs the upstream identity adapter and has no database in this release", () => {
+  test("production signs staff in through auth and has no database in this release", () => {
     expect(refusal({ ...staging, APP_ENV: "production", APP_ORIGIN: "https://example.test" }).problems).toEqual([
       { setting: "IDENTITY_ADAPTER", reason: "notAllowedHere" },
       { setting: "DB", reason: "notAllowedHere" },
     ]);
-    expect(refusal({ ...local, IDENTITY_ADAPTER: "upstream" }).problems).toEqual([
-      { setting: "IDENTITY_ADAPTER", reason: "notAllowedHere" },
+    expect(refusal({ ...local, IDENTITY_ADAPTER: "upstream" }).problems.map((p) => p.setting)).toEqual([
+      "IDENTITY_ADAPTER",
     ]);
+  });
+
+  test("signing in through auth needs auth's address and respon's client", () => {
+    expect(refusal({ ...staging, IDENTITY_ADAPTER: "auth" }).problems).toEqual([
+      { setting: "AUTH_ISSUER", reason: "missing" },
+      { setting: "AUTH_CLIENT_ID", reason: "missing" },
+      { setting: "AUTH_CLIENT_SECRET", reason: "missing" },
+    ]);
+    const signIn = { IDENTITY_ADAPTER: "auth", AUTH_CLIENT_ID: "respon", AUTH_CLIENT_SECRET: SECRET };
+    expect(parseSettings({ ...staging, ...signIn, AUTH_ISSUER: "https://auth.example.test" }, true).auth).toEqual({
+      issuer: "https://auth.example.test",
+      clientId: "respon",
+      clientSecret: SECRET,
+    });
+    expect(parseSettings(local, true).auth).toBeNull();
+  });
+
+  test("auth over plain http only on one's own machine", () => {
+    const signIn = { IDENTITY_ADAPTER: "auth", AUTH_CLIENT_ID: "respon", AUTH_CLIENT_SECRET: SECRET };
+    expect(parseSettings({ ...local, ...signIn, AUTH_ISSUER: "http://127.0.0.1:3100" }, true).auth).toMatchObject({
+      issuer: "http://127.0.0.1:3100",
+    });
+    const plain = { setting: "AUTH_ISSUER", reason: "notAllowedHere" };
+    expect(refusal({ ...local, ...signIn, AUTH_ISSUER: "http://auth.example.test" }).problems).toEqual([plain]);
+    expect(refusal({ ...staging, ...signIn, AUTH_ISSUER: "http://127.0.0.1:3100" }).problems).toEqual([plain]);
   });
 
   test("defaults for optional settings", () => {

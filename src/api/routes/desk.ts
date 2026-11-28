@@ -1,5 +1,6 @@
 import { createRoute, z } from "@hono/zod-openapi";
-import { deleteCookie, setCookie } from "hono/cookie";
+import { deleteCookie, getCookie, setCookie } from "hono/cookie";
+import { signOutStaff, staffCookieName } from "../../adapters/identity/auth";
 import { isSeededStaffCode, SESSION_COOKIE } from "../../adapters/identity/seeded";
 import { hazardTypeSchema } from "../../contract/common";
 import {
@@ -300,8 +301,8 @@ export function addDeskRoutes(api: Api): void {
     },
   );
 
-  // Local, test and staging stand in for the main site's staff sign-in with seeded codes. The
-  // upstream adapter has its own sign-in, so in production this route does not exist.
+  // Local, test and staging sign staff in with seeded codes. Where auth signs them in (production),
+  // this route does not exist.
   addRoute(
     api,
     "public",
@@ -343,8 +344,12 @@ export function addDeskRoutes(api: Api): void {
       path: "/desk/session",
       responses: { 204: { description: "Signed out" } },
     }),
-    (c) => {
-      deleteCookie(c, SESSION_COOKIE, { path: "/", secure: new URL(c.req.url).protocol === "https:" });
+    async (c) => {
+      const secure = new URL(c.req.url).protocol === "https:";
+      const token = getCookie(c, staffCookieName(secure));
+      if (token) await signOutStaff(c.env.db, token);
+      deleteCookie(c, staffCookieName(secure), { path: "/", secure });
+      deleteCookie(c, SESSION_COOKIE, { path: "/", secure });
       return c.body(null, 204);
     },
   );

@@ -161,6 +161,7 @@ export function testBindings(
       db,
       clock,
       identity: seededIdentity(db, clock),
+      signIn: null,
       model: options.model ?? modelOff,
       photos: r2PhotoStore(testBucket()),
       // No cache unless a test hands one in, so a change shows on the next read.
