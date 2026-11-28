@@ -1,7 +1,7 @@
 import { describe, expect, test } from "vitest";
 import { maskNumber, normaliseNumber, readBackNumber } from "./phoneNumber";
 
-describe("typed WhatsApp number", () => {
+describe("typed phone number", () => {
   test("08, 62, +62 and the 8 alone after the form's +62 store the same number", () => {
     expect(normaliseNumber("080000000001")).toBe("+6280000000001");
     expect(normaliseNumber("6280000000001")).toBe("+6280000000001");

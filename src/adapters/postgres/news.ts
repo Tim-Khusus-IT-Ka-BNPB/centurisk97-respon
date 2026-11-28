@@ -27,9 +27,8 @@ export const replyNotice = (ticketNumber: string, at: Date): Query =>
     select ${ticketNumber}, 'reply', (select max(id) from report_reply where ticket_number = ${ticketNumber}), ${at}
     where ${LISTENING(ticketNumber)}`;
 
-// How many notices of a report its reporter has not read, for a list of reports. A document sent in
-// a chat is no news.
-export const UNREAD: Query = sql`(select count(*) from notice n where n.ticket_number = r.ticket_number and n.kind <> 'document'
+// How many notices of a report its reporter has not read, for a list of reports.
+export const UNREAD: Query = sql`(select count(*) from notice n where n.ticket_number = r.ticket_number
     and n.at > coalesce(w.read_at, '-infinity') and not coalesce(w.stopped, false))`;
 
 export type NewsState = { readonly readAtMs: number | null; readonly stopped: boolean };

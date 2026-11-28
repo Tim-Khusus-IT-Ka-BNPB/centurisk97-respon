@@ -35,7 +35,6 @@ describe("the BPBD officers on a report", () => {
     expect(within(sari).getByText("Pusdalops, BPBD Provinsi Uji, tingkat provinsi")).toBeTruthy();
     expect(within(sari).getByText("+62 800-1108-009")).toBeTruthy();
     expect(within(sari).getByRole("link", { name: "Telepon" }).getAttribute("href")).toBe("tel:+628001108009");
-    expect(within(sari).queryByRole("link", { name: "WhatsApp" })).toBeNull();
     expect(screen.queryByText(/Belum ada PIC/)).toBeNull();
   });
 

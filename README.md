@@ -1,12 +1,12 @@
 # Respon (centurisk97-respon)
 
-Disaster reporting for BNPB. A person reports what happened from a phone, on the web or over WhatsApp, and BNPB and BPBD staff see, check and act on each report.
+Disaster reporting for BNPB. A person reports what happened on the web from their phone, and BNPB and BPBD staff see, check and act on each report.
 
 This repo rebuilds the Lapor module of [poskokarhutla](https://github.com/terasurbannetwork/poskokarhutla) as its own product. Upstream is the behaviour reference, not a source to copy from: the features stay the same, the engineering is redone. The two repos share no git history.
 
 How it is built: typed contracts between pages and API, layered code (route, service, repository) with pure domain rules, every user-facing word in one copy catalogue, every rule enforced on the server, and nothing merged without type checks, lint, 100% unit coverage and browser tests at phone, tablet and desktop widths.
 
-Status: moving onto centurisk97's own server (centurisk97-platform), beside auth; the old Cloudflare staging is gone. Reporters: the guided report on the web and WhatsApp (place by search or GPS, hazard, follow-up and rescue questions, photos and video, summary, send), an emergency report, the ticket with the national numbers and its rating, tracking, "Laporan saya", the missing person report, Info daerah with warnings to the phone, and the report pages in local languages. Staff: the desk (map, list, gallery, clusters, status, replies, checks, documents), Orang dicari, Respons BPBD and the WhatsApp pilot numbers. Staff sign in through auth (centurisk97-auth) over OpenID Connect where `IDENTITY_ADAPTER` is `auth`, which production requires; local, test and staging use seeded codes.
+Status: moving onto centurisk97's own server (centurisk97-platform), beside auth; the old Cloudflare staging is gone. Reporters: the guided report on the web (place by search or GPS, hazard, follow-up and rescue questions, photos and video, summary, send), an emergency report, the ticket with the national numbers and its rating, tracking, "Laporan saya", the missing person report, Info daerah with warnings to the phone, and the report pages in local languages. Staff: the desk (map, list, gallery, clusters, status, replies, checks, documents), Orang dicari and Respons BPBD. Staff sign in through auth (centurisk97-auth) over OpenID Connect where `IDENTITY_ADAPTER` is `auth`, which production requires; local, test and staging use seeded codes.
 
 ## Where things are
 
@@ -14,7 +14,7 @@ Status: moving onto centurisk97's own server (centurisk97-platform), beside auth
 - `workflow/`: planning and task files. Local only, not tracked.
 - `app/`: pages (React Router, server rendered). `src/`: the API (Hono), domain rules and adapters. `src/platform/node/`: the Node server, the only code that names the process and its port.
 - `db/schema.ts`, `db/migrations/`, `db/seed/`: the Postgres schema in Drizzle, its migrations (forward only) and synthetic seed data.
-- `scripts/`: database, sweep and budget commands. `tools/model-stub/`: a local stand-in for the model provider. `tools/test-gateway/`: a local stand-in for WhatsApp.
+- `scripts/`: database, sweep and budget commands. `tools/model-stub/`: a local stand-in for the model provider.
 
 ## Rules for this repo
 
@@ -54,10 +54,7 @@ Needs Node 26.3 (see `.nvmrc`) and pnpm 10.34.5 (the `packageManager` field; `np
    pnpm dev
    pnpm model-stub          # only when MODEL_MODE=recorded in .env
    pnpm sweep:local         # the run every 15 minutes, once and now, on the database in .env
-   pnpm test-gateway        # a chat page at http://127.0.0.1:8791 that stands in for WhatsApp
    ```
-
-   The test gateway signs each message with `TEST_GATEWAY_SECRET`, which must equal its entry in `GATEWAY_SECRETS`, and keeps what each number received as its outbox (`/api/outbox`). It takes 0800 numbers only and sends nothing to WhatsApp. Only numbers of the pilot are served: allow one on the desk under "Nomor uji WhatsApp", or write `lapor izin 0800...` as 0800 0000 0000.
 
    Contacts and preparedness topics. The seed loads synthetic stand-ins: the BPBD numbers there are 0800 numbers, never an agency's real line. Upstream's real files load with `reference:import-file`, each checked against its contract first.
 

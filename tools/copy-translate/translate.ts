@@ -61,7 +61,7 @@ const kept: Record<string, string> = existsSync(target) ? JSON.parse(readFileSyn
 const wanted = Object.keys(source).filter((key) => isTranslated(key) && kept[key] === undefined);
 
 const SYSTEM = `You translate the interface of BNPB's disaster report service from Indonesian into ${name}, for residents of Indonesia reporting a disaster.
-Rules: translate meaning only, add nothing, keep the register plain and polite. Keep every {placeholder} exactly as written. Keep every number exactly as written, as digits. Keep these unchanged: BNPB, BPBD, Pantau Bencana, WhatsApp, RT, RW, 112, 117, Desa/Kel., Kec. Keep line breaks. Never say that a place or a person is safe. If a word has no good equivalent, keep the Indonesian word.
+Rules: translate meaning only, add nothing, keep the register plain and polite. Keep every {placeholder} exactly as written. Keep every number exactly as written, as digits. Keep these unchanged: BNPB, BPBD, Pantau Bencana, RT, RW, 112, 117, Desa/Kel., Kec. Keep line breaks. Never say that a place or a person is safe. If a word has no good equivalent, keep the Indonesian word.
 Answer with a JSON object of the same keys.`;
 
 let added = 0;

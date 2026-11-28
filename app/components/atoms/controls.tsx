@@ -8,7 +8,7 @@ export function Input({ className, ...props }: InputHTMLAttributes<HTMLInputElem
   return <input type="text" {...props} className={cn(box, "min-h-target", className)} />;
 }
 
-// An input led by a fixed part of the value, as +62 before a WhatsApp number. The part is named to a
+// An input led by a fixed part of the value, as +62 before a phone number. The part is named to a
 // screen reader through its id, which the caller adds to the input's description.
 export function PrefixedInput({
   prefix,
