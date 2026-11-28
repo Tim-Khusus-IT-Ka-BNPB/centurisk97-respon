@@ -204,14 +204,20 @@
   animation: settle 200ms var(--ease-settle);
 }
 
-/* Reveals that need no script: a field shows when the answer that asks for it is checked. */
-/* Fixed to the bottom, the tab bar would ride up on the keyboard over the field being typed in. */
+/* Fixed to the bottom, the tab bar would ride up on the keyboard over the field being typed in. It
+   comes back a moment after the field lets go: pressing a button where the bar sits moves the focus
+   off the field first, and a bar back at once would take the release, so the press would do nothing.
+   Visibility, unlike display, can wait; hidden, the bar takes no press and is out of the tab order. */
 @utility hide-while-typing {
+  transition: visibility 0s 0.3s;
   body:has(:is(input:not([type="radio"], [type="checkbox"], [type="submit"], [type="button"]), textarea, select):focus)
     & {
-    display: none;
+    visibility: hidden;
+    transition-delay: 0s;
   }
 }
+
+/* Reveals that need no script: a field shows when the answer that asks for it is checked. */
 
 @utility reveal-officer {
   display: none;
