@@ -1,4 +1,5 @@
 import { closedProofKey, handlingOf } from "../adapters/postgres/handling";
+import { repliesOf } from "../adapters/postgres/news";
 import {
   ownReports,
   type ReportRecord,
@@ -7,7 +8,7 @@ import {
   reportByTicket,
   reportByTrackingHash,
 } from "../adapters/postgres/reports";
-import type { Tracking } from "../contract/tracking";
+import type { Tracked, Tracking } from "../contract/tracking";
 import { checkContactFile, pickContact } from "../domain/contacts";
 import type { EventTimeValue, PlaceValue } from "../domain/fieldState";
 import type { FieldError } from "../domain/identityForm";
@@ -81,18 +82,27 @@ export async function trackingOf(bindings: ServiceBindings, report: ReportRecord
 }
 
 export type TrackAnswer =
-  | { readonly kind: "ok"; readonly tracking: Tracking }
+  | { readonly kind: "ok"; readonly tracking: Tracked }
   | { readonly kind: "notFound" }
   | { readonly kind: "limit"; readonly refusal: LimitRefusal };
 
-// A tracking link opened anywhere, signed in or not. An unknown token and a malformed one are
-// told the same, so a guess learns nothing.
+// A tracking link opened anywhere, signed in or not, with staff's replies to the reporter. An
+// unknown token and a malformed one are told the same, so a guess learns nothing.
 export async function trackReport(bindings: ServiceBindings, address: string, token: string): Promise<TrackAnswer> {
   const refusal = await checkLimits(bindings, [["address.tracking", { kind: "address", bucket: address }]]);
   if (refusal) return { kind: "limit", refusal };
   if (!TOKEN.test(token)) return { kind: "notFound" };
   const report = await reportByTrackingHash(bindings.db, await sha256Hex(token));
-  return report ? { kind: "ok", tracking: await trackingOf(bindings, report) } : { kind: "notFound" };
+  if (report === null) return { kind: "notFound" };
+  const zone = draftZone(report.villageCode);
+  const [tracking, replies] = await Promise.all([
+    trackingOf(bindings, report),
+    repliesOf(bindings.db, report.ticketNumber),
+  ]);
+  return {
+    kind: "ok",
+    tracking: { ...tracking, replies: replies.map((one) => ({ text: one.text, at: at(one.atMs, zone) })).reverse() },
+  };
 }
 
 export type ProofAnswer =

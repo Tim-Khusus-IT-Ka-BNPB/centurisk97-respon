@@ -2272,7 +2272,6 @@
   "ownReport.back": "Laporan ulun",
   "ownReport.lead": "{hazard} di Desa/Kel. {village}",
   "ownReport.link": "Tautan palacak",
-  "ownReport.linkHint": "Siapa haja nang mamegang tautan ini kawa malihat status wan lokasi desa, tanpa ngaran, nomor, wan titik lokasi pian.",
   "ownReport.linkOpen": "Buka halaman palacak",
   "page.home.title": "{appName}",
   "page.report.title": "Lapor kajadian, {appName}",

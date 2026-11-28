@@ -31,7 +31,8 @@ export const trackingSchema = z.object({
   ticketNumber: z.string(),
   sentAt: timeSchema,
   stages: z.array(z.object({ status: ticketStatusSchema, reachedAt: timeSchema.nullable() })),
-  // Set aside, with the reason an officer wrote for the reporter. Nothing else staff write is here.
+  // Set aside, with the reason an officer wrote for the reporter. Of what else staff write, only the
+  // tracking page's replies (trackedSchema).
   rejected: z.object({ at: timeSchema, reason: z.string() }).nullable(),
   // What was done, and once the report is closed the photos of it.
   actions: z.array(z.string()),
@@ -45,6 +46,14 @@ export const trackingSchema = z.object({
 });
 
 export type Tracking = z.infer<typeof trackingSchema>;
+
+// What the tracking page shows: the same, and what staff answered the reporter, newest first. Never
+// who wrote it, so anyone holding the link reads the words alone.
+export const trackedSchema = trackingSchema.extend({
+  replies: z.array(z.object({ text: z.string(), at: timeSchema })),
+});
+
+export type Tracked = z.infer<typeof trackedSchema>;
 
 // One sent report of this number on this device, newest first, with its tracking secret: only
 // its owner is given it.

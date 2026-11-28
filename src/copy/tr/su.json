@@ -2272,7 +2272,6 @@
   "ownReport.back": "Laporan abdi",
   "ownReport.lead": "{hazard} di Desa/Kel. {village}",
   "ownReport.link": "Tautan lacak",
-  "ownReport.linkHint": "Saha waé anu nyepeng tautan ieu tiasa ningali status sareng lokasi désa, tanpa nami, nomer, sareng titik lokasi Bapa/Ibu.",
   "ownReport.linkOpen": "Buka kaca lacak",
   "page.home.title": "{appName}",
   "page.report.title": "Lapor kajadian, {appName}",

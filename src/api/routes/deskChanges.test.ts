@@ -1,7 +1,7 @@
 import { beforeAll, describe, expect, test, vi } from "vitest";
 import { SEEDED_SESSIONS } from "../../../db/synthetic/reporters";
 import { type DeskReport, deskReportSchema } from "../../contract/desk";
-import { trackingSchema } from "../../contract/tracking";
+import { trackedSchema } from "../../contract/tracking";
 import { windowStart } from "../../domain/limits";
 import { hmacKey } from "../../platform/keys";
 import { trackingToken } from "../../services/tracking";
@@ -65,11 +65,12 @@ const actions = async (ticket: string) =>
   (await query<{ action: string }>`select action from staff_action where ticket_number = ${ticket} order by id`).map(
     (one) => one.action,
   );
-const tracked = async (ticket: string) => {
+const trackedJson = async (ticket: string) => {
   const [report] = await query<{ id: string }>`select id from report where ticket_number = ${ticket}`;
   const token = await trackingToken(bindings.settings.keyHmacSecret, report?.id as string);
-  return trackingSchema.parse((await browser(fetchApi).call("POST", "/tracking", { token })).json);
+  return (await browser(fetchApi).call("POST", "/tracking", { token })).json;
 };
+const tracked = async (ticket: string) => trackedSchema.parse(await trackedJson(ticket));
 
 describe("a ticket moved along", () => {
   test("holds its new status, one history row with the note, one logged action, and shows the reporter the stage", async () => {
@@ -192,8 +193,14 @@ describe("a reply to the reporter", () => {
       },
     ]);
     expect(await actions(ticket)).toEqual(["view", "reply"]);
-    // It does not reach the reporter's page yet.
-    expect(JSON.stringify(await tracked(ticket))).not.toContain("kami cek");
+    // The tracking page shows it, newest first, and never who wrote it.
+    tick();
+    expect((await reply(ticket, "Tim sudah berangkat")).status).toBe(200);
+    expect((await tracked(ticket)).replies).toEqual([
+      { text: "Tim sudah berangkat", at: { utc: new Date(clock.now()).toISOString(), zone: "WIB" } },
+      { text: "Terima kasih, kami cek", at: report.replies[0]?.at },
+    ]);
+    expect(JSON.stringify(await trackedJson(ticket))).not.toMatch(/Petugas Uji|Pusdalops/);
   });
 
   test("on a ticket nobody opened passes through seen, so no stage is skipped", async () => {

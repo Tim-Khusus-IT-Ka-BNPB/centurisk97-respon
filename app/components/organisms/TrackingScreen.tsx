@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router";
-import type { Tracking } from "../../../src/contract/tracking";
+import type { Tracked } from "../../../src/contract/tracking";
+import { clockTime, longDate } from "../../../src/copy/time";
 import { postForFile, postJson } from "../../lib/clientApi";
 import { useText } from "../../lib/text";
 import { buttonStyles } from "../atoms/Button";
@@ -11,7 +12,7 @@ import { ReportEvent, ReportStatus } from "./ReportProgress";
 
 type TrackingState =
   | { readonly kind: "loading" }
-  | { readonly kind: "ok"; readonly tracking: Tracking }
+  | { readonly kind: "ok"; readonly tracking: Tracked }
   | { readonly kind: "notFound" }
   | { readonly kind: "limit"; readonly limit: number; readonly minutes: number }
   | { readonly kind: "unavailable" };
@@ -23,7 +24,7 @@ const tokenOf = (hash: string): string => new URLSearchParams(hash.replace(/^#/,
 
 // One read of the report. The token goes in the body of a POST.
 async function readTracking(token: string): Promise<TrackingState> {
-  const answer = await postJson<Tracking>("/tracking", { token });
+  const answer = await postJson<Tracked>("/tracking", { token });
   if (answer.kind === "ok") return { kind: "ok", tracking: answer.body };
   if (answer.kind === "unreachable") return { kind: "unavailable" };
   if (answer.status === 404) return { kind: "notFound" };
@@ -84,14 +85,42 @@ function Proof({ proofId, alt }: { readonly proofId: string; readonly alt: strin
   );
 }
 
-function TrackingView({ tracking }: { readonly tracking: Tracking }) {
+// What staff answered the reporter, newest first, never who wrote it.
+function Replies({ replies }: { readonly replies: Tracked["replies"] }) {
+  const t = useText();
+  if (replies.length === 0) return null;
+  return (
+    <section aria-labelledby="tracking-replies" className="flex flex-col gap-3 card-surface p-4 md:p-5">
+      <h2 id="tracking-replies" className="text-card font-bold">
+        {t("tracking.replies")}
+      </h2>
+      <ol className="flex flex-col gap-3">
+        {replies.map((one, index) => (
+          // Two replies may share a time and words, so their order is their key.
+          // biome-ignore lint/suspicious/noArrayIndexKey: the list is read whole each time and never reordered
+          <li key={index} className="flex flex-col gap-1">
+            <span className="text-meta text-muted tabular-nums">
+              {t("stage.reachedAt", { date: longDate(one.at), time: clockTime(one.at), zone: one.at.zone })}
+            </span>
+            <p className="rounded-control bg-selected px-3 py-2 break-words whitespace-pre-line">{one.text}</p>
+          </li>
+        ))}
+      </ol>
+    </section>
+  );
+}
+
+function TrackingView({ tracking }: { readonly tracking: Tracked }) {
   const t = useText();
   return (
     <div className="grid gap-6 lg:grid-cols-2 lg:items-start">
-      <ReportStatus tracking={tracking} photo={(proofId, alt) => <Proof proofId={proofId} alt={alt} />}>
-        <p>{t("tracking.contactPromise")}</p>
-        <p className="text-meta text-muted">{t("tracking.updated")}</p>
-      </ReportStatus>
+      <div className="flex flex-col gap-6">
+        <ReportStatus tracking={tracking} photo={(proofId, alt) => <Proof proofId={proofId} alt={alt} />}>
+          <p>{t("tracking.contactPromise")}</p>
+          <p className="text-meta text-muted">{t("tracking.updated")}</p>
+        </ReportStatus>
+        <Replies replies={tracking.replies} />
+      </div>
       <div className="flex flex-col gap-6">
         <ReportEvent tracking={tracking} />
         <ContactBlock contact={tracking.contact} />

@@ -2272,7 +2272,6 @@
   "ownReport.back": "Laporan ambo",
   "ownReport.lead": "{hazard} di Desa/Kel. {village}",
   "ownReport.link": "Tautan lacak",
-  "ownReport.linkHint": "Sia sajo nan mamaga tautan ko bisa mancaliak status jo lokasi desa, tanpa nama, nomor, jo titik lokasi Anda.",
   "ownReport.linkOpen": "Buka halaman lacak",
   "page.home.title": "{appName}",
   "page.report.title": "Lapor kejadian, {appName}",

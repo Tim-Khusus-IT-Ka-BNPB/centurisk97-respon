@@ -2273,7 +2273,6 @@
   "ownReport.back": "My reports",
   "ownReport.lead": "{hazard} in Desa/Kel. {village}",
   "ownReport.link": "Tracking link",
-  "ownReport.linkHint": "Anyone who has this link can see the status and the village location, without your name, number, and location point.",
   "ownReport.linkOpen": "Open tracking page",
   "page.home.title": "{appName}",
   "page.report.title": "Report an incident, {appName}",

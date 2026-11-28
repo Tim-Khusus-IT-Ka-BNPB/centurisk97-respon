@@ -2272,7 +2272,6 @@
   "ownReport.back": "Laporanku",
   "ownReport.lead": "{hazard} ri Desa/Kel. {village}",
   "ownReport.link": "Tautan lacak",
-  "ownReport.linkHint": "Sininna tau mappunnai tautan iyyé naulléni mitai status sibawa onrong désa, dè' naitai asenta, nomorta, sibawa titik lokasita.",
   "ownReport.linkOpen": "Bukka halaman lacak",
   "page.home.title": "{appName}",
   "page.report.title": "Pallaporang kajajiyang, {appName}",

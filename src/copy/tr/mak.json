@@ -2272,7 +2272,6 @@
   "ownReport.back": "Laporanku",
   "ownReport.lead": "{hazard} ri Desa/Kel. {village}",
   "ownReport.link": "Tautan lacak",
-  "ownReport.linkHint": "Sai-sai tau ia ma'pegang tautan anne akkulle cini' status siagang tampa desa, tena areng, nomor, siagang titik lokasi ta'.",
   "ownReport.linkOpen": "Buka halaman lacak",
   "page.home.title": "{appName}",
   "page.report.title": "Lapporang kajariang, {appName}",

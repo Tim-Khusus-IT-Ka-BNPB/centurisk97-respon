@@ -27,6 +27,7 @@
   "tracking.contactPromise": "Petugas akan menghubungi pelapor bila perlu keterangan tambahan.",
   "tracking.rejected": "Alasan petugas: {reason}",
   "tracking.handling": "Penanganan",
+  "tracking.replies": "Balasan petugas",
   "tracking.proof.alt": "Foto penanganan {n}",
   "tracking.proof.unavailable": "Foto belum bisa dimuat."
 }

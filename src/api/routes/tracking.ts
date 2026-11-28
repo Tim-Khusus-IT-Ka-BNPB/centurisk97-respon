@@ -1,6 +1,6 @@
 import { createRoute, z } from "@hono/zod-openapi";
 import { referenceFile } from "../../adapters/postgres/reports";
-import { trackingSchema } from "../../contract/tracking";
+import { trackedSchema } from "../../contract/tracking";
 import { checkEducationFile, TOPIC_LISTS } from "../../domain/education";
 import { rateOwnReport, trackedProof, trackReport } from "../../services/tracking";
 import { refuse } from "../envelope";
@@ -76,7 +76,7 @@ export function addTrackingRoutes(api: Api): void {
       path: "/tracking",
       request: { body: jsonBody(trackBody) },
       responses: {
-        200: jsonResponse("The report as anyone with its link sees it", trackingSchema),
+        200: jsonResponse("The report as anyone with its link sees it, with staff's replies", trackedSchema),
         404: refusal("No report has this link"),
         429: refusal("Too many opens from this address"),
       },

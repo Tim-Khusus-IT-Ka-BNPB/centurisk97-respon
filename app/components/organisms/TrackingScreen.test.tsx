@@ -1,12 +1,13 @@
 import { screen, waitFor, within } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import type { Card } from "../../../src/contract/card";
+import type { Tracked } from "../../../src/contract/tracking";
 import { SAMPLE_DRAFTS } from "../../../src/testing/samples";
 import { renderPage } from "../../testing/render";
 import { TrackingScreen } from "./TrackingScreen";
 
 const TOKEN = "0123456789abcdef0123456789abcdef";
-const tracking = (SAMPLE_DRAFTS.sent.card as Extract<Card, { kind: "sent" }>).tracking;
+const tracking: Tracked = { ...(SAMPLE_DRAFTS.sent.card as Extract<Card, { kind: "sent" }>).tracking, replies: [] };
 const calls: { url: string; init: RequestInit }[] = [];
 
 function answer(status: number, body: unknown = null) {
@@ -58,6 +59,23 @@ describe("tracking page", () => {
     expect(screen.getByRole("link", { name: "Telepon 0800-1111-2222" })).toBeTruthy();
     expect(screen.getByRole("link", { name: /117/ }).getAttribute("href")).toBe("tel:117");
     expect(document.body.textContent).not.toMatch(/Uji|0800\d|RT|RW/);
+    expect(screen.queryByRole("region", { name: "Balasan petugas" })).toBeNull();
+  });
+
+  test("staff's replies are listed as given, newest first, with their time and no name", async () => {
+    answer(200, {
+      ...tracking,
+      replies: [
+        { text: "Tim sudah berangkat", at: { utc: "2026-11-23T05:30:00.000Z", zone: "WIB" } },
+        { text: "Terima kasih,\nkami cek", at: { utc: "2026-11-23T05:00:00.000Z", zone: "WIB" } },
+      ],
+    });
+    draw();
+    const replies = within(await screen.findByRole("region", { name: "Balasan petugas" }));
+    expect(replies.getAllByRole("listitem").map((item) => item.textContent)).toEqual([
+      "23 November 2026, pukul 12.30 WIBTim sudah berangkat",
+      "23 November 2026, pukul 12.00 WIBTerima kasih,\nkami cek",
+    ]);
   });
 
   test("a report set aside shows the stages it reached and why, and waits for nothing", async () => {

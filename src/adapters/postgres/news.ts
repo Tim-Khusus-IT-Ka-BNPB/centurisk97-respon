@@ -44,6 +44,15 @@ export async function newsState(db: Database, ticketNumber: string): Promise<New
     : { readAtMs: Date.parse(found.read_at), stopped: found.stopped === true };
 }
 
+// What staff answered the reporter, oldest first, without who wrote it.
+export async function repliesOf(db: Database, ticketNumber: string): Promise<{ text: string; atMs: number }[]> {
+  const found = await rows<{ text: string; at: string }>(
+    db,
+    sql`select text, at from report_reply where ticket_number = ${ticketNumber} order by at, id`,
+  );
+  return found.map((one) => ({ text: one.text, atMs: Date.parse(one.at) }));
+}
+
 // What was written about a report that its news is made from, oldest first.
 export async function newsSources(
   db: Database,
@@ -63,10 +72,7 @@ export async function newsSources(
       sql`select actor, event, from_status, to_status, note, detail, at from ticket_history
         where ticket_number = ${ticketNumber} order by at, id`,
     ),
-    rows<{ text: string; at: string }>(
-      db,
-      sql`select text, at from report_reply where ticket_number = ${ticketNumber} order by at, id`,
-    ),
+    repliesOf(db, ticketNumber),
   ]);
   return {
     history: history.map((one) => ({
@@ -78,7 +84,7 @@ export async function newsSources(
       actions: (one.detail as { actions?: string[] } | null)?.actions ?? [],
       atMs: Date.parse(one.at),
     })),
-    replies: replies.map((one) => ({ text: one.text, atMs: Date.parse(one.at) })),
+    replies,
   };
 }
 

@@ -2272,7 +2272,6 @@
   "ownReport.back": "Laporan titiang",
   "ownReport.lead": "{hazard} ring Desa/Kel. {village}",
   "ownReport.link": "Tautan pelacakan",
-  "ownReport.linkHint": "Sapasira sane ngelah tautan puniki prasida ningalin status miwah lokasi desa, tanpa wasta, nomor, miwah titik lokasi Ida dane.",
   "ownReport.linkOpen": "Bukak kaca pelacakan",
   "page.home.title": "{appName}",
   "page.report.title": "Ngaturang laporan kajadian, {appName}",

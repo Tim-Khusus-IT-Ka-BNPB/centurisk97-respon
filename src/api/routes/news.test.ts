@@ -192,7 +192,7 @@ describe("stopping the news", () => {
 });
 
 describe("whose news it is", () => {
-  test("another phone and a signed-out caller get none of it, and the tracking link shows no reply", async () => {
+  test("another phone and a signed-out caller get none of it, and the tracking link shows a reply's words alone", async () => {
     const { phone, ticket } = await sentReport();
     await onDesk(ticket, "replies", { text: "Kami cek ke rumah Anda" });
     const other = browser(fetchApi);
@@ -207,7 +207,8 @@ describe("whose news it is", () => {
     const token = await trackingToken(bindings.settings.keyHmacSecret, report?.id as string);
     const tracked = await browser(fetchApi).call("POST", "/tracking", { token });
     expect(tracked.status).toBe(200);
-    expect(JSON.stringify(tracked.json)).not.toContain("Kami cek");
+    expect(JSON.stringify(tracked.json)).toContain("Kami cek ke rumah Anda");
+    expect(JSON.stringify(tracked.json)).not.toMatch(/Petugas Uji|Pusdalops/);
   });
 
   test("past the hourly limit it is told when to try again", async () => {

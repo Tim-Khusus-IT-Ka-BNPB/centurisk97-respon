@@ -2272,7 +2272,6 @@
   "ownReport.back": "Laporan ndra'o",
   "ownReport.lead": "{hazard} ba Desa/Kel. {village}",
   "ownReport.link": "Tautan lacak",
-  "ownReport.linkHint": "Niha si so tautan da'e tola mangila status awö lokasi desa, tanpa töi, nomor, awö titik lokasi ndra'ugö.",
   "ownReport.linkOpen": "Buka halaman lacak",
   "page.home.title": "{appName}",
   "page.report.title": "Fanuriagö kejadian, {appName}",
