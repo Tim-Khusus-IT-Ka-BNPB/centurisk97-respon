@@ -229,6 +229,8 @@ describe("what the model reads of a report being sent", () => {
         waterDepth: value("chest"),
         urgentNeeds: value({ optionIds: ["readyMeals", "cleanWater"], otherText: null }),
         injured: { state: "confirmedUnknown", origin: "tappedOption" } as FieldState,
+        displacedPeople: value(40),
+        shelters: value("balai desa"),
         // A field another hazard asks is not read.
         magnitude: value(6),
       } as never,
@@ -244,6 +246,8 @@ describe("what the model reads of a report being sent", () => {
         missing: null,
         waterDepth: "chest",
         urgentNeeds: ["readyMeals", "cleanWater"],
+        displacedPeople: 40,
+        shelters: "balai desa",
       }),
       words: ["air sampai dada"],
     });
