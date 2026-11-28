@@ -26,6 +26,15 @@ export type Settings = {
   // The VAPID pair the warnings are signed with, and who the push services may write to. Null:
   // warnings are shut.
   readonly push: { readonly publicKey: string; readonly privateKey: string; readonly subject: string } | null;
+  // Where photos and videos live (decision 0015 in centurisk97-platform). Null on one's own machine
+  // and in tests with no S3: a bucket in memory.
+  readonly s3: {
+    readonly endpoint: string;
+    readonly region: string;
+    readonly bucket: string;
+    readonly accessKeyId: string;
+    readonly secretAccessKey: string;
+  } | null;
   readonly logLevel: LogLevel;
 };
 
@@ -97,6 +106,14 @@ const raw = z.object({
   PUSH_PUBLIC_KEY: z.union([z.literal(""), z.string().regex(/^B[A-Za-z0-9_-]{86}$/)]).default(""),
   PUSH_PRIVATE_KEY: z.union([z.literal(""), z.string().regex(/^[A-Za-z0-9_-]{43}$/)]).default(""),
   PUSH_SUBJECT: z.union([z.literal(""), z.string().regex(/^(mailto:|https:\/\/)\S+$/)]).default(""),
+  S3_ENDPOINT: z.union([z.literal(""), z.url()]).default(""),
+  S3_REGION: z.string().min(1).default("garage"),
+  S3_BUCKET: z
+    .string()
+    .regex(/^[a-z0-9][a-z0-9.-]{1,61}[a-z0-9]$/)
+    .default("respon-files"),
+  S3_ACCESS_KEY_ID: z.string().default(""),
+  S3_SECRET_ACCESS_KEY: z.string().default(""),
   LOG_LEVEL: z.enum(["debug", "info", "warn", "error"]).default("info"),
 });
 type Raw = z.infer<typeof raw>;
@@ -146,6 +163,13 @@ function environmentProblems(values: Raw, hasDatabase: boolean): SettingProblem[
   if (push.some((value) => value !== "") && push.some((value) => value === ""))
     for (const setting of ["PUSH_PUBLIC_KEY", "PUSH_PRIVATE_KEY", "PUSH_SUBJECT"] as const)
       if (values[setting] === "") refuse(setting, "missing");
+  // Files go to S3 everywhere but one's own machine and the tests, which may keep them in memory.
+  if (values.S3_ENDPOINT === "") {
+    if (!development) refuse("S3_ENDPOINT", "missing");
+  } else {
+    if (values.S3_ACCESS_KEY_ID === "") refuse("S3_ACCESS_KEY_ID", "missing");
+    if (values.S3_SECRET_ACCESS_KEY === "") refuse("S3_SECRET_ACCESS_KEY", "missing");
+  }
   // Each environment's D1 database is named in its own wrangler environment. Production has no
   // database in this release, so it cannot start.
   if (!hasDatabase) refuse("DB", "missing");
@@ -195,6 +219,16 @@ export function parseSettings(source: Readonly<Record<string, unknown>>, hasData
       values.PUSH_PUBLIC_KEY === ""
         ? null
         : { publicKey: values.PUSH_PUBLIC_KEY, privateKey: values.PUSH_PRIVATE_KEY, subject: values.PUSH_SUBJECT },
+    s3:
+      values.S3_ENDPOINT === ""
+        ? null
+        : {
+            endpoint: values.S3_ENDPOINT,
+            region: values.S3_REGION,
+            bucket: values.S3_BUCKET,
+            accessKeyId: values.S3_ACCESS_KEY_ID,
+            secretAccessKey: values.S3_SECRET_ACCESS_KEY,
+          },
     logLevel: values.LOG_LEVEL,
   };
 }

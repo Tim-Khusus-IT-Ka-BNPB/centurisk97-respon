@@ -1,7 +1,6 @@
 import { type EdgeStore, edgeCache } from "../adapters/cache/edgeCache";
 import { seededIdentity } from "../adapters/identity/seeded";
 import { modelOff } from "../adapters/model/off";
-import { type Bucket, r2PhotoStore } from "../adapters/r2/photoStore";
 import type { ApiBindings } from "../api/context";
 import type { DraftBody } from "../contract/draft";
 import type { ErrorEnvelope } from "../contract/errors";
@@ -9,6 +8,7 @@ import { type Database, LostRace, row, rows, run, sql } from "../platform/databa
 import { createLogger, type LogLine } from "../platform/log";
 import { parseSettings } from "../platform/settings";
 import type { ModelPort } from "../ports/model";
+import type { PhotoStore } from "../ports/photoStore";
 
 export const TEST_ORIGIN = "http://localhost:5173";
 
@@ -19,9 +19,9 @@ export function testDatabase(): Database {
   return db;
 }
 
-// The in-memory R2 bucket of this test file, made beside its database.
-export function testBucket(): Bucket {
-  return (globalThis as { testPhotos?: Bucket }).testPhotos as Bucket;
+// This test file's file store: a bucket in memory, made beside its database.
+export function testBucket(): PhotoStore {
+  return (globalThis as { testPhotos?: PhotoStore }).testPhotos as PhotoStore;
 }
 
 // Columns stored as JSON text, read back as values so a test compares what was stored.
@@ -160,7 +160,7 @@ export function testBindings(
       identity: seededIdentity(db, clock),
       signIn: null,
       model: options.model ?? modelOff,
-      photos: r2PhotoStore(testBucket()),
+      photos: testBucket(),
       // No cache unless a test hands one in, so a change shows on the next read.
       edge: edgeCache(TEST_ORIGIN, options.edge ?? null),
     },

@@ -14,6 +14,9 @@ importers:
       '@hono/zod-openapi':
         specifier: 1.6.3
         version: 1.6.3(hono@4.13.20)(zod@4.6.7)
+      aws4fetch:
+        specifier: 1.0.20
+        version: 1.0.20
       class-variance-authority:
         specifier: 0.7.1
         version: 0.7.1
@@ -2163,6 +2166,9 @@ packages:
 
   ast-v8-to-istanbul@1.0.8:
     resolution: {integrity: sha512-lPdpagk13ANXV+HClJEpCZM7kUsl5XcvgqKzZhaj6Ve1ZFICcY2sGhAN1n1vT0tML6EclT7bfVgTxqL57Gkpow==}
+
+  aws4fetch@1.0.20:
+    resolution: {integrity: sha512-/djoAN709iY65ETD6LKCtyyEI04XIBP5xVvfmNxsEP0uJB5tyaGBztSryRr4HqMStr9R06PisQE7m9zDTXKu6g==}
 
   babel-dead-code-elimination@1.0.12:
     resolution: {integrity: sha512-GERT7L2TiYcYDtYk1IpD+ASAYXjKbLTDPhBtYj7X1NuRMDTMtAx9kyBenub1Ev41lo91OHCKdmP+egTDmfQ7Ig==}
@@ -5271,6 +5277,8 @@ snapshots:
       '@jridgewell/trace-mapping': 0.3.31
       estree-walker: 3.0.3
       js-tokens: 10.0.1
+
+  aws4fetch@1.0.20: {}
 
   babel-dead-code-elimination@1.0.12:
     dependencies:

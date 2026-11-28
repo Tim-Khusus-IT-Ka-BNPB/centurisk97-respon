@@ -25,7 +25,7 @@ Status: on staging for the pilot. Reporters: the guided report on the web and Wh
 
 ## Run it from a fresh clone
 
-Needs Node 26.3 (see `.nvmrc`) and pnpm 10.34.5 (the `packageManager` field; `npm install -g pnpm@10.34.5`). The database is PostgreSQL 18 through Drizzle ([0014 in centurisk97-platform](https://github.com/Tim-Khusus-IT-Ka-BNPB/centurisk97-platform/blob/main/docs/decisions/0014-postgres-with-drizzle.md)); locally any Postgres 18 on this machine, such as Homebrew's `postgresql@18`. Photos go to an R2 bucket of its own (`PHOTOS`), which wrangler keeps on disk locally.
+Needs Node 26.3 (see `.nvmrc`) and pnpm 10.34.5 (the `packageManager` field; `npm install -g pnpm@10.34.5`). The database is PostgreSQL 18 through Drizzle ([0014 in centurisk97-platform](https://github.com/Tim-Khusus-IT-Ka-BNPB/centurisk97-platform/blob/main/docs/decisions/0014-postgres-with-drizzle.md)); locally any Postgres 18 on this machine, such as Homebrew's `postgresql@18`. Photos and videos go to S3: Garage on the server ([0015](https://github.com/Tim-Khusus-IT-Ka-BNPB/centurisk97-platform/blob/main/docs/decisions/0015-files-in-garage-on-the-server.md)); on one's own machine and in tests, to a bucket in memory unless `S3_ENDPOINT` is set.
 
 1. Install. This also wires the git hooks in `.githooks/`.
 

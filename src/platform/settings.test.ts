@@ -23,6 +23,9 @@ const staging = {
   APP_ORIGIN: "https://staging.example.test",
   MODEL_BASE_URL: "",
   MODEL_NAME: "",
+  S3_ENDPOINT: "http://garage:3900",
+  S3_ACCESS_KEY_ID: "GKstagingaccesskey",
+  S3_SECRET_ACCESS_KEY: "staging-sample-secret-key",
 };
 
 function refusal(source: Record<string, unknown>, hasDatabase = true) {
@@ -51,6 +54,7 @@ describe("settings read at start", () => {
       gatewaySecrets: new Map(),
       push: null,
       todayPage: false,
+      s3: null,
       logLevel: "info",
     });
   });
@@ -288,6 +292,26 @@ describe("settings read at start", () => {
     const plain = { setting: "AUTH_ISSUER", reason: "notAllowedHere" };
     expect(refusal({ ...local, ...signIn, AUTH_ISSUER: "http://auth.example.test" }).problems).toEqual([plain]);
     expect(refusal({ ...staging, ...signIn, AUTH_ISSUER: "http://127.0.0.1:3100" }).problems).toEqual([plain]);
+  });
+
+  test("files go to S3 outside one's own machine and the tests, with the bucket's key", () => {
+    const { S3_ENDPOINT, S3_ACCESS_KEY_ID, S3_SECRET_ACCESS_KEY, ...noS3 } = staging;
+    expect(refusal(noS3).problems).toEqual([{ setting: "S3_ENDPOINT", reason: "missing" }]);
+    expect(refusal({ ...noS3, S3_ENDPOINT }).problems).toEqual([
+      { setting: "S3_ACCESS_KEY_ID", reason: "missing" },
+      { setting: "S3_SECRET_ACCESS_KEY", reason: "missing" },
+    ]);
+    expect(parseSettings(staging, true).s3).toEqual({
+      endpoint: "http://garage:3900",
+      region: "garage",
+      bucket: "respon-files",
+      accessKeyId: S3_ACCESS_KEY_ID,
+      secretAccessKey: S3_SECRET_ACCESS_KEY,
+    });
+    expect(parseSettings(local, true).s3).toBeNull();
+    expect(refusal({ ...staging, S3_BUCKET: "Not A Bucket" }).problems).toEqual([
+      { setting: "S3_BUCKET", reason: "invalid" },
+    ]);
   });
 
   test("defaults for optional settings", () => {

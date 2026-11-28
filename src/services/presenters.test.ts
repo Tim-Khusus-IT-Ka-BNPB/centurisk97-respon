@@ -9,7 +9,7 @@ import { modelRequest } from "../domain/modelRequest";
 import { EMPTY_CONTENT } from "../domain/turn/content";
 import { createClock } from "../platform/clock";
 import { sqlState } from "../platform/database";
-import { createServices } from "../platform/services";
+import { createServices, photoStoreOf } from "../platform/services";
 import { testBindings, testBucket } from "../testing/api";
 import { cardFor } from "./cards";
 import { answerLine } from "./extract";
@@ -133,6 +133,20 @@ describe("the reporter's line for a card answer", () => {
 
 describe("ports chosen by the settings", () => {
   const { bindings } = testBindings();
+  test("files in a bucket in memory with no S3, else in the S3 named, signed with its key", async () => {
+    const memory = photoStoreOf(bindings.settings);
+    await memory.put("k", new Uint8Array([1]));
+    expect(await memory.get("k")).toEqual(new Uint8Array([1]));
+    const s3 = {
+      endpoint: "http://127.0.0.1:9",
+      region: "garage",
+      bucket: "respon-files",
+      accessKeyId: "GK1",
+      secretAccessKey: "s",
+    };
+    await expect(photoStoreOf({ ...bindings.settings, s3 }).get("k")).rejects.toThrow();
+  });
+
   test("off, recorded and live models; the seeded identity; the upstream identity is not built", async () => {
     expect(createServices(bindings.settings, bindings.log, bindings.db, testBucket(), bindings.clock).model).toBe(
       modelOff,

@@ -1,13 +1,13 @@
 import type { AppLoadContext } from "react-router";
-import { r2PhotoStore } from "../../adapters/r2/photoStore";
 import { api } from "../../api/app";
 import { createBridge } from "../../api/bridge";
+import type { PhotoStore } from "../../ports/photoStore";
 import { runSweep } from "../../services/sweep";
 import { sendWarnings } from "../../services/warningSend";
 import { createClock } from "../clock";
 import { type Database, sqlState } from "../database";
 import { createLogger, type Logger, type LogSink } from "../log";
-import { createServices } from "../services";
+import { createServices, photoStoreOf } from "../services";
 import { parseSettings, type Settings, SettingsError } from "../settings";
 
 // The Worker's database binding, until respon runs on Node beside its Postgres.
@@ -15,7 +15,12 @@ const dbOf = (env: Env) => env.DB as unknown as Database;
 
 type PageHandler = (request: Request, context: AppLoadContext) => Promise<Response>;
 
-type Instance = { readonly settings: Settings; readonly log: Logger; readonly clock: ReturnType<typeof createClock> };
+type Instance = {
+  readonly settings: Settings;
+  readonly log: Logger;
+  readonly clock: ReturnType<typeof createClock>;
+  readonly photos: PhotoStore;
+};
 type Started = { readonly ok: true; readonly instance: Instance } | { readonly ok: false };
 
 // Settings are read once per Worker instance. A bad setting refuses every request and is logged by name.
@@ -24,7 +29,12 @@ function start(env: Env, sink: LogSink | undefined): Started {
     const settings = parseSettings(env as unknown as Record<string, unknown>, env.DB !== undefined);
     return {
       ok: true,
-      instance: { settings, log: createLogger(settings.logLevel, sink), clock: createClock(settings.clockFixedMs) },
+      instance: {
+        settings,
+        log: createLogger(settings.logLevel, sink),
+        clock: createClock(settings.clockFixedMs),
+        photos: photoStoreOf(settings),
+      },
     };
   } catch (error) {
     if (!(error instanceof SettingsError)) throw error;
@@ -57,8 +67,8 @@ export function createWorker(pages: PageHandler, runtime: string, sink?: LogSink
     async fetch(request, env, ctx) {
       const state = startOnce(env);
       if (!state.ok) return new Response(null, { status: 503, headers: { "referrer-policy": "no-referrer" } });
-      const { settings, log, clock } = state.instance;
-      const bindings = createServices(settings, log, dbOf(env), env.PHOTOS, clock);
+      const { settings, log, clock, photos } = state.instance;
+      const bindings = createServices(settings, log, dbOf(env), photos, clock);
       const fetchApi = async (apiRequest: Request) => api.app.fetch(apiRequest, bindings, ctx);
       if (new URL(request.url).pathname.startsWith("/api/")) return fetchApi(request);
       const context = {
@@ -72,10 +82,10 @@ export function createWorker(pages: PageHandler, runtime: string, sink?: LogSink
     async scheduled(_controller, env) {
       const state = startOnce(env);
       if (!state.ok) return;
-      const { settings, log, clock } = state.instance;
+      const { settings, log, clock, photos } = state.instance;
       let step = "sweep";
       try {
-        await runSweep(dbOf(env), r2PhotoStore(env.PHOTOS), clock, log);
+        await runSweep(dbOf(env), photos, clock, log);
         step = "warnings";
         const started = Date.now();
         // The old site's impact model was the second trigger; nothing reads the old site now, so the

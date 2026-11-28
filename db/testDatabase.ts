@@ -1,6 +1,7 @@
 import { randomBytes } from "node:crypto";
 import { afterAll } from "vitest";
-import { getPlatformProxy } from "wrangler";
+import { MEMORY_S3, memoryBucket } from "../src/adapters/s3/memoryBucket.ts";
+import { s3PhotoStore } from "../src/adapters/s3/store.ts";
 import { postgresDatabase, postgresPool } from "../src/platform/postgres.ts";
 import { onServer, TEMPLATE, urlOf } from "./testServer.ts";
 
@@ -11,12 +12,10 @@ await onServer((client) => client.query(`create database ${name} template ${TEMP
 const pool = postgresPool(urlOf(name), 4);
 (globalThis as { testDb?: unknown }).testDb = postgresDatabase(pool);
 
-// The R2 bucket beside it, for the photo store (src/testing/api.ts).
-const proxy = await getPlatformProxy<{ PHOTOS: unknown }>({ configPath: "wrangler.jsonc", persist: false });
-(globalThis as { testPhotos?: unknown }).testPhotos = proxy.env.PHOTOS;
+// The file store beside it: a bucket in memory of its own (src/testing/api.ts).
+(globalThis as { testPhotos?: unknown }).testPhotos = s3PhotoStore(MEMORY_S3, memoryBucket().fetcher);
 
 afterAll(async () => {
-  await proxy.dispose();
   if (!pool.ended) await pool.end();
   await onServer((client) => client.query(`drop database if exists ${name} with (force)`));
 });
